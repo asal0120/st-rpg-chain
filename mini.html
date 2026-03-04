@@ -1670,11 +1670,12 @@
                 // === 步驟 1: 修改變量 (狀態變更) ===
                 // 存檔完成後，再修改變量，這樣讀取存檔時變量還是舊的(未攻略狀態)
                 await bridge.execute(`/xbsetvar 世界.妈妈.${currentTargetName}.状态 3`);
+				await bridge.execute(`/xbsetvar 世界.妈妈.${currentTargetName}.在队状态 是`);
                 await bridge.execute(`/xbgetvar 世界.迷宫攻略.当前攻略对象 | /xbdelvar 世界.迷宫攻略.可用名单.{{pipe}}`);
                 await bridge.execute(`/xbsetvar 世界.迷宫攻略.当前攻略对象 非攻略中`);
 
                 // === 步驟 2: 發送訊息 ===
-                const success = sendMsgViaDOM(`戰鬥結束！成功攻略 ${currentTargetName}！`);
+                const success = sendMsgViaDOM(`战斗结束！成功攻略${currentTargetName}！`);
                 
                 if (!success) {
                     showLog("訊息發送失敗，請手動發送");
@@ -1906,3 +1907,4 @@
 </script>
 </body>
 </html>
+
