@@ -1675,7 +1675,12 @@
                 await bridge.execute(`/xbsetvar 世界.迷宫攻略.当前攻略对象 非攻略中`);
 
                 // === 步驟 2: 發送訊息 ===
-                const success = sendMsgViaDOM(`战斗结束！成功攻略${currentTargetName}！`);
+                const success = sendMsgViaDOM(`战斗结束！成功攻略${currentTargetName}！
+<state>
+世界.妈妈.${currentTargetName}.状态: 3
+世界.迷宫攻略.当前攻略对象: 非攻略中
+</state>
+				`);
                 
                 if (!success) {
                     showLog("訊息發送失敗，請手動發送");
@@ -1907,4 +1912,5 @@
 </script>
 </body>
 </html>
+
 
