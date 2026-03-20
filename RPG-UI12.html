@@ -2288,7 +2288,7 @@ let isGenerating = false;
         const targetState = isCurrentlyInParty ? '否' : '是';
         try {
             document.body.style.cursor = 'wait';
-            await STscript(`/xbsetvar 世界.妈妈.${charName}.在队状态 ${targetState}`);
+            await STscript(`/setvar 世界.妈妈.${charName}.在队状态 ${targetState}`);
             
             // [新增] 紀錄自動化變量
             await window.RPGBridge.updateMessageContent(null, [
@@ -2317,7 +2317,7 @@ let isGenerating = false;
                 if (DEBUG_MODE) { activePartyData.push(char); } 
                 else {
                     try {
-                        let status = await STscript(`/xbgetvar 世界.妈妈.${char.name}.状态`);
+                        let status = await STscript(`/getvar 世界.妈妈.${char.name}.状态`);
                         if (parseInt(status) >= 3) activePartyData.push(char);
                     } catch (e) { console.log(e); }
                 }
@@ -2499,7 +2499,7 @@ let isGenerating = false;
             if (charData.id === 'p1') {
                 bondVal = MAX_BOND_LIMIT; // 玩家自己預設為滿值
             } else {
-                let val = await STscript(`/xbgetvar 世界.妈妈.${charData.name}.好感度`);
+                let val = await STscript(`/getvar 世界.妈妈.${charData.name}.好感度`);
                 bondVal = parseInt(val) || 0;
             }
         } catch(e) { console.log(e); }
@@ -2576,7 +2576,7 @@ let isGenerating = false;
         const btn = document.getElementById(btnId);
         if(btn) btn.classList.add('disabled');
         try {
-            let points = await STscript(`/xbgetvar ${VAR_POINTS}`);
+            let points = await STscript(`/getvar ${VAR_POINTS}`);
             points = parseInt(points) || 0;
             if (points < 1) { console.log("点数不足！"); return; }
             
@@ -2584,34 +2584,34 @@ let isGenerating = false;
 
             // 1. 計算新的系統點數
             let newPoints = parseInt(window.__RPG_CACHE.points) - 1;
-            await STscript(`/xbsetvar ${VAR_POINTS} ${newPoints}`); // 改為絕對賦值 setvar
+            await STscript(`/setvar ${VAR_POINTS} ${newPoints}`); // 改為絕對賦值 setvar
             window.__RPG_CACHE.points = newPoints;
             autoVars.push({ varName: VAR_POINTS, type: 'set', value: newPoints }); // 傳遞絕對值
 
             if (type === 'HP') {
                 // 2. 計算新的 HP
                 let newHp = parseInt(window.__RPG_CACHE.hp) + 10;
-                await STscript(`/xbsetvar ${VAR_HP} ${newHp}`); // 改為絕對賦值 setvar
+                await STscript(`/setvar ${VAR_HP} ${newHp}`); // 改為絕對賦值 setvar
                 window.__RPG_CACHE.hp = newHp;
                 autoVars.push({ varName: VAR_HP, type: 'set', value: newHp }); // 傳遞絕對值
             }
             else if (type === 'ATK') {
                 // 3. 計算新的 ATK
                 let newAtk = parseInt(window.__RPG_CACHE.atk) + 5;
-                await STscript(`/xbsetvar ${VAR_ATK} ${newAtk}`);
+                await STscript(`/setvar ${VAR_ATK} ${newAtk}`);
                 window.__RPG_CACHE.atk = newAtk;
                 autoVars.push({ varName: VAR_ATK, type: 'set', value: newAtk });
             }
             
             // 重新計算等級與位階
-            let currentHP = parseInt(await STscript(`/xbgetvar ${VAR_HP}`)) || 0;
-            let currentATK = parseInt(await STscript(`/xbgetvar ${VAR_ATK}`)) || 0;
+            let currentHP = parseInt(await STscript(`/getvar ${VAR_HP}`)) || 0;
+            let currentATK = parseInt(await STscript(`/getvar ${VAR_ATK}`)) || 0;
             const rawScore = (currentHP - 1900) + (currentATK - 750) * 2;
             const calcLv = Math.floor(rawScore / 54) + 70;
-            let currentLv = parseInt(await STscript(`/xbgetvar ${VAR_LEVEL}`)) || 0;
+            let currentLv = parseInt(await STscript(`/getvar ${VAR_LEVEL}`)) || 0;
 
             if (calcLv > currentLv) {
-    await STscript(`/xbsetvar ${VAR_LEVEL} ${calcLv}`);
+    await STscript(`/setvar ${VAR_LEVEL} ${calcLv}`);
     window.__RPG_CACHE.level = calcLv; 
     autoVars.push({ varName: VAR_LEVEL, type: 'set', value: calcLv });
 
@@ -2622,7 +2622,7 @@ let isGenerating = false;
                 if (newRank) {
                     let currentRank = window.__RPG_CACHE.rank;
                     if (currentRank !== newRank) {
-                        await STscript(`/xbsetvar ${VAR_RANK} ${newRank}`);
+                        await STscript(`/setvar ${VAR_RANK} ${newRank}`);
                         window.__RPG_CACHE.rank = newRank;
                         autoVars.push({ varName: VAR_RANK, type: 'set', value: newRank });
                     }
@@ -2738,11 +2738,11 @@ let isGenerating = false;
         try {
     // === [效能優化] 5 個循序請求合併為並行請求 ===
     const [rank, lv, valHP, valATK, valPoints] = await Promise.all([
-        STscript(`/xbgetvar ${VAR_RANK}`),
-        STscript(`/xbgetvar ${VAR_LEVEL}`),
-        STscript(`/xbgetvar ${VAR_HP}`),
-        STscript(`/xbgetvar ${VAR_ATK}`),
-        STscript(`/xbgetvar ${VAR_POINTS}`)
+        STscript(`/getvar ${VAR_RANK}`),
+        STscript(`/getvar ${VAR_LEVEL}`),
+        STscript(`/getvar ${VAR_HP}`),
+        STscript(`/getvar ${VAR_ATK}`),
+        STscript(`/getvar ${VAR_POINTS}`)
     ]);
 
     if(rank && rank !== "0" && els.playerA) els.playerA.innerText = rank;
@@ -2776,8 +2776,8 @@ let isGenerating = false;
         try {
     // === [效能優化] 2 個循序請求合併為並行請求 ===
     const [bond, statusVal] = await Promise.all([
-        STscript(`/xbgetvar 世界.妈妈.${data.name}.好感度`),
-        STscript(`/xbgetvar 世界.妈妈.${data.name}.在队状态`)
+        STscript(`/getvar 世界.妈妈.${data.name}.好感度`),
+        STscript(`/getvar 世界.妈妈.${data.name}.在队状态`)
     ]);
 
     if (els.mBond) els.mBond.innerText = bond || "0";
@@ -2818,7 +2818,7 @@ let isGenerating = false;
     // === [效能優化] 捨棄 for 迴圈內的 await，改為一次性並行請求 ===
     // 產生所有的 Promise 陣列，並加上 catch 避免單一變量缺失導致整個報錯
     const promises = items.map(item => 
-        STscript(`/xbgetvar 世界.妈妈.${name}.NSFW.${catName}.${item}`).catch(() => "0")
+        STscript(`/getvar 世界.妈妈.${name}.NSFW.${catName}.${item}`).catch(() => "0")
     );
     
     // 一口氣等待所有結果回來 (原本要等 5 次的網路來回，現在只需 1 次)
@@ -2978,7 +2978,7 @@ let isGenerating = false;
 
         try {
             // 2. 向 ST 請求變量內容
-            const result = await STscript(`/xbgetvar ${varName}`);
+            const result = await STscript(`/getvar ${varName}`);
 
             // 3. 類型判斷與處理
             if (!result || result === '0') {
@@ -3024,7 +3024,7 @@ let isGenerating = false;
             
             // 2. 組合變數名稱並抓取當前完整陣列
             const varName = `世界.任务.${category}.${filter}`;
-            const result = await STscript(`/xbgetvar ${varName}`);
+            const result = await STscript(`/getvar ${varName}`);
             
             let dataList = [];
             if (typeof result === 'object') {
@@ -3205,7 +3205,7 @@ let isGenerating = false;
             
             // 2. 組合變數名稱並抓取當前完整資料
             const varName = `世界.储物袋.${category}`;
-            const result = await STscript(`/xbgetvar ${varName}`);
+            const result = await STscript(`/getvar ${varName}`);
             
             let itemList = {};
             
@@ -3287,7 +3287,7 @@ let isGenerating = false;
         // --- A. 讀取金幣 ---
         try {
             // 變數路徑範例：世界.储物袋.货币
-            const rawMoney = await STscript('/xbgetvar 世界.储物袋.货币');
+            const rawMoney = await STscript('/getvar 世界.储物袋.货币');
             // 如果讀不到或為空，預設為 0
             let moneyVal = parseInt(rawMoney);
             if (isNaN(moneyVal)) moneyVal = 0;
@@ -3303,7 +3303,7 @@ let isGenerating = false;
         const varName = `世界.储物袋.${currentBagCategory}`;
 
         try {
-            const result = await STscript(`/xbgetvar ${varName}`);
+            const result = await STscript(`/getvar ${varName}`);
             console.log(`[Bag Debug] 讀取 ${varName}:`, result, typeof result);
 
             if (!result || result === '0') {
@@ -4006,24 +4006,24 @@ let isGenerating = false;
             const batchPromises = [
                 // Group 0: 位置資訊 (原本的 region, locationName, subLocation)
                 Promise.all([
-                    STscript('/xbgetvar 世界.位置.区域'),
-                    STscript('/xbgetvar 世界.位置.地点'),
-                    STscript('/xbgetvar 世界.位置.子地点')
+                    STscript('/getvar 世界.位置.区域'),
+                    STscript('/getvar 世界.位置.地点'),
+                    STscript('/getvar 世界.位置.子地点')
                 ]),
                 // Group 1: 玩家數值 (原本的 pLevel, valHP, valATK, valPoints, rank)
                 Promise.all([
-                    STscript('/xbgetvar 世界.玩家状态.综合实力.实际等级'), // index 0
-                    STscript(`/xbgetvar ${VAR_HP}`),                     // index 1
-                    STscript(`/xbgetvar ${VAR_ATK}`),                    // index 2
-                    STscript(`/xbgetvar ${VAR_POINTS}`),                 // index 3
-                    STscript(`/xbgetvar ${VAR_RANK}`)                    // index 4
+                    STscript('/getvar 世界.玩家状态.综合实力.实际等级'), // index 0
+                    STscript(`/getvar ${VAR_HP}`),                     // index 1
+                    STscript(`/getvar ${VAR_ATK}`),                    // index 2
+                    STscript(`/getvar ${VAR_POINTS}`),                 // index 3
+                    STscript(`/getvar ${VAR_RANK}`)                    // index 4
                 ]),
                 // Group 2: 時間日期 (用於 HUD 時間顯示與好感度檢查)
                 Promise.all([
-                    STscript('/xbgetvar 世界.当前.时间.时'), // index 0
-                    STscript('/xbgetvar 世界.当前.日期.年'), // index 1
-                    STscript('/xbgetvar 世界.当前.日期.月'), // index 2
-                    STscript('/xbgetvar 世界.当前.日期.日')  // index 3
+                    STscript('/getvar 世界.当前.时间.时'), // index 0
+                    STscript('/getvar 世界.当前.日期.年'), // index 1
+                    STscript('/getvar 世界.当前.日期.月'), // index 2
+                    STscript('/getvar 世界.当前.日期.日')  // index 3
                 ])
             ];
 
@@ -4089,11 +4089,11 @@ let isGenerating = false;
 
             // === 自動解除懲罰邏輯 (保持原樣，因為它依賴特定變數) ===
             try {
-                let isPunished = await STscript('/xbgetvar 世界.玩家状态.惩罚.惩罚中');
-                let remainDays = await STscript('/xbgetvar 世界.玩家状态.惩罚.剩余天数');
+                let isPunished = await STscript('/getvar 世界.玩家状态.惩罚.惩罚中');
+                let remainDays = await STscript('/getvar 世界.玩家状态.惩罚.剩余天数');
                 if (isPunished === '是' && parseInt(remainDays) === 0) {
-                    await STscript('/xbsetvar 世界.玩家状态.惩罚.惩罚中 否');
-                    await STscript('/xbsetvar 世界.玩家状态.惩罚.内容 无');
+                    await STscript('/setvar 世界.玩家状态.惩罚.惩罚中 否');
+                    await STscript('/setvar 世界.玩家状态.惩罚.内容 无');
                     await window.RPGBridge.updateMessageContent(null, [
                         { varName: '世界.玩家状态.惩罚.惩罚中', type: 'set', value: '否' },
                         { varName: '世界.玩家状态.惩罚.内容', type: 'set', value: '无' }
@@ -4124,19 +4124,19 @@ let isGenerating = false;
             } catch(e) { console.log("面板更新失败", e); }
 
             // 隊伍狀態與好感度讀取 (這裡也建議保留，因為這些變數依賴關係較複雜，暫不併入上方的 Batch)
-            const statusPromises = heroineList.map(id => STscript(`/xbgetvar 世界.妈妈.${id}.状态`));
+            const statusPromises = heroineList.map(id => STscript(`/getvar 世界.妈妈.${id}.状态`));
             const statusResults = await Promise.all(statusPromises);
             const currentRecruitedCount = statusResults.filter(val => val == '3').length;
 
-            const favPromises = heroineList.map(id => STscript(`/xbgetvar 世界.妈妈.${id}.好感度`));
+            const favPromises = heroineList.map(id => STscript(`/getvar 世界.妈妈.${id}.好感度`));
             const favResults = await Promise.all(favPromises);
             const currentrelationshipCount = favResults.filter(val => (parseInt(val) || 0) >= 350).length;
 
             // 自動解鎖奈芙蒂邏輯
             if (currentrelationshipCount >= 8) {
-                let currentNephStatus = await STscript('/xbgetvar 世界.妈妈.奈芙蒂.状态');
+                let currentNephStatus = await STscript('/getvar 世界.妈妈.奈芙蒂.状态');
                 if (currentNephStatus === '-1' || currentNephStatus == '-1' || currentNephStatus === '' || currentNephStatus === '0') {
-                    await STscript('/xbsetvar 世界.妈妈.奈芙蒂.状态 1');
+                    await STscript('/setvar 世界.妈妈.奈芙蒂.状态 1');
                     console.log("[RPG 系统] 8 位媽媽好感度皆達到 350");
                 }
             }
@@ -4203,7 +4203,7 @@ let isGenerating = false;
         let finalDesc = point.desc;
         if (point.motherID) {
             const varName = `世界.妈妈.${point.motherID}.状态`;
-            const statusVal = await STscript(`/xbgetvar ${varName}`);
+            const statusVal = await STscript(`/getvar ${varName}`);
             
             // 狀態為未知 (0 或 -1)，跳過不顯示
             if (statusVal === '-1' || statusVal === -1 || statusVal === '') continue;
@@ -4357,15 +4357,15 @@ let isGenerating = false;
 }
             // 2. 隊伍成員同步
             const partyPromises = [
-                STscript('/xbgetvar 世界.妈妈.爱娜.在队状态').then(val => ({ id: '爱娜', val })),
-                STscript('/xbgetvar 世界.妈妈.琳.在队状态').then(val => ({ id: '琳', val })),
-                STscript('/xbgetvar 世界.妈妈.米拉露恩.在队状态').then(val => ({ id: '米拉露恩', val })),
-                STscript('/xbgetvar 世界.妈妈.黛芬妮.在队状态').then(val => ({ id: '黛芬妮', val })),
-                STscript('/xbgetvar 世界.妈妈.芙蕾嘉.在队状态').then(val => ({ id: '芙蕾嘉', val })),
-                STscript('/xbgetvar 世界.妈妈.穗.在队状态').then(val => ({ id: '穗', val })),
-                STscript('/xbgetvar 世界.妈妈.莉迪娅.在队状态').then(val => ({ id: '莉迪娅', val })),
-                STscript('/xbgetvar 世界.妈妈.璐法.在队状态').then(val => ({ id: '璐法', val })),
-                STscript('/xbgetvar 世界.妈妈.奈芙蒂.在队状态').then(val => ({ id: '奈芙蒂', val }))
+                STscript('/getvar 世界.妈妈.爱娜.在队状态').then(val => ({ id: '爱娜', val })),
+                STscript('/getvar 世界.妈妈.琳.在队状态').then(val => ({ id: '琳', val })),
+                STscript('/getvar 世界.妈妈.米拉露恩.在队状态').then(val => ({ id: '米拉露恩', val })),
+                STscript('/getvar 世界.妈妈.黛芬妮.在队状态').then(val => ({ id: '黛芬妮', val })),
+                STscript('/getvar 世界.妈妈.芙蕾嘉.在队状态').then(val => ({ id: '芙蕾嘉', val })),
+                STscript('/getvar 世界.妈妈.穗.在队状态').then(val => ({ id: '穗', val })),
+                STscript('/getvar 世界.妈妈.莉迪娅.在队状态').then(val => ({ id: '莉迪娅', val })),
+                STscript('/getvar 世界.妈妈.璐法.在队状态').then(val => ({ id: '璐法', val })),
+                STscript('/getvar 世界.妈妈.奈芙蒂.在队状态').then(val => ({ id: '奈芙蒂', val }))
             ];
             const partyResults = await Promise.all(partyPromises);
             const currentPartyIds = partyResults
@@ -4384,15 +4384,15 @@ let isGenerating = false;
             if (isMuted) return; 
 
             const nsfwPromises = [
-                STscript('/xbgetvar 世界.妈妈.爱娜.NSFW状态'),
-                STscript('/xbgetvar 世界.妈妈.琳.NSFW状态'),
-                STscript('/xbgetvar 世界.妈妈.米拉露恩.NSFW状态'),
-                STscript('/xbgetvar 世界.妈妈.黛芬妮.NSFW状态'),
-                STscript('/xbgetvar 世界.妈妈.芙蕾嘉.NSFW状态'),
-                STscript('/xbgetvar 世界.妈妈.穗.NSFW状态'),
-                STscript('/xbgetvar 世界.妈妈.莉迪娅.NSFW状态'),
-                STscript('/xbgetvar 世界.妈妈.璐法.NSFW状态'),
-                STscript('/xbgetvar 世界.妈妈.奈芙蒂.NSFW状态')
+                STscript('/getvar 世界.妈妈.爱娜.NSFW状态'),
+                STscript('/getvar 世界.妈妈.琳.NSFW状态'),
+                STscript('/getvar 世界.妈妈.米拉露恩.NSFW状态'),
+                STscript('/getvar 世界.妈妈.黛芬妮.NSFW状态'),
+                STscript('/getvar 世界.妈妈.芙蕾嘉.NSFW状态'),
+                STscript('/getvar 世界.妈妈.穗.NSFW状态'),
+                STscript('/getvar 世界.妈妈.莉迪娅.NSFW状态'),
+                STscript('/getvar 世界.妈妈.璐法.NSFW状态'),
+                STscript('/getvar 世界.妈妈.奈芙蒂.NSFW状态')
             ];
             const nsfwResults = await Promise.all(nsfwPromises);
             const isAnyNsfw = nsfwResults.some(val => val === '是' || val === 'True' || val === 'true');
@@ -4466,7 +4466,7 @@ window.RPGBridge = {
     // 1. 讀取變量
     getVar: async function(varName) {
         if (typeof STscript !== 'function') return null;
-        return await STscript(`/xbgetvar ${varName}`);
+        return await STscript(`/getvar ${varName}`);
     },
 
     // 2. 寫入/執行指令
@@ -4655,7 +4655,7 @@ window.RPGBridge = {
     // 檢查是否需要進入戰鬥 (建議放在 syncGameState 循環中呼叫)
     async function checkRaidStatus() {
     // 讀取當前攻略對象
-    const target = await STscript('/xbgetvar 世界.迷宫攻略.当前攻略对象');
+    const target = await STscript('/getvar 世界.迷宫攻略.当前攻略对象');
     
     // 如果有值，且不是 "非攻略中"，且小遊戲尚未開啟
     const layer = document.getElementById('minigame-layer');
@@ -4737,9 +4737,9 @@ async function openMinigame(url) {
         }
         const readPromises = [];
         for (const name of heroineList) {
-            readPromises.push(STscript(`/xbgetvar 世界.妈妈.${name}.好感度`));
-            readPromises.push(STscript(`/xbgetvar 世界.妈妈.${name}.日基准好感`));
-            readPromises.push(STscript(`/xbgetvar 世界.妈妈.${name}.上次变动日期`));
+            readPromises.push(STscript(`/getvar 世界.妈妈.${name}.好感度`));
+            readPromises.push(STscript(`/getvar 世界.妈妈.${name}.日基准好感`));
+            readPromises.push(STscript(`/getvar 世界.妈妈.${name}.上次变动日期`));
         }
 
         const results = await Promise.all(readPromises);
@@ -4760,12 +4760,12 @@ async function openMinigame(url) {
             if (isNaN(baseAffection)) { 
                 baseAffection = currentAffection;
                 isFirstInit = true; 
-                writePromises.push(STscript(`/xbsetvar 世界.妈妈.${name}.日基准好感 ${baseAffection}`));
+                writePromises.push(STscript(`/setvar 世界.妈妈.${name}.日基准好感 ${baseAffection}`));
             }
             if (!lastDate || lastDate === '0') { 
                 lastDate = currentDateStr;
                 isFirstInit = true;
-                writePromises.push(STscript(`/xbsetvar 世界.妈妈.${name}.上次变动日期 ${lastDate}`));
+                writePromises.push(STscript(`/setvar 世界.妈妈.${name}.上次变动日期 ${lastDate}`));
             }
 
             // --- 核心限制邏輯 ---
@@ -4774,14 +4774,14 @@ async function openMinigame(url) {
                 let legalYesterdayAffection = Math.min(currentAffection, baseAffection + MAX_DAILY_AFFECTION);
                 baseAffection = legalYesterdayAffection;
             
-                writePromises.push(STscript(`/xbsetvar 世界.妈妈.${name}.日基准好感 ${baseAffection}`));
-                writePromises.push(STscript(`/xbsetvar 世界.妈妈.${name}.上次变动日期 ${currentDateStr}`));
+                writePromises.push(STscript(`/setvar 世界.妈妈.${name}.日基准好感 ${baseAffection}`));
+                writePromises.push(STscript(`/setvar 世界.妈妈.${name}.上次变动日期 ${currentDateStr}`));
                 // 收集換日變量
                 autoVars.push({ varName: `世界.妈妈.${name}.日基准好感`, type: 'set', value: baseAffection });
                 autoVars.push({ varName: `世界.妈妈.${name}.上次变动日期`, type: 'set', value: currentDateStr });
             
                 if (currentAffection > legalYesterdayAffection) {
-                    writePromises.push(STscript(`/xbsetvar 世界.妈妈.${name}.好感度 ${legalYesterdayAffection}`));
+                    writePromises.push(STscript(`/setvar 世界.妈妈.${name}.好感度 ${legalYesterdayAffection}`));
                     autoVars.push({ varName: `世界.妈妈.${name}.好感度`, type: 'set', value: legalYesterdayAffection });
                 }
             } else if (!isFirstInit) {
@@ -4789,7 +4789,7 @@ async function openMinigame(url) {
                 let maxAllowedToday = baseAffection + MAX_DAILY_AFFECTION;
                 if (currentAffection > maxAllowedToday) {
                     console.log(`[好感度攔截] ${name} 數值異常(${currentAffection})，壓回上限(${maxAllowedToday})`);
-                    writePromises.push(STscript(`/xbsetvar 世界.妈妈.${name}.好感度 ${maxAllowedToday}`));
+                    writePromises.push(STscript(`/setvar 世界.妈妈.${name}.好感度 ${maxAllowedToday}`));
                     autoVars.push({ varName: `世界.妈妈.${name}.好感度`, type: 'set', value: maxAllowedToday });
                 }
             }
