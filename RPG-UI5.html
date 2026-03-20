@@ -2156,19 +2156,36 @@
 </div>
 
 <script>
-// === [新增] STscript 全域橋接器 ===
-if (typeof window.STscript === 'undefined') {
-    window.STscript = async function(command) {
-        if (typeof window.executeSlashCommands === 'function') {
-            // 呼叫 ST 原生的斜線指令 API，並等待返回結果
-            return await window.executeSlashCommands(command);
-        } else {
-            console.error("[RPG] 無法獲取變數：找不到原生 executeSlashCommands API");
+// === [修改] 完美兼容 SillyTavern 原生的 STscript 替身 ===
+window.STscript = async function(command) {
+    try {
+        // 1. 優先嘗試 SillyTavern 原生核心 API (最穩定)
+        if (window.SlashCommandParser && typeof window.SlashCommandParser.executeSlashCommand === 'function') {
+            const result = await window.SlashCommandParser.executeSlashCommand(command);
+            // executeSlashCommand 會回傳命令的 pipe (管道) 結果，我們將其轉為字串
+            return result !== undefined && result !== null ? String(result) : "";
+        } 
+        // 2. 備案：嘗試酒館助手 (Tavern Helper) 的擴展 API
+        else if (typeof window.triggerSlash === 'function') {
+            const result = await window.triggerSlash(command);
+            return result !== undefined && result !== null ? String(result) : "";
+        } 
+        // 3. 備案：部分舊版或魔改版 ST 的全域 API
+        else if (window.SillyTavern && typeof window.SillyTavern.executeSlashCommandsWithOptions === 'function') {
+            const result = await window.SillyTavern.executeSlashCommandsWithOptions(command);
+            return result !== undefined && result !== null ? String(result) : "";
+        } 
+        // 如果都找不到
+        else {
+            console.warn("[RPG] 找不到原生 SlashCommandParser API，變數獲取失敗。請確認 ST 版本是否過舊。");
             return "";
         }
-    };
-}
-// ==================================
+    } catch (err) {
+        console.error(`[RPG] STscript 執行失敗: ${command}`, err);
+        return "";
+    }
+};
+// ====================================================
 
 // === [新增] 替換為 SillyTavern 原生流式監聽 ===
 let currentMesId = null;
