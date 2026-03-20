@@ -1,15 +1,10 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RPG</title>
+
 <style>
     /* 引入 Uncial Antiqua (英文/數字) 與 ZCOOL XiaoWei (中文古典風) */
 	/* [修改] 引入 Noto Serif SC (簡體宋體) */
     @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&family=Noto+Serif+TC:wght@400;700&family=Uncial+Antiqua&family=ZCOOL+XiaoWei&display=swap');
     /* === 1. 容器與地圖 (維持不變) === */
-	body {
+	.rpg-v7-root {
         margin: 0;
         background-color: transparent; 
         /* 移除 UI1 原本的 flex 置中，改由 scale 控制 */
@@ -1887,8 +1882,7 @@
         transition: all 0.3s;
     }
 </style>
-</head>
-<body>	
+
 <div class="rpg-v7-root paged-mode">
     <div class="map-area">
         <div id="day-night-overlay"></div>
@@ -5252,5 +5246,4 @@ async function openMinigame(url) {
     else init();
 })();
 </script>
-</body>
 </html>
