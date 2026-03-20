@@ -2168,41 +2168,6 @@
 let currentMesId = null;
 let isGenerating = false;
 
-if (window.eventSource && window.tavern_events) {
-    // 1. 監聽生成開始，鎖定 UI
-    window.eventSource.on(window.tavern_events.MESSAGE_SEND, (messageId) => {
-        if (!isGenerating) {
-            isGenerating = true;
-            const root = document.querySelector('.rpg-v7-root');
-            if (root) root.classList.add('generating');
-            currentMesId = messageId;
-            console.log("[RPG] 流式生成開始，鎖定交互...");
-        }
-    });
-
-    // 2. 獲取流式傳輸文本，實時更新介面
-    window.eventSource.on(window.tavern_events.STREAM_TOKEN_RECEIVED, (text) => {
-        if (typeof window.updateTemplateVariables === 'function') {
-            const match = text.match(/(?:\[|<)\s*RPG\s*(?:\]|>)([\s\S]*?)(?:(?:\[|<)\/\s*RPG\s*(?:\]|>)|$)/i);
-            const content = match ? match[1] : text;
-            window.updateTemplateVariables(content);
-        }
-    });
-
-    // 3. 監聽生成結束，解鎖 UI 並同步狀態
-    window.eventSource.on(window.tavern_events.MESSAGE_RECEIVED, (messageId) => {
-        isGenerating = false;
-        const root = document.querySelector('.rpg-v7-root');
-        if (root) root.classList.remove('generating');
-        currentMesId = messageId;
-        console.log("[RPG] 生成結束，解鎖 UI。");
-        if (typeof syncGameState === 'function') syncGameState();
-    });
-} else {
-    console.warn("[RPG] 找不到 window.eventSource，流式監聽可能無法運作。");
-}
-// ===========================================
-
 (function() {
     window.RPG_IS_MUTED = true;    
 // === [新增] 全域快取與初始化標記 ===
@@ -5282,23 +5247,7 @@ async function openMinigame(url) {
 
         }, 100); // 100ms 緩衝
 	};
-	setTimeout(() => {
-        // 透過 SillyTavern 全域變數 window.chat 獲取最後一則訊息
-        if (window.chat && window.chat.length > 0) {
-            const currentMsg = window.chat[window.chat.length - 1];
-            if (currentMsg && currentMsg.mes) {
-                const match = currentMsg.mes.match(/(?:\[|<)\s*RPG\s*(?:\]|>)([\s\S]*?)(?:(?:\[|<)\/\s*RPG\s*(?:\]|>)|$)/i);
-                // 只有成功匹配到 RPG 標籤才更新，避免干擾
-                if (match && match[1]) {
-                    if (typeof window.updateTemplateVariables === 'function') {
-                        window.updateTemplateVariables(match[1]);
-                    }
-                }
-            }
-        }
-    }, 100);
-    // ----------------------------
-	
+
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
     else init();
 })();
