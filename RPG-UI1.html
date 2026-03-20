@@ -5278,7 +5278,8 @@ async function openMinigame(url) {
             }
 
         }, 100); // 100ms 緩衝
-setTimeout(() => {
+	};
+	setTimeout(() => {
         if (typeof getChatMessages === 'function' && typeof getCurrentMessageId === 'function') {
             const currentMsg = getChatMessages(getCurrentMessageId())[0];
             if (currentMsg && currentMsg.mes) {
