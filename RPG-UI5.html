@@ -2156,7 +2156,19 @@
 </div>
 
 <script>
-
+// === [新增] STscript 全域橋接器 ===
+if (typeof window.STscript === 'undefined') {
+    window.STscript = async function(command) {
+        if (typeof window.executeSlashCommands === 'function') {
+            // 呼叫 ST 原生的斜線指令 API，並等待返回結果
+            return await window.executeSlashCommands(command);
+        } else {
+            console.error("[RPG] 無法獲取變數：找不到原生 executeSlashCommands API");
+            return "";
+        }
+    };
+}
+// ==================================
 
 // === [新增] 替換為 SillyTavern 原生流式監聽 ===
 let currentMesId = null;
