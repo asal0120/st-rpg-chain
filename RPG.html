@@ -2155,15 +2155,44 @@
 </div>
 
 <script>
-// === [新增] 儲存當前樓層 ID ===
-    let currentMesId = null;
 
-    // 監聽來自 template-editor 的更新事件，抓取 messageId
-    window.addEventListener('message', (event) => {
-        if (event.data && event.data.type === 'VARIABLE_UPDATE') {
-            currentMesId = event.data.messageId;
-        }
-    });
+
+// === [新增] 替換為 SillyTavern 原生流式監聽 ===
+let currentMesId = null;
+let isGenerating = false;
+
+// 1. 監聽生成開始，鎖定 UI
+eventOn(tavern_events.MESSAGE_SEND, (messageId) => {
+    if (!isGenerating) {
+        isGenerating = true;
+        const root = document.querySelector('.rpg-v7-root');
+        if (root) root.classList.add('generating');
+        currentMesId = messageId;
+        console.log("[RPG] 流式生成開始，鎖定交互...");
+    }
+});
+
+// 2. 獲取流式傳輸文本，實時更新介面
+eventOn(tavern_events.STREAM_TOKEN_RECEIVED, (text) => {
+    if (typeof window.updateTemplateVariables === 'function') {
+        // 只提取 [RPG]...[/RPG] 中的內容，避免 AI 廢話干擾
+        const match = text.match(/(?:\[|<)\s*RPG\s*(?:\]|>)([\s\S]*?)(?:(?:\[|<)\/\s*RPG\s*(?:\]|>)|$)/i);
+        const content = match ? match[1] : text;
+        window.updateTemplateVariables(content);
+    }
+});
+
+// 3. 監聽生成結束，解鎖 UI 並同步狀態
+eventOn(tavern_events.MESSAGE_RECEIVED, (messageId) => {
+    isGenerating = false;
+    const root = document.querySelector('.rpg-v7-root');
+    if (root) root.classList.remove('generating');
+    currentMesId = messageId;
+    console.log("[RPG] 生成結束，解鎖 UI。");
+    if (typeof syncGameState === 'function') syncGameState();
+});
+// ===========================================
+
 (function() {
     window.RPG_IS_MUTED = true;    
 // === [新增] 全域快取與初始化標記 ===
@@ -5242,7 +5271,20 @@ async function openMinigame(url) {
             }
 
         }, 100); // 100ms 緩衝
-    };
+setTimeout(() => {
+        if (typeof getChatMessages === 'function' && typeof getCurrentMessageId === 'function') {
+            const currentMsg = getChatMessages(getCurrentMessageId())[0];
+            if (currentMsg && currentMsg.mes) {
+                currentMesId = currentMsg.mesId || getCurrentMessageId();
+                const match = currentMsg.mes.match(/(?:\[|<)\s*RPG\s*(?:\]|>)([\s\S]*?)(?:(?:\[|<)\/\s*RPG\s*(?:\]|>)|$)/i);
+                const content = match ? match[1] : currentMsg.mes;
+                if (typeof window.updateTemplateVariables === 'function') {
+                    window.updateTemplateVariables(content);
+                }
+            }
+        }
+    }, 100);
+    // ----------------------------
 	
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
     else init();
