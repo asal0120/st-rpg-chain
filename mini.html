@@ -138,38 +138,77 @@
 
         /* === BOSS 區域 === */
         .area-top { 
-            position: absolute; top: 10px; left: 150px; right: 280px; height: 140px; 
+            /* 左側 buff 面板寬 80px，間距 10px，所以從 100px 開始 */
+            position: absolute; top: 10px; left: 100px; right: 280px; height: 140px; 
             display: flex; flex-direction: column; align-items: center; z-index: 10; 
+        }
+        /* Boss 標題列：名字 + inline orb + HP數字 */
+        .boss-title-row { 
+            display: flex; justify-content: space-between; align-items: center;
+            font-size: 1.2rem; margin-bottom: 5px; color: var(--c-gold); 
+            text-shadow: 0 2px 2px #000; gap: 8px; width: 100%;
+        }
+        .boss-name-text { flex: 1; font-family: "Cinzel", "Noto Serif SC", serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        /* 標題列內嵌的小 orb 群 */
+        .inline-orb-row { display: flex; gap: 4px; align-items: center; flex-shrink: 0; }
+        .inline-orb {
+            width: 13px; height: 13px;
+            background: radial-gradient(circle at 35% 30%, #ff6060, #6a0000);
+            border-radius: 50%;
+            border: 1px solid #442222;
+            box-shadow: 0 0 4px rgba(180,20,20,0.5), inset 1px 1px 2px rgba(255,255,255,0.25);
+            transition: 0.25s; flex-shrink: 0;
+        }
+        .inline-orb.lost {
+            background: #111; border-color: #2a1a1a;
+            box-shadow: none; transform: scale(0.7); opacity: 0.3;
+        }
+        .hp-text-val { 
+            font-family: "Cinzel", serif; font-size: 1rem; 
+            color: #c08080; flex-shrink: 0; text-shadow: 0 1px 3px #000;
         }
         .boss-hp-box { 
             width: 100%; 
-            border: 2px solid var(--c-gold); 
+            border: 1px solid #6a4e1a;
+            border-top: 3px solid #8a6422;
+            border-bottom: 3px solid #8a6422;
             padding: 8px; 
-            background: rgba(0,0,0,0.8); 
+            background: 
+                linear-gradient(to bottom, #1a1208, #120d06),
+                repeating-linear-gradient(90deg, transparent, transparent 30px, rgba(0,0,0,0.06) 30px, rgba(0,0,0,0.06) 31px);
             position: relative; 
-            border-radius: 4px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.6), inset 0 0 20px rgba(0,0,0,0.5);
         }
         .boss-title-row { display: flex; justify-content: space-between; font-size: 1.3rem; margin-bottom: 5px; color: var(--c-gold); text-shadow: 0 2px 2px #000; }
         .hp-track { 
-            width: 100%; height: 20px; background: #221111; 
-            border: 1px solid #442222; box-shadow: inset 0 0 5px #000;
+            width: 100%; height: 20px; 
+            background: #150505; 
+            border: 1px solid #2a1010;
+            box-shadow: inset 0 2px 6px rgba(0,0,0,0.8), inset 0 0 10px rgba(0,0,0,0.5);
         }
         .hp-fill { 
             height: 100%; 
-            background: linear-gradient(to right, #8a1c1c, #e03131); 
+            background: linear-gradient(to right, #4a0000, #8a1010 40%, #b01818);
             width: 100%; transition: width 0.15s ease-out; 
-            box-shadow: 0 0 10px rgba(224, 49, 49, 0.5);
+            box-shadow: 0 0 8px rgba(150,20,20,0.4);
+            /* 斜條紋增加質感 */
+            background-image: 
+                repeating-linear-gradient(60deg, transparent, transparent 6px, rgba(0,0,0,0.15) 6px, rgba(0,0,0,0.15) 12px),
+                linear-gradient(to right, #4a0000, #8a1010 40%, #b01818);
         }
         
         .condition-box { 
-            margin-top: 8px; border: 1px solid var(--c-blue-bright); 
-            background: rgba(0, 10, 20, 0.8); 
-            padding: 6px 20px; font-size: 1.1rem; color: #add8e6; 
-            box-shadow: 0 0 10px rgba(77, 171, 247, 0.2);
+            margin-top: 8px; 
+            border: 1px solid #4a3820;
+            border-left: 3px solid #8a6422;
+            background: 
+                linear-gradient(to right, #1a1208, #120d06),
+                repeating-linear-gradient(0deg, transparent, transparent 4px, rgba(0,0,0,0.08) 4px, rgba(0,0,0,0.08) 5px);
+            padding: 6px 20px; font-size: 1rem; color: #b09060; 
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.6);
             transition: all 0.3s; text-align: center; width: 100%;
-            font-family: "Cinzel", serif;
-            border-left: 5px solid var(--c-blue-bright); 
+            font-family: "Noto Serif SC", serif;
+            letter-spacing: 0.5px;
         }
 
         .special-status-box, .sum-display-box {
@@ -187,41 +226,82 @@
         }
         .ingame-skip-btn:hover { color: var(--c-gold); border-color: var(--c-gold); }
 
-        /* === Phase Orb === */
+        /* === 左側 Buff 狀態面板 === */
         .area-left { 
-            position: absolute; top: 10px; left: 20px; bottom: 400px; width: 80px; 
-            border: 2px solid #553333; 
-            background: rgba(20, 10, 10, 0.6); 
-            display: flex; flex-direction: column; align-items: center; 
-            padding-top: 20px; gap: 15px; z-index: 10; border-radius: 4px; 
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            position: absolute; top: 10px; left: 10px; width: 80px;
+            display: none; /* 預設隱藏，有 buff 時才顯示 */
+            flex-direction: column; align-items: center; 
+            padding: 6px 4px 4px; gap: 4px; z-index: 10;
+            border: 1px solid #3a2e18;
+            border-top: 2px solid #5a4520;
+            border-bottom: 2px solid #5a4520;
+            background: 
+                linear-gradient(to bottom, #150e04, #0e0904 30%, #0a0603 70%, #150e04),
+                repeating-linear-gradient(0deg, transparent, transparent 5px, rgba(0,0,0,0.1) 5px, rgba(0,0,0,0.1) 6px);
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.6), 0 0 10px rgba(0,0,0,0.4);
+            overflow: hidden;
         }
-        .lives-label { font-weight: bold; color: #8a1c1c; margin-bottom: 5px; font-size: 0.8rem; text-align: center; font-family: "Cinzel", serif; }
-        .life-orb { 
-            width: 40px; height: 40px; 
-            background: radial-gradient(circle at 30% 30%, #ff6b6b, #820000); 
-            border-radius: 50%; border: 2px solid #442222; 
-            box-shadow: 0 0 10px #f00, inset 2px 2px 5px rgba(255,255,255,0.4); 
-            transition: 0.3s; 
+        .buff-panel-title {
+            font-family: "Cinzel", serif; font-size: 0.6rem; letter-spacing: 1px;
+            color: #6a5a3a; text-align: center; width: 100%;
+            border-bottom: 1px solid #3a2810; padding-bottom: 4px;
+            text-transform: uppercase; flex-shrink: 0;
         }
-        .life-orb.lost { 
-            background: #111; border-color: #333; box-shadow: inset 0 0 5px #000; 
-            transform: scale(0.8); opacity: 0.5; 
+        .buff-chip {
+            width: 100%;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 6px 3px;
+            border-top: 1px solid #5a4020;
+            background: linear-gradient(to bottom, #1f1608, #120d04);
+            animation: fadeIn 0.3s;
+            flex-shrink: 0;
+        }
+        .buff-chip-icon { font-size: 1rem; line-height: 1; margin-bottom: 2px; }
+        .buff-chip-name { 
+            font-family: "Noto Serif SC", serif; font-size: 0.58rem; 
+            color: #a09060; text-align: center; line-height: 1.3;
+        }
+        .buff-chip-turns {
+            font-family: "Cinzel", serif; font-size: 1.2rem; font-weight: bold;
+            color: #c5a059; text-shadow: 0 0 6px rgba(180,130,50,0.4);
+            line-height: 1; margin-top: 2px;
+        }
+        .buff-chip-turns-label {
+            font-family: "Cinzel", serif; font-size: 0.5rem;
+            color: #6a5a3a; letter-spacing: 1px;
         }
 
         /* === 敵方意圖 === */
         .area-right-top { 
             position: absolute; top: 10px; right: 20px; width: 220px; height: 130px; 
-            border: 2px solid var(--c-red);
-            background: rgba(30, 10, 10, 0.9); padding: 10px; 
-            text-align: center; z-index: 10; border-radius: 4px; 
+            border: 1px solid #5a2020;
+            border-top: 3px solid #7a2a2a;
+            border-bottom: 3px solid #7a2a2a;
+            background: 
+                linear-gradient(160deg, #200808, #160404 40%, #0e0202),
+                repeating-linear-gradient(0deg, transparent, transparent 4px, rgba(0,0,0,0.08) 4px, rgba(0,0,0,0.08) 5px);
+            padding: 10px; 
+            text-align: center; z-index: 10;
             display: flex; flex-direction: column; justify-content: center;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.6);
-            clip-path: polygon(0 0, 100% 0, 100% 90%, 90% 100%, 0 100%);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.7), inset 0 0 20px rgba(0,0,0,0.5);
+            /* 去掉現代clip-path，改用側邊裝飾線 */
+        }
+        /* 裝飾性角章 */
+        .area-right-top::before {
+            content: "⚔";
+            position: absolute;
+            top: 4px; right: 6px;
+            font-size: 0.7rem;
+            color: #5a2020;
+            opacity: 0.7;
         }
         .area-right-top.broken {
-            border-color: var(--c-green-bright);
-            background: rgba(0, 40, 0, 0.85);
+            border-color: #2a6a35;
+            border-top-color: #3a8a45;
+            border-bottom-color: #3a8a45;
+            background: 
+                linear-gradient(160deg, #081a0a, #040e05 40%, #020802),
+                repeating-linear-gradient(0deg, transparent, transparent 4px, rgba(0,0,0,0.08) 4px, rgba(0,0,0,0.08) 5px);
         }
         .intent-label { font-size: 1rem; color: #ffa8a8; font-weight: bold; margin-bottom: 5px; font-family: "Cinzel", serif; }
         .dmg-val { 
@@ -236,21 +316,40 @@
         .area-right-mid { 
             position: absolute; top: 150px; right: 20px; bottom: 260px; 
             width: 220px; 
-            border: 2px solid #555; 
-            background: rgba(20, 20, 20, 0.8); 
+            /* 古卷/法典風格邊框 */
+            border: 1px solid #5a3e1a;
+            border-top: 3px solid #7a5522;
+            border-bottom: 3px solid #7a5522;
+            background: 
+                linear-gradient(to bottom, #1a1208, #120d06 30%, #0e0a04 70%, #1a1208),
+                repeating-linear-gradient(90deg, transparent, transparent 20px, rgba(0,0,0,0.08) 20px, rgba(0,0,0,0.08) 21px);
             display: flex; flex-direction: column; 
             padding: 8px; gap: 8px;
-            z-index: 10; border-radius: 4px; 
-            box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+            z-index: 10;
+            box-shadow: inset 0 0 30px rgba(0,0,0,0.7), 2px 0 8px rgba(0,0,0,0.4), -2px 0 8px rgba(0,0,0,0.4);
         }
+        /* 裝飾性邊角 */
+        .area-right-mid::before, .area-right-mid::after {
+            content: "✦";
+            position: absolute;
+            color: #7a5522;
+            font-size: 0.8rem;
+            opacity: 0.6;
+        }
+        .area-right-mid::before { top: 4px; left: 6px; }
+        .area-right-mid::after { top: 4px; right: 6px; }
         
         .skill-title {
-            color: var(--c-orange); 
+            color: #c5a059; 
             font-weight: bold; 
-            text-align: left;
+            text-align: center;
             padding-bottom: 4px;
-            border-bottom: 1px solid #444;
-            font-family: "Noto Serif SC", serif;
+            padding-top: 2px;
+            border-bottom: 1px solid #3a2810;
+            font-family: "Cinzel", serif;
+            font-size: 0.85rem;
+            letter-spacing: 2px;
+            text-shadow: 0 0 8px rgba(180,130,50,0.4);
         }
 
         .skill-container {
@@ -258,86 +357,121 @@
             grid-template-columns: 1fr 1fr;
             grid-template-rows: 1fr 1fr;
             gap: 6px;
-            flex-grow: 1; /* 佔滿剩餘高度 */
+            flex-grow: 1;
         }
         
         .skill-btn {
-    background: linear-gradient(to bottom, #2b2b2b, #1a1a1a); /* 深色背景 */
-    border: 1px solid #555; 
-    color: #ddd; 
-    cursor: pointer; 
-    display: flex; 
-    flex-direction: column; 
-    justify-content: flex-end; /* 內容靠下對齊 */
-    align-items: center;
-    text-align: center;
-    width: 100%; height: 100%; 
-    transition: 0.2s; border-radius: 4px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.5);
-    padding: 5px;
-    position: relative;
-    overflow: hidden; /* 防止圖片超出 */
-}
-		.skill-btn .s-img {
-    position: absolute;
-    top: 5px; /* 圖片距離頂部 */
-    height: 65%; /* 圖片高度佔比 */
-    width: auto;
-    object-fit: contain;
-    filter: drop-shadow(0 0 5px rgba(0,0,0,0.8));
-    transition: 0.2s;
-    z-index: 1;
-}
+            /* 羊皮紙/石板風格 */
+            background: 
+                linear-gradient(160deg, #252018 0%, #1a1610 40%, #111009 100%);
+            border: 1px solid #4a3515; 
+            border-top: 1px solid #5a4520;
+            color: #d0c090; 
+            cursor: pointer; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: flex-end;
+            align-items: center;
+            text-align: center;
+            width: 100%; height: 100%; 
+            transition: 0.2s;
+            border-radius: 1px;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5), 0 2px 4px rgba(0,0,0,0.4);
+            padding: 5px;
+            position: relative;
+            overflow: hidden;
+        }
+        /* 技能按鈕的石刻裝飾線 */
+        .skill-btn::before {
+            content: "";
+            position: absolute;
+            inset: 3px;
+            border: 1px solid rgba(180,130,50,0.1);
+            pointer-events: none;
+        }
+        .skill-btn .s-img {
+            position: absolute;
+            top: 5px;
+            height: 65%;
+            width: auto;
+            object-fit: contain;
+            filter: drop-shadow(0 0 5px rgba(0,0,0,0.8)) sepia(0.2);
+            transition: 0.2s;
+            z-index: 1;
+        }
 
         .skill-btn .s-name { 
-    font-family: "Noto Serif SC", serif;
-    font-weight: bold; 
-    font-size: 1.1rem; 
-    color: #fff;
-    text-shadow: 0 0 3px #000, 0 0 5px #000;
-    z-index: 2;
-    margin-bottom: 2px;
-}
-        .skill-btn .s-cost { font-size: 0.75rem; color: #aaa; }
+            font-family: "Noto Serif SC", serif;
+            font-weight: bold; 
+            font-size: 1rem; 
+            color: #e0d0a0;
+            text-shadow: 0 1px 3px #000, 0 0 5px rgba(0,0,0,0.8);
+            z-index: 2;
+            margin-bottom: 1px;
+        }
+        .skill-btn .s-cost { font-size: 0.75rem; color: #8a7a5a; }
         .skill-btn .s-count { 
-    font-family: "Cinzel", serif;
-    font-size: 0.9rem; 
-    color: #ffd43b; 
-    font-weight: bold;
-    text-shadow: 0 1px 2px #000;
-    z-index: 2;
-}
-		.skill-btn:hover:not(:disabled) .s-img {
-    transform: scale(1.1);
-}
+            font-family: "Cinzel", serif;
+            font-size: 0.8rem; 
+            color: #c5a059; 
+            font-weight: bold;
+            text-shadow: 0 1px 2px #000;
+            z-index: 2;
+            letter-spacing: 1px;
+        }
+        .skill-btn:hover:not(:disabled) .s-img {
+            transform: scale(1.1);
+            filter: drop-shadow(0 0 8px rgba(180,130,50,0.5)) sepia(0.1);
+        }
 
         .skill-btn:hover:not(:disabled) { 
-    background: #333; 
-    border-color: #888; 
-}
+            background: linear-gradient(160deg, #302818 0%, #221c0e 40%, #1a1409 100%);
+            border-color: #7a5522;
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.3), 0 0 8px rgba(120,80,20,0.2);
+        }
         .skill-btn.active { 
-    border-color: var(--c-gold); 
-    background: #3d3015; 
-    box-shadow: 0 0 10px var(--c-gold-dim); 
-}
-        .skill-btn.targetable-skill { border-color: var(--c-green); background: #0f2b15; cursor: crosshair; }
+            border-color: var(--c-gold); 
+            background: linear-gradient(160deg, #3d3015, #2b2010, #201800);
+            box-shadow: 0 0 12px rgba(180,130,40,0.4), inset 0 0 10px rgba(180,130,40,0.1); 
+        }
+        .skill-btn.targetable-skill { border-color: #2a6a35; background: #071a0a; cursor: crosshair; }
         .skill-btn:disabled { 
-    opacity: 0.5; 
-    cursor: not-allowed; 
-    filter: grayscale(0.8); 
-}
+            opacity: 0.4; 
+            cursor: not-allowed; 
+            filter: grayscale(0.9) brightness(0.6); 
+        }
 
         /* === 玩家 HP === */
         .area-right-bot { 
             position: absolute; bottom: 20px; right: 20px; width: 220px; height: 230px; 
-            border: 3px double var(--c-green-bright); 
-            background: radial-gradient(circle, rgba(0,40,0,0.9), #001100); 
+            /* 改為八角形紋章盾牌造型，告別現代圓形UI */
+            border: none;
+            background: none;
             display: flex; flex-direction: column; justify-content: center; align-items: center; 
-            z-index: 10; border-radius: 50%; 
-            box-shadow: 0 0 30px rgba(81, 207, 102, 0.2); 
+            z-index: 10;
         }
-        .php-val { font-size: 4.5rem; font-weight: bold; line-height: 1; color: var(--c-green-bright); text-shadow: 0 0 15px var(--c-green); }
-        .php-lbl { font-size: 1rem; color: #8ce99a; margin-top: 5px; font-family: "Cinzel", serif; }
+        /* 用 SVG clip-path 做盾牌/紋章形狀 */
+        .area-right-bot::before {
+            content: "";
+            position: absolute; inset: 0;
+            background: radial-gradient(ellipse at 40% 30%, #0a2a0a, #001800 60%, #000d00);
+            clip-path: polygon(50% 0%, 90% 15%, 100% 50%, 90% 90%, 50% 100%, 10% 90%, 0% 50%, 10% 15%);
+            border: none;
+            z-index: -1;
+        }
+        .area-right-bot::after {
+            content: "";
+            position: absolute; inset: 3px;
+            background: transparent;
+            clip-path: polygon(50% 0%, 90% 15%, 100% 50%, 90% 90%, 50% 100%, 10% 90%, 0% 50%, 10% 15%);
+            border: 2px solid #1a6b2a;
+            box-shadow: 0 0 20px rgba(40,140,60,0.3), inset 0 0 30px rgba(0,60,0,0.5);
+            z-index: -1;
+            outline: 1px solid #0d3d18;
+            outline-offset: 4px;
+        }
+        .php-val { font-size: 4.5rem; font-weight: bold; line-height: 1; color: #6ddb7a; text-shadow: 0 0 20px #0a4010, 0 2px 0 #001800; letter-spacing: -2px; }
+        .php-lbl { font-size: 0.85rem; color: #4a9a58; margin-top: 5px; font-family: "Cinzel", serif; letter-spacing: 3px; text-transform: uppercase; }
 
         /* === 儀表板 === */
         .dashboard-container { 
@@ -345,11 +479,17 @@
             z-index: 20; 
             transform: perspective(800px) rotateX(20deg); 
             transform-origin: bottom center; 
-            border: 4px solid #3e3025; 
-            background: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjMjYyMTE5IiAvPgo8L3N2Zz4=');
-            background-color: #262119;
+            /* 石板/木板紋理感 */
+            border: 3px solid #3e2e18;
+            border-top: 4px solid #5a4020;
+            border-bottom: 4px solid #5a4020;
+            background-color: #1a1508;
+            background-image: 
+                repeating-linear-gradient(90deg, transparent, transparent 60px, rgba(0,0,0,0.12) 60px, rgba(0,0,0,0.12) 61px),
+                repeating-linear-gradient(0deg, transparent, transparent 8px, rgba(255,255,255,0.015) 8px, rgba(255,255,255,0.015) 9px),
+                linear-gradient(to bottom, #211a0a, #1a1206 30%, #120e04 70%, #1a1508);
             display: grid; grid-template-columns: 1fr 240px; 
-            box-shadow: 0 30px 60px rgba(0,0,0,0.9), inset 0 0 30px rgba(0,0,0,0.8);
+            box-shadow: 0 30px 60px rgba(0,0,0,0.9), inset 0 0 40px rgba(0,0,0,0.7);
         }
         .dash-left { border-right: 2px solid #3e3025; padding: 10px 20px; display: flex; flex-direction: column; }
         .track-box { 
@@ -364,9 +504,23 @@
         .cell-big-text { font-size: 2rem; font-weight: bold; color: #e0d6c8; }
         
         .btn-full { width: 100%; height: 100%; border: none; font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: 0.2s; font-family: "Noto Serif SC", serif; }
-        .btn-restart { background: #3d332a; color: #aaa; } .btn-restart:hover { color: white; background: #554433; }
-        .btn-end { background: #1a1510; color: #d4af37; border-top: 2px solid #d4af37; } 
-        .btn-end:hover { background: #2b2210; box-shadow: inset 0 0 20px #d4af37; text-shadow: 0 0 10px #d4af37; }
+        .btn-restart { 
+            background: linear-gradient(to bottom, #2a2015, #1a1408); 
+            color: #8a7a5a; 
+            border-top: 1px solid #3a2e18;
+        } 
+        .btn-restart:hover { color: #d0b870; background: linear-gradient(to bottom, #352818, #221a0a); }
+        .btn-end { 
+            background: linear-gradient(to bottom, #201808, #150f04); 
+            color: #c5a059; 
+            border-top: 2px solid #5a4020; 
+        } 
+        .btn-end:hover { 
+            background: linear-gradient(to bottom, #2b2010, #1a1208); 
+            box-shadow: inset 0 0 20px rgba(180,130,40,0.2); 
+            text-shadow: 0 0 10px rgba(180,130,40,0.6); 
+            color: #e0c070;
+        }
 
         /* === 手牌區 === */
         .area-hand { 
@@ -378,47 +532,96 @@
         
         .card { 
             width: 90px; height: 120px; 
-            background: #222; border-radius: 8px; 
-            border: 2px solid #aaa; 
+            background: #1a1208;
+            border-radius: 2px; 
+            border: 2px solid #6b4c20;
+            outline: 1px solid #3a2810;
+            outline-offset: -5px;
             display: flex; justify-content: center; align-items: center; 
-            font-size: 2.5rem; font-weight: bold; color: white; 
+            font-size: 2.5rem; font-weight: bold; color: #f0e8d0; 
             cursor: pointer; transition: transform 0.15s, filter 0.2s; 
             position: relative; 
-            box-shadow: 0 5px 10px rgba(0,0,0,0.7);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.8), inset 0 0 20px rgba(0,0,0,0.6);
             font-family: "Cinzel", serif;
+            /* 羊皮紙紋理：用多層線性漸層模擬木刻壓印感 */
+            background-image:
+                repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.04) 3px, rgba(0,0,0,0.04) 4px),
+                linear-gradient(160deg, rgba(255,255,255,0.04) 0%, transparent 50%, rgba(0,0,0,0.2) 100%);
         }
-        .card:hover { transform: translateY(-30px) scale(1.1); border-color: white; z-index: 100; box-shadow: 0 0 20px rgba(255,255,255,0.3); }
+        /* 卡牌角落裝飾紋 */
+        .card::before {
+            content: "";
+            position: absolute;
+            inset: 4px;
+            border: 1px solid rgba(255,255,255,0.08);
+            pointer-events: none;
+        }
+        .card:hover { transform: translateY(-30px) scale(1.1); border-color: #d4af37; z-index: 100; box-shadow: 0 12px 30px rgba(0,0,0,0.9), 0 0 15px rgba(180,130,40,0.4); }
         
-        .card.red { background: linear-gradient(135deg, #5c0000, #2b0000); border-color: #ff8787; text-shadow: 2px 2px 0 #000;} 
-        .card.blue { background: linear-gradient(135deg, #002a7a, #001133); border-color: #74c0fc; text-shadow: 2px 2px 0 #000;} 
-        .card.green { background: linear-gradient(135deg, #1b4d24, #051f0a); border-color: #69db7c; text-shadow: 2px 2px 0 #000;} 
-        .card.yellow { background: linear-gradient(135deg, #946c00, #3d2c00); color: #fff; border-color: #ffd43b; text-shadow: 2px 2px 0 #000;}
+        .card.red { 
+            background-color: #2d0a0a;
+            background-image:
+                repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.05) 3px, rgba(0,0,0,0.05) 4px),
+                linear-gradient(160deg, rgba(180,30,30,0.15) 0%, transparent 60%, rgba(0,0,0,0.3) 100%);
+            border-color: #7a2a2a; 
+            color: #ffb3b3;
+            text-shadow: 0 0 8px #800, 2px 2px 0 #1a0000;
+        } 
+        .card.blue { 
+            background-color: #050f2a;
+            background-image:
+                repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.05) 3px, rgba(0,0,0,0.05) 4px),
+                linear-gradient(160deg, rgba(20,60,160,0.2) 0%, transparent 60%, rgba(0,0,0,0.3) 100%);
+            border-color: #2a4a8a; 
+            color: #9bbfff;
+            text-shadow: 0 0 8px #006, 2px 2px 0 #000d33;
+        } 
+        .card.green { 
+            background-color: #071a0a;
+            background-image:
+                repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.05) 3px, rgba(0,0,0,0.05) 4px),
+                linear-gradient(160deg, rgba(20,100,40,0.2) 0%, transparent 60%, rgba(0,0,0,0.3) 100%);
+            border-color: #2a6a35; 
+            color: #8ddb9a;
+            text-shadow: 0 0 8px #040, 2px 2px 0 #001a08;
+        } 
+        .card.yellow { 
+            background-color: #1f1400;
+            background-image:
+                repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.05) 3px, rgba(0,0,0,0.05) 4px),
+                linear-gradient(160deg, rgba(180,120,0,0.2) 0%, transparent 60%, rgba(0,0,0,0.3) 100%);
+            border-color: #7a5a00; 
+            color: #ffd060;
+            text-shadow: 0 0 8px #840, 2px 2px 0 #1a0f00;
+        }
         
         .card.token::after { 
-            content: "T"; position: absolute; top: 5px; right: 5px; 
-            font-size: 0.7rem; color: #111; 
-            border: 1px solid #d4af37; border-radius: 50%; 
-            width: 20px; height: 20px; 
-            display: flex; justify-content: center; align-items: center; 
-            background: #d4af37; box-shadow: 0 1px 3px rgba(0,0,0,0.5);
-            font-family: sans-serif;
+            content: "⚜"; position: absolute; top: 4px; right: 4px; 
+            font-size: 0.8rem; color: #d4af37; 
+            text-shadow: 0 0 4px #000;
+            font-family: serif;
         }
 
         .card.disabled { 
-            filter: brightness(0.8) grayscale(0.6); 
-            opacity: 0.7; cursor: not-allowed; border-color: #333; transform: scale(0.95); box-shadow: none;
+            filter: brightness(0.6) saturate(0.4); 
+            opacity: 0.6; cursor: not-allowed; transform: scale(0.93);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
         }
-        .card.disabled:hover { transform: scale(0.95); border-color: #333; z-index: 0; }
-        .card.targetable { animation: glow 1s infinite alternate; border-color: white; cursor: crosshair; filter: brightness(1.2); }
+        .card.disabled:hover { transform: scale(0.93); z-index: 0; border-color: #3a2810; }
+        .card.targetable { animation: glow 1s infinite alternate; border-color: #d4af37; cursor: crosshair; filter: brightness(1.2); }
 
         .mini-card { 
-            width: 30px; height: 45px; border-radius: 3px; border: 1px solid rgba(255,255,255,0.3); 
+            width: 30px; height: 45px; 
+            border-radius: 1px; 
+            border: 1px solid rgba(180,130,50,0.2); 
             display: flex; justify-content: center; align-items: center; font-size: 0.9rem; font-weight: bold; 
-            flex-shrink: 0; color: white; text-shadow: 1px 1px 0 #000; 
+            flex-shrink: 0; text-shadow: 1px 1px 0 #000; 
             font-family: "Cinzel", serif;
         }
-        .mini-card.red { background: #8a1c1c; } .mini-card.blue { background: #1c4e8a; } 
-        .mini-card.green { background: #2b5933; } .mini-card.yellow { background: #b08d00; }
+        .mini-card.red { background: #3d0a0a; color: #c06060; border-color: rgba(120,40,40,0.5); } 
+        .mini-card.blue { background: #060f2a; color: #5070c0; border-color: rgba(30,60,130,0.5); } 
+        .mini-card.green { background: #071a0a; color: #407850; border-color: rgba(30,80,40,0.5); } 
+        .mini-card.yellow { background: #1f1400; color: #a08030; border-color: rgba(120,90,0,0.5); }
         
         .boss-img-container { 
             position: absolute; top: 250px; left: 160px; right: 280px; bottom: 200px; 
@@ -434,20 +637,67 @@
             font-family: "Cinzel", serif; letter-spacing: 2px;
         }
         
-        /* === 顏色選擇器 === */
+        /* === 顏色選擇器（法陣封印風格）=== */
         #color-picker { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(0,0,0,0.9); z-index: 2000; 
-            display: none; justify-content: center; align-items: center; flex-direction: column; gap: 20px; 
+            /* 半透明暗幕，帶細紋 */
+            background: 
+                repeating-linear-gradient(45deg, transparent, transparent 3px, rgba(0,0,0,0.04) 3px, rgba(0,0,0,0.04) 6px),
+                rgba(5, 3, 2, 0.93);
+            z-index: 2000; 
+            display: none; justify-content: center; align-items: center; flex-direction: column; gap: 24px; 
         }
-        .cp-options { display: flex; gap: 30px; }
+        /* 選色器標題 */
+        #color-picker h2 {
+            font-family: "Cinzel", serif !important;
+            color: #c5a059 !important;
+            font-size: 1.2rem !important;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            border-bottom: 1px solid #5a4020;
+            padding-bottom: 10px;
+            margin: 0 !important;
+            text-shadow: 0 0 12px rgba(180,130,50,0.4);
+        }
+        .cp-options { 
+            display: flex; gap: 20px;
+            padding: 20px 28px;
+            background: linear-gradient(to bottom, #1a1208, #0e0a04);
+            border: 1px solid #5a4020;
+            border-top: 3px solid #7a5522;
+            border-bottom: 3px solid #7a5522;
+            box-shadow: inset 0 0 30px rgba(0,0,0,0.6), 0 0 40px rgba(0,0,0,0.5);
+        }
         .cp-btn { 
-            width: 80px; height: 80px; border: 3px solid #555; cursor: pointer; border-radius: 50%;
-            transition: 0.2s; box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            /* 菱形封印寶石造型 */
+            width: 72px; height: 72px; 
+            border: none;
+            cursor: pointer; 
+            clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+            transition: transform 0.15s, filter 0.15s;
             position: relative;
+            filter: brightness(0.7) saturate(0.8);
         }
-        .cp-btn:hover { transform: scale(1.1); border-color: #fff; }
-        .cp-btn::after { content: ""; position: absolute; inset: 5px; border: 1px dashed rgba(255,255,255,0.5); border-radius: 50%; }
+        .cp-btn:hover { 
+            transform: scale(1.18) rotate(5deg); 
+            filter: brightness(1.1) saturate(1.2);
+        }
+        /* 去掉原本的圓形內框線，菱形不需要 */
+        .cp-btn::after { content: none; }
+        /* 取消按鈕——石碑刻字風格 */
+        .cp-cancel-btn {
+            background: transparent;
+            border: none;
+            border-top: 1px solid #3a2810;
+            color: #6a5a3a;
+            font-family: "Cinzel", serif;
+            font-size: 0.9rem;
+            letter-spacing: 3px;
+            padding: 8px 30px;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .cp-cancel-btn:hover { color: #c5a059; }
 
         @keyframes glow { from { box-shadow: 0 0 5px white; } to { box-shadow: 0 0 20px gold; transform: translateY(-20px); } }
         @keyframes pulse { 0% { border-color: var(--c-orange); } 50% { border-color: white; box-shadow: 0 0 15px var(--c-orange); } 100% { border-color: var(--c-orange); } }
@@ -465,42 +715,48 @@
         }
 
         #bgm-toggle-btn {
-            position: absolute; bottom: 10px; right: 5px; width: 50px; height: 50px;
-            background: radial-gradient(circle, #333, #000);
-            border: 2px solid #665544; color: #d4af37;
-            font-size: 24px; display: flex; justify-content: center; align-items: center;
-            cursor: pointer; z-index: 1000; border-radius: 50%; transition: all 0.2s;
-            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            position: absolute; bottom: 10px; right: 5px; width: 44px; height: 44px;
+            background: linear-gradient(to bottom, #1a1208, #0e0904);
+            border: 1px solid #3a2810;
+            border-top: 2px solid #5a3e18;
+            color: #7a6040;
+            font-size: 18px; display: flex; justify-content: center; align-items: center;
+            cursor: pointer; z-index: 1000; transition: all 0.2s;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
         }
-        #bgm-toggle-btn:hover { border-color: #fff; transform: scale(1.1); box-shadow: 0 0 15px #d4af37; }
+        #bgm-toggle-btn:hover { border-color: #7a5522; color: #c5a059; }
 		
-		/* === 新增：未來視界區域 (左側紅圈處) === */
+		/* === 未來視界的牌預覽現在整合進左側 buff 面板，此容器保留但不再獨立顯示 === */
 .future-sight-container {
     position: absolute;
-    bottom: 160px; /* 與儀表板底部對齊 */
-    left: 20px;    /* 儀表板在 120px，這裡設在更左邊 */
-    width: 80px;
-    display: none; /* 預設隱藏 */
+    left: 10px; width: 80px;
+    /* top 由 JS 動態設定，或用固定值：buff面板約 200px 高，再加間距 */
+    top: 220px;
+    display: none;
     flex-direction: column;
     align-items: center;
-    gap: 10px;
+    gap: 5px;
     z-index: 15;
-    background: rgba(0, 0, 0, 0.6);
-    border: 1px solid #554433;
-    padding: 10px 5px;
-    border-radius: 4px;
-    box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+    background: 
+        linear-gradient(to bottom, #150e04, #0e0904 40%, #0a0603 70%, #150e04),
+        repeating-linear-gradient(0deg, transparent, transparent 5px, rgba(0,0,0,0.1) 5px, rgba(0,0,0,0.1) 6px);
+    border: 1px solid #3a2810;
+    border-top: 2px solid #5a3e18;
+    border-bottom: 2px solid #5a3e18;
+    padding: 6px 5px;
+    box-shadow: inset 0 0 15px rgba(0,0,0,0.6), 0 0 10px rgba(0,0,0,0.4);
     animation: fadeIn 0.5s;
 }
 
 .fs-label {
-    font-size: 0.8rem;
-    color: #aaa;
+    font-size: 0.7rem;
+    color: #8a7a5a;
     font-family: "Cinzel", serif;
     text-align: center;
-    border-bottom: 1px solid #444;
+    border-bottom: 1px solid #3a2810;
     padding-bottom: 5px;
     width: 100%;
+    letter-spacing: 1px;
 }
 
 .fs-card-slot {
@@ -573,14 +829,15 @@
     </div>
 
     <div id="color-picker">
-        <h2 style="color:white">选择转换后的目标颜色</h2>
+        <h2>选择转换后的目标颜色</h2>
         <div class="cp-options">
-            <div class="cp-btn" style="background:#e03131" onclick="resolveColorPick('red')"></div>
-            <div class="cp-btn" style="background:#1864ab" onclick="resolveColorPick('blue')"></div>
-            <div class="cp-btn" style="background:#2b8a3e" onclick="resolveColorPick('green')"></div>
-            <div class="cp-btn" style="background:#f08c00" onclick="resolveColorPick('yellow')"></div>
+            <!-- 顏色改成更暗沉的奇幻色調，配合卡牌系統 -->
+            <div class="cp-btn" style="background: linear-gradient(135deg, #8a1a1a, #3d0808)" onclick="resolveColorPick('red')"></div>
+            <div class="cp-btn" style="background: linear-gradient(135deg, #1a3a7a, #060f2a)" onclick="resolveColorPick('blue')"></div>
+            <div class="cp-btn" style="background: linear-gradient(135deg, #1a5a28, #071a0a)" onclick="resolveColorPick('green')"></div>
+            <div class="cp-btn" style="background: linear-gradient(135deg, #8a6200, #3d2a00)" onclick="resolveColorPick('yellow')"></div>
         </div>
-        <button onclick="cancelColorPick()" style="margin-top:20px; padding:10px 20px; font-size: 1.2rem; cursor: pointer;">取消</button>
+        <button class="cp-cancel-btn" onclick="cancelColorPick()">— 取消 —</button>
     </div>
 
     <div id="log-overlay"></div>
@@ -589,8 +846,9 @@
         <div class="area-top">
             <div class="boss-hp-box">
                 <div class="boss-title-row">
-                    <span id="enemy-name">BOSS</span>
-                    <span id="hp-text">200/200</span>
+                    <span class="boss-name-text" id="enemy-name">BOSS</span>
+                    <span class="inline-orb-row" id="inline-orb-row"></span>
+                    <span class="hp-text-val" id="hp-text">200/200</span>
                 </div>
                 <div class="hp-track"><div id="hp-bar" class="hp-fill"></div></div>
                 <div class="ingame-skip-btn" onclick="skipBattle()" title="作弊：直接勝利">⏩</div>
@@ -603,12 +861,13 @@
                 </div>
         </div>
 
-        <div class="area-left">
-            <div class="lives-label">BOSS<br>PHASES</div>
-            <div class="life-orb" id="orb-1"></div>
-            <div class="life-orb" id="orb-2"></div>
-            <div class="life-orb" id="orb-3"></div>
-            <div class="life-orb" id="orb-4" style="display:none"></div> </div>
+        <div class="area-left" id="buff-panel">
+            <div class="buff-panel-title">Buffs</div>
+        </div>
+        <div id="future-sight-area" class="future-sight-container">
+            <div class="fs-label">NEXT<br>DRAWS</div>
+            <div id="fs-cards-list" style="display:flex; flex-direction:column; gap:6px;"></div>
+        </div>
 
         <div class="area-right-top" id="intent-box">
             <div class="intent-label" id="intent-label">伤害预兆</div>
@@ -623,11 +882,6 @@
             <div class="php-val" id="player-hp-text">100</div>
             <div class="php-lbl">PLAYER HP</div>
         </div>
-        <div id="future-sight-area" class="future-sight-container">
-    <div class="fs-label">NEXT<br>DRAWS</div>
-    <div id="fs-cards-list" style="display:flex; flex-direction:column; gap:8px;">
-        </div>
-</div>
         <div class="dashboard-container">
             <div class="dash-left">
                 <div style="font-size:0.9rem; color:#aaa; margin-bottom:5px;">HISTORY</div>
@@ -659,7 +913,7 @@
     </div>
 
 <script>
-	const IS_DEBUG_MODE = false ;
+	const IS_DEBUG_MODE = true ;
 
     // === 1. 技能數據庫 (8個) ===
     const SKILLS_DB = [
@@ -691,10 +945,10 @@
 			bgm: "https://files.catbox.moe/vlllik.ogg",
             bg: "linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('https://cdn.imgchest.com/files/fde1e6539f6e.png')",
             phases: [
-                { hp: 10, atk: 5, mode: "count", desc: "基础：出一张牌造成 1 点伤害" },
-                { hp: 10, atk: 5, mode: "count", desc: "基础：出一张牌造成 1 点伤害" },
-                { hp: 10, atk: 5, mode: "count", desc: "基础：出一张牌造成 1 点伤害" },
-                { hp: 10, atk: 5, mode: "count", desc: "基础：出一张牌造成 1 点伤害" }
+                { hp: 5, atk: 10, mode: "count", desc: "基础：出一张牌造成 1 点伤害" },
+                { hp: 7, atk: 15, mode: "count", desc: "基础：出一张牌造成 1 点伤害" },
+                { hp: 8, atk: 20, mode: "count", desc: "基础：出一张牌造成 1 点伤害" },
+                { hp: 10, atk: 25, mode: "count", desc: "基础：出一张牌造成 1 点伤害" }
             ]
         },
         "enemy_2": { 
@@ -703,10 +957,10 @@
 			bgm: "https://files.catbox.moe/ep9wz3.ogg",
             bg: "linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('https://cdn.imgchest.com/files/a5c7463338b2.png')",
             phases: [
-                { hp: 10, atk: 10, mode: "color_chain", params: {color:'red'}, desc: "红色连击：连续出红牌造成 1 点伤害" },
-                { hp: 10, atk: 12, mode: "color_chain", params: {color:'blue'}, desc: "蓝色连击：连续出蓝牌造成 1 点伤害" },
-                { hp: 10, atk: 15, mode: "color_chain", params: {color:'green'}, desc: "绿色连击：连续出绿牌造成 1 点伤害" },
-                { hp: 10, atk: 18, mode: "color_chain", params: {color:'yellow'}, desc: "黄色连击：连续出黄牌造成 1 点伤害" }
+                { hp: 7, atk: 20, mode: "color_chain", params: {color:'red'}, desc: "红色连击：连续出红牌造成 1 点伤害" },
+                { hp: 7, atk: 20, mode: "color_chain", params: {color:'blue'}, desc: "蓝色连击：连续出蓝牌造成 1 点伤害" },
+                { hp: 7, atk: 20, mode: "color_chain", params: {color:'green'}, desc: "绿色连击：连续出绿牌造成 1 点伤害" },
+                { hp: 7, atk: 20, mode: "color_chain", params: {color:'yellow'}, desc: "黄色连击：连续出黄牌造成 1 点伤害" }
             ]
         },
         "enemy_3": { 
@@ -715,10 +969,10 @@
 			bgm: "https://files.catbox.moe/6dk58a.ogg",
             bg: "linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('https://cdn.imgchest.com/files/8ce1992d18ee.png')",
             phases: [
-                { hp: 12, atk: 15, mode: "color_switch", desc: "变幻：切换颜色时造成 1 点伤害" },
-                { hp: 12, atk: 18, mode: "color_switch", desc: "变幻：切换颜色时造成 1 点伤害" },
-                { hp: 12, atk: 20, mode: "color_switch", desc: "变幻：切换颜色时造成 1 点伤害" },
-                { hp: 12, atk: 22, mode: "color_switch", desc: "变幻：切换颜色时造成 1 点伤害" }
+                { hp: 5, atk: 12, mode: "color_switch", desc: "变幻：切换颜色时造成 1 点伤害" },
+                { hp: 5, atk: 15, mode: "color_switch", desc: "变幻：切换颜色时造成 1 点伤害" },
+                { hp: 5, atk: 18, mode: "color_switch", desc: "变幻：切换颜色时造成 1 点伤害" },
+                { hp: 5, atk: 21, mode: "color_switch", desc: "变幻：切换颜色时造成 1 点伤害" }
             ]
         },
         "enemy_4": { 
@@ -727,10 +981,10 @@
 			bgm: "https://files.catbox.moe/r2nk9x.ogg",
             bg: "linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('https://cdn.imgchest.com/files/6610a1163c98.png')",
             phases: [
-                { hp: 30, atk: 20, mode: "diff", desc: "落差：造成前后牌差值的伤害" },
-                { hp: 35, atk: 22, mode: "diff", desc: "落差：造成前后牌差值的伤害" },
-                { hp: 40, atk: 25, mode: "diff", desc: "落差：造成前后牌差值的伤害" },
-                { hp: 45, atk: 28, mode: "diff", desc: "落差：造成前后牌差值的伤害" }
+                { hp: 20, atk: 20, mode: "diff", desc: "落差：造成前后牌差值的伤害" },
+                { hp: 25, atk: 22, mode: "diff", desc: "落差：造成前后牌差值的伤害" },
+                { hp: 30, atk: 25, mode: "diff", desc: "落差：造成前后牌差值的伤害" },
+                { hp: 35, atk: 28, mode: "diff", desc: "落差：造成前后牌差值的伤害" }
             ]
         },
         "enemy_5": { 
@@ -739,10 +993,10 @@
 			bgm: "https://files.catbox.moe/ho39fr.ogg",
             bg: "linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('https://cdn.imgchest.com/files/c497ed656454.png')",
             phases: [
-                { hp: 8, atk: 15, mode: "combo_mod", params: {mod:2}, desc: "二连拍：每 2 连击造成 1 伤害" },
-                { hp: 6, atk: 20, mode: "combo_mod", params: {mod:3}, desc: "三连拍：每 3 连击造成 1 伤害" },
-                { hp: 5, atk: 25, mode: "combo_mod", params: {mod:4}, desc: "四连拍：每 4 连击造成 1 伤害" },
-                { hp: 4, atk: 30, mode: "combo_mod", params: {mod:5}, desc: "五连拍：每 5 连击造成 1 伤害" }
+                { hp: 7, atk: 12, mode: "combo_mod", params: {mod:2}, desc: "二连拍：每 2 连击造成 1 伤害" },
+                { hp: 5, atk: 15, mode: "combo_mod", params: {mod:3}, desc: "三连拍：每 3 连击造成 1 伤害" },
+                { hp: 4, atk: 18, mode: "combo_mod", params: {mod:4}, desc: "四连拍：每 4 连击造成 1 伤害" },
+                { hp: 3, atk: 21, mode: "combo_mod", params: {mod:5}, desc: "五连拍：每 5 连击造成 1 伤害" }
             ]
         },
         "enemy_6": { 
@@ -751,10 +1005,10 @@
 			bgm: "https://files.catbox.moe/yi2xi9.ogg",
             bg: "linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('https://cdn.imgchest.com/files/a4f7ce51ac53.png')",
             phases: [
-                { hp: 4, atk: 20, mode: "sum_target", params: {target:10}, desc: "总和 10：出牌总和刚好 10 造成 1 伤害" },
-                { hp: 4, atk: 22, mode: "sum_target", params: {target:15}, desc: "总和 15：出牌总和刚好 15 造成 1 伤害" },
-                { hp: 4, atk: 25, mode: "sum_target", params: {target:20}, desc: "总和 20：出牌总和刚好 20 造成 1 伤害" },
-                { hp: 4, atk: 28, mode: "sum_target", params: {target:25}, desc: "总和 25：出牌总和刚好 25 造成 1 伤害" }
+                { hp: 1, atk: 20, mode: "sum_target", params: {target:15}, desc: "总和 15：出牌总和刚好 15 造成 1 伤害" },
+                { hp: 1, atk: 22, mode: "sum_target", params: {target:20}, desc: "总和 20：出牌总和刚好 20 造成 1 伤害" },
+                { hp: 1, atk: 25, mode: "sum_target", params: {target:25}, desc: "总和 25：出牌总和刚好 25 造成 1 伤害" },
+                { hp: 1, atk: 28, mode: "sum_target", params: {target:30}, desc: "总和 30：出牌总和刚好 30 造成 1 伤害" }
             ]
         },
         "enemy_7": { 
@@ -763,10 +1017,10 @@
 			bgm: "https://files.catbox.moe/025ta8.ogg",
             bg: "linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('https://cdn.imgchest.com/files/bf860e2b694a.png')",
             phases: [
-                { hp: 150, atk: 30, mode: "value", desc: "重击：牌面数值即为伤害" },
-                { hp: 200, atk: 35, mode: "value", desc: "重击：牌面数值即为伤害" },
-                { hp: 250, atk: 40, mode: "value", desc: "重击：牌面数值即为伤害" },
-                { hp: 300, atk: 45, mode: "value", desc: "重击：牌面数值即为伤害" }
+                { hp: 40, atk: 20, mode: "value", desc: "重击：牌面数值 = 伤害" },
+                { hp: 60, atk: 25, mode: "value", desc: "重击：牌面数值 = 伤害" },
+                { hp: 80, atk: 30, mode: "value", desc: "重击：牌面数值 = 伤害" },
+                { hp: 100, atk: 35, mode: "value", desc: "重击：牌面数值 = 伤害" }
             ]
         },
         "enemy_8": { 
@@ -787,10 +1041,10 @@
 			bgm: "https://files.catbox.moe/ypyat2.ogg",
             bg: "linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('https://cdn.imgchest.com/files/9a2a15de37c1.png')",
             phases: [
-                { hp: 8, atk: 20, mode: "compare_asc", desc: "升序：后牌 > 前牌 时伤害" },
-                { hp: 8, atk: 20, mode: "compare_desc", desc: "降序：后牌 < 前牌 时伤害" },
-                { hp: 8, atk: 20, mode: "compare_eq", desc: "同号：后牌 = 前牌 时伤害" },
-                { hp: 10, atk: 30, mode: "compare_all", desc: "全序：单回合内集齐 升/降/同 时伤害" }
+                { hp: 6, atk: 20, mode: "compare_asc", desc: "升序：后牌 > 前牌 时伤害" },
+                { hp: 6, atk: 20, mode: "compare_desc", desc: "降序：后牌 < 前牌 时伤害" },
+                { hp: 3, atk: 20, mode: "compare_eq", desc: "同号：后牌 = 前牌 时伤害" },
+                { hp: 1, atk: 25, mode: "compare_all", desc: "全序：单回合内集齐 升/降/同 时伤害" }
             ]
         },
         "默认": { 
@@ -977,26 +1231,24 @@
                     const picked = colors[Math.floor(Math.random() * colors.length)];
                     return { 
                         mode: "color_chain", 
-                        hp: 5,
+                        hp: 10,
                         params: { color: picked }, 
                         desc: `同色：连续出${cMap[picked]}牌造成伤害` 
                     };
                 },
 
                 // 3. 顏色變換 (參考 Enemy 3)
-                // 容易觸發，HP 與基礎持平
                 () => ({ 
                     mode: "color_switch", 
-                    hp: 10,
+                    hp: 7,
                     params: {}, 
                     desc: "变幻：切换颜色时造成伤害" 
                 }),
 
                 // 4. 數值落差 (參考 Enemy 4)
-                // 平均一張牌能打 2.5~3 傷害，HP 需要是基礎的 3 倍左右
                 () => ({ 
                     mode: "diff", 
-                    hp: 50,
+                    hp: 40,
                     params: {}, 
                     desc: "落差：造成前后牌差值的伤害" 
                 }),
@@ -1016,13 +1268,12 @@
                 },
 
                 // 6. 總和目標 (參考 Enemy 6)
-                // 觸發極難，HP 必須個位數
                 () => {
-                    const targets = [15, 20, 25]; // 10 太容易了先拿掉
+                    const targets = [15, 20, 25]; 
                     const t = targets[Math.floor(Math.random() * targets.length)];
                     return { 
                         mode: "sum_target", 
-                        hp: 3, 
+                        hp: 2, 
                         params: { target: t }, 
                         desc: `总和：总和刚好 ${t} 造成伤害` 
                     };
@@ -1032,7 +1283,7 @@
        
                 () => ({ 
                     mode: "value", 
-                    hp: 100, 
+                    hp: 120, 
                     params: {}, 
                     desc: "重击：牌面数值即为伤害" 
                 }),
@@ -1042,8 +1293,8 @@
                     const types = [
                         { m: "compare_asc", d: "升序：后牌 > 前牌", hp: 10 },
                         { m: "compare_desc", d: "降序：后牌 < 前牌", hp: 10 },
-                        { m: "compare_eq", d: "同号：后牌 = 前牌", hp: 5 }, // 同號較難
-                        { m: "compare_all", d: "全序：集齐 升/降/同", hp: 2 } // 最難
+                        { m: "compare_eq", d: "同号：后牌 = 前牌", hp: 5 }, 
+                        { m: "compare_all", d: "全序：集齐 升/降/同", hp: 1 } 
                     ];
                     const t = types[Math.floor(Math.random() * types.length)];
                     return { 
@@ -1175,12 +1426,14 @@
         document.getElementById('defeat-modal').style.display = 'none';
         document.getElementById('enemy-name').innerText = currentEnemyData.name;
         
+        // Orb 現在放在血量標題列內
         const phaseCount = Math.min(4, currentEnemyData.phases.length);
-        const orbContainer = document.querySelector('.area-left');
-        orbContainer.innerHTML = '<div class="lives-label">BOSS<br>PHASES</div>';
-        for(let i=0; i<phaseCount; i++) {
-            orbContainer.innerHTML += `<div class="life-orb" id="orb-${i+1}"></div>`;
+        const inlineOrbRow = document.getElementById('inline-orb-row');
+        let orbHtml = '';
+        for(let i = 0; i < phaseCount; i++) {
+            orbHtml += `<span class="inline-orb" id="orb-${i+1}"></span>`;
         }
+        inlineOrbRow.innerHTML = orbHtml;
 
         loadEnemyPhase(0);
 
@@ -1653,21 +1906,6 @@
         try {
             if (currentTargetName && currentTargetName !== '非攻略中') {
                 
-                // === 步驟 0: 動態建立專屬存檔 ===
-                // 1. 處理檔名：把空格或特殊符號去掉，避免指令出錯
-                // 例如 "高塔的魔女爱娜" -> "Battle_高塔的魔女爱娜"
-                let safeName = currentTargetName.replace(/\s+/g, '_'); 
-                let saveCmd = `/checkpoint-create mesId={{lastMessageId}} AutoSave_Battle_${safeName}_{{date}}{{time}}`;
-
-                // 2. 執行存檔指令
-                // 這會在 ST 的 Checkpoints 列表中建立一個永久存在的還原點
-                await bridge.execute(saveCmd);
-                console.log("已執行自動存檔:", saveCmd);
-                
-                // 視覺提示 (Optional)
-                showLog("已建立戰鬥前存檔");
-
-
 
                 // === 發送訊息 ===
                 const success = sendMsgViaDOM(`战斗结束！成功攻略${currentTargetName}！
@@ -1784,11 +2022,13 @@
                 if (targetingMode && targetingMode.skillIndex === i) cls += ' active';
                 if (targetingMode && targetingMode.type === 'MIMIC_SELECT' && s.id !== 2) cls += ' targetable-skill';
                 
-                // 獲取圖片，如果沒有定義則使用透明圖或預設圖
-                const imgUrl = SKILL_ICONS[s.owner] || ""; 
+                // MIMIC_SELECT 模式下，被選擇的目標技能無視 charges，強制可點擊
+                const isMimicTarget = targetingMode && targetingMode.type === 'MIMIC_SELECT' && s.id !== 2;
+                const isDisabled = !isMimicTarget && s.charges <= 0;
+                const imgUrl = SKILL_ICONS[s.owner] || "";
                 
                 return `
-                <button class="${cls}" onclick="useSkill(${i})" ${s.charges <= 0 ? 'disabled' : ''}>
+                <button class="${cls}" onclick="useSkill(${i})" ${isDisabled ? 'disabled' : ''}>
                     <img src="${imgUrl}" class="s-img" alt="${s.owner}">
                     
                     <span class="s-name">${s.name}</span>
@@ -1798,28 +2038,7 @@
             `}).join('')}
         </div>
     `;
-	const fsArea = document.getElementById('future-sight-area');
-    const fsList = document.getElementById('fs-cards-list');
-    
-    // 只有當 Buff 大於 0 且 牌庫還有牌時顯示
-    if (buffs.futureSightTurns > 0 && deck.length > 0) {
-        fsArea.style.display = 'flex';
-        
-        // 抓取牌庫頂端的 3 張牌
-        // 因為是用 pop() 抽牌，所以陣列尾端 (length-1) 是下一張要抽的牌
-        let previewHtml = '';
-        const peekCount = Math.min(3, deck.length);
-        
-        for (let i = 1; i <= peekCount; i++) {
-            // deck[deck.length - 1] 是下一張
-            const card = deck[deck.length - i];
-            previewHtml += `<div class="mini-card fs-card-slot ${card.color}">${card.number}</div>`;
-        }
-        
-        fsList.innerHTML = previewHtml;
-    } else {
-        fsArea.style.display = 'none';
-    }
+	// 未來視界、鼓舞之心、不動信念的顯示統一由 updateBuffPanel() 處理（在 updateUI 末段呼叫）
 }
 
         document.getElementById('hp-text').innerText = `${enemy.hp}/${enemy.maxHp}`;
@@ -1874,15 +2093,80 @@
         const phasesLeft = currentEnemyData.phases.length - enemy.phaseIndex; 
         for(let i=1; i<=phaseTotal; i++) {
             const orb = document.getElementById(`orb-${i}`);
-            if (i <= phasesLeft) orb.classList.remove('lost'); 
-            else orb.classList.add('lost');
+            if(orb) {
+                if (i <= phasesLeft) orb.classList.remove('lost'); 
+                else orb.classList.add('lost');
+            }
         }
+        
+        // 更新左側 buff 面板
+        updateBuffPanel();
 
         const trackDiv = document.getElementById('played-cards-track');
         if (currentTurnCards.length === 0) trackDiv.innerHTML = `<span>等待出牌...</span>`;
         else {
             trackDiv.innerHTML = currentTurnCards.map(c => `<div class="mini-card ${c.color}">${c.number}</div>`).join('');
             trackDiv.scrollLeft = trackDiv.scrollWidth;
+        }
+    }
+
+    function updateBuffPanel() {
+        const panel = document.getElementById('buff-panel');
+        if (!panel) return;
+
+        // 清除舊 chip（保留標題）
+        panel.querySelectorAll('.buff-chip').forEach(el => el.remove());
+
+        const chips = [];
+
+        if (buffs.extraDrawTurns > 0) {
+            chips.push(`
+                <div class="buff-chip">
+                    <div class="buff-chip-icon">✦</div>
+                    <div class="buff-chip-name">鼓舞<br>之心</div>
+                    <div class="buff-chip-turns">${buffs.extraDrawTurns}</div>
+                    <div class="buff-chip-turns-label">TURNS</div>
+                </div>`);
+        }
+
+        if (buffs.keepHandTurns > 0) {
+            chips.push(`
+                <div class="buff-chip">
+                    <div class="buff-chip-icon">🛡</div>
+                    <div class="buff-chip-name">不动<br>信念</div>
+                    <div class="buff-chip-turns">${buffs.keepHandTurns}</div>
+                    <div class="buff-chip-turns-label">TURNS</div>
+                </div>`);
+        }
+
+        // 整個面板：有 buff 才顯示
+        if (chips.length === 0) {
+            panel.style.display = 'none';
+        } else {
+            panel.style.display = 'flex';
+            chips.forEach(html => {
+                const tmp = document.createElement('div');
+                tmp.innerHTML = html.trim();
+                panel.appendChild(tmp.firstElementChild);
+            });
+        }
+
+        // 未來視界：獨立面板
+        const fsArea = document.getElementById('future-sight-area');
+        const fsList = document.getElementById('fs-cards-list');
+        if (fsArea && fsList) {
+            if (buffs.futureSightTurns > 0 && deck.length > 0) {
+                fsArea.style.display = 'flex';
+                let previewHtml = '';
+                const peekCount = Math.min(3, deck.length);
+                for (let i = 1; i <= peekCount; i++) {
+                    const card = deck[deck.length - i];
+                    previewHtml += `<div class="mini-card fs-card-slot ${card.color}">${card.number}</div>`;
+                }
+                fsList.innerHTML = previewHtml;
+            } else {
+                fsArea.style.display = 'none';
+            }
         }
     }
 
@@ -1908,6 +2192,3 @@
 </script>
 </body>
 </html>
-
-
-
