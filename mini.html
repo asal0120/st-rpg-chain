@@ -493,9 +493,13 @@
         }
         .dash-left { border-right: 2px solid #3e3025; padding: 10px 20px; display: flex; flex-direction: column; }
         .track-box { 
-            flex-grow: 1; background: rgba(0,0,0,0.4); border: 1px inset #554433; 
-            display: flex; align-items: center; padding: 0 10px; gap: 5px; overflow-x: hidden; 
-        }
+    flex-grow: 1; background: rgba(0,0,0,0.4); border: 1px inset #554433; 
+    display: flex; align-items: center; padding: 0 10px; gap: 5px;
+    overflow-x: auto;   /* ← hidden 改為 auto */
+    overflow-y: hidden;
+    scrollbar-width: none; /* 隱藏 scrollbar 保持美觀 */
+}
+.track-box::-webkit-scrollbar { display: none; }
         
         .dash-right { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
         .dash-cell { border-bottom: 1px solid #3e3025; border-right: 1px solid #3e3025; display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; }
@@ -913,7 +917,7 @@
     </div>
 
 <script>
-	const IS_DEBUG_MODE = false ;
+	const IS_DEBUG_MODE = true ;
 
     // === 1. 技能數據庫 (8個) ===
     const SKILLS_DB = [
@@ -958,9 +962,9 @@
             bg: "linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('https://cdn.imgchest.com/files/a5c7463338b2.png')",
             phases: [
                 { hp: 7, atk: 20, mode: "color_chain", params: {color:'red'}, desc: "红色连击：连续出红牌造成 1 点伤害" },
-                { hp: 7, atk: 20, mode: "color_chain", params: {color:'blue'}, desc: "蓝色连击：连续出蓝牌造成 1 点伤害" },
-                { hp: 7, atk: 20, mode: "color_chain", params: {color:'green'}, desc: "绿色连击：连续出绿牌造成 1 点伤害" },
-                { hp: 7, atk: 20, mode: "color_chain", params: {color:'yellow'}, desc: "黄色连击：连续出黄牌造成 1 点伤害" }
+                { hp: 7, atk: 23, mode: "color_chain", params: {color:'blue'}, desc: "蓝色连击：连续出蓝牌造成 1 点伤害" },
+                { hp: 7, atk: 26, mode: "color_chain", params: {color:'green'}, desc: "绿色连击：连续出绿牌造成 1 点伤害" },
+                { hp: 7, atk: 29, mode: "color_chain", params: {color:'yellow'}, desc: "黄色连击：连续出黄牌造成 1 点伤害" }
             ]
         },
         "enemy_3": { 
@@ -1195,11 +1199,27 @@
 
         // 隨機化處理
         if (enemyId === "enemy_2") {
-            for (let i = currentEnemyData.phases.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [currentEnemyData.phases[i], currentEnemyData.phases[j]] = [currentEnemyData.phases[j], currentEnemyData.phases[i]];
-            }
-        }
+    // 只抽出顏色部分來打亂
+    const colors = currentEnemyData.phases.map(p => p.params.color);
+    const descs = {
+        'red': '红色连击：连续出红牌造成 1 点伤害',
+        'blue': '蓝色连击：连续出蓝牌造成 1 点伤害',
+        'green': '绿色连击：连续出绿牌造成 1 点伤害',
+        'yellow': '黄色连击：连续出黄牌造成 1 点伤害'
+    };
+    
+    // 打亂顏色順序
+    for (let i = colors.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [colors[i], colors[j]] = [colors[j], colors[i]];
+    }
+    
+    // 顏色套回各階段，atk 保持原本遞增設定不動
+    currentEnemyData.phases.forEach((p, i) => {
+        p.params = { color: colors[i] };
+        p.desc = descs[colors[i]];
+    });
+}
 
         if (enemyId === "enemy_9") {
             const firstThree = [currentEnemyData.phases[0], currentEnemyData.phases[1], currentEnemyData.phases[2]];
@@ -1333,8 +1353,8 @@
             if (IS_DEBUG_MODE) {
                 availableSkills.push(skill);
             } else {
-                let status = await getST(`世界.妈妈.${skill.owner}.在队状态`);
-                if (status === '是' || status === 'True' || status === 'true') {
+                let status = await getST(`世界.妈妈.${skill.owner}.状态`);
+                if (status === '3' || status === 3 ) {
                     availableSkills.push(skill);
                 }
             }
@@ -1597,9 +1617,12 @@
 
             let bonusDraw = false;
             if (!isFirstMoveOfTurn && effectiveTopCard) {
-                if (card.color === effectiveTopCard.color && Math.abs(card.number - effectiveTopCard.number) === 1) bonusDraw = true;
-                if (card.color !== effectiveTopCard.color && card.number === effectiveTopCard.number) bonusDraw = true;
-            }
+    const sameColor = card.color === effectiveTopCard.color;
+    const sameNum = card.number === effectiveTopCard.number;
+    const adjNum = Math.abs(card.number - effectiveTopCard.number) === 1;
+    
+    if ((sameColor && adjNum) || (!sameColor && sameNum) || (sameColor && sameNum)) bonusDraw = true;
+}
 
             isFirstMoveOfTurn = false;
             if (bonusDraw) {
@@ -1827,7 +1850,7 @@
                 if (card.number <= 1) { showLog("數字太小無法切割"); return; }
                 hand.splice(index, 1);
                 if (!card.isToken) discardPile.push(card);
-                const v1 = Math.floor(card.number/2);
+                const v1 = Math.floor(Math.random() * (card.number - 1)) + 1;
                 const v2 = card.number - v1;
                 hand.push({color:card.color, number:v1, isToken:true, id:Math.random()}, {color:card.color, number:v2, isToken:true, id:Math.random()});
                 player.equippedSkills[skillIdx].charges--;
@@ -2105,7 +2128,8 @@
         const trackDiv = document.getElementById('played-cards-track');
         if (currentTurnCards.length === 0) trackDiv.innerHTML = `<span>等待出牌...</span>`;
         else {
-            trackDiv.innerHTML = currentTurnCards.map(c => `<div class="mini-card ${c.color}">${c.number}</div>`).join('');
+			const displayCards = currentTurnCards.slice(-11);
+            trackDiv.innerHTML = displayCards.map(c => `<div class="mini-card ${c.color}">${c.number}</div>`).join('');
             trackDiv.scrollLeft = trackDiv.scrollWidth;
         }
     }
