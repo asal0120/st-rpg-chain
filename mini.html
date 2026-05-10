@@ -796,6 +796,40 @@
             background: var(--c-gold); color: #000; box-shadow: 0 0 25px var(--c-gold);
             transform: scale(1.05);
         }
+		
+		#turn-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    z-index: 1500;
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    pointer-events: none;
+}
+#turn-overlay.visible {
+    display: flex;
+    animation: fadeIn 0.3s ease-in;
+}
+#turn-overlay-text {
+    font-family: "Cinzel", serif;
+    font-size: 3.5rem;
+    font-weight: bold;
+    letter-spacing: 8px;
+    text-shadow: 0 0 30px currentColor;
+}
+#turn-overlay-sub {
+    font-family: "Noto Serif SC", serif;
+    font-size: 1.3rem;
+    color: #aaa;
+    letter-spacing: 2px;
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
     </style>
 </head>
 <body>
@@ -845,7 +879,10 @@
     </div>
 
     <div id="log-overlay"></div>
-
+    <div id="turn-overlay">
+        <div id="turn-overlay-text"></div>
+        <div id="turn-overlay-sub"></div>
+    </div>
     <div id="game-stage">
         <div class="area-top">
             <div class="boss-hp-box">
@@ -1892,30 +1929,81 @@
     }
 
     async function endTurn() {
-        if (targetingMode) { 
-            cancelTargetingMode();
-            return; 
-        }
-        
-        const currentEnemyAtk = isPhaseBrokenThisTurn ? 0 : enemy.atk;
-        
-        const defense = turnStats.cardsPlayed * DEFENSE_PER_CARD;
-        const incoming = Math.max(0, currentEnemyAtk - defense);
-        
-        if (incoming > 0) {
-            player.hp = Math.max(0, player.hp - incoming);
-            showLog(`受到 ${incoming} 点伤害！`);
-        } else {
-            if (isPhaseBrokenThisTurn) showLog("stunned！");
-            else showLog("guard !");
-        }
-
-        if (player.hp <= 0) {
-            document.getElementById('defeat-modal').style.display = 'flex';
-        } else {
-            startNewTurn();
-        }
+    if (targetingMode) { 
+        cancelTargetingMode();
+        return; 
     }
+
+    // 先把所有按鈕鎖住，防止重複點擊
+    document.getElementById('game-stage').style.pointerEvents = 'none';
+
+    const currentEnemyAtk = isPhaseBrokenThisTurn ? 0 : enemy.atk;
+    const defense = turnStats.cardsPlayed * DEFENSE_PER_CARD;
+    const incoming = Math.max(0, currentEnemyAtk - defense);
+
+    // === 第一幕：Enemy Turn ===
+    const overlay = document.getElementById('turn-overlay');
+    const overlayText = document.getElementById('turn-overlay-text');
+    const overlaySub = document.getElementById('turn-overlay-sub');
+
+    overlayText.style.color = '#ff4d4d';
+    overlayText.innerText = 'ENEMY ATTACK!';
+
+    if (isPhaseBrokenThisTurn) {
+        overlaySub.innerText = '— STUNNED —';
+        overlayText.style.color = '#51cf66';
+        overlayText.innerText = 'BREAK!';
+    } else if (incoming > 0) {
+        overlaySub.innerText = `受到 ${incoming} 点伤害`;
+    } else {
+        overlaySub.innerText = '— GUARD —';
+        overlayText.style.color = '#4dabf7';
+    }
+
+    overlay.classList.add('visible');
+    await sleep(700);
+
+	overlay.style.animation = 'fadeOut 0.3s ease-out forwards';
+	await sleep(300);
+	overlay.classList.remove('visible');
+	overlay.style.animation = '';
+
+    // 實際結算傷害
+    if (incoming > 0) {
+        player.hp = Math.max(0, player.hp - incoming);
+        updateUI();
+    }
+
+    if (player.hp <= 0) {
+        overlay.classList.remove('visible');
+        document.getElementById('game-stage').style.pointerEvents = '';
+        document.getElementById('defeat-modal').style.display = 'flex';
+        return;
+    }
+
+    // === 第二幕：Your Turn ===
+	await sleep(300);
+    overlayText.style.color = '#c5a059';
+    overlayText.innerText = 'YOUR TURN';
+    overlaySub.innerText = 'FORWARD!';
+	overlay.classList.add('visible');
+    await sleep(600);
+
+    // 淡出遮罩
+    overlay.style.animation = 'fadeOut 0.3s ease-out forwards';
+    await sleep(300);
+    overlay.classList.remove('visible');
+    overlay.style.animation = '';
+
+    document.getElementById('game-stage').style.pointerEvents = '';
+
+    startNewTurn();
+}
+
+// 輔助函數
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
 
     async function handleVictory() {
         showLog("勝利！");
