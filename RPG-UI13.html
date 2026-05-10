@@ -1,10 +1,9 @@
-
 <style>
     /* 引入 Uncial Antiqua (英文/數字) 與 ZCOOL XiaoWei (中文古典風) */
 	/* [修改] 引入 Noto Serif SC (簡體宋體) */
-    @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&family=Noto+Serif+TC:wght@400;700&family=Uncial+Antiqua&family=ZCOOL+XiaoWei&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Noto+Serif+SC:wght@400;700&family=Noto+Serif+TC:wght@400;700&family=Uncial+Antiqua&family=ZCOOL+XiaoWei&display=swap');
     /* === 1. 容器與地圖 (維持不變) === */
-	.rpg-v7-root {
+	body {
         margin: 0;
         background-color: transparent; 
         /* 移除 UI1 原本的 flex 置中，改由 scale 控制 */
@@ -47,7 +46,9 @@
         background-repeat: no-repeat;
         position: relative; 
         overflow: hidden;
-    }
+    background-color: #222; /* 原本已有，確保無圖時也有高度 */
+    min-height: 200px;      /* 新增：防止未加載時塌陷 */
+}
 
     .landmark-img {
         position: absolute;
@@ -82,7 +83,7 @@
         z-index: 111;
         /* 讓座標點的中心對準設定的 % 位置，而不是左上角 */
         transform: translate(-50%, -50%);
-        transition: transform 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease, z-index 0.2s ease;
+        transition: transform 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
         border: 2px solid transparent; /* 預留邊框空間 */
     }
 
@@ -120,6 +121,7 @@
         pointer-events: none; /* 讓滑鼠穿透，不要擋住點擊 */
         
         filter: drop-shadow(0 2px 5px rgba(0,0,0,0.5)); /* 加點陰影 */
+        will-change: transform; 
         animation: floatShip 3s ease-in-out infinite; /* (選用) 讓船微微上下浮動 */
     }
 
@@ -127,7 +129,6 @@
     @keyframes floatShip {
         0%, 100% { transform: translate(-50%, -50%) translateY(0); }
         50% { transform: translate(-50%, -50%) translateY(-3px); }
-        will-change: transform; /* [新增] 啟用 GPU 優化 */
     }
 
     /* === [新增] 地點資訊框 (Tooltip) === */
@@ -136,7 +137,8 @@
         bottom: 140%; /* 顯示在點的上方 */
         left: 50%;
         transform: translateX(-50%);
-        background: rgba(0, 0, 0, 0.85);
+        background: linear-gradient(to bottom, #2a2522, #1a1512); /* 漸變深棕底色 */
+        border: 1px solid #554433; /* 新增棕色邊框 */
         color: #fff;
         padding: 8px 12px; /* 稍微增加內距讓文字不要太擠 */
         border-radius: 4px;
@@ -194,7 +196,7 @@
     }
 
     /* === [修改] 僅在支援滑鼠的設備 (電腦) 啟用懸停效果 === */
-    @media (hover: hover) {
+    @media (hover: hover) and (pointer: fine) {
         .map-point:hover .point-tip {
             opacity: 1;
             visibility: visible;
@@ -212,8 +214,8 @@
         bottom: 15px; /* 固定顯示時與底部的距離 */
         left: 5%;
         width: 90%;
-        background: rgba(15, 18, 22, 0.95);
-        border: 1px solid var(--p-gold-dim, #8a734b);
+        background: linear-gradient(to bottom, #2a2522, #1a1512);
+        border: 1px solid #554433;
         border-left: 4px solid #ffaa00;
         border-radius: 4px;
         padding: 12px 16px;
@@ -326,7 +328,7 @@
 
     /* === 右上角系統選單 (CRPG 風格) === */
     .rpg-v7-root .menu-wrap { 
-        position: absolute;
+      
         top: 12px; right: 12px;
         display: flex; flex-direction: column; align-items: flex-end;
         font-family: "Noto Serif SC", "Noto Serif TC", serif;
@@ -363,6 +365,7 @@
     .rpg-v7-root .menu-opt { 
         padding: 8px 15px; 
         font-size: 14px; 
+        font-family: "Cinzel", "Noto Serif SC", "Noto Serif TC", serif; /* 新增此行 */
         text-align: center;
         cursor: pointer; 
         transition: all 0.2s;
@@ -418,17 +421,13 @@
     
     /* [核心修復] 立繪圖片樣式 */
     .rpg-v7-root .face-pic { 
- 
-
         height: 45%;          
         max-height: 600px;    
-        
         width: auto;          /* 寬度自動，保持比例 */
         max-width: 400px;     /* 寬度上限，防止太胖的角色佔滿畫面 */
+		margin-right: -10%; 
         border: none;        
         background: transparent; 
-        margin-right: -10%; 
-        
         filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.6));
         
         /* 確保縮放時依然貼底且保持比例 */
@@ -443,6 +442,8 @@
 
         transition: transform 0.2s, filter 0.2s, margin-right 0.2s;
     }
+	
+
     
     .rpg-v7-root .face-pic:hover { 
         transform: translateY(-5px) scale(1.05); 
@@ -461,6 +462,8 @@
     /* === 3. 文本區域 (維持不變) === */
     .rpg-v7-root {
         /* --- 預設：黑曜石深色主題 (Dark Mode) --- */
+        --p-gold: #c5a059;       /* 新增變數 */
+        --p-gold-dim: #8a6d3b;   /* 新增變數 */
         --bg-text-area: linear-gradient(to bottom, rgba(20, 23, 28, 0.98), rgba(10, 12, 16, 1));
         --border-main: #8a734b;       /* 暗金邊框 */
         --border-sub: #1a1a1a;
@@ -624,8 +627,8 @@
         border-radius: 2px;
         color: var(--btn-text);
         font-size: 14px;
-        font-family: inherit;
-        transition: all 0.2s;
+        font-family: "Cinzel", inherit; /* 原為 inherit，前置插入 Cinzel */
+        transition: border-color 0.2s, color 0.2s, filter 0.2s, transform 0.2s;
         box-shadow: 0 2px 4px rgba(0,0,0,0.2);
     }
 
@@ -639,8 +642,9 @@
 
     .page-num {
         color: var(--border-main); /* 頁碼顏色跟隨主色調 */
-        font-family: "Georgia", serif;
+        font-family: "Cinzel", "Georgia", serif; /* 原為 "Georgia", serif */
         font-style: italic;
+        font-weight: bold;
         letter-spacing: 1px;
     }
 
@@ -682,7 +686,7 @@
 
     /* === [修改] 伸縮按鈕 (固定位置) === */
     .hud-toggle-btn {
-        position: absolute;
+  
         /* 這裡設定按鈕在螢幕上的固定位置 */
         /* 您可以調整這兩個數值來改變按鈕位置 */
         left: 3%; 
@@ -889,7 +893,7 @@
         font-size: 18px;
         letter-spacing: 1px;
         cursor: pointer;
-        transition: all 0.3s ease;
+        transition: border-color 0.3s ease, color 0.3s ease, background 0.3s ease, text-shadow 0.3s ease, box-shadow 0.3s ease;
         transform: skewX(-15deg); 
         box-shadow: 4px 4px 10px rgba(0,0,0,0.5);
         overflow: hidden;
@@ -1097,7 +1101,7 @@
         padding: 8px 30px;
         font-family: "Uncial Antiqua", "Noto Serif SC", serif; /* 加入中文支援 */
         font-size: 18px; letter-spacing: 1px;
-        cursor: pointer; transition: all 0.3s ease;
+        cursor: pointer; transition: border-color 0.3s ease, color 0.3s ease, background 0.3s ease, text-shadow 0.3s ease, box-shadow 0.3s ease;
         transform: skewX(-15deg); 
         box-shadow: 4px 4px 10px rgba(0,0,0,0.5);
     }
@@ -1328,7 +1332,7 @@
         color: var(--p-text-dim); border: 1px solid #3d332a; border-bottom: none;
         padding: 8px 25px; margin-right: 6px;
         font-family: "Uncial Antiqua", serif; font-size: 14px; letter-spacing: 1px;
-        cursor: pointer; transition: all 0.3s; transform: skewX(0deg); 
+        cursor: pointer; transition: background 0.3s, color 0.3s, border-color 0.3s, padding-bottom 0.3s, margin-bottom 0.3s, text-shadow 0.3s; transform: skewX(0deg); 
         box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
     }
     .status-scaler .tab-btn.active {
@@ -1342,7 +1346,7 @@
         background: var(--p-bg-panel);
         border: 1px solid var(--p-gold-dim); border-top: 1px solid var(--p-gold);
         box-shadow: inset 0 0 30px rgba(0,0,0,0.8), 0 10px 30px rgba(0,0,0,0.6);
-        padding: 30px; backdrop-filter: blur(8px);
+        padding: 30px; 
         transform: skewX(15deg); margin-left: 20px; height: 85%; 
         overflow-y: auto; position: relative;
     }
@@ -1663,7 +1667,7 @@
         font-size: 20px;
         cursor: pointer;
         z-index: 170; /* 確保在背景之上，但在彈窗之下 */
-        transition: all 0.2s;
+        transition: border-color 0.2s, color 0.2s, background 0.2s, box-shadow 0.2s, transform 0.2s;
         box-shadow: 0 2px 5px rgba(0,0,0,0.5);
     }
 
@@ -1724,7 +1728,7 @@
         border: 1px solid #444;
         border-radius: 6px;
         cursor: pointer;
-        transition: all 0.2s;
+        transition: border-color 0.2s, background 0.2s, transform 0.2s;
         display: flex; flex-direction: column; align-items: center;
         padding: 10px;
     }
@@ -1881,9 +1885,578 @@
         filter: grayscale(100%);
         transition: all 0.3s;
     }
+.placeholder-text {
+    text-align: center;
+    color: var(--border-main);      /* 暗金色，比正文更低調 */
+    font-family: "Uncial Antiqua", serif;
+    letter-spacing: 0.2em;
+    font-style: italic;
+    opacity: 0.6;
+    animation: pulse 2.5s ease-in-out infinite;  /* 呼吸感 */
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 0.4; }
+    50%       { opacity: 0.8; }
+}
+
+/* === [新增] State 查看面板 === */
+.state-viewer-panel {
+    border-top: 1px solid var(--border-main);
+    background: var(--bg-text-area);
+    font-family: "Noto Serif SC", monospace, serif;
+    overflow: hidden;
+}
+
+.state-viewer-toggle {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 7px 16px;
+    cursor: pointer;
+    color: var(--text-color);
+    font-size: 12px;
+    letter-spacing: 0.5px;
+    user-select: none;
+    transition: background 0.2s;
+}
+.state-viewer-toggle:hover {
+    background: rgba(138, 115, 75, 0.08);
+}
+
+.state-viewer-arrow {
+    font-size: 10px;
+    transition: transform 0.2s;
+}
+.state-viewer-arrow.open {
+    transform: rotate(180deg);
+}
+
+.state-viewer-body {
+    display: none;
+    padding: 10px 16px 14px;
+    margin: 0;
+    color: var(--text-color);
+    font-size: 11.5px;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    word-break: break-all;
+    max-height: 260px;
+    overflow-y: auto;
+    border-top: 1px solid var(--control-border);
+    /* 捲軸樣式 */
+    scrollbar-width: thin;
+    scrollbar-color: #8a734b transparent;
+}
+.state-viewer-body::-webkit-scrollbar { width: 4px; }
+.state-viewer-body::-webkit-scrollbar-thumb { background: #8a734b; border-radius: 2px; }
+
+.state-viewer-body.expanded {
+    display: block;
+    animation: fadeIn 0.2s ease;
+}
+
+/* ==========================================
+   世界地圖覆蓋層樣式
+   ========================================== */
+
+/* 覆蓋層底板（與 quest-layer-wrapper 同結構） */
+.worldmap-layer-wrapper {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 300;
+    display: none;
+    overflow: hidden;
+    pointer-events: none;
+}
+.worldmap-layer-wrapper.active {
+    display: block;
+}
+
+.worldmap-scaler {
+    position: absolute;
+    width: 1080px;
+    height: 720px;
+    transform-origin: top left;
+    background: linear-gradient(to bottom, #1c1e24, #10121a);
+    border: 1px solid #8a734b;
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 12px 50px rgba(0, 0, 0, 0.85);
+    pointer-events: auto;
+}
+
+/* 標題列 */
+.wm-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 22px;
+    border-bottom: 1px solid #4a3e28;
+    flex-shrink: 0;
+    background: linear-gradient(to right, rgba(138,115,75,0.12), transparent);
+}
+.wm-title {
+    color: #ffcc66;
+    font-size: 18px;
+    font-family: "Cinzel", "Noto Serif SC", serif;
+    letter-spacing: 0.08em;
+}
+.wm-close-btn {
+    background: none;
+    border: 1px solid #5c4e36;
+    color: #b0a080;
+    width: 30px;
+    height: 30px;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.wm-close-btn:hover {
+    border-color: #ffaa00;
+    color: #ffcc66;
+}
+
+/* 主體左右分欄 */
+.wm-body {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+/* 左側區域列表 */
+.wm-sidebar {
+    width: 180px;
+    flex-shrink: 0;
+    border-right: 1px solid #3a3020;
+    display: flex;
+    flex-direction: column;
+    background: rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+}
+.wm-sidebar-label {
+    padding: 12px 16px 8px;
+    font-size: 11px;
+    color: #8a734b;
+    letter-spacing: 0.1em;
+    font-family: "Noto Serif SC", serif;
+    border-bottom: 1px solid #2a2418;
+    flex-shrink: 0;
+}
+.wm-region-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 0;
+    scrollbar-width: thin;
+    scrollbar-color: #5c4e36 transparent;
+}
+.wm-region-list::-webkit-scrollbar { width: 3px; }
+.wm-region-list::-webkit-scrollbar-thumb { background: #5c4e36; border-radius: 2px; }
+
+/* 每個區域按鈕 */
+.wm-region-btn {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
+    border-left: 3px solid transparent;
+    color: #9a8a6a;
+    font-family: "Noto Serif SC", serif;
+    font-size: 14px;
+    padding: 10px 16px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+    line-height: 1.4;
+}
+.wm-region-btn:hover {
+    background: rgba(138, 115, 75, 0.12);
+    color: #d0c0a0;
+    border-left-color: #8a734b;
+}
+.wm-region-btn.active {
+    background: rgba(255, 170, 0, 0.1);
+    color: #ffcc66;
+    border-left-color: #ffaa00;
+}
+
+/* 右側預覽區 */
+.wm-preview-wrap {
+    flex: 1;
+    position: relative;   /* ← 讓 mobile-panel 相對這裡定位 */
+    overflow: hidden;
+    display: flex;
+    align-items: flex-start;
+    min-height: 0;
+}
+
+.wm-preview-area {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 3 / 2;
+    background-color: #111;
+    background-size: 100% 100%;
+    background-position: center;
+    background-repeat: no-repeat;
+    flex-shrink: 0;
+}
+
+/* [新增] 手機模式下地圖填滿容器，不用 aspect-ratio */
+@media (max-width: 600px) {
+    .wm-preview-area {
+        aspect-ratio: unset;
+        position: absolute;   /* 填滿 wm-preview-wrap */
+        inset: 0;
+        flex-shrink: unset;
+    }
+}
+/* 預覽區內的地標圖和標記點沿用全局的 .landmark-img / .map-point 樣式，無需額外定義 */
+
+/* 未選擇時的提示文字 */
+.wm-placeholder {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #3a3020;
+    font-size: 15px;
+    font-family: "Noto Serif SC", serif;
+    pointer-events: none;
+}
+
+/* 右下角的區域名稱標示 */
+.wm-preview-label {
+    position: absolute;
+    bottom: 14px;
+    right: 16px;
+    background: rgba(16, 18, 26, 0.88);
+    border: 1px solid #ffaa00;
+    border-radius: 4px;
+    color: #ffcc66;
+    font-family: "Noto Serif SC", serif;
+    font-size: 14px;
+    padding: 5px 14px;
+    pointer-events: none;
+    z-index: 10;
+}
+
+/* 手機：隱藏側欄，改用 tab bar */
+@media (max-width: 600px) {
+    .wm-body {
+        flex-direction: column;
+    }
+    .wm-sidebar {
+        display: none;
+    }
+    .wm-tab-bar {
+        display: flex;
+    }
+    .wm-mobile-panel {
+        display: block;
+    }
+    /* [新增] 縱向佈局時讓 preview-wrap 佔剩餘高度，不被截 */
+    .wm-preview-wrap {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+    }
+    /* [新增] 縱向時 aspect-ratio 由寬度決定高度，允許自然展開 */
+    .wm-preview-area {
+        width: 100%;
+        height: auto;
+        min-height: 0;
+    }
+}
+
+/* Tab bar（手機專用，預設隱藏） */
+.wm-tab-bar {
+    display: none;
+    flex-direction: row;
+    overflow-x: auto;
+    gap: 0;
+    background: rgba(0, 0, 0, 0.3);
+    border-bottom: 1px solid #3a3020;
+    flex-shrink: 0;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+}
+.wm-tab-bar::-webkit-scrollbar { display: none; }
+
+.wm-tab-btn {
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: #9a8a6a;
+    font-family: "Noto Serif SC", serif;
+    font-size: 13px;
+    padding: 10px 16px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: color 0.15s, border-color 0.15s;
+}
+.wm-tab-btn.active {
+    color: #ffcc66;
+    border-bottom-color: #ffaa00;
+}
+.wm-tab-btn:hover { color: #d0c0a0; }
+
+/* 手機地點資訊面板（預設隱藏） */
+.wm-mobile-panel {
+    display: none;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(16, 18, 26, 0.95);
+    border-top: 1px solid #8a734b;
+    padding: 10px 16px;
+    z-index: 115;
+    pointer-events: auto;
+    transform: translateY(100%);
+    transition: transform 0.25s ease;
+}
+.wm-mobile-panel.show {
+    transform: translateY(0);
+}
+.wm-mobile-panel-name {
+    color: #ffcc66;
+    font-size: 14px;
+    font-family: "Noto Serif SC", serif;
+    margin-bottom: 4px;
+}
+.wm-mobile-panel-desc {
+    color: #b0a080;
+    font-size: 12px;
+    font-family: "Noto Serif SC", serif;
+    line-height: 1.5;
+}
+
+.location-action-btn {
+    background: rgba(20, 23, 28, 0.9);
+    border: 1px solid #ffaa00;
+    color: #ffcc66;
+    border-radius: 3px;
+    padding: 3px 8px;
+    font-size: 11px;
+    font-family: "Noto Serif SC", serif;
+    cursor: pointer;
+    pointer-events: auto;
+    transition: background 0.2s, color 0.2s;
+    white-space: nowrap;
+}
+.location-action-btn:hover {
+    background: #ffaa00;
+    color: #1a1512;
+}
+
+
+.map-topbar {
+    position: relative; /* 從 absolute 改成 relative */
+    width: 100%;
+    height: 52px;
+    flex-shrink: 0;
+    background: var(--bg-text-area);
+    border-bottom: 1px solid var(--border-main);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 10px;
+    box-sizing: border-box;
+    z-index: 170;
+}
+
+/* 頂部橫條存在時，地圖內容往下推（避免被橫條蓋住） */
+.rpg-v7-root .hud-wrap {
+    top: 0
+}
+
+/* 選單下拉從橫條下方開始 */
+.map-topbar .menu-wrap {
+    position: static;  /* 改為靜態，讓 flex 排版 */
+}
+.map-topbar .menu-drop {
+    position: absolute;
+    top: 52px;  /* 從橫條底部往下展開 */
+    right: 10px;
+}
+
+/* HUD 收折按鈕改為橫條內的普通元素 */
+.map-topbar .hud-toggle-btn {
+    position: static;
+    width: 36px; height: 36px;
+}
+
+
+
+/* === 顯示設定子視窗 === */
+.display-layer-wrapper {
+    position: absolute;
+    inset: 0;
+    z-index: 300;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(2px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+}
+.display-layer-wrapper.active {
+    display: flex;
+    pointer-events: auto;
+}
+
+.display-modal {
+    width: min(380px, 90%);  /* 手機上自動縮到 90% 寬 */
+    max-height: 85%;
+    overflow-y: auto;
+    background: linear-gradient(to bottom, #1c1e24, #10121a);
+    border: 1px solid #8a734b;
+    border-radius: 6px;
+    overflow-y: auto
+    box-shadow: 0 12px 40px rgba(0,0,0,0.8);
+    pointer-events: auto;
+}
+.display-modal-body {
+    padding: 20px 24px;
+}
+.display-section-label {
+    color: #8a734b;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    font-family: "Noto Serif SC", serif;
+    margin-bottom: 10px;
+}
+.display-btn-group {
+    display: flex;
+    gap: 8px;
+}
+.display-opt-btn {
+    flex: 1;
+    border: 1px solid #5c4e36;
+    background: none;
+    color: #9a8a6a;
+    font-family: "Noto Serif SC", serif;
+    font-size: 13px;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+}
+.display-opt-btn.active {
+    border-color: #ffaa00;
+    background: rgba(255,170,0,0.1);
+    color: #ffcc66;
+}
+.display-opt-btn:hover { border-color: #8a734b; color: #d0c0a0; }
+
+.display-img-host-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.display-host-item {
+    border: 1px solid #3a3020;
+    border-radius: 4px;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+.display-host-item.active {
+    border-color: #ffaa00;
+    background: rgba(255,170,0,0.08);
+}
+.display-host-item:hover { border-color: #8a734b; }
+.display-host-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    border: 1px solid #5c4e36;
+    flex-shrink: 0;
+    transition: background 0.2s, border-color 0.2s;
+}
+.display-host-item.active .display-host-dot {
+    background: #ffaa00;
+    border-color: #ffaa00;
+}
+.display-host-name { color: #d0c0a0; font-size: 13px; font-family: "Noto Serif SC", serif; }
+.display-host-desc { color: #5a4a30; font-size: 11px; margin-top: 2px; }
+.display-host-hint {
+    color: #4a3a28;
+    font-size: 11px;
+    font-style: italic;
+    font-family: "Noto Serif SC", serif;
+    margin-top: 8px;
+}
+.display-modal-footer {
+    border-top: 1px solid #2a2418;
+    padding: 12px 20px;
+    display: flex;
+    justify-content: flex-end;
+}
+.display-close-footer-btn {
+    background: linear-gradient(to bottom, #2b2b2b, #1a1a1a);
+    border: 1px solid #8a734b;
+    color: #d0c8b6;
+    font-size: 13px;
+    font-family: "Noto Serif SC", serif;
+    padding: 6px 20px;
+    border-radius: 3px;
+    cursor: pointer;
+}
+.display-close-footer-btn:hover { border-color: #ffaa00; color: #ffcc66; }
+
+.batch-input {
+    width: 36px;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid #5c4e36;
+    color: #c8aa6e;
+    font-family: "Uncial Antiqua", serif;
+    font-size: 14px;
+    text-align: center;
+    padding: 2px 4px;
+    border-radius: 2px;
+    margin-right: 4px;
+    -moz-appearance: textfield;
+}
+.batch-input::-webkit-outer-spin-button,
+.batch-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+.batch-input:focus { border-color: #c8aa6e; outline: none; }
+
+/* 生成中鎖定 */
+.rpg-v7-root.generating .batch-input {
+    opacity: 0.5;
+    pointer-events: none;
+}
 </style>
 
 <div class="rpg-v7-root paged-mode">
+<div class="map-topbar" id="map-topbar">
+    <div class="hud-toggle-btn" id="hud-toggle">◀</div>
+    <div class="menu-wrap">
+        <div class="icon-btn menu-toggle">≡</div>
+        <div class="menu-drop">
+            <div class="menu-opt" data-action="status">状态</div>
+            <div class="menu-opt" data-action="bag">背包</div>
+            <div class="menu-opt" data-action="quest">任务</div>
+            <div class="menu-opt" data-action="worldmap">地图</div>
+            <div class="menu-opt" data-action="display">显示设定</div>
+        </div>
+    </div>
+</div>
     <div class="map-area">
         <div id="day-night-overlay"></div>
         <div class="hud-wrap" id="hud-wrap">
@@ -1899,25 +2472,87 @@
                     </div>
                 </div>
             </div>
-
-            <div class="hud-toggle-btn" id="hud-toggle">◀</div>
-        </div>
-
-        <div class="menu-wrap">
-            <div class="icon-btn menu-toggle">≡</div>
-            <div class="menu-drop">
-                <div class="menu-opt" data-action="status">状态</div>
-                <div class="menu-opt" data-action="bag">背包</div>
-                <div class="menu-opt" data-action="quest">任务</div>
-            </div>
         </div>
 
         <div class="party-wrap">
             <div class="icon-btn party-toggle">-</div>
             <div class="faces-row" id="party-container"></div>
         </div>
-        
-		<div class="quest-layer-wrapper" id="quest-layer">
+
+
+<!-- 顯示設定子視窗 -->
+<div class="display-layer-wrapper" id="display-layer">
+    <div class="display-modal" id="display-modal">
+        <div class="wm-header">
+            <span class="wm-title">⚙ 显示设定</span>
+            <button class="wm-close-btn" id="display-close-btn">✕</button>
+        </div>
+        <div class="display-modal-body">
+
+            <!-- 介面主題 -->
+            <div class="display-section-label">介面主题</div>
+            <div class="display-btn-group">
+                <div class="display-opt-btn active" id="theme-dark-btn" onclick="setTheme('dark')">🌑 深色</div>
+                <div class="display-opt-btn" id="theme-light-btn" onclick="setTheme('light')">☀️ 淺色</div>
+            </div>
+
+            <!-- 圖片來源 -->
+            <div class="display-section-label" style="margin-top:20px;">图床</div>
+            <div class="display-img-host-list" id="display-img-host-list">
+                <div class="display-host-item active" id="host-imgchest" onclick="selectHost('imgchest')">
+                    <span class="display-host-dot"></span>
+                    <div>
+                        <div class="display-host-name">Imgchest</div>
+                        <div class="display-host-desc">图床1</div>
+                    </div>
+                </div>
+                <div class="display-host-item" id="host-catbox" onclick="selectHost('catbox')">
+                    <span class="display-host-dot"></span>
+                    <div>
+                        <div class="display-host-name">Catbox</div>
+                        <div class="display-host-desc">图床2</div>
+                    </div>
+                </div>
+            </div>
+            <div class="display-host-hint">切换后需点击编辑以套用设定（或等待下一次回复）</div>
+
+        </div>
+        <div class="display-modal-footer">
+            <button class="display-close-footer-btn" id="display-footer-close">关闭</button>
+        </div>
+    </div>
+</div>
+
+        <!-- ============================
+             世界地圖覆蓋層
+             ============================ -->
+        <div class="worldmap-layer-wrapper" id="worldmap-layer">
+            <div class="worldmap-scaler" id="worldmap-scaler">
+                <div class="wm-header">
+                    <span class="wm-title">🗺 世界地图</span>
+                    <button class="wm-close-btn" id="worldmap-close-btn">✕</button>
+                </div>
+				<div class="wm-tab-bar" id="wm-tab-bar"></div>
+                <div class="wm-body">
+                    <div class="wm-sidebar">
+                        <div class="wm-sidebar-label">选择区域</div>
+                        <div class="wm-region-list" id="wm-region-list"></div>
+                    </div>
+                    <div class="wm-preview-wrap">
+                        <div class="wm-preview-area" id="wm-preview-area">
+                            <div class="wm-placeholder">← 请选择一个区域</div>
+                        </div>
+                        <div class="wm-preview-label" id="wm-preview-label" style="display:none;"></div>
+						<div class="wm-mobile-panel" id="wm-mobile-panel">
+        <div class="wm-mobile-panel-name" id="wm-mobile-panel-name"></div>
+        <div class="wm-mobile-panel-desc" id="wm-mobile-panel-desc"></div>
+    </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="quest-layer-wrapper" id="quest-layer">
             <div class="quest-scaler" id="quest-scaler">
                 
                 <div class="bg-layer"></div>
@@ -1934,7 +2569,7 @@
                     <div class="filter-bar">
                         <div class="filter-opt active" onclick="setFilter('进行中')">进行中</div>
                         <div class="filter-opt" onclick="setFilter('已完成')">已完成</div>
-                        <div class="filter-opt" onclick="setFilter('已失敗')">已失敗</div>
+                        <div class="filter-opt" onclick="setFilter('已失败')">已失败</div>
                     </div>
 
                     <div class="quest-list" id="quest-list-container">
@@ -2022,6 +2657,7 @@
                                             <span class="stat-label">HP</span>
                                             <div class="stat-val-group">
                                                 <span class="stat-num" id="stat-hp-val">0</span>
+                                                <input class="batch-input" id="batch-hp" type="number" min="1" value="1" title="批量加点">
                                                 <div class="btn-plus" id="btn-add-hp" onclick="addStat('HP')">+</div>
                                             </div>
                                         </div>
@@ -2029,6 +2665,7 @@
                                             <span class="stat-label">ATK</span>
                                             <div class="stat-val-group">
                                                 <span class="stat-num" id="stat-atk-val">0</span>
+                                                <input class="batch-input" id="batch-atk" type="number" min="1" value="1" title="批量加点">
                                                 <div class="btn-plus" id="btn-add-atk" onclick="addStat('ATK')">+</div>
                                             </div>
                                         </div>
@@ -2058,10 +2695,10 @@
                                     <div class="exp-col">
                                         <div class="exp-header">侍奉经验</div>
                                         <div class="exp-item"><span>口</span><span class="exp-val" id="exp-1-1">0</span></div>
-                                        <div class="exp-item"><span>手</span><span class="exp-val" id="exp-1-3">0</span></div>
-                                        <div class="exp-item"><span>足</span><span class="exp-val" id="exp-1-4">0</span></div>
-                                        <div class="exp-item"><span>股</span><span class="exp-val" id="exp-1-5">0</span></div>
-                                        <div class="exp-item"><span>乳</span><span class="exp-val" id="exp-1-6">0</span></div>
+                                        <div class="exp-item"><span>手</span><span class="exp-val" id="exp-1-2">0</span></div>
+                                        <div class="exp-item"><span>足</span><span class="exp-val" id="exp-1-3">0</span></div>
+                                        <div class="exp-item"><span>股</span><span class="exp-val" id="exp-1-4">0</span></div>
+                                        <div class="exp-item"><span>乳</span><span class="exp-val" id="exp-1-5">0</span></div>
                                     </div>
                                     <div class="exp-col">
                                         <div class="exp-header">亲密经验</div>
@@ -2140,10 +2777,19 @@
         </div>
     </div>
     </div>
-
-    <div class="text-area">
-        <div class="text-display">谱写崭新篇章...</div>
+<div class="text-area">
+    <div class="text-display">
+    <p class="placeholder-text">谱写崭新篇章...</p>
+</div>
+</div>
+<!-- [新增] State 查看面板 -->
+<div id="state-viewer-panel" class="state-viewer-panel" style="display:none">
+    <div class="state-viewer-toggle" onclick="toggleStateViewer()">
+        <span class="state-viewer-label">📓 变量更新状态</span>
+        <span id="state-viewer-arrow" class="state-viewer-arrow">▼</span>
     </div>
+    <pre id="state-viewer-body" class="state-viewer-body"></pre>
+</div>
     
     <div class="control-panel">
         <button class="mode-switch">切換全文模式</button>
@@ -2155,10 +2801,8 @@
     </div>
 </div>
 
+
 <script>
-// === [新增] 替換為 SillyTavern 原生流式監聽 ===
-let currentMesId = null;
-let isGenerating = false;
 
 (function() {
     window.RPG_IS_MUTED = true;    
@@ -2174,6 +2818,32 @@ let isGenerating = false;
             rank: ""
         };
     }
+
+window.setTheme = function(mode) {
+    const root = document.querySelector('.rpg-v7-root');
+    if (mode === 'light') root.classList.add('light-mode');
+    else root.classList.remove('light-mode');
+    topWindow.RPG_GLOBAL_STATE.theme = mode;  // 統一存這裡
+    document.getElementById('theme-dark-btn')?.classList.toggle('active', mode === 'dark');
+    document.getElementById('theme-light-btn')?.classList.toggle('active', mode === 'light');
+};
+
+window.selectHost = function(host) {
+    topWindow.RPG_GLOBAL_STATE.imageHost = host;  // 統一存這裡
+    window.switchImageHost(host); // 已有的函數
+    document.querySelectorAll('.display-host-item').forEach(el => {
+        const isActive = el.id === `host-${host}`;
+        el.classList.toggle('active', isActive);
+        el.querySelector('.display-host-dot').style.background = isActive ? '#ffaa00' : '';
+    });
+};
+
+const img = (imgchestUrl, catboxUrl) => {
+    const host = window?.RPG_GLOBAL_STATE?.imageHost || 'imgchest';
+    if (host === 'imgchest') return imgchestUrl;
+    return catboxUrl || imgchestUrl;
+};
+
     // ==================================
     const DEBUG_MODE = false; // 整合時設為 false 以讀取真實變數
     const EXP_CAT_1 = "侍奉经验"; 
@@ -2188,21 +2858,29 @@ let isGenerating = false;
     const VAR_LEVEL = '世界.玩家状态.综合实力.实际等级';
     const VAR_RANK = '世界.玩家状态.综合实力.实际位阶';
 
+
+
     // 您的原始角色數據 (完整保留)
     const fullPartyData = [
         { 
             id: "p1", name: "{{user}}",
             dataA: "---", dataB: "冒险者", dataC: "---", 
             desc: "我。", 
-            img: "https://cdn.imgchest.com/files/7dcbb8b9ba87.png", imgDiff: "https://cdn.imgchest.com/files/7dcbb8b9ba87.png", face: "https://cdn.imgchest.com/files/e82870b91d30.png", bg: "https://cdn.imgchest.com/files/951e90c0a29f.png" ,
-			sdImg: "",
+            img:     img("https://cdn.imgchest.com/files/7dcbb8b9ba87.png", "https://files.catbox.moe/sq441t.png"),
+            imgDiff: img("https://cdn.imgchest.com/files/7dcbb8b9ba87.png", "https://files.catbox.moe/sq441t.png"),
+            face:    img("https://cdn.imgchest.com/files/e82870b91d30.png", "https://files.catbox.moe/r1rgqt.png"),
+            bg:      img("https://cdn.imgchest.com/files/951e90c0a29f.png", "https://files.catbox.moe/fs53um.png"),
+            sdImg: "",
         },
         { 
             id: "p2", name: "爱娜",
             race: "人类", birth: "4月13日", interest: "小动物、烹饪、家务", height: "142cm",
             desc: "爱娜。", 
-            img: "https://cdn.imgchest.com/files/ffded04458b1.png", imgDiff: "https://cdn.imgchest.com/files/c06deb7bcf87.png", face: "https://cdn.imgchest.com/files/d61e9fec63af.png", bg: "https://cdn.imgchest.com/files/71183e63bb1d.png",
-			sdImg: "https://cdn.imgchest.com/files/4a138a01617e.png",
+            img:     img("https://cdn.imgchest.com/files/ffded04458b1.png", "https://files.catbox.moe/iurzeo.png"),
+            imgDiff: img("https://cdn.imgchest.com/files/c06deb7bcf87.png", "https://files.catbox.moe/r8opmo.png"),
+            face:    img("https://cdn.imgchest.com/files/d61e9fec63af.png", "https://files.catbox.moe/vzyxnm.png"),
+            bg:      img("https://cdn.imgchest.com/files/71183e63bb1d.png", "https://files.catbox.moe/ceb8db.png"),
+            sdImg:   img("https://cdn.imgchest.com/files/4a138a01617e.png", "https://files.catbox.moe/k2qqsy.png"),
             cgData: [
                 { unlocked: false, cover: "", images: [] },
                 { unlocked: false, cover: "", images: [] },
@@ -2213,65 +2891,90 @@ let isGenerating = false;
             ]
         },
         { id: "p3", name: "黛芬妮",
-		  race: "人偶", birth: "2月19日", interest: "裁缝、戏剧", height: "138cm",
+          race: "人偶", birth: "2月19日", interest: "裁缝、戏剧", height: "138cm",
           desc: "黛芬妮。", 
-		  img: "https://cdn.imgchest.com/files/7396e46c9622.png", imgDiff: "https://cdn.imgchest.com/files/dbb4e18ee304.png", face: "https://cdn.imgchest.com/files/8f434206b743.png", bg: "https://cdn.imgchest.com/files/f2c77f71b582.png",
-		  sdImg: "https://cdn.imgchest.com/files/ca5ce96a0344.png",
-		  cgData: [ { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] } ]
+          img:     img("https://cdn.imgchest.com/files/7396e46c9622.png", "https://files.catbox.moe/qmoavv.png"),
+          imgDiff: img("https://cdn.imgchest.com/files/dbb4e18ee304.png", "https://files.catbox.moe/x5i2in.png"),
+          face:    img("https://cdn.imgchest.com/files/8f434206b743.png", "https://files.catbox.moe/vq0qxy.png"),
+          bg:      img("https://cdn.imgchest.com/files/f2c77f71b582.png", "https://files.catbox.moe/cncjcp.png"),
+          sdImg:   img("https://cdn.imgchest.com/files/ca5ce96a0344.png", "https://files.catbox.moe/zuut1k.png"),
+          cgData: [ { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] } ]
         },
         { id: "p4", name: "穗",
-		  race: "仙人", birth: "12月16日", interest: "舞蹈、玩耍", height: "141cm",
+          race: "仙人", birth: "12月16日", interest: "舞蹈、玩耍", height: "141cm",
           desc: "穗。", 
-		  img: "https://cdn.imgchest.com/files/299c6a475806.png", imgDiff: "https://cdn.imgchest.com/files/9dce762303b8.png", face: "https://cdn.imgchest.com/files/a4502b0964b6.png", bg: "https://cdn.imgchest.com/files/2c53549a79f9.png",
-		  sdImg: "https://cdn.imgchest.com/files/c8a84a967a69.png",
-		  cgData: [ { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] } ]
+          img:     img("https://cdn.imgchest.com/files/299c6a475806.png", "https://files.catbox.moe/dsyvgw.png"),
+          imgDiff: img("https://cdn.imgchest.com/files/9dce762303b8.png", "https://files.catbox.moe/3e81yd.png"),
+          face:    img("https://cdn.imgchest.com/files/a4502b0964b6.png", "https://files.catbox.moe/7g8y1e.png"),
+          bg:      img("https://cdn.imgchest.com/files/2c53549a79f9.png", "https://files.catbox.moe/d0bpe8.png"),
+          sdImg:   img("https://cdn.imgchest.com/files/c8a84a967a69.png", "https://files.catbox.moe/vz9bd5.png"),
+          cgData: [ { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] } ]
         },
         { id: "p5", name: "芙蕾嘉",
-		  race: "精灵", birth: "9月29日", interest: "园艺、踏青", height: "140cm",
+          race: "精灵", birth: "9月29日", interest: "园艺、踏青", height: "140cm",
           desc: "芙蕾嘉。", 
-		  img: "https://cdn.imgchest.com/files/44a7eab2e247.png", imgDiff: "https://cdn.imgchest.com/files/0e430d798aaa.png", face: "https://cdn.imgchest.com/files/eddda37d3dc3.png", bg: "https://cdn.imgchest.com/files/f048e83095df.png",
-		  sdImg: "https://cdn.imgchest.com/files/973c56e2f7af.png",
-		  cgData: [ { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] } ]
+          img:     img("https://cdn.imgchest.com/files/44a7eab2e247.png", "https://files.catbox.moe/bw1nro.png"),
+          imgDiff: img("https://cdn.imgchest.com/files/0e430d798aaa.png", "https://files.catbox.moe/3zujkf.png"),
+          face:    img("https://cdn.imgchest.com/files/eddda37d3dc3.png", "https://files.catbox.moe/5j2ma4.png"),
+          bg:      img("https://cdn.imgchest.com/files/f048e83095df.png", "https://files.catbox.moe/8mrnsl.png"),
+          sdImg:   img("https://cdn.imgchest.com/files/973c56e2f7af.png", "https://files.catbox.moe/485jkh.png"),
+          cgData: [ { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] } ]
         },
         { id: "p6", name: "琳",
-		  race: "真祖", birth: "6月14日", interest: "时尚、夜游", height: "142cm",
+          race: "真祖", birth: "6月14日", interest: "时尚、夜游", height: "142cm",
           desc: "琳。", 
-		  img: "https://cdn.imgchest.com/files/9cd9c13142a8.png", imgDiff: "https://cdn.imgchest.com/files/4abdf3e590fa.png", face: "https://cdn.imgchest.com/files/d52523fdb6a3.png", bg: "https://cdn.imgchest.com/files/3a52940c19f7.png",
-		  sdImg: "https://cdn.imgchest.com/files/30a480088b23.png",
-		  cgData: [ { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] } ]
+          img:     img("https://cdn.imgchest.com/files/9cd9c13142a8.png", "https://files.catbox.moe/8neyi0.png"),
+          imgDiff: img("https://cdn.imgchest.com/files/4abdf3e590fa.png", "https://files.catbox.moe/xjm5ob.png"),
+          face:    img("https://cdn.imgchest.com/files/d52523fdb6a3.png", "https://files.catbox.moe/yomixt.png"),
+          bg:      img("https://cdn.imgchest.com/files/3a52940c19f7.png", "https://files.catbox.moe/0kuuuf.png"),
+          sdImg:   img("https://cdn.imgchest.com/files/30a480088b23.png", "https://files.catbox.moe/civeuq.png"),
+          cgData: [ { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] } ]
         },
         { id: "p7", name: "米拉露恩",
-		  race: "古龙", birth: "8月7日", interest: "阅读、写作、摸魚", height: "140cm",
+          race: "古龙", birth: "8月7日", interest: "阅读、写作、摸魚", height: "140cm",
           desc: "米拉露恩。", 
-		  img: "https://cdn.imgchest.com/files/3f5735d532e0.png", imgDiff: "https://cdn.imgchest.com/files/8a2e53ef12a0.png", face: "https://cdn.imgchest.com/files/be06c02284ff.png", bg: "https://cdn.imgchest.com/files/e3deddba5945.png",
-		  sdImg: "https://cdn.imgchest.com/files/c0c61c8c8475.png",
-		  cgData: [ { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] } ]
+          img:     img("https://cdn.imgchest.com/files/3f5735d532e0.png", "https://files.catbox.moe/oyp53t.png"),
+          imgDiff: img("https://cdn.imgchest.com/files/8a2e53ef12a0.png", "https://files.catbox.moe/anlwu3.png"),
+          face:    img("https://cdn.imgchest.com/files/be06c02284ff.png", "https://files.catbox.moe/57m9l7.png"),
+          bg:      img("https://cdn.imgchest.com/files/e3deddba5945.png", "https://files.catbox.moe/f12i1j.png"),
+          sdImg:   img("https://cdn.imgchest.com/files/c0c61c8c8475.png", "https://files.catbox.moe/zavdit.png"),
+          cgData: [ { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] } ]
         },
         { id: "p8", name: "璐法",
-		  race: "人类", birth: "9月12日", interest: "恋爱故事、慈善活动", height: "144cm",
+          race: "人类", birth: "9月12日", interest: "恋爱故事、慈善活动", height: "144cm",
           desc: "璐法。", 
-		  img: "https://cdn.imgchest.com/files/65aa8ceb2b4f.png", imgDiff: "https://cdn.imgchest.com/files/54516f85fd90.png", face: "https://cdn.imgchest.com/files/69fb07af45a3.png", bg: "https://cdn.imgchest.com/files/ef0916e7f9cf.png",
-		  sdImg: "https://cdn.imgchest.com/files/c4dee393ba2d.png",
-		  cgData: [ { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] } ]
+          img:     img("https://cdn.imgchest.com/files/65aa8ceb2b4f.png", "https://files.catbox.moe/x0iioz.png"),
+          imgDiff: img("https://cdn.imgchest.com/files/54516f85fd90.png", "https://files.catbox.moe/cnh0pd.png"),
+          face:    img("https://cdn.imgchest.com/files/69fb07af45a3.png", "https://files.catbox.moe/3bupkt.png"),
+          bg:      img("https://cdn.imgchest.com/files/ef0916e7f9cf.png", "https://files.catbox.moe/xj13hg.png"),
+          sdImg:   img("https://cdn.imgchest.com/files/c4dee393ba2d.png", "https://files.catbox.moe/9sgl35.png"),
+          cgData: [ { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] } ]
         },
         { id: "p9", name: "莉迪娅",
-		  race: "人类", birth: "5月8日", interest: "恋爱故事、幻想、运动", height: "146cm",
+          race: "人类", birth: "5月8日", interest: "恋爱故事、幻想、运动", height: "146cm",
           desc: "莉迪娅。", 
-		  img: "https://cdn.imgchest.com/files/fa9164f2fb93.png", imgDiff: "https://cdn.imgchest.com/files/69eb4beaee92.png", face: "https://cdn.imgchest.com/files/b8834c569bc4.png", bg: "https://cdn.imgchest.com/files/717c305ab5d3.png",
-		  sdImg: "https://cdn.imgchest.com/files/62c350200304.png",
-		  cgData: [ { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] } ]
+          img:     img("https://cdn.imgchest.com/files/fa9164f2fb93.png", "https://files.catbox.moe/nh3jl8.png"),
+          imgDiff: img("https://cdn.imgchest.com/files/69eb4beaee92.png", "https://files.catbox.moe/un6ib2.png"),
+          face:    img("https://cdn.imgchest.com/files/b8834c569bc4.png", "https://files.catbox.moe/vn5nok.png"),
+          bg:      img("https://cdn.imgchest.com/files/717c305ab5d3.png", "https://files.catbox.moe/ca70l8.png"),
+          sdImg:   img("https://cdn.imgchest.com/files/62c350200304.png", "https://files.catbox.moe/qw2n11.png"),
+          cgData: [ { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] } ]
         },
         { id: "p10", name: "奈芙蒂",
-		  race: "魔族", birth: "11月24日", interest: "家人、探索世界", height: "135cm",
+          race: "魔族", birth: "11月24日", interest: "家人、探索世界", height: "135cm",
           desc: "奈芙蒂。", 
-		  img: "https://cdn.imgchest.com/files/d0d789082cd8.png", imgDiff: "https://cdn.imgchest.com/files/28dfa5b42364.png", face: "https://cdn.imgchest.com/files/7de9ef0ca4df.png", bg: "https://cdn.imgchest.com/files/1f3e3f91e74a.png",
-		  sdImg: "https://cdn.imgchest.com/files/b2af14057a7b.png",
-		  cgData: [ { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] } ]
+          img:     img("https://cdn.imgchest.com/files/d0d789082cd8.png", "https://files.catbox.moe/0cqdjy.png"),
+          imgDiff: img("https://cdn.imgchest.com/files/28dfa5b42364.png", "https://files.catbox.moe/6jxhrj.png"),
+          face:    img("https://cdn.imgchest.com/files/7de9ef0ca4df.png", "https://files.catbox.moe/b0x36j.png"),
+          bg:      img("https://cdn.imgchest.com/files/1f3e3f91e74a.png", "https://files.catbox.moe/5wk4kj.png"),
+          sdImg:   img("https://cdn.imgchest.com/files/b2af14057a7b.png", "https://files.catbox.moe/8t6uw9.png"),
+          cgData: [ { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] } ]
         }
     ];
 
 
-
+    const charNameToId = new Map(fullPartyData.map(c => [c.name, c.id]));
+    const charIdToData = new Map(fullPartyData.map(c => [c.id, c])); // 新增這行：用 ID 直接映射完整資料物件
     let activePartyData = [];
     // 注意：這裡使用 getElementById，確保 ID 不重複
     let stTrack = null; 
@@ -2288,12 +2991,7 @@ let isGenerating = false;
         const targetState = isCurrentlyInParty ? '否' : '是';
         try {
             document.body.style.cursor = 'wait';
-            await STscript(`/xbsetvar 世界.妈妈.${charName}.在队状态 ${targetState}`);
-            
-            // [新增] 紀錄自動化變量
-            await window.RPGBridge.updateMessageContent(null, [
-                { varName: `世界.妈妈.${charName}.在队状态`, type: 'set', value: targetState }
-            ]);
+            setGlobalVariable(`世界.妈妈.${charName}.在队状态`, targetState);
 
             // 重新刷新當前 Status UI 及全域隊伍狀態
             if (typeof updateSelectionFromCenter === 'function') updateSelectionFromCenter(true);
@@ -2306,34 +3004,40 @@ let isGenerating = false;
     };
 
     // [修改] 初始化函數 (原本是 init)
+    // [修改] 初始化函數 (原本是 init)
     window.initStatusInterface = async function() {
         stTrack = document.getElementById('faces-track');
         if(!stTrack) return;
 
-        activePartyData = [];
-        for (let char of fullPartyData) {
-            if (char.id === 'p1') { activePartyData.push(char); } 
-            else {
-                if (DEBUG_MODE) { activePartyData.push(char); } 
-                else {
-                    try {
-                        let status = await STscript(`/xbgetvar 世界.妈妈.${char.name}.状态`);
-                        if (parseInt(status) >= 3) activePartyData.push(char);
-                    } catch (e) { console.log(e); }
-                }
-            }
+        // 默认先推入玩家 (p1)
+        activePartyData = [fullPartyData[0]]; 
+
+        if (DEBUG_MODE) { 
+            activePartyData.push(...fullPartyData.slice(1));
+        } else {
+            // [优化 1] 并行请求所有角色的状态
+            const checks = fullPartyData.slice(1).map(char =>
+                Promise.resolve(getVariable(`世界.妈妈.${char.name}.状态`))
+                    .then(s => ({ char, ok: parseInt(s) >= 3 }))
+                    .catch(e => { console.log("角色状态读取失败:", e); return { char, ok: false }; })
+            );
+            const results = await Promise.all(checks);
+            
+            // 过滤出符合条件的角色并推入 activePartyData
+            activePartyData.push(...results.filter(r => r.ok).map(r => r.char));
         }
+
         renderFaces();
-        
-        // 修正：如果只有兩個角色，不需要移動 DOM，否則會導致錯位
-        if (activePartyData.length > 2 && stTrack.lastElementChild) {
+        // 將最後一個卡片移到最前面，使 p1 (玩家) 落在 index 1 的中心位置
+        // 需要 >= 2 人才執行 (1人時 centerIndex=0 已正確; 2人或以上都需要旋轉)
+        if (activePartyData.length >= 2 && stTrack.lastElementChild) {
             stTrack.insertBefore(stTrack.lastElementChild, stTrack.firstElementChild);
         }
         
         const leftBtn = document.getElementById('btn-left');
         const rightBtn = document.getElementById('btn-right');
         if (activePartyData.length <= 1) {
-            if(leftBtn) leftBtn.classList.add('hidden'); 
+            if(leftBtn) leftBtn.classList.add('hidden');
             if(rightBtn) rightBtn.classList.add('hidden');
         } else {
             if(leftBtn) leftBtn.classList.remove('hidden'); 
@@ -2482,7 +3186,7 @@ let isGenerating = false;
         // 1. 初始化 DOM (如果還沒做過)
         initMiniModal();
         // 2. 尋找角色資料
-        const charData = fullPartyData.find(p => p.id === charId);
+        const charData = charIdToData.get(charId);
         if(!charData) return;
 
         // 3. 填入資料
@@ -2499,7 +3203,7 @@ let isGenerating = false;
             if (charData.id === 'p1') {
                 bondVal = MAX_BOND_LIMIT; // 玩家自己預設為滿值
             } else {
-                let val = await STscript(`/xbgetvar 世界.妈妈.${charData.name}.好感度`);
+                let val = getVariable(`世界.妈妈.${charData.name}.好感度`);
                 bondVal = parseInt(val) || 0;
             }
         } catch(e) { console.log(e); }
@@ -2564,82 +3268,77 @@ let isGenerating = false;
     }
     
     window.addStat = async function(type) {
-        // [新增] 如果正在生成中，直接阻擋執行
-        if (isGenerating) {
-            console.warn("生成中，禁止加點");
-            return;
+    if (isGenerating) {
+        console.warn("生成中，禁止加點");
+        return;
+    }
+    if (isStatProcessing) return;
+    isStatProcessing = true;
+    document.body.style.cursor = 'wait';
+    const btnId = type === 'HP' ? 'btn-add-hp' : 'btn-add-atk';
+    const btn = document.getElementById(btnId);
+    if(btn) btn.classList.add('disabled');
+
+    // === 新增：讀取批量數量 ===
+    const batchId = type === 'HP' ? 'batch-hp' : 'batch-atk';
+    const batchInput = document.getElementById(batchId);
+    const amount = Math.max(1, parseInt(batchInput?.value) || 1);
+
+    try {
+        let points = getVariable(VAR_POINTS);
+        points = parseInt(points) || 0;
+        if (points < amount) { console.log(`点数不足！需要 ${amount}，现有 ${points}`); return; }
+
+        // 點數一次扣 amount 點
+        let newPoints = parseInt(window.__RPG_CACHE.points) - amount;
+        setGlobalVariable(VAR_POINTS, newPoints);
+        window.__RPG_CACHE.points = newPoints;
+
+        if (type === 'HP') {
+            // HP 一次加 amount * 10
+            let newHp = parseInt(window.__RPG_CACHE.hp) + (10 * amount);
+            setGlobalVariable(VAR_HP, newHp);
+            window.__RPG_CACHE.hp = newHp;
         }
-        if (isStatProcessing) return;
-        isStatProcessing = true;
-        document.body.style.cursor = 'wait';
-        const btnId = type === 'HP' ? 'btn-add-hp' : 'btn-add-atk';
-        const btn = document.getElementById(btnId);
-        if(btn) btn.classList.add('disabled');
-        try {
-            let points = await STscript(`/xbgetvar ${VAR_POINTS}`);
-            points = parseInt(points) || 0;
-            if (points < 1) { console.log("点数不足！"); return; }
-            
-            let autoVars = []; // [新增] 用來收集變數變更
+        else if (type === 'ATK') {
+            // ATK 一次加 amount * 5
+            let newAtk = parseInt(window.__RPG_CACHE.atk) + (5 * amount);
+            setGlobalVariable(VAR_ATK, newAtk);
+            window.__RPG_CACHE.atk = newAtk;
+        }
 
-            // 1. 計算新的系統點數
-            let newPoints = parseInt(window.__RPG_CACHE.points) - 1;
-            await STscript(`/xbsetvar ${VAR_POINTS} ${newPoints}`); // 改為絕對賦值 xbsetvar
-            window.__RPG_CACHE.points = newPoints;
-            autoVars.push({ varName: VAR_POINTS, type: 'set', value: newPoints }); // 傳遞絕對值
+        // 重置 input 回 1
+        if (batchInput) batchInput.value = 1;
 
-            if (type === 'HP') {
-                // 2. 計算新的 HP
-                let newHp = parseInt(window.__RPG_CACHE.hp) + 10;
-                await STscript(`/xbsetvar ${VAR_HP} ${newHp}`); // 改為絕對賦值 xbsetvar
-                window.__RPG_CACHE.hp = newHp;
-                autoVars.push({ varName: VAR_HP, type: 'set', value: newHp }); // 傳遞絕對值
-            }
-            else if (type === 'ATK') {
-                // 3. 計算新的 ATK
-                let newAtk = parseInt(window.__RPG_CACHE.atk) + 5;
-                await STscript(`/xbsetvar ${VAR_ATK} ${newAtk}`);
-                window.__RPG_CACHE.atk = newAtk;
-                autoVars.push({ varName: VAR_ATK, type: 'set', value: newAtk });
-            }
-            
-            // 重新計算等級與位階
-            let currentHP = parseInt(await STscript(`/xbgetvar ${VAR_HP}`)) || 0;
-            let currentATK = parseInt(await STscript(`/xbgetvar ${VAR_ATK}`)) || 0;
-            const rawScore = (currentHP - 1900) + (currentATK - 750) * 2;
-            const calcLv = Math.floor(rawScore / 54) + 70;
-            let currentLv = parseInt(await STscript(`/xbgetvar ${VAR_LEVEL}`)) || 0;
-
-            if (calcLv > currentLv) {
-    await STscript(`/xbsetvar ${VAR_LEVEL} ${calcLv}`);
-    window.__RPG_CACHE.level = calcLv; 
-    autoVars.push({ varName: VAR_LEVEL, type: 'set', value: calcLv });
-
-                let newRank = "";
-                if (calcLv >= 301) newRank = "黄金种";
-                else if (calcLv >= 151) newRank = "白银种";
-
-                if (newRank) {
-                    let currentRank = window.__RPG_CACHE.rank;
-                    if (currentRank !== newRank) {
-                        await STscript(`/xbsetvar ${VAR_RANK} ${newRank}`);
-                        window.__RPG_CACHE.rank = newRank;
-                        autoVars.push({ varName: VAR_RANK, type: 'set', value: newRank });
-                    }
+        // 以下等級位階計算完全不動
+        let currentHP = parseInt(getVariable(VAR_HP)) || 0;
+        let currentATK = parseInt(getVariable(VAR_ATK)) || 0;
+        const rawScore = (currentHP - 1900) + (currentATK - 750) * 2;
+        const calcLv = Math.floor(rawScore / 54) + 70;
+        let currentLv = parseInt(getVariable(VAR_LEVEL)) || 0;
+        if (calcLv > currentLv) {
+            setGlobalVariable(VAR_LEVEL, calcLv);
+            window.__RPG_CACHE.level = calcLv; 
+            let newRank = "";
+            if (calcLv >= 301) newRank = "黄金种";
+            else if (calcLv >= 101) newRank = "白银种";
+            if (newRank) {
+                let currentRank = window.__RPG_CACHE.rank;
+                if (currentRank !== newRank) {
+                    setGlobalVariable(VAR_RANK, newRank);
+                    window.__RPG_CACHE.rank = newRank;
                 }
             }
-            
-            // [新增] 將收集到的變數一併寫入文本
-            await window.RPGBridge.updateMessageContent(null, autoVars);
-            await updateSelectionFromCenter(true);
-            syncGameState();
-
-        } catch (e) { console.error("加点交易失败:", e); } finally {
-            isStatProcessing = false;
-            document.body.style.cursor = 'default';
-            setTimeout(() => { if(btn) btn.classList.remove('disabled'); }, 50);
         }
+        
+        await updateSelectionFromCenter(true);
+        syncGameState();
+    } catch (e) { console.error("加点失败:", e); } finally {
+        isStatProcessing = false;
+        document.body.style.cursor = 'default';
+        setTimeout(() => { if(btn) btn.classList.remove('disabled'); }, 50);
     }
+}
 
     window.switchPlayerTab = function(tabName) { /* Only 1 tab */ }
 
@@ -2661,7 +3360,7 @@ let isGenerating = false;
         
         if (!centerCard) return;
         const id = centerCard.dataset.id;
-        const data = activePartyData.find(p => p.id === id);
+        const data = charIdToData.get(id);
         if(data) {
             const tachie = document.getElementById('big-tachie');
             let targetImg = (tabName === 'm-data') ? data.img : data.imgDiff; 
@@ -2712,13 +3411,13 @@ let isGenerating = false;
 
             if (!tachie.src.includes(targetImg)) {
                 tachie.classList.remove('show');
-                requestAnimationFrame(() => {
-                    setTimeout(() => {
-                        tachie.src = targetImg;
-                        tachie.onload = () => tachie.classList.add('show');
-                        if(tachie.complete) tachie.classList.add('show');
-                    }, 150);
-                });
+                
+                // [修改] 移除無意義的 requestAnimationFrame 嵌套，直接使用 setTimeout
+                setTimeout(() => {
+                    tachie.src = targetImg;
+                    tachie.onload = () => tachie.classList.add('show');
+                    if(tachie.complete) tachie.classList.add('show');
+                }, 150);
             }
 
             const playerTabs = els.tabsPlayer;
@@ -2738,11 +3437,11 @@ let isGenerating = false;
         try {
     // === [效能優化] 5 個循序請求合併為並行請求 ===
     const [rank, lv, valHP, valATK, valPoints] = await Promise.all([
-        STscript(`/xbgetvar ${VAR_RANK}`),
-        STscript(`/xbgetvar ${VAR_LEVEL}`),
-        STscript(`/xbgetvar ${VAR_HP}`),
-        STscript(`/xbgetvar ${VAR_ATK}`),
-        STscript(`/xbgetvar ${VAR_POINTS}`)
+        Promise.resolve(getVariable(VAR_RANK)),
+        Promise.resolve(getVariable(VAR_LEVEL)),
+        Promise.resolve(getVariable(VAR_HP)),
+        Promise.resolve(getVariable(VAR_ATK)),
+        Promise.resolve(getVariable(VAR_POINTS))
     ]);
 
     if(rank && rank !== "0" && els.playerA) els.playerA.innerText = rank;
@@ -2776,8 +3475,8 @@ let isGenerating = false;
         try {
     // === [效能優化] 2 個循序請求合併為並行請求 ===
     const [bond, statusVal] = await Promise.all([
-        STscript(`/xbgetvar 世界.妈妈.${data.name}.好感度`),
-        STscript(`/xbgetvar 世界.妈妈.${data.name}.在队状态`)
+        Promise.resolve(getVariable(`世界.妈妈.${data.name}.好感度`)),
+        Promise.resolve(getVariable(`世界.妈妈.${data.name}.在队状态`))
     ]);
 
     if (els.mBond) els.mBond.innerText = bond || "0";
@@ -2818,7 +3517,7 @@ let isGenerating = false;
     // === [效能優化] 捨棄 for 迴圈內的 await，改為一次性並行請求 ===
     // 產生所有的 Promise 陣列，並加上 catch 避免單一變量缺失導致整個報錯
     const promises = items.map(item => 
-        STscript(`/xbgetvar 世界.妈妈.${name}.NSFW.${catName}.${item}`).catch(() => "0")
+        Promise.resolve(getVariable(`世界.妈妈.${name}.NSFW.${catName}.${item}`)).catch(() => "0")
     );
     
     // 一口氣等待所有結果回來 (原本要等 5 次的網路來回，現在只需 1 次)
@@ -2885,7 +3584,10 @@ let isGenerating = false;
     }
 
     // 按鈕綁定
+    let statusButtonsBound = false;
     function bindStatusButtons() {
+        if (statusButtonsBound) return;
+        statusButtonsBound = true;
         const btnRight = document.getElementById('btn-right');
         const btnLeft = document.getElementById('btn-left');
         
@@ -2930,37 +3632,31 @@ let isGenerating = false;
 
     // 2. 核心縮放函數 (解決 1080p vs RWD 的關鍵)
     function updateUIScale() {
-        const mapArea = document.querySelector('.map-area');
-        if (!mapArea) return;
+    if (!els.mapArea) return;
+    const containerWidth = els.mapArea.offsetWidth;
+    const containerHeight = els.mapArea.offsetHeight;
+    const scale = containerWidth / 1080;
 
-        // 1. 計算縮放比例
-        const containerWidth = mapArea.offsetWidth;
-        const scale = containerWidth / 1080;
-
-        // 2. 應用縮放至 Quest 介面
-        const qScaler = document.getElementById('quest-scaler');
-        if (qScaler) qScaler.style.transform = `scale(${scale})`;
-
-        // 3. 應用縮放至 Bag 介面
-        const bScaler = document.getElementById('bag-scaler');
-        if (bScaler) bScaler.style.transform = `scale(${scale})`;
-
-        // 4. [新增] 應用縮放至 Status 介面
-        const sScaler = document.getElementById('status-scaler');
-        if (sScaler) {
-            sScaler.style.transform = `scale(${scale})`;
-            
-            // [額外優化] 如果是 Status 介面，可能需要強制重繪以避免斜切元素模糊
-            // sScaler.style.width = '1080px'; 
-            // sScaler.style.height = '720px';
-        };
-		const mmScaler = document.getElementById('mini-modal-scaler');
-        if (mmScaler) mmScaler.style.transform = `scale(${scale})`;
-		const gameScaler = document.getElementById('minigame-scaler');
-        if (gameScaler) {
-            gameScaler.style.transform = `scale(${scale})`;
-        }
-    }
+    if (els.qScaler) els.qScaler.style.transform = `scale(${scale})`;
+    if (els.bScaler) els.bScaler.style.transform = `scale(${scale})`;
+    if (els.sScaler) els.sScaler.style.transform = `scale(${scale})`;
+    if (els.mmScaler) els.mmScaler.style.transform = `scale(${scale})`;
+    if (els.gameScaler) els.gameScaler.style.transform = `scale(${scale})`;
+    if (els.wmScaler) {
+    const WM_WIDTH = 1080;
+    const WM_HEIGHT = 720;
+    // 用 0.85 讓 scaler 比容器小 15%，留出置中空間
+    const wmScale = (containerWidth / 1080) * 0.95;
+    const scaledW = WM_WIDTH * wmScale;
+    const scaledH = WM_HEIGHT * wmScale;
+    const offsetX = (containerWidth - scaledW) / 2;
+    const offsetY = (containerHeight - scaledH) / 2;
+    els.wmScaler.style.transformOrigin = 'top left';
+    els.wmScaler.style.transform = `scale(${wmScale})`;
+    els.wmScaler.style.left = offsetX + 'px';
+    els.wmScaler.style.top = offsetY + 'px';
+}
+}
 
 
 
@@ -2978,7 +3674,7 @@ let isGenerating = false;
 
         try {
             // 2. 向 ST 請求變量內容
-            const result = await STscript(`/xbgetvar ${varName}`);
+            const result = getVariable(varName);
 
             // 3. 類型判斷與處理
             if (!result || result === '0') {
@@ -3024,7 +3720,7 @@ let isGenerating = false;
             
             // 2. 組合變數名稱並抓取當前完整陣列
             const varName = `世界.任务.${category}.${filter}`;
-            const result = await STscript(`/xbgetvar ${varName}`);
+            const result = getVariable(varName);
             
             let dataList = [];
             if (typeof result === 'object') {
@@ -3036,45 +3732,24 @@ let isGenerating = false;
                 dataList = Object.values(dataList || {});
             }
 
-            // 3. 在前端過濾掉該筆任務 (產生全新陣列)
-            const newDataList = dataList.filter(q => q["任务名"] !== questName);
+            // 3. 在前端過濾掉該筆任務 (只刪除第一筆匹配，保留其餘同名項目)
+            // 注意：使用 flag 確保重複任務中只有第一筆被刪除，避免誤刪原本的那筆
+            let removedOnce = false;
+            const newDataList = dataList.filter(q => {
+                if (!removedOnce && q["任务名"] === questName) {
+                    removedOnce = true;
+                    return false; // 只刪這一筆
+                }
+                return true;
+            });
 
             // 4. 序列化為 JSON 字串 (單行，無換行格式)
             const jsonStr = JSON.stringify(newDataList);
 
-            // 5. 透過 RPGBridge 寫入，並【獲取修改後的完整文本】
-            // 假設 updateMessageContent 已被修改為會 return 最終的字串
-            const finalFullText = await window.RPGBridge.updateMessageContent(null, [
-                { varName: varName, type: 'set', value: jsonStr }
-            ]);
+            // 5. 將去重後的陣列透過酒館助手 API 寫回變量
+            setGlobalVariable(varName, newDataList);
 
-            // 6. 透過官方 API 進行全量安全同步
-            let targetId = currentMesId;
-            if ((targetId === null || isNaN(targetId)) && window.frameElement) {
-                const mesNode = window.frameElement.closest('.mes');
-                if (mesNode) targetId = parseInt(mesNode.getAttribute('mesid'));
-            }
-
-            if (targetId !== null && !isNaN(targetId) && window.parent) {
-                try {
-                    const stateV2Api = window.parent.LWB_StateV2;
-                    if (stateV2Api && typeof stateV2Api.applyText === 'function') {
-                        // 防呆：確保真的有拿到完整文本才執行，避免清空變量
-                        if (finalFullText && typeof finalFullText === 'string' && finalFullText.trim() !== '') {
-                            console.log(`[RPG] 呼叫 LWB_StateV2.applyText 注入完整文本 (樓層: ${targetId})`);
-                            // 將包含所有變量（含 HP、Quest 等）的完整文本餵給插件，保證 100% 狀態一致
-                            await stateV2Api.applyText(finalFullText, { floor: targetId });
-                            console.log("[RPG] 變量底層同步完成！");
-                        } else {
-                            console.warn("[RPG] 未能獲取 finalFullText，取消變量同步以保護現有狀態。");
-                        }
-                    }
-                } catch(e) {
-                    console.error("[RPG] 變量同步過程發生錯誤:", e);
-                }
-            }
-
-            // 7. 延遲後重新渲染前端 UI
+            // 6. 延遲後重新渲染前端 UI
             await window.renderQuests();
 
         } catch (e) {
@@ -3098,12 +3773,86 @@ let isGenerating = false;
             return;
         }
 
+        // === [新增] 跨列表防呆：若「进行中」某任务與「已完成」或「已失败」完全一致，代表歸檔時出錯，自動從「进行中」刪除 ===
+        let cleanedQuestArray = questArray; // 預設沿用原陣列，不改動
+        if (currentFilter === '进行中') {
+            try {
+                const [completedRaw, failedRaw] = await Promise.all([
+                    Promise.resolve(getVariable(`世界.任务.${currentCategory}.已完成`)).catch(() => null),
+                    Promise.resolve(getVariable(`世界.任务.${currentCategory}.已失败`)).catch(() => null)
+                ]);
+
+                const archivedKeys = new Set();
+                for (const raw of [completedRaw, failedRaw]) {
+                    if (!raw || raw === '0') continue;
+                    let list = [];
+                    if (typeof raw === 'object') list = Object.values(raw);
+                    else if (typeof raw === 'string' && raw.trim()) {
+                        try { list = JSON.parse(raw); } catch(e) {}
+                    }
+                    if (!Array.isArray(list)) list = Object.values(list || {});
+                    list.forEach(q => {
+                        const key = `${q["任务名"] || ""}__${q["时间"] || ""}`;
+                        if (key !== "__") archivedKeys.add(key);
+                    });
+                }
+
+                if (archivedKeys.size > 0) {
+                    const filtered = questArray.filter(q => {
+                        const key = `${q["任务名"] || ""}__${q["时间"] || ""}`;
+                        if (archivedKeys.has(key)) {
+                            console.warn(`[RPG Quest] 跨列表防呆：「${q["任务名"]}」(${q["时间"]}) 已存在於歸檔中，從進行中移除`);
+                            return false;
+                        }
+                        return true;
+                    });
+                    if (filtered.length !== questArray.length) {
+                        console.log(`[RPG Quest] 跨列表防呆移除 ${questArray.length - filtered.length} 筆，正在寫回進行中...`);
+                        cleanedQuestArray = filtered;
+                        try {
+                            setGlobalVariable(varName, cleanedQuestArray);
+                            console.log(`[RPG Quest] 跨列表防呆寫回完成。`);
+                        } catch(e) {
+                            console.error("[RPG Quest] 跨列表防呆寫回失敗:", e);
+                        }
+                    }
+                }
+            } catch(e) {
+                console.error("[RPG Quest] 跨列表防呆比對失敗:", e);
+            }
+        }
+        // === 跨列表防呆結束 ===
+
+        // === [現有] 同列表內重複任務自動修復：偵測到重複時，自動將去重後的乾淨陣列寫回變量 ===
+        const seenKeys = new Set();
+        const deduplicatedArray = cleanedQuestArray.filter(quest => {
+            const key = `${quest["任务名"] || ""}__${quest["时间"] || ""}`;
+            if (seenKeys.has(key)) {
+                console.warn(`[RPG Quest] 偵測到重複任務: 「${quest["任务名"]}」(${quest["时间"]})`);
+                return false;
+            }
+            seenKeys.add(key);
+            return true;
+        });
+
+        // 如果過濾前後長度不同，代表確實有重複，觸發自動寫回
+        if (deduplicatedArray.length !== cleanedQuestArray.length) {
+            console.log(`[RPG Quest] 發現 ${cleanedQuestArray.length - deduplicatedArray.length} 筆同列表重複，正在自動修復並寫回變量...`);
+            try {
+                setGlobalVariable(varName, deduplicatedArray);
+                console.log(`[RPG Quest] 重複任務自動修復完成，變量已同步。`);
+            } catch(e) {
+                console.error("[RPG Quest] 自動修復寫回時發生錯誤:", e);
+            }
+        }
+        // === 去重結束 ===
+
         const fragment = document.createDocumentFragment();
 
-        questArray.forEach((quest, index) => {
+        deduplicatedArray.forEach((quest, index) => {
             let statusClass = 'status-active';
             if (currentFilter === '已完成') statusClass = 'status-completed';
-            if (currentFilter === '已失敗') statusClass = 'status-failed';
+            if (currentFilter === '已失败') statusClass = 'status-failed';
 
             let qName = quest["任务名"] || "未知任务";
             let qDesc = quest["描述"] || "暂无描述";
@@ -3121,7 +3870,7 @@ let isGenerating = false;
             card.style.animationDelay = `${index * 0.05}s`;
 
             // 判斷是否為可刪除狀態
-            let isDeletable = (currentFilter === '已完成' || currentFilter === '已失敗');
+            let isDeletable = (currentFilter === '已完成' || currentFilter === '已失败');
 
             // [新增] 當日保護邏輯：若任務有紀錄時間，且時間等於當前遊戲日期，則強制禁止刪除
             // window.__LAST_CHECKED_DATE 是在 syncGameState 中同步的 "YYYY-MM-DD" 字串
@@ -3136,7 +3885,7 @@ let isGenerating = false;
                     <div class="q-title">
                         ${qName}
                         ${currentFilter === '已完成' ? '<span>✔</span>' : ''}
-                        ${currentFilter === '已失敗' ? '<span>✖</span>' : ''}
+                        ${currentFilter === '已失败' ? '<span>✖</span>' : ''}
                     </div>
                     ${isDeletable ? 
                         `<div class="quest-delete-btn" title="刪除任務" onclick="deleteQuest('${qName.replace(/'/g, "\\'")}', '${currentCategory}', '${currentFilter}')">✖</div>` : ''}
@@ -3180,7 +3929,7 @@ let isGenerating = false;
             // 兼容中英文判斷
             if(filter === '进行中' && opt.innerText.includes('Active')) opt.classList.add('active');
             if(filter === '已完成' && opt.innerText.includes('Completed')) opt.classList.add('active');
-            if(filter === '已失敗' && opt.innerText.includes('Failed')) opt.classList.add('active');
+            if(filter === '已失败' && opt.innerText.includes('Failed')) opt.classList.add('active');
         });
         window.renderQuests();
     }
@@ -3205,7 +3954,7 @@ let isGenerating = false;
             
             // 2. 組合變數名稱並抓取當前完整資料
             const varName = `世界.储物袋.${category}`;
-            const result = await STscript(`/xbgetvar ${varName}`);
+            const result = getVariable(varName);
             
             let itemList = {};
             
@@ -3224,37 +3973,10 @@ let isGenerating = false;
                 }
             }
 
-            // 4. 序列化為 JSON 字串
-            const jsonStr = JSON.stringify(itemList);
+            // 4. 透過酒館助手 API 寫回變量
+            setGlobalVariable(varName, itemList);
 
-            // 5. 透過 RPGBridge 寫入，並獲取修改後的完整文本
-            const finalFullText = await window.RPGBridge.updateMessageContent(null, [
-                { varName: varName, type: 'set', value: jsonStr }
-            ]);
-
-            // 6. 透過官方 API 進行全量安全同步
-            let targetId = currentMesId;
-            if ((targetId === null || isNaN(targetId)) && window.frameElement) {
-                const mesNode = window.frameElement.closest('.mes');
-                if (mesNode) targetId = parseInt(mesNode.getAttribute('mesid'));
-            }
-
-            if (targetId !== null && !isNaN(targetId) && window.parent) {
-                try {
-                    const stateV2Api = window.parent.LWB_StateV2;
-                    if (stateV2Api && typeof stateV2Api.applyText === 'function') {
-                        if (finalFullText && typeof finalFullText === 'string' && finalFullText.trim() !== '') {
-                            console.log(`[RPG] 呼叫 LWB_StateV2.applyText 注入完整文本 (樓層: ${targetId})`);
-                            await stateV2Api.applyText(finalFullText, { floor: targetId });
-                            console.log("[RPG] 物品變量底層同步完成！");
-                        }
-                    }
-                } catch(e) {
-                    console.error("[RPG] 物品同步過程發生錯誤:", e);
-                }
-            }
-
-            // 7. 重新渲染前端 UI
+            // 5. 重新渲染前端 UI
             await window.renderInventory();
 
         } catch (e) {
@@ -3267,7 +3989,43 @@ let isGenerating = false;
 
 
 
+    // === [新增] State 查看面板邏輯 ===
 
+// 從原始字串提取 <state> 內容
+function extractStateContent(rawString) {
+    if (!rawString) return null;
+    // 1. 先移除思考標籤
+    let cleaned = rawString
+        .replace(/<thinking>[\s\S]*?<\/thinking>/gi, '')
+        .replace(/<think>[\s\S]*?<\/think>/gi, '')
+        .replace(/\[metacognition\][\s\S]*?\[\/metacognition\]/gi, '');
+    // 2. 提取第一個 <state>...</state>
+    const match = cleaned.match(/<state>([\s\S]*?)<\/state>/i);
+    return match ? match[1].trim() : null;
+}
+
+function updateStateViewer(content) {
+    const panel = document.getElementById('state-viewer-panel');
+    const body  = document.getElementById('state-viewer-body');
+    if (!panel || !body) return;
+    if (content) {
+        // 只在內容真的改變時才更新（避免不必要的 DOM 操作）
+        if (body.textContent !== content) {
+            body.textContent = content;
+        }
+        panel.style.display = 'block';
+    } else {
+        panel.style.display = 'none';
+    }
+}
+
+window.toggleStateViewer = function() {
+    const body  = document.getElementById('state-viewer-body');
+    const arrow = document.getElementById('state-viewer-arrow');
+    if (!body) return;
+    const isNowOpen = body.classList.toggle('expanded');
+    if (arrow) arrow.classList.toggle('open', isNowOpen);
+};
 
 
     // ==========================================
@@ -3283,46 +4041,51 @@ let isGenerating = false;
         if (!grid) return;
         
         grid.innerHTML = '';
-
-        // --- A. 讀取金幣 ---
+        
+        // 提前定義變數名稱
+        const varName = `世界.储物袋.${currentBagCategory}`;
+        
+        // === [修改] 使用 Promise.all 並行請求，並加上 catch 獨立處理錯誤 ===
+        let rawMoney = "0";
+        let result = null;
+        
         try {
-            // 變數路徑範例：世界.储物袋.货币
-            const rawMoney = await STscript('/xbgetvar 世界.储物袋.货币');
-            // 如果讀不到或為空，預設為 0
-            let moneyVal = parseInt(rawMoney);
-            if (isNaN(moneyVal)) moneyVal = 0;
-            
-            if (currencyEl) currencyEl.innerText = moneyVal.toLocaleString();
-        } catch(e) {
-            console.error("金幣讀取失敗", e);
-            if (currencyEl) currencyEl.innerText = "0";
+            [rawMoney, result] = await Promise.all([
+                Promise.resolve(getVariable('世界.储物袋.货币')).catch(e => {
+                    console.error("金幣讀取失敗", e);
+                    return "0";
+                }),
+                Promise.resolve(getVariable(varName)).catch(e => {
+                    console.error("背包數據讀取失敗:", e);
+                    return null;
+                })
+            ]);
+        } catch (e) {
+            console.error("背包並行讀取發生預期外錯誤:", e);
         }
 
-        // --- B. 讀取物品列表 ---
-        let itemList = {}; // 預設為空物件
-        const varName = `世界.储物袋.${currentBagCategory}`;
+        // --- A. 處理金幣 ---
+        let moneyVal = parseInt(rawMoney);
+        if (isNaN(moneyVal)) moneyVal = 0;
+        if (currencyEl) currencyEl.innerText = moneyVal.toLocaleString();
 
-        try {
-            const result = await STscript(`/xbgetvar ${varName}`);
-            console.log(`[Bag Debug] 讀取 ${varName}:`, result, typeof result);
-
-            if (!result || result === '0') {
-                // 空
-            } 
-            else if (typeof result === 'object') {
-                itemList = result;
-            } 
-            else if (typeof result === 'string') {
-                if (result.trim() !== '') {
-                    try {
-                         itemList = JSON.parse(result);
-                    } catch(jsonErr) {
-                         console.error("背包 JSON 解析失敗:", result);
-                    }
+        // --- B. 處理物品列表 ---
+        let itemList = {};
+        
+        if (!result || result === '0') {
+            // 空
+        } 
+        else if (typeof result === 'object') {
+            itemList = result;
+        } 
+        else if (typeof result === 'string') {
+            if (result.trim() !== '') {
+                try {
+                     itemList = JSON.parse(result);
+                } catch(jsonErr) {
+                     console.error("背包 JSON 解析失敗:", result);
                 }
             }
-        } catch(e) {
-            console.error("背包數據讀取失敗:", e);
         }
 
         // --- C. 渲染卡片 ---
@@ -3381,11 +4144,6 @@ let isGenerating = false;
         
         // 一次性掛載到真實 DOM
         grid.appendChild(fragment);
-        
-        // 空狀態處理
-        if (itemsToRender.length === 0) {
-            grid.innerHTML = '<div class="empty-state">- 背包空空如也 -</div>';
-        }
     }
 
     // 2. 切換分類函數
@@ -3403,12 +4161,16 @@ let isGenerating = false;
     // ============================================================
     // PART 1: 全域通訊核心 (只負責同步按鈕狀態)
     // ============================================================
-    const topWindow = window.parent || window;
-    
+    const topWindow = window;
+
+
+
     // 初始化全域狀態變數 (如果不存在的話)
     if (!topWindow.RPG_GLOBAL_STATE) {
         topWindow.RPG_GLOBAL_STATE = {
-            isMuted: true 
+            isMuted: true,
+            theme: 'dark',       // 新增
+            imageHost: 'imgchest'  // 新增
         };
     }
 
@@ -3423,6 +4185,15 @@ let isGenerating = false;
         });
         topWindow.dispatchEvent(event);
     };
+
+    // 從全域狀態讀取並立刻套用，避免閃爍
+    const _gs = topWindow.RPG_GLOBAL_STATE;
+    if (_gs.theme === 'light') {
+        document.querySelector('.rpg-v7-root')?.classList.add('light-mode');
+    }
+
+    let IMAGE_HOST = topWindow.RPG_GLOBAL_STATE?.imageHost || 'imgchest';
+
 
     // ============================================================
     // PART 2: 局部變數與資源
@@ -3443,27 +4214,31 @@ let isGenerating = false;
 
 
     const extractContent = (input) => {
-        // 1. 確保轉為字串
-        const str = (typeof input === 'object' && input !== null) ?
-            Object.values(input)[0] : String(input);
-        
-        // 2. 先抓出 [RPG] 標籤內的範圍
-        const match = str.match(/(?:\[|<)\s*RPG\s*(?:\]|>)([\s\S]*?)(?:(?:\[|<)\/\s*RPG\s*(?:\]|>)|$)/i);
-        let content = (match ? match[1] : str).trim();
+    const str = (typeof input === 'object' && input !== null) ? Object.values(input)[0] : String(input);
 
-        // 3. [關鍵] 移除模擬思考區塊
-        // 原理：刪除所有 "HTML註釋" 格式的文字
-        
-        content = content.replace(/<!--[\s\S]*?-->/g, '');
+    let content = str;
+    // 先切掉字串開頭到思考結尾標籤之間的所有內容
+    content = content.replace(/^[\s\S]*?<\/thinking>/i, '');
+    content = content.replace(/^[\s\S]*?<\/think>/i, '');
+    content = content.replace(/^[\s\S]*?\[\/metacognition\]/i, '');
 
+    // 再清掉完整包裹的思考標籤
+    content = content.replace(/<thinking>[\s\S]*?<\/thinking>/g, '');
+    content = content.replace(/<think>[\s\S]*?<\/think>/g, '');
+    content = content.replace(/\[metacognition\][\s\S]*?\[\/metacognition\]/g, ''); // ← 修正字元集 bug
+    content = content.replace(/<!--[\s\S]*?-->/g, '');
 
-        // 4. [額外保險] 如果有的模型是用 <thinking>...</thinking> 這種格式，可以加這行：
-        content = content.replace(/<thinking>[\s\S]*?<\/thinking>/g, '');
-        content = content.replace(/<think>[\s\S]*?<\/think>/g, '');
-        content = content.replace(/[metacognition][\s\S]*?[\/metacognition]/g, '');
-
-        return content.trim();
-    };
+    // ✅ 開頭標籤加回 ?（可選），與舊版一致
+    const strictMatch = content.match(
+    /(?:\[|<)\s*RPG\s*(?:\]|>)([\s\S]*?)(?:\[|<)\/\s*RPG\s*(?:\]|>)/i
+);
+    const match = strictMatch || content.match(
+    /(?:(?:\[|<)\s*RPG\s*(?:\]|>))?([\s\S]*?)(?:(?:\[|<)\/\s*RPG\s*(?:\]|>)|$)/i
+);
+    content = (match ? match[1] : content).trim();
+    content = content.replace(/^\s*(?:\[|<)\s*RPG\s*(?:\]|>)\s*/i, '').trim();
+    return content;
+};
 
     // === [最終修正版] 文本格式化函數 ===
     const formatText = (text) => {
@@ -3548,23 +4323,23 @@ let isGenerating = false;
         });
 
         if (currentPageHTML) pages.push(currentPageHTML);
-        return pages.length > 0 ? pages : ["<p>內容載入中...</p>"];
+        return pages.length > 0 ? pages : ["<p class='placeholder-text'>谱写崭新篇章...</p>"];
     };
 
     const ICON_NOTE = `<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>`;
     const ICON_MUTE = `<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73 4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>`;
 
     const mapAssets = {
-        "自由都市": "https://cdn.imgchest.com/files/d94dd2953c9a.png", 
-        "耶特米王国": "https://cdn.imgchest.com/files/a910c07c3eee.png",
-        "玛奇共和国": "https://cdn.imgchest.com/files/6fcf2f4efbe4.png",
-        "艾赫罗曼帝国": "https://cdn.imgchest.com/files/7ef06cbf8c90.png",
-        "圣教国": "https://cdn.imgchest.com/files/53378072d673.png",
-        "精灵之森": "https://cdn.imgchest.com/files/48f1e91e2233.png",
-        "龙骸雪原": "https://cdn.imgchest.com/files/7535c0ecc0fa.png",
-        "魔界": "https://cdn.imgchest.com/files/d13e0c26457b.png",
-        "迷途海": "https://cdn.imgchest.com/files/ade8b93ec9a6.png",
-        "提费尔山脉": "https://cdn.imgchest.com/files/5b84e01f701b.png"
+        "自由都市":    img("https://cdn.imgchest.com/files/d94dd2953c9a.png", "https://files.catbox.moe/grfgvi.png"),
+        "耶特米王国":  img("https://cdn.imgchest.com/files/a910c07c3eee.png", "https://files.catbox.moe/kh1s5w.png"),
+        "玛奇共和国":  img("https://cdn.imgchest.com/files/6fcf2f4efbe4.png", "https://files.catbox.moe/t95y1c.png"),
+        "艾赫罗曼帝国": img("https://cdn.imgchest.com/files/7ef06cbf8c90.png", "https://files.catbox.moe/wnt9qn.png"),
+        "圣教国":      img("https://cdn.imgchest.com/files/53378072d673.png", "https://files.catbox.moe/26d896.png"),
+        "精灵之森":    img("https://cdn.imgchest.com/files/48f1e91e2233.png", "https://files.catbox.moe/l7k77f.png"),
+        "龙骸雪原":    img("https://cdn.imgchest.com/files/7535c0ecc0fa.png", "https://files.catbox.moe/dl1t9l.png"),
+        "魔界":        img("https://cdn.imgchest.com/files/d13e0c26457b.png", "https://files.catbox.moe/6enakz.png"),
+        "迷途海":      img("https://cdn.imgchest.com/files/ade8b93ec9a6.png", "https://files.catbox.moe/354vjx.png"),
+        "提费尔山脉":  img("https://cdn.imgchest.com/files/5b84e01f701b.png", "https://files.catbox.moe/rnvj1o.png")
     };
     
     const mapMusic = {
@@ -3585,38 +4360,38 @@ let isGenerating = false;
 
 
     const iconAssets = {
-    "塔": "https://cdn.imgchest.com/files/6063d7f4cdf9.png",
-    "迷1": "https://cdn.imgchest.com/files/fd4abadeeb61.png",
-    "城1": "https://cdn.imgchest.com/files/03e44fed1d2e.png",
-    "城2": "https://cdn.imgchest.com/files/65e9c22c59d5.png",
-    "城3": "https://cdn.imgchest.com/files/cf66482f7082.png",
-    "村1": "https://cdn.imgchest.com/files/3c87b4d338e6.png",
-    "村2": "https://cdn.imgchest.com/files/f4b7baba374c.png",
-    "迷2": "https://cdn.imgchest.com/files/3686c569a0d7.png",
-    "城4": "https://cdn.imgchest.com/files/d4d920ec0569.png",
-    "城5": "https://cdn.imgchest.com/files/94263a3704eb.png",
-    "魔1": "https://cdn.imgchest.com/files/f9cef6370775.png",
-    "村4": "https://cdn.imgchest.com/files/277d1ac727fa.png",
-    "城6": "https://cdn.imgchest.com/files/3a5eaa2a24ab.png",
-    "城7": "https://cdn.imgchest.com/files/6f0013e8bae8.png",
-    "城8": "https://cdn.imgchest.com/files/5e4871222439.png",
-    "城9": "https://cdn.imgchest.com/files/54529b3b99cc.png",
-    "城10": "https://cdn.imgchest.com/files/56e2a4f6bea1.png",
-    "城11": "https://cdn.imgchest.com/files/8f2deef72e42.png",
-    "迷3": "https://cdn.imgchest.com/files/d3b6fdf64f57.png",
-    "防1": "https://cdn.imgchest.com/files/cc75d5ecbec1.png",
-    "城12": "https://cdn.imgchest.com/files/118a66662fd5.png",
-    "村3": "https://cdn.imgchest.com/files/0fd649c7f30a.png",
-    "城13": "https://cdn.imgchest.com/files/6e545f790919.png",
-    "防2": "https://cdn.imgchest.com/files/65c5f46974bd.png",
-    "迷4": "https://cdn.imgchest.com/files/6c3920a5bb13.png",
-    "防3": "https://cdn.imgchest.com/files/24735267fe8b.png",
-    "迷5": "https://cdn.imgchest.com/files/895c2299c578.png",
-    "迷6": "https://cdn.imgchest.com/files/9b0eebd39da3.png",
-    "魔2": "https://cdn.imgchest.com/files/d2fede53a025.png",
-    "魔3": "https://cdn.imgchest.com/files/3d11b75bbdc1.png",
-    "魔4": "https://cdn.imgchest.com/files/aa2ba9c97410.png",
-    "防4": "https://cdn.imgchest.com/files/0d173c009f41.png"
+    "塔":   img("https://cdn.imgchest.com/files/6063d7f4cdf9.png", "https://files.catbox.moe/trm1ru.png"),
+    "迷1":  img("https://cdn.imgchest.com/files/fd4abadeeb61.png", "https://files.catbox.moe/hdbd3z.png"),
+    "城1":  img("https://cdn.imgchest.com/files/03e44fed1d2e.png", "https://files.catbox.moe/8siw5z.png"),
+    "城2":  img("https://cdn.imgchest.com/files/65e9c22c59d5.png", "https://files.catbox.moe/bcqh9b.png"),
+    "城3":  img("https://cdn.imgchest.com/files/cf66482f7082.png", "https://files.catbox.moe/d9bkuz.png"),
+    "村1":  img("https://cdn.imgchest.com/files/3c87b4d338e6.png", "https://files.catbox.moe/rpneqw.png"),
+    "村2":  img("https://cdn.imgchest.com/files/f4b7baba374c.png", "https://files.catbox.moe/0o9948.png"),
+    "迷2":  img("https://cdn.imgchest.com/files/3686c569a0d7.png", "https://files.catbox.moe/sellii.png"),
+    "城4":  img("https://cdn.imgchest.com/files/d4d920ec0569.png", "https://files.catbox.moe/n5wit8.png"),
+    "城5":  img("https://cdn.imgchest.com/files/94263a3704eb.png", "https://files.catbox.moe/735o4f.png"),
+    "魔1":  img("https://cdn.imgchest.com/files/f9cef6370775.png", "https://files.catbox.moe/tpgaox.png"),
+    "村4":  img("https://cdn.imgchest.com/files/277d1ac727fa.png", "https://files.catbox.moe/lxkbpd.png"),
+    "城6":  img("https://cdn.imgchest.com/files/3a5eaa2a24ab.png", "https://files.catbox.moe/f7x46x.png"),
+    "城7":  img("https://cdn.imgchest.com/files/6f0013e8bae8.png", "https://files.catbox.moe/6iayeo.png"),
+    "城8":  img("https://cdn.imgchest.com/files/5e4871222439.png", "https://files.catbox.moe/wgdv5a.png"),
+    "城9":  img("https://cdn.imgchest.com/files/54529b3b99cc.png", "https://files.catbox.moe/dgg468.png"),
+    "城10": img("https://cdn.imgchest.com/files/56e2a4f6bea1.png", "https://files.catbox.moe/z50il2.png"),
+    "城11": img("https://cdn.imgchest.com/files/8f2deef72e42.png", "https://files.catbox.moe/1ae63m.png"),
+    "迷3":  img("https://cdn.imgchest.com/files/d3b6fdf64f57.png", "https://files.catbox.moe/1nej3y.png"),
+    "防1":  img("https://cdn.imgchest.com/files/cc75d5ecbec1.png", "https://files.catbox.moe/bhz86j.png"),
+    "城12": img("https://cdn.imgchest.com/files/118a66662fd5.png", "https://files.catbox.moe/cez6d3.png"),
+    "村3":  img("https://cdn.imgchest.com/files/0fd649c7f30a.png", "https://files.catbox.moe/exaer6.png"),
+    "城13": img("https://cdn.imgchest.com/files/6e545f790919.png", "https://files.catbox.moe/s087su.png"),
+    "防2":  img("https://cdn.imgchest.com/files/65c5f46974bd.png", "https://files.catbox.moe/0eobui.png"),
+    "迷4":  img("https://cdn.imgchest.com/files/6c3920a5bb13.png", "https://files.catbox.moe/pyjbqg.png"),
+    "防3":  img("https://cdn.imgchest.com/files/24735267fe8b.png", "https://files.catbox.moe/yox8py.png"),
+    "迷5":  img("https://cdn.imgchest.com/files/895c2299c578.png", "https://files.catbox.moe/y7zgg3.png"),
+    "迷6":  img("https://cdn.imgchest.com/files/9b0eebd39da3.png", "https://files.catbox.moe/74gxbc.png"),
+    "魔2":  img("https://cdn.imgchest.com/files/d2fede53a025.png", "https://files.catbox.moe/ay9x99.png"),
+    "魔3":  img("https://cdn.imgchest.com/files/3d11b75bbdc1.png", "https://files.catbox.moe/0vqb01.png"),
+    "魔4":  img("https://cdn.imgchest.com/files/aa2ba9c97410.png", "https://files.catbox.moe/kyxb58.png"),
+    "防4":  img("https://cdn.imgchest.com/files/0d173c009f41.png", "https://files.catbox.moe/5u4kf2.png")
     };
     // === [新增] 地圖座標數據庫 ===
     // x: 左邊距離(%), y: 頂部距離(%)
@@ -3651,7 +4426,7 @@ let isGenerating = false;
         { name: "赤灰丘陵", x: 54.3, y: 64.6, desc: "多尔・萨姆北侧过渡的丘陵地带，盛产铁矿。" },
         { name: "盖特河谷", x: 37.1, y: 73.6, desc: "河流的交会加上肥沃的土壤，使这里成为当之无愧的世界粮仓。" },
         { name: "杜尔加特", x: 39.8, y: 47.5, icon: "防2", imgWidth: "6%", desc: "提费尔山脉中段东侧的要塞都市，镇守与帝国的官方指定通道双王山道。" },
-        { name: "凯拉梅", x: 60.3, y: 43.2, icon: "城13", desc: "秩序与工艺的制造业之都，铁与煤的交会之地。" },
+        { name: "凯拉梅", x: 60.3, y: 43.2, offsetY: "-1%", icon: "城13", desc: "秩序与工艺的制造业之都，铁与煤的交会之地。" },
         { name: "黑岩台地", x: 76.4, y: 36.5, desc: "王国主要的煤矿产区，已能受到绯月古堡影响，天色地貌都很昏暗。" },
         { name: "珍珠海岸", x: 86, y: 67.6, desc: "风平浪静的沿岸沙滩，如蜜海迷人的景致和安稳的环境，让这里成为世界着名的休闲胜地。" },
         { name: "亡语断崖", x: 63.7, y: 14.7, desc: "顶级的林业地，受绯月古堡影响严重，不仅气候极端，还有亡灵生物出没。" },
@@ -3664,9 +4439,9 @@ let isGenerating = false;
             offsetY: "0%",  
             imgWidth: null,  
             desc: {
-                1: "久攻不陷的数个迷宫之一。", 
-                2: "久攻不陷的数个迷宫之一。为了羞耻的系统任务，我来到这里，寻找那个可以成为我母亲的女人！",           
-                3: "久攻不陷的数个迷宫之一。被我攻略（？）后只剩下空壳的无主之城。"   
+                1: "久攻不陷的三大迷宫之一。一座笼罩在永夜之下的宏伟哥特式城市。", 
+                2: "久攻不陷的三大迷宫之一。这座宏伟哥特式城市里，有可以成为我母亲的女人！",           
+                3: "久攻不陷的三大迷宫之一。被我攻略（？）后只剩下空壳的无主之城。"   
             }
         },
     ],
@@ -3676,10 +4451,10 @@ let isGenerating = false;
         { name: "康普瑞克之手", x: 61.3, y: 33.6, desc: "地貌多变的破碎之地，丘陵、台地、平原细碎交错。" },
         { name: "梭鲁因", x: 55.7, y: 55.6, icon: "城5", offsetY: "-1%", imgWidth: "8.5%", desc: "加工业基地与物流中心，产线如潮水般永不停歇" },
         { name: "翠恩港", x: 73.2, y: 59.0, desc: "共和国东岸中段突出的一角，从海上远远眺望，能看到此处隐现于树海之中" },
-        { name: "诺托", x: 50.3, y: 79.1, icon: "城13", desc: "碧帛树海的入口，广袤树海的植物中能提取带有魔力的高品质丝线，是共和国魔导制品的重要原料。" },
+        { name: "诺托", x: 50.3, y: 79.1, offsetY: "-1%", icon: "城13", desc: "碧帛树海的入口，广袤树海的植物中能提取带有魔力的高品质丝线，是共和国魔导制品的重要原料。" },
         { name: "泽费洛", x: 39.2, y: 25.4, icon: "城9", desc: "共和国的能源心脏，利用充足日照发展的光魔法的晶体都市。" },
         { name: "贝瑞托", x: 75.3, y: 20.1, icon: "城8", desc: "共和国的边境口岸与陆上门户，和耶特米王国、圣教国的交界地带，势力错综复杂" },
-        { name: "南拜伦防线", x: 37.2, y: 69.4, desc: "依讬懸崖的防线南段，俯瞰着另一侧魔界的瘴毒林" },
+        { name: "南拜伦防线", x: 37.2, y: 69.4, icon: "防1", desc: "依讬懸崖的防线南段，俯瞰着另一侧魔界的瘴毒林" },
         { 
             name: "巧织奇境", 
             x: 50.7, y: 91.1, 
@@ -3780,10 +4555,9 @@ let isGenerating = false;
             offsetY: "-1.5%",  
             imgWidth: null,  
             desc: {
-                0: "久攻不陷的数个迷宫之一，雪原本就不是正常人能探索的，遑论这尽头之处。", 
-                1: "迷宫内部的环境反而比外面好多了……我得在这无尽藏的书海里，找到我的新母亲。",
-                2: "不断向上攀爬后，顶层的书房里等待着我新的小妈妈。",           
-                3: "被攻略后仍屹立在雪原深处的书库，米拉露恩似乎在哪里都能拿出里面的书……这里实在很难抵达，希望她不要哪天说想回老家看看。"   
+                1: "久攻不陷的三大迷宫之一，雪原本就不是正常人能探索的，遑论这尽头之处。", 
+                2: "久攻不陷的三大迷宫之一，迷宫内部的环境反而比外面好多了……我得在这无尽藏的书海里，找到我的小妈妈。",         
+                3: "被攻略后仍屹立在雪原深处的书库，米拉露恩似乎在哪里都能拿出里面的书……"   
             }
         },
         { name: "长牙部落", x: 37.1, y: 26.6, icon: "村4", imgWidth: "8.5%", offsetY: "0%", desc: "龙骸雪原主要的亚人部落群之一，与帝国中北边境关系相对温和。" },
@@ -3844,7 +4618,7 @@ let isGenerating = false;
         },
     ],
     "迷途海": [  
-        { name: "巨龙之吻", x: 77.3, y: 19.7, desc: "凛冬角、帝国与王国间的寒冷海湾。" },
+        { name: "巨龙之吻", x: 77.3, y: 19.7, desc: "终年被冰雪与寒风笼罩的海域，漂浮着山峦般巨大的冰川。" },
         { 
             name: "樱阙", 
             x: 97.8, y: 21.2, 
@@ -3863,7 +4637,7 @@ let isGenerating = false;
                 3: "迷途海北方空中飘着的天上宫阙。穗不在后，主动隐藏了身姿，除了我们以外不会再有人能看到了它吧。"   
             }
         },
-        { name: "碎星海", x: 89.4, y: 85.6, desc: "锈锚湾外侧的水域，沿岸的灯塔守望着往来的船只。" },
+        { name: "碎星海", x: 84, y: 85.6, desc: "锈锚湾外侧、散发着热带气息与神秘幽光的浅海区域。" },
         { name: "如蜜海", x: 94.4, y: 48.8, desc: "珍珠海岸外侧的海域，水流稳定、也没有大型水栖魔物的踪迹，作为度假胜地在富裕人士间很有人气。" },
         { name: "柏鲁克海峡", x: 58.2, y: 79.3, desc: "共和国与自由都市间的狭窄海域，海面上永远千帆竞渡。" },
     ],
@@ -3874,33 +4648,42 @@ let isGenerating = false;
     ],
 };
 
+
+
+
     // === [新增] HUD 資源配置 ===
     // 請在此替換您的三張圖片連結
     const hudAssets = {
-        "青铜种": "https://cdn.imgchest.com/files/acf2e0cf0fe6.png", 
-        "白银种": "https://cdn.imgchest.com/files/c4460e478611.png", 
-        "黄金种": "https://cdn.imgchest.com/files/a5e696f886f8.png"  
+        "青铜种": img("https://cdn.imgchest.com/files/acf2e0cf0fe6.png", "https://files.catbox.moe/e9suxt.png"),
+        "白银种": img("https://cdn.imgchest.com/files/c4460e478611.png", "https://files.catbox.moe/76ohmc.png"),
+        "黄金种": img("https://cdn.imgchest.com/files/a5e696f886f8.png", "https://files.catbox.moe/9nqyae.png")
     };
     // 預設樣式
     const defaultHudStyle = "青铜种";
 
     const charAssets = {
-        "爱娜": "https://cdn.imgchest.com/files/a3f878473340.png",
-        "琳": "https://cdn.imgchest.com/files/9854e1f8d364.png", 
-        "米拉露恩": "https://cdn.imgchest.com/files/ba1a4dd4c6a6.png",
-        "黛芬妮": "https://cdn.imgchest.com/files/31bc075de478.png",
-        "芙蕾嘉": "https://cdn.imgchest.com/files/d1d1ed8ba801.png",
-        "穗": "https://cdn.imgchest.com/files/d4c5bca4d565.png",
-        "莉迪娅": "https://cdn.imgchest.com/files/03bc2190501c.png",
-        "璐法": "https://cdn.imgchest.com/files/8da43bf94c9b.png",
-        "奈芙蒂": "https://cdn.imgchest.com/files/dc073a4409e4.png"
+        "爱娜":    img("https://cdn.imgchest.com/files/a3f878473340.png", "https://files.catbox.moe/nl9id1.png"),
+        "琳":      img("https://cdn.imgchest.com/files/9854e1f8d364.png", "https://files.catbox.moe/8d4udg.png"),
+        "米拉露恩": img("https://cdn.imgchest.com/files/ba1a4dd4c6a6.png", "https://files.catbox.moe/yhle88.png"),
+        "黛芬妮":  img("https://cdn.imgchest.com/files/31bc075de478.png", "https://files.catbox.moe/on22kw.png"),
+        "芙蕾嘉":  img("https://cdn.imgchest.com/files/d1d1ed8ba801.png", "https://files.catbox.moe/tufmer.png"),
+        "穗":      img("https://cdn.imgchest.com/files/d4c5bca4d565.png", "https://files.catbox.moe/5kf1wi.png"),
+        "莉迪娅":  img("https://cdn.imgchest.com/files/03bc2190501c.png", "https://files.catbox.moe/fo970o.png"),
+        "璐法":    img("https://cdn.imgchest.com/files/8da43bf94c9b.png", "https://files.catbox.moe/1gceje.png"),
+        "奈芙蒂":  img("https://cdn.imgchest.com/files/dc073a4409e4.png", "https://files.catbox.moe/ezwzmw.png")
     };
 
     // ============================================================
     // PART 3: UI 渲染與同步邏輯
     // ============================================================
     const refreshUI = () => {
+        if (!els.display) {
+        els.display = document.querySelector('.rpg-v7-root .text-display');
+        els.pageNum = document.querySelector('.rpg-v7-root .page-num');
+        els.prevBtn = document.querySelector('.rpg-v7-root .btn-prev');
+        els.nextBtn = document.querySelector('.rpg-v7-root .btn-next');
         if (!els.display) return;
+    }
         els.display.classList.remove('show-drop-cap');
 
         if (state.isPaged) {
@@ -3914,9 +4697,9 @@ let isGenerating = false;
             els.pageNum.innerText = `${state.currPage + 1}/${state.pages.length}`;
             updateButtons();
             
-            if (state.currPage === 0) {
-                els.display.classList.add('show-drop-cap');
-            }
+            if (state.currPage === 0 && state.rawText && state.rawText.trim()) {
+    els.display.classList.add('show-drop-cap');
+}
         } else {
             // --- 全文模式 (同樣導入快取機制) ---
             els.display.innerHTML = state.rawText
@@ -3968,23 +4751,22 @@ let isGenerating = false;
                 img.src = imgUrl;
                 img.className = 'face-pic';
                 img.style.animationDelay = Math.random() * 0.3 + 's';
-                els.partyContainer.appendChild(img);
 				
 				// [修改] 綁定點擊事件
                 // 這裡我們需要找到該角色在 fullPartyData 對應的 ID (p1, p2...)
                 // 因為 partyIds 存的是名字 (如 "爱娜")，我們需要反查
                 img.onclick = (e) => {
                     e.stopPropagation();
-					// 從 fullPartyData 反查角色 ID (例如 "p2")
-                    const charObj = fullPartyData.find(c => c.name === id);
-                    if (charObj) {
-                        openMiniModal(charObj.id);
+                    const charId = charNameToId.get(id); // 此處的 id 變數實際上是傳入的 char.name
+                    if (charId) {
+                        openMiniModal(charId);
                     }
                 };
 
                 els.partyContainer.appendChild(img);
             }
         });
+
 					
   
         if (displayIds.length === 0) {
@@ -3994,115 +4776,653 @@ let isGenerating = false;
         }
     };
 
+
+    // === [新增] 背景資源預載（低優先度，不阻塞主流程）===
+if (!window.top.__PRELOAD_DONE) window.top.__PRELOAD_DONE = new Set(); 
+const __PRELOAD_DONE = window.top.__PRELOAD_DONE;
+
+function scheduleBackgroundPreload(currentRegion, currentPartyIds) {
+    // 避免重複排程
+    if (window.__PRELOAD_SCHEDULED) return;
+    window.__PRELOAD_SCHEDULED = true;
+    
+    // 等待 4 秒，讓優先資源（當前地圖、當前立繪）先完成
+    setTimeout(() => {
+        window.__PRELOAD_SCHEDULED = false; // 重置，允許下次重新排程
+        console.log('[RPG Preload] 目前已緩存數量:', __PRELOAD_DONE.size);
+        const queue = [];
+        const needsLoad = (url) => url && !__PRELOAD_DONE.has(url);
+        
+        // 1. 其他地圖
+        Object.entries(mapAssets).forEach(([region, url]) => {
+            if (region !== currentRegion && needsLoad(url)) queue.push(url);
+        });
+        
+        // 2. 其他角色立繪（charAssets 是地圖上的立繪縮圖）
+        Object.entries(charAssets).forEach(([name, url]) => {
+            if (!currentPartyIds.includes(name) && needsLoad(url)) queue.push(url);
+        });
+        
+        // 3. fullPartyData 中的 img / face / bg（Status 介面用的大圖）
+        fullPartyData.forEach(char => {
+            [char.img, char.face, char.bg, char.imgDiff].forEach(url => {
+                if (needsLoad(url)) queue.push(url);
+            });
+        });
+        
+        // 4. 地圖圖標
+        Object.values(iconAssets).forEach(url => {
+            if (needsLoad(url)) queue.push(url);
+        });
+        
+        console.log(`[RPG Preload] 開始背景預載 ${queue.length} 個資源...`);
+        
+        // 節流：每次只加載一張，完成後再加載下一張，避免搶占頻寬
+        const loadNext = () => {
+            if (queue.length === 0) {
+                console.log('[RPG Preload] 背景預載完成');
+                return;
+            }
+            const url = queue.shift();
+            if (!needsLoad(url)) { loadNext(); return; } // 跳過已快取
+            
+            const img = new Image();
+            img.onload = () => {
+                __PRELOAD_DONE.add(url);
+                setTimeout(loadNext, 150); // 每張間隔 150ms
+            };
+            img.onerror = () => {
+                setTimeout(loadNext, 150); // 失敗也繼續
+            };
+            img.src = url;
+        };
+        
+        // 使用 requestIdleCallback 在瀏覽器空閒時才開始
+        if (typeof requestIdleCallback === 'function') {
+            requestIdleCallback(loadNext, { timeout: 5000 });
+        } else {
+            loadNext();
+        }
+        
+    }, 4000); // 主流程 4 秒後才開始
+}
+
+
+    // ==========================================
+    // === 世界地圖：渲染函數 ===
+    // ==========================================
+
+    window.renderWorldMap = function() {
+    const listEl = document.getElementById('wm-region-list');
+    const tabBar = document.getElementById('wm-tab-bar');
+    if (!listEl) return;
+    listEl.innerHTML = '';
+    if (tabBar) tabBar.innerHTML = '';
+
+    // [新增] 強制根據 scaler 實際顯示寬度決定模式，不依賴 media query
+    const scaler = document.getElementById('worldmap-scaler');
+    const scalerStyle = scaler ? window.getComputedStyle(scaler) : null;
+    const scaleVal = scalerStyle ? parseFloat(scalerStyle.transform.match(/matrix\(([^,]+)/)?.[1] || 1) : 1;
+    const visualWidth = 1080 * scaleVal;
+    const isMobile = visualWidth < 640;
+
+    // 強制套用手機/桌面佈局
+    const sidebarEl = document.querySelector('.wm-sidebar');
+    const bodyEl = document.querySelector('.wm-body');
+    if (isMobile) {
+    if (sidebarEl) sidebarEl.style.display = 'none';
+    if (tabBar) tabBar.style.display = 'flex';
+    if (bodyEl) bodyEl.style.flexDirection = 'column';
+
+    const previewArea = document.getElementById('wm-preview-area');
+    if (previewArea) {
+        previewArea.style.aspectRatio = 'unset';
+        previewArea.style.position = 'absolute';
+        previewArea.style.inset = '0';
+        previewArea.style.width = '100%';
+        previewArea.style.height = '100%';
+    }
+
+    // [新增] 把 mobile-panel 移到 worldmap-layer（scaler 外層），脫離縮放
+    const layer = document.getElementById('worldmap-layer');
+    let panel = document.getElementById('wm-mobile-panel');
+    if (panel && layer && panel.parentElement !== layer) {
+        layer.appendChild(panel);
+    }
+    if (panel) {
+        // 直接用 viewport 固定在畫面底部
+        panel.style.position = 'fixed';
+        panel.style.bottom = '0';
+        panel.style.left = '0';
+        panel.style.right = '0';
+        panel.style.width = '100%';
+        panel.style.transform = '';
+        panel.style.fontSize = '14px';
+        panel.style.padding = '12px 16px';
+        panel.style.display = 'none'; // 初始隱藏，等點擊再 show
+    }
+} else {
+    // 桌面模式：panel 移回 wm-preview-wrap
+    const previewWrap = document.querySelector('.wm-preview-wrap');
+    let panel = document.getElementById('wm-mobile-panel');
+    if (panel && previewWrap && panel.parentElement !== previewWrap) {
+        previewWrap.appendChild(panel);
+    }
+    if (panel) {
+        panel.style.position = '';
+        panel.style.bottom = '';
+        panel.style.left = '';
+        panel.style.right = '';
+        panel.style.width = '';
+        panel.style.fontSize = '';
+        panel.style.padding = '';
+    }
+
+    const previewArea = document.getElementById('wm-preview-area');
+    if (previewArea) {
+        previewArea.style.aspectRatio = '';
+        previewArea.style.position = '';
+        previewArea.style.inset = '';
+        previewArea.style.width = '';
+        previewArea.style.height = '';
+    }
+}
+
+
+    // 重置預覽區
+    const previewArea = document.getElementById('wm-preview-area');
+    if (previewArea) {
+        previewArea.style.backgroundImage = '';
+        previewArea.innerHTML = '';
+        const placeholder = document.createElement('div');
+        placeholder.className = 'wm-placeholder';
+        placeholder.textContent = '← 请选择一个区域';
+        previewArea.appendChild(placeholder);
+        const mobilePanel = document.createElement('div');
+        mobilePanel.className = 'wm-mobile-panel';
+        mobilePanel.id = 'wm-mobile-panel';
+        mobilePanel.innerHTML = `
+            <div class="wm-mobile-panel-name" id="wm-mobile-panel-name"></div>
+            <div class="wm-mobile-panel-desc" id="wm-mobile-panel-desc"></div>
+        `;
+        previewArea.appendChild(mobilePanel);
+    }
+    const labelEl = document.getElementById('wm-preview-label');
+    if (labelEl) labelEl.style.display = 'none';
+
+    const currentRegion = state.region;
+    const allRegions = Object.keys(mapAssets);
+
+    const onSelectRegion = (region, activeBtnEl) => {
+        listEl.querySelectorAll('.wm-region-btn').forEach(b => b.classList.remove('active'));
+        if (tabBar) tabBar.querySelectorAll('.wm-tab-btn').forEach(b => b.classList.remove('active'));
+        activeBtnEl.classList.add('active');
+        const sideBtn = listEl.querySelector(`.wm-region-btn[data-region="${region}"]`);
+        const tabBtn = tabBar?.querySelector(`.wm-tab-btn[data-region="${region}"]`);
+        if (sideBtn) sideBtn.classList.add('active');
+        if (tabBtn) tabBtn.classList.add('active');
+        _renderWmPreview(region);
+    };
+
+    allRegions.forEach(region => {
+        // [修正 Bug1] 移除 currentRegion skip，兩側都要顯示全部區域
+        const btn = document.createElement('button');
+        btn.className = 'wm-region-btn';
+        btn.dataset.region = region;
+        btn.textContent = region;
+        if (region === currentRegion) btn.classList.add('active');  // 預設高亮當前區域
+        btn.onclick = () => onSelectRegion(region, btn);
+        listEl.appendChild(btn);
+
+        if (tabBar) {
+            const tabBtn = document.createElement('button');
+            tabBtn.className = 'wm-tab-btn';
+            tabBtn.dataset.region = region;
+            tabBtn.textContent = region;
+            if (region === currentRegion) tabBtn.classList.add('active');  // 預設高亮當前區域
+            tabBtn.onclick = () => onSelectRegion(region, tabBtn);
+            tabBar.appendChild(tabBtn);
+        }
+    });
+
+    // [修正 Bug1] 自動顯示當前區域地圖，手機上打開就有內容
+    if (currentRegion && mapAssets[currentRegion]) {
+        _renderWmPreview(currentRegion);
+    }
+};
+
+
+    async function _renderWmPreview(region) {
+    const previewArea = document.getElementById('wm-preview-area');
+    if (!previewArea) return;
+
+    previewArea.innerHTML = '';
+    const url = mapAssets[region];
+    if (url) {
+        previewArea.style.backgroundImage = `url('${url}')`;
+    } else {
+        previewArea.style.backgroundImage = '';
+    }
+
+    // 一次性讀取所有角色狀態，建立 statusMap
+    const statusMap = {};
+    let statusFetchFailed = false;
+    try {
+        const statusResults = await Promise.all(
+            heroineList.map(id => Promise.resolve(getVariable(`世界.妈妈.${id}.状态`)).catch(() => '-1'))
+        );
+        heroineList.forEach((id, i) => {
+            statusMap[id] = statusResults[i] || '-1';
+        });
+    } catch(e) {
+        console.warn('[WM] 讀取角色狀態失敗，使用靜態模式', e);
+        statusFetchFailed = true;
+    }
+
+const existingPanel = document.getElementById('wm-mobile-panel');
+const panelParent = existingPanel?.parentElement 
+    || document.getElementById('worldmap-layer') 
+    || document.querySelector('.wm-preview-wrap');
+
+if (existingPanel) existingPanel.remove();
+
+const mobilePanel = document.createElement('div');
+mobilePanel.className = 'wm-mobile-panel';
+mobilePanel.id = 'wm-mobile-panel';
+mobilePanel.innerHTML = `
+    <div class="wm-mobile-panel-name" id="wm-mobile-panel-name"></div>
+    <div class="wm-mobile-panel-desc" id="wm-mobile-panel-desc"></div>
+`;
+panelParent.appendChild(mobilePanel);
+
+    // [修正 Bug3] 點地圖空白處關閉面板，移到 forEach 外層，只綁一次
+    if (!previewArea._wmPanelListenerAdded) {
+    previewArea._wmPanelListenerAdded = true;
+    previewArea.addEventListener('click', (e) => {
+        if (!e.target.closest('.map-point')) {
+            const panel = document.getElementById('wm-mobile-panel');
+            if (panel) {
+                panel.classList.remove('show');
+                // show 動畫結束後才隱藏，避免閃爍
+                setTimeout(() => {
+                    if (!panel.classList.contains('show')) panel.style.display = '';
+                }, 300);
+            }
+        }
+    });
+}
+
+    const markers = mapMarkers[region] || [];
+    markers.forEach(point => {
+        // 有 motherID 的地點：依狀態決定是否顯示
+        if (point.motherID) {
+            const statusVal = statusMap[point.motherID] || '-1';
+            // 狀態 -1 或 0 代表未解鎖，不顯示
+            if (statusVal === '-1' || statusVal === '0' || statusVal === -1 || statusVal === 0) return;
+        }
+
+        // 地標圖示
+        const iconSrc = point.img || (iconAssets && iconAssets[point.icon]);
+        if (iconSrc) {
+            const lm = document.createElement('img');
+            lm.className = 'landmark-img';
+            lm.dataset.name = point.name;
+            lm.style.left = point.x + '%';
+            lm.style.top = point.y + '%';
+            if (point.imgWidth) lm.style.width = point.imgWidth;
+            if (point.offsetX) lm.style.marginLeft = point.offsetX;
+            if (point.offsetY) lm.style.marginTop = point.offsetY;
+            lm.src = iconSrc;
+            previewArea.appendChild(lm);
+        }
+
+        // 標記點
+        const dot = document.createElement('div');
+        dot.className = 'map-point';
+        dot.dataset.name = point.name;
+        if (point.y < 35) dot.classList.add('flip-down');
+        if (point.x > 70) dot.classList.add('near-right');
+        else if (point.x < 30) dot.classList.add('near-left');
+        dot.style.left = point.x + '%';
+        dot.style.top = point.y + '%';
+
+        // 描述：依角色狀態取對應版本
+        let desc = point.desc;
+        if (point.motherID && typeof desc === 'object' && desc !== null) {
+            const statusVal = statusMap[point.motherID] || '-1';
+            desc = desc[statusVal] || desc['default'] || desc[1] || Object.values(desc)[0] || '';
+        } else if (typeof desc === 'object' && desc !== null) {
+            desc = desc[1] || desc['default'] || Object.values(desc)[0] || '';
+        }
+        desc = desc || '';
+
+        dot.innerHTML = `<div class="point-tip"><strong>${point.name}</strong>${desc ? `<span>${desc}</span>` : ''}</div>`;
+
+        dot.onclick = (e) => {
+    // 用 scaler 視覺寬度判斷手機模式，跟 renderWorldMap 邏輯一致
+    const scaler = document.getElementById('worldmap-scaler');
+    const matrix = scaler ? window.getComputedStyle(scaler).transform : '';
+    const scaleVal = parseFloat(matrix.match(/matrix\(([^,]+)/)?.[1] || 1);
+    const isMobileMode = (1080 * scaleVal) < 640;
+
+    if (isMobileMode) {
+        e.stopPropagation();
+        const panel = document.getElementById('wm-mobile-panel');
+        const nameEl = document.getElementById('wm-mobile-panel-name');
+        const descEl = document.getElementById('wm-mobile-panel-desc');
+        if (panel && nameEl && descEl) {
+            nameEl.textContent = point.name;
+            descEl.textContent = desc || '';
+            // 強制讓 panel display block 再加 show（繞過 media query 失效問題）
+            panel.style.display = 'block';
+            requestAnimationFrame(() => panel.classList.add('show'));
+        }
+    }
+};
+
+    // 右下角區域名稱
+    const labelEl = document.getElementById('wm-preview-label');
+    if (labelEl) {
+        labelEl.textContent = region;
+        labelEl.style.display = 'block';
+    }
+}
+
+    let isSyncing = false;
+
+		// === 地點快捷按鈕設定 ===
+// buttonText 三選一: "A文字" | "B文字" | "C文字"
+// action: { varName, value } → 點擊後將 varName 設為 value 並刷新
+const LOCATION_BUTTONS = [
+    {
+        location: "伦德",
+        buttonText: "回家",
+        conditions: [
+            { varName: "世界.位置.子地点", not: "家" }  // 子地点「不等於」家時才顯示
+        ],
+        actions: [
+            { varName: "世界.位置.子地点", value: "家" }
+        ]
+    },
+    {
+        location: "巧织奇境",
+        buttonText: "决战",
+		conditions: [
+            { varName: "世界.妈妈.黛芬妮.状态", value: "2" }
+        ],
+        action: { varName: "世界.迷宫攻略.当前攻略对象", value: "黛芬妮" }
+    },
+	{
+        location: "绯月古堡",
+        buttonText: "决战",
+		conditions: [
+            { varName: "世界.妈妈.琳.状态", value: "2" }
+        ],
+        action: { varName: "世界.迷宫攻略.当前攻略对象", value: "琳" }
+    },
+	{
+        location: "樱阙",
+        buttonText: "决战",
+		conditions: [
+            { varName: "世界.妈妈.穗.状态", value: "2" }
+        ],
+        action: { varName: "世界.迷宫攻略.当前攻略对象", value: "穗" }
+    },
+	{
+        location: "生命之树",
+        buttonText: "决战",
+		conditions: [
+            { varName: "世界.妈妈.芙蕾嘉.状态", value: "2" }
+        ],
+        action: { varName: "世界.迷宫攻略.当前攻略对象", value: "芙蕾嘉" }
+    },
+	{
+        location: "无尽书库",
+        buttonText: "决战",
+		conditions: [
+            { varName: "世界.妈妈.米拉露恩.状态", value: "2" }
+        ],
+        action: { varName: "世界.迷宫攻略.当前攻略对象", value: "米拉露恩" }
+    },
+	{
+        location: "璀璨神域",
+        buttonText: "决战",
+		conditions: [
+            { varName: "世界.妈妈.璐法.状态", value: "2" }
+        ],
+        action: { varName: "世界.迷宫攻略.当前攻略对象", value: "璐法" }
+    },
+	{
+        location: "王圣玉座",
+        buttonText: "决战",
+		conditions: [
+            { varName: "世界.妈妈.莉迪娅.状态", value: "2" }
+        ],
+        action: { varName: "世界.迷宫攻略.当前攻略对象", value: "莉迪娅" }
+    },
+	{
+        location: "魔王城",
+        buttonText: "决战",
+		conditions: [
+            { varName: "世界.妈妈.奈芙蒂.状态", value: "2" }
+        ],
+        action: { varName: "世界.迷宫攻略.当前攻略对象", value: "奈芙蒂" }
+    },
+	{
+        location: "珍珠海岸",
+        buttonText: "出海",
+        action: [
+                { varName: "世界.位置.区域", value: "迷途海" },
+                { varName: "世界.位置.地点", value: "如蜜海" },
+                { varName: "世界.位置.子地点", value: "飞星群" }
+		]
+    },
+	{
+        location: "锈锚湾",
+        buttonText: "出海",
+		action: [
+                { varName: "世界.位置.区域", value: "迷途海" },
+                { varName: "世界.位置.地点", value: "碎星海" },
+                { varName: "世界.位置.子地点", value: "千灯航路" }
+		]
+    },
+	{
+        location: "翠恩港",
+        buttonText: "出海",
+		action: [
+                { varName: "世界.位置.区域", value: "迷途海" },
+                { varName: "世界.位置.地点", value: "柏鲁克海峡" },
+                { varName: "世界.位置.子地点", value: "翠恩-铁炉摆渡线" }
+		]
+    },
+	{
+        location: "凛冬角",
+        buttonText: "出海",
+		action: [
+                { varName: "世界.位置.区域", value: "迷途海" },
+                { varName: "世界.位置.地点", value: "巨龙之吻" },
+                { varName: "世界.位置.子地点", value: "浮冰哨站" }
+		]
+    },
+	{
+        location: "艾佩达港",
+        buttonText: "出海",
+		action: [
+                { varName: "世界.位置.区域", value: "迷途海" },
+                { varName: "世界.位置.地点", value: "巨龙之吻" },
+                { varName: "世界.位置.子地点", value: "破冰航线" }
+		]
+    },
+];
+	
+	async function renderLocationButtons(locationName) {
+    const existing = els.mapArea.querySelectorAll('.location-action-btn-wrap');
+    existing.forEach(el => el.remove());
+
+    const matches = LOCATION_BUTTONS.filter(b => b.location === locationName);
+    if (matches.length === 0) return;
+
+    const activeDot = els.mapArea.querySelector(`.map-point[data-name="${locationName}"]`);
+    if (!activeDot) return;
+
+    // 逐一檢查每個按鈕的條件，過濾掉不符合的
+    const visibleBtns = [];
+    for (const cfg of matches) {
+        if (!cfg.conditions || cfg.conditions.length === 0) {
+            visibleBtns.push(cfg); // 無條件，直接通過
+            continue;
+        }
+        // 並行讀取所有條件變量
+        const results = await Promise.all(
+            cfg.conditions.map(c => Promise.resolve(getVariable(c.varName)).catch(() => null))
+        );
+        const allMet = cfg.conditions.every((c, i) => {
+    if (c.value !== undefined) return results[i] == c.value;   // 符合某值
+    if (c.not   !== undefined) return results[i] != c.not;     // 不符合某值
+    return true; // 兩者都沒寫就視為通過
+});
+        if (allMet) visibleBtns.push(cfg);
+    }
+
+    if (visibleBtns.length === 0) return;
+
+    const wrap = document.createElement('div');
+    wrap.className = 'location-action-btn-wrap';
+    wrap.style.cssText = `
+        position: absolute;
+        left: ${activeDot.style.left};
+        top: ${activeDot.style.top};
+        transform: translate(-50%, 12px);
+        display: flex; gap: 4px;
+        z-index: 200;
+    `;
+
+    visibleBtns.forEach(cfg => {
+        const btn = document.createElement('button');
+        btn.className = 'location-action-btn';
+        btn.textContent = cfg.buttonText;
+        btn.onclick = async (e) => {
+            e.stopPropagation();
+            const actList = cfg.actions
+                ? cfg.actions
+                : Array.isArray(cfg.action) ? cfg.action : [cfg.action];
+            for (const act of actList) {
+                setGlobalVariable(act.varName, act.value);
+            }
+            await syncGameState();
+        };
+        wrap.appendChild(btn);   // ← 補回這行
+    });                          // ← forEach 結束（加分號更規範）
+
+    els.mapArea.appendChild(wrap);
+}                     
+
     async function syncGameState() {
+        console.log('[RPG] syncGameState 呼叫, isSyncing:', isSyncing);
+        if (isSyncing) return;
+        isSyncing = true;
+	let region = '';
+                     let currentPartyIds = [];
         try {
             await checkRaidStatus();
-
             // ============================================================
             // === [優化一] 並行數據請求 (Parallel Fetching) ===
             // ============================================================
             
-            // 1. 建立請求池：將原本散落的 STscript 請求分組
             const batchPromises = [
-                // Group 0: 位置資訊 (原本的 region, locationName, subLocation)
+                // Group 0: 位置資訊
                 Promise.all([
-                    STscript('/xbgetvar 世界.位置.区域'),
-                    STscript('/xbgetvar 世界.位置.地点'),
-                    STscript('/xbgetvar 世界.位置.子地点')
+                    getVariable('世界.位置.区域'),
+                    getVariable('世界.位置.地点'),
+                    getVariable('世界.位置.子地点')
                 ]),
-                // Group 1: 玩家數值 (原本的 pLevel, valHP, valATK, valPoints, rank)
+                // Group 1: 玩家數值
                 Promise.all([
-                    STscript('/xbgetvar 世界.玩家状态.综合实力.实际等级'), // index 0
-                    STscript(`/xbgetvar ${VAR_HP}`),                     // index 1
-                    STscript(`/xbgetvar ${VAR_ATK}`),                    // index 2
-                    STscript(`/xbgetvar ${VAR_POINTS}`),                 // index 3
-                    STscript(`/xbgetvar ${VAR_RANK}`)                    // index 4
+                    getVariable('世界.玩家状态.综合实力.实际等级'),
+                    getVariable(VAR_HP),                     
+                    getVariable(VAR_ATK),                    
+                    getVariable(VAR_POINTS),                 
+                    getVariable(VAR_RANK)                    
                 ]),
-                // Group 2: 時間日期 (用於 HUD 時間顯示與好感度檢查)
+                // Group 2: 時間日期
                 Promise.all([
-                    STscript('/xbgetvar 世界.当前.时间.时'), // index 0
-                    STscript('/xbgetvar 世界.当前.日期.年'), // index 1
-                    STscript('/xbgetvar 世界.当前.日期.月'), // index 2
-                    STscript('/xbgetvar 世界.当前.日期.日')  // index 3
+                    getVariable('世界.当前.时间.时'),
+                    getVariable('世界.当前.日期.年'),
+                    getVariable('世界.当前.日期.月'),
+                    getVariable('世界.当前.日期.日') 
+                ]),
+                Promise.all([
+                    getVariable('世界.玩家状态.惩罚.惩罚中'),
+                    getVariable('世界.玩家状态.惩罚.剩余天数')
                 ])
             ];
 
-            // 2. 等待所有請求並行完成 (這裡會節省大量時間)
-            const [locData, playerData, timeData] = await Promise.all(batchPromises);
+            const [locData, playerData, timeData, punishData] = await Promise.all(batchPromises);
+	    [region] = locData;
+            const [, locationName, subLocation] = locData;
+state.region = region;
+state.location = locationName;
+state.subLocation = subLocation;
 
-            // ============================================================
-            // === [關鍵] 變數解構與對接 (確保變數名稱與後續代碼一致) ===
-            // ============================================================
+// === 防呆：修正模型可能誤寫成子地點的獨立迷宮地點 ===
+const STANDALONE_LOCATIONS = [
+    { name: "巧织奇境", defaultSub: "杰作蓝林" },
+    { name: "璀璨神域",  defaultSub: "光之回廊" },
+    { name: "王圣玉座",  defaultSub: "祖灵祭坛" },
+    { name: "生命之树",  defaultSub: "树根門扉" },
+    { name: "无尽书库",  defaultSub: "寂静宏门" },
+    { name: "樱阙",      defaultSub: "云端天梯" },
+];
+const _standaloneMatch = STANDALONE_LOCATIONS.find(l => l.name === subLocation);
+if (_standaloneMatch) {
+    console.warn(`[RPG 防呆] 子地點「${subLocation}」應為獨立地點，自動修正...`);
+    setGlobalVariable('世界.位置.地点', _standaloneMatch.name);
+    setGlobalVariable('世界.位置.子地点', _standaloneMatch.defaultSub);
+    // 同步更新本次 sync 用的變量，避免後續邏輯還讀舊值
+    state.location = _standaloneMatch.name;
+    state.subLocation = _standaloneMatch.defaultSub;
+}
 
-            // --- A. 對接位置資訊 ---
-            const [region, locationName, subLocation] = locData;
-            state.region = region;
-            state.location = locationName;
-            state.subLocation = subLocation;
+const [pLevelRaw, valHP, valATK, valPoints, rank] = playerData;
+            let pLevel = parseInt(pLevelRaw) || 0;
+            const pInt = parseInt(valPoints) || 0;
 
-            // --- B. 對接玩家數值 ---
-            const [pLevelRaw, valHP, valATK, valPoints, rank] = playerData;
-            
-            // 這裡對應後續代碼中使用的 pLevel
-            let pLevel = parseInt(pLevelRaw) || 0; 
-            // pInt 用於點數顯示
-            const pInt = parseInt(valPoints) || 0; 
-
-            // --- C. 對接時間數據 ---
             const [hourVal, valYear, valMonth, valDay] = timeData;
-            
-            // 處理時間 (用於日夜光影)
             let gameHour = parseInt(hourVal);
             if (isNaN(gameHour)) gameHour = 12;
 
-            // 處理日期 (用於 HUD 顯示與好感度檢查)
             const y = valYear && valYear !== '0' ? valYear : '----';
             const m = valMonth && valMonth !== '0' ? valMonth : '--';
             const d = valDay && valDay !== '0' ? valDay : '--';
             const currentDateStr = `${y}-${m}-${d}`;
 
-            // ============================================================
-            // === 緩存與邏輯處理 ===
-            // ============================================================
-
             if (!window.__RPG_INIT_DONE) {
-                // 首次載入：寫入緩存
-                await enforceAffectionLimit(currentDateStr);
-                
+                // [DISABLED] 日基准好感 / 上次变动日期 自动检测功能已停用，如需恢复请取消此行注释并删除下一行
+                // await enforceAffectionLimit(currentDateStr);
                 window.__RPG_CACHE.hp = valHP || 0;
                 window.__RPG_CACHE.atk = valATK || 0;
                 window.__RPG_CACHE.points = pInt;
                 window.__RPG_CACHE.level = pLevel;
                 window.__RPG_CACHE.rank = rank && rank !== "0" ? rank : "";
-
                 window.__RPG_INIT_DONE = true;
             } 
-            // 注意：非首次載入時，我們直接使用上面併發請求到的最新 valHP, valATK 等變數
-            // 這與原代碼邏輯一致 (原代碼在 else 區塊是讀取 Cache，但我們這裡直接讀新的更準確)
 
-            // [優化二的應用]：日期改變時才檢查好感度
             if (typeof window.__LAST_CHECKED_DATE === 'undefined') window.__LAST_CHECKED_DATE = null;
             if (window.__LAST_CHECKED_DATE !== currentDateStr) {
-                 await enforceAffectionLimit(currentDateStr);
+                 // [DISABLED] 日基准好感 / 上次变动日期 自动检测功能已停用，如需恢复请取消此行注释并删除下一行
+                 // await enforceAffectionLimit(currentDateStr);
                  window.__LAST_CHECKED_DATE = currentDateStr;
             }
 
-            // === 自動解除懲罰邏輯 (保持原樣，因為它依賴特定變數) ===
             try {
-                let isPunished = await STscript('/xbgetvar 世界.玩家状态.惩罚.惩罚中');
-                let remainDays = await STscript('/xbgetvar 世界.玩家状态.惩罚.剩余天数');
+                const [isPunished, remainDays] = punishData;
                 if (isPunished === '是' && parseInt(remainDays) === 0) {
-                    await STscript('/xbsetvar 世界.玩家状态.惩罚.惩罚中 否');
-                    await STscript('/xbsetvar 世界.玩家状态.惩罚.内容 无');
-                    await window.RPGBridge.updateMessageContent(null, [
-                        { varName: '世界.玩家状态.惩罚.惩罚中', type: 'set', value: '否' },
-                        { varName: '世界.玩家状态.惩罚.内容', type: 'set', value: '无' }
-                    ]);
+                    setGlobalVariable('世界.玩家状态.惩罚.惩罚中', '否');
+                    setGlobalVariable('世界.玩家状态.惩罚.效果', '无');
                     console.log("[RPG 系统] 惩罚天数已归零，自动解除惩罚状态。");
                 }
             } catch(e) { console.error("惩罚状态自动检测失败:", e); }
 
-            // === HUD 顯示更新 (使用上面解構出的變數) ===
             const gameTimeStr = `<span class="hud-label">星历</span>${y}<span class="hud-label">年</span>` +
                                 `${m}<span class="hud-label">月</span>` +
                                 `${d}<span class="hud-label">日</span>`;
@@ -4110,39 +5430,51 @@ let isGenerating = false;
             if (els.hudTime) els.hudTime.innerHTML = gameTimeStr;
             if (els.hudLevel) els.hudLevel.innerHTML = pLevel;
 
-            // 更新玩家面板數據
             try {
                 if(rank) document.getElementById('player-a').innerText = rank;
                 if(pLevel) document.getElementById('player-c').innerText = pLevel;
                 document.getElementById('stat-hp-val').innerText = valHP || 0;
                 document.getElementById('stat-atk-val').innerText = valATK || 0;
                 document.getElementById('stat-points').innerText = pInt;
-                
                 const btns = document.querySelectorAll('.btn-plus');
                 if (pInt < 1) btns.forEach(b => b.classList.add('disabled'));
                 else btns.forEach(b => b.classList.remove('disabled'));
             } catch(e) { console.log("面板更新失败", e); }
 
-            // 隊伍狀態與好感度讀取 (這裡也建議保留，因為這些變數依賴關係較複雜，暫不併入上方的 Batch)
-            const statusPromises = heroineList.map(id => STscript(`/xbgetvar 世界.妈妈.${id}.状态`));
-            const statusResults = await Promise.all(statusPromises);
-            const currentRecruitedCount = statusResults.filter(val => val == '3').length;
+            // ============================================================
+            // === [优化 2] 合并所有的角色状态请求 (状态、好感、在队、NSFW) ===
+            // ============================================================
+            const charPromises = heroineList.flatMap(id => [
+                Promise.resolve(getVariable(`世界.妈妈.${id}.状态`)).catch(() => '-1'),
+                Promise.resolve(getVariable(`世界.妈妈.${id}.好感度`)).catch(() => '0'),
+                Promise.resolve(getVariable(`世界.妈妈.${id}.在队状态`)).catch(() => '否'),
+                Promise.resolve(getVariable(`世界.妈妈.${id}.NSFW状态`)).catch(() => '否')
+            ]);
+            
+            const charResults = await Promise.all(charPromises);
+            
+            let currentRecruitedCount = 0;
+            let currentrelationshipCount = 0;
+            let currentPartyIds = [];
+            let isAnyNsfw = false;
 
-            const favPromises = heroineList.map(id => STscript(`/xbgetvar 世界.妈妈.${id}.好感度`));
-            const favResults = await Promise.all(favPromises);
-            const currentrelationshipCount = favResults.filter(val => (parseInt(val) || 0) >= 350).length;
+            // 每 4 笔为一组解构
+            let nsfwPartyIds = [];   // 新增：NSFW 狀態為「是」的在隊角色
 
-            // 自動解鎖奈芙蒂邏輯
-            if (currentrelationshipCount >= 8) {
-                let currentNephStatus = await STscript('/xbgetvar 世界.妈妈.奈芙蒂.状态');
-                if (currentNephStatus === '-1' || currentNephStatus == '-1' || currentNephStatus === '' || currentNephStatus === '0') {
-                    await STscript('/xbsetvar 世界.妈妈.奈芙蒂.状态 1');
-                    console.log("[RPG 系统] 8 位媽媽好感度皆達到 350");
-                }
-            }
+heroineList.forEach((id, i) => {
+    const [status, fav, party, nsfw] = charResults.slice(i * 4, i * 4 + 4);
+    const isNsfw = nsfw === '是' || nsfw === 'True' || nsfw === 'true';
+    const inParty = party === '是' || party === 'True' || party === 'true';
+    
+    if (status == '3') currentRecruitedCount++;
+    if ((parseInt(fav) || 0) >= 150) currentrelationshipCount++;
+    if (inParty) currentPartyIds.push(id);
+    if (isNsfw) { isAnyNsfw = true; if (inParty) nsfwPartyIds.push(id); }
+    // 也收集：任一角色NSFW（不限在隊），供判斷是否進入純NSFW顯示模式
+});
 
-            // HUD 樣式變數
-            let hudStyleVar = rank; // 直接使用前面抓到的 rank
+           
+            let hudStyleVar = rank;
             if (hudStyleVar) {
                 hudStyleVar = hudStyleVar.replace(/['"\s]/g, '');
             }
@@ -4150,7 +5482,6 @@ let isGenerating = false;
                 hudStyleVar = defaultHudStyle;
             }
 
-            // === 日夜光影更新 (使用前面解析的 gameHour) ===
             const overlay = document.getElementById('day-night-overlay');
             if (overlay) {
                 let overlayColor = 'rgba(0,0,0,0)'; 
@@ -4175,7 +5506,6 @@ let isGenerating = false;
                 overlay.style.mixBlendMode = blendMode;
             }
 
-            // HUD 背景更新
             if (els.hudBg) {
                 const bgUrl = hudAssets[hudStyleVar] || hudAssets[defaultHudStyle];
                 if (els.hudBg.dataset.currentBg !== bgUrl) {
@@ -4184,219 +5514,181 @@ let isGenerating = false;
                 }
             }
 
-            // 檢查是否需要更新地圖背景或點位
             if (region) {
-    const url = mapAssets[region] || mapAssets["自由都市"];
-    if (url && els.mapArea && els.mapArea.style.backgroundImage !== `url("${url}")`) {
-        els.mapArea.style.backgroundImage = `url('${url}')`;
-        state.lastRegion = region;
-    }
-
-    const markers = mapMarkers[region] || [];
-    const activeMarkers = new Map(); // 用於儲存當前「應該顯示」的有效點位
-
-    // 1. 預先計算並過濾當前有效的點位
-    for (const point of markers) {
-        let displayName = point.name;
-        if (point.minLevel && pLevel < point.minLevel) continue;
-
-        let finalDesc = point.desc;
-        if (point.motherID) {
-            const varName = `世界.妈妈.${point.motherID}.状态`;
-            const statusVal = await STscript(`/xbgetvar ${varName}`);
-            
-            // 狀態為未知 (0 或 -1)，跳過不顯示
-            if (statusVal === '-1' || statusVal === -1 || statusVal === '') continue;
-
-            if (typeof point.desc === 'object') {
-                finalDesc = point.desc[statusVal] || point.desc['default'] || point.desc[1] || "暂无描述";
-            }
-            if (typeof point.displayNames === 'object') {
-                // 如果有設定 displayNames 物件，依照變數取值，若無對應值則退回預設 true name
-                displayName = point.displayNames[statusVal] || point.name;
-            } else if (point.revealNameAt && parseInt(statusVal) < point.revealNameAt) {
-                displayName = "???";
-            }
-        }
-        
-        if (typeof finalDesc === 'object') finalDesc = Object.values(finalDesc)[0] || "描述读取错误";
-        if (point.reqHeroineCount && currentRecruitedCount < point.reqHeroineCount) continue;
-        if (point.reqHeroineRelationshipCount && currentrelationshipCount < point.reqHeroineRelationshipCount) continue;
-
-        const iconSrc = point.img || (iconAssets && iconAssets[point.icon]);
-
-        // 通過所有檢查，存入 Map
-        activeMarkers.set(point.name, { pointData: point, displayName, finalDesc, iconSrc });
-    }
-
-    // 2. 垃圾回收 (Garbage Collection)：移除不再需要的 DOM
-    els.mapArea.querySelectorAll('.map-point, .landmark-img').forEach(node => {
-        // 如果當前需要顯示的清單中沒有這個節點，且不是日夜光影層，則移除
-        if (!activeMarkers.has(node.dataset.name) && node.id !== 'day-night-overlay') {
-            node.remove();
-        }
-    });
-
-    // 3. 狀態同步 (DOM Diffing)：新增或更新 DOM
-    for (const [name, data] of activeMarkers.entries()) {
-        const { pointData, displayName, finalDesc, iconSrc } = data;
-
-        // --- 處理地標圖片 (.landmark-img) ---
-        if (iconSrc) {
-            let landmark = els.mapArea.querySelector(`.landmark-img[data-name="${name}"]`);
-            if (!landmark) {
-                landmark = document.createElement('img');
-                landmark.className = 'landmark-img';
-                landmark.dataset.name = name; // 綁定唯一 ID 用於比對
-                landmark.style.left = pointData.x + '%';
-                landmark.style.top = pointData.y + '%';
-                if (pointData.imgWidth) landmark.style.width = pointData.imgWidth;
-                if (pointData.offsetX) landmark.style.marginLeft = pointData.offsetX;
-                if (pointData.offsetY) landmark.style.marginTop = pointData.offsetY;
-                els.mapArea.appendChild(landmark);
-            }
-            // 只有圖片不同時才替換，避免閃爍
-            if (landmark.src !== iconSrc && !landmark.src.includes(iconSrc)) {
-                landmark.src = iconSrc;
-            }
-        }
-
-        // --- 處理互動標記點 (.map-point) ---
-        let dot = els.mapArea.querySelector(`.map-point[data-name="${name}"]`);
-        if (!dot) {
-            dot = document.createElement('div');
-            dot.className = 'map-point';
-            dot.dataset.name = name; // 綁定唯一 ID
-            if (pointData.y < 35) dot.classList.add('flip-down');
-            if (pointData.x > 70) dot.classList.add('near-right');
-            else if (pointData.x < 30) dot.classList.add('near-left');
-            dot.style.left = pointData.x + '%';
-            dot.style.top = pointData.y + '%';
-            // === [全新修改] 電腦防干擾與手機獨立面板邏輯 ===
-            dot.onclick = (e) => {
-                e.stopPropagation(); // 阻止事件冒泡
-
-                // 1. 判斷是否為支援 Hover 的電腦設備
-                const isHoverDevice = window.matchMedia('(hover: hover)').matches;
-                if (isHoverDevice) {
-                    // 電腦端：不做任何事，完美保留原生 Hover 體驗，解決割裂感
-                    return;
+                const url = mapAssets[region] || mapAssets["自由都市"];
+                if (url && els.mapArea && els.mapArea.dataset.currentMapUrl !== url) {
+                    const preloader = new Image();
+                    preloader.onload = () => {
+                        els.mapArea.style.backgroundImage = `url('${url}')`;
+                        els.mapArea.dataset.currentMapUrl = url;  
+                    };
+                    preloader.src = url;
+                    state.lastRegion = region;
                 }
 
-                // 2. 手機端：將資料丟給全局底部面板並滑出
-                const mobilePanel = document.getElementById('mobile-map-panel');
-                if (mobilePanel) {
-                    mobilePanel.innerHTML = `
-                        <strong>${displayName}</strong>
-                        ${finalDesc ? `<span>${finalDesc}</span>` : ''}
-                    `;
-                    // 強制重繪以觸發 CSS 動畫
-                    mobilePanel.classList.remove('show');
-                    void mobilePanel.offsetWidth; 
-                    mobilePanel.classList.add('show');
+                const markers = mapMarkers[region] || [];
+                const activeMarkers = new Map();
+
+                // 為了避免在迴圈內發起請求，我們改用前面已經抓好的角色狀態 (charResults)
+                // 創建一個快速查找字典
+                const statusMap = {};
+                heroineList.forEach((id, i) => {
+                    statusMap[id] = charResults[i * 4];
+                });
+
+            if (currentrelationshipCount >= 8) {
+                const currentNephStatus = statusMap['奈芙蒂'] || '-1';  // 直接用已有的
+                if (currentNephStatus === '-1' || currentNephStatus == '-1' || currentNephStatus === '' || currentNephStatus === '0') {
+                    setGlobalVariable('世界.妈妈.奈芙蒂.状态', '1');
                 }
-            };
-            // ===============================================
+            }
 
-            els.mapArea.appendChild(dot);
-        }
+                for (const point of markers) {
+                    let displayName = point.name;
+                    if (point.minLevel && pLevel < point.minLevel) continue;
 
-        // 獨立更新內容：將基礎 HTML 存入 dataset，作為恢復的基準
-        const baseHTML = `
-            <div class="point-tip">
-                <strong>${displayName}</strong>
-                ${finalDesc ? `<span>${finalDesc}</span>` : ''}
-            </div>
+                    let finalDesc = point.desc;
+                    if (point.motherID) {
+                        // 【优化】直接从刚才查好的表里拿，不需要重新 await STscript
+                        const statusVal = statusMap[point.motherID] || '-1';
+                        
+                        if (statusVal === '-1' || statusVal == -1 || statusVal === '') continue;
+                        if (typeof point.desc === 'object') {
+                            finalDesc = point.desc[statusVal] || point.desc['default'] || point.desc[1] || "暂无描述";
+                        }
+                        if (typeof point.displayNames === 'object') {
+                            displayName = point.displayNames[statusVal] || point.name;
+                        } else if (point.revealNameAt && parseInt(statusVal) < point.revealNameAt) {
+                            displayName = "???";
+                        }
+                    }
+                    
+                    if (typeof finalDesc === 'object') finalDesc = Object.values(finalDesc)[0] || "描述读取错误";
+                    if (point.reqHeroineCount && currentRecruitedCount < point.reqHeroineCount) continue;
+                    if (point.reqHeroineRelationshipCount && currentrelationshipCount < point.reqHeroineRelationshipCount) continue;
+
+                    const iconSrc = point.img || (iconAssets && iconAssets[point.icon]);
+                    activeMarkers.set(point.name, { pointData: point, displayName, finalDesc, iconSrc });
+                }
+
+                els.mapArea.querySelectorAll('.map-point, .landmark-img').forEach(node => {
+                    if (!activeMarkers.has(node.dataset.name) && node.id !== 'day-night-overlay') {
+                        node.remove();
+                    }
+                });
+
+                for (const [name, data] of activeMarkers.entries()) {
+                    const { pointData, displayName, finalDesc, iconSrc } = data;
+                    if (iconSrc) {
+                        let landmark = els.mapArea.querySelector(`.landmark-img[data-name="${name}"]`);
+                        if (!landmark) {
+                            landmark = document.createElement('img');
+                            landmark.className = 'landmark-img';
+                            landmark.dataset.name = name; 
+                            landmark.style.left = pointData.x + '%';
+                            landmark.style.top = pointData.y + '%';
+                            if (pointData.imgWidth) landmark.style.width = pointData.imgWidth;
+                            if (pointData.offsetX) landmark.style.marginLeft = pointData.offsetX;
+                            if (pointData.offsetY) landmark.style.marginTop = pointData.offsetY;
+                            els.mapArea.appendChild(landmark);
+                        }
+                        if (landmark.src !== iconSrc && !landmark.src.includes(iconSrc)) {
+                            landmark.src = iconSrc;
+                        }
+                    }
+
+                    let dot = els.mapArea.querySelector(`.map-point[data-name="${name}"]`);
+                    if (!dot) {
+                        dot = document.createElement('div');
+                        dot.className = 'map-point';
+                        dot.dataset.name = name; 
+                        if (pointData.y < 35) dot.classList.add('flip-down');
+                        if (pointData.x > 70) dot.classList.add('near-right');
+                        else if (pointData.x < 30) dot.classList.add('near-left');
+                        dot.style.left = pointData.x + '%';
+                        dot.style.top = pointData.y + '%';
+                        dot.onclick = (e) => {
+    e.stopPropagation();
+
+    const isHoverDevice = window.matchMedia('(hover: hover)').matches 
+                       && !window.matchMedia('(pointer: coarse)').matches;
+    if (isHoverDevice) return;
+
+    const mobilePanel = document.getElementById('mobile-map-panel');
+    if (mobilePanel) {
+        // ✅ 直接從 DOM 當前狀態讀取，子地點、動態描述都會自動包含
+        const tipEl = dot.querySelector('.point-tip');
+        const currentName = tipEl?.querySelector('strong')?.innerHTML || displayName;
+        const currentDesc = tipEl?.querySelector(':scope > span')?.textContent || finalDesc || '';
+
+        mobilePanel.innerHTML = `
+            <strong>${currentName}</strong>
+            ${currentDesc ? `<span>${currentDesc}</span>` : ''}
         `;
-        
-        // 只有內容真正發生變化時（例如描述因狀態改變而更新）才重繪
-        if (dot.dataset.baseHtml !== baseHTML) {
-            dot.innerHTML = baseHTML;
-            dot.dataset.baseHtml = baseHTML;
-        }
+        mobilePanel.classList.remove('show');
+        void mobilePanel.offsetWidth;
+        mobilePanel.classList.add('show');
     }
+};
+                        els.mapArea.appendChild(dot);
+                    }
 
-    // 4. 處理當前位置 (Active) 高亮與動態附加物 (飛船 / 子地點)
-    const shipImgUrl = "https://cdn.imgchest.com/files/86eaf2fddb66.png";
-    els.mapArea.querySelectorAll('.map-point').forEach(dot => {
-        // 先移除飛船
-        const existingShip = dot.querySelector('.ship-icon');
-        if (existingShip) existingShip.remove();
-
-        const titleEl = dot.querySelector('.point-tip strong');
-
-        if (dot.dataset.name === locationName) {
-            dot.classList.add('active');
-
-            // 處理子地點顯示
-            if (titleEl && subLocation && subLocation !== '0' && subLocation !== '' && subLocation !== 'undefined') {
-                // 如果尚未添加子地點，才進行修改
-                if (!titleEl.querySelector('.sub-loc')) {
-                    titleEl.innerHTML = `${dot.dataset.name}<span class="sub-arrow"> ▶ </span><span class="sub-loc">${subLocation}</span>`;
+                    const baseHTML = `<div class="point-tip"><strong>${displayName}</strong>${finalDesc ? `<span>${finalDesc}</span>` : ''}</div>`;
+                    if (dot.dataset.baseHtml !== baseHTML) {
+                        dot.innerHTML = baseHTML;
+                        dot.dataset.baseHtml = baseHTML;
+                    }
                 }
-            } else if (titleEl) {
-                // 沒有子地點，確保維持原始標題
-                titleEl.innerHTML = dot.dataset.name;
+
+                const shipImgUrl = img("https://cdn.imgchest.com/files/86eaf2fddb66.png", "https://files.catbox.moe/n1fxe0.png");
+                els.mapArea.querySelectorAll('.map-point').forEach(dot => {
+                    const existingShip = dot.querySelector('.ship-icon');
+                    if (existingShip) existingShip.remove();
+
+                    const titleEl = dot.querySelector('.point-tip strong');
+
+                    if (dot.dataset.name === locationName) {
+                        dot.classList.add('active');
+                        if (titleEl && subLocation && subLocation !== '0' && subLocation !== '' && subLocation !== 'undefined') {
+                            // 子地點有值：只要文字不同就更新（修正：原本的 !querySelector 在子地點變更時不刷新）
+                            const existingSubLoc = titleEl.querySelector('.sub-loc');
+                            if (!existingSubLoc || existingSubLoc.textContent !== subLocation) {
+                                titleEl.innerHTML = `${dot.dataset.name}<span class="sub-arrow"> ▶ </span><span class="sub-loc">${subLocation}</span>`;
+                            }
+                        } else if (titleEl) {
+                            // 子地點清空：確保清除殘留的子地點箭頭
+                            if (titleEl.querySelector('.sub-loc')) {
+                                titleEl.innerHTML = dot.dataset.name;
+                            }
+                        }
+                        if (region === "迷途海") {
+                            const ship = document.createElement('img');
+                            ship.src = shipImgUrl;
+                            ship.className = 'ship-icon';
+                            dot.appendChild(ship);
+                        }
+                    } else {
+                        dot.classList.remove('active');
+                        if (dot.dataset.baseHtml) {
+                            dot.innerHTML = dot.dataset.baseHtml;
+                        }
+                    }
+                });
+				renderLocationButtons(locationName);
             }
 
-            // 處理海洋地圖的飛船
-            if (region === "迷途海") {
-                const ship = document.createElement('img');
-                ship.src = shipImgUrl;
-                ship.className = 'ship-icon';
-                dot.appendChild(ship);
-            }
-        } else {
-            dot.classList.remove('active');
-            // 從 baseHTML 完美恢復未選中狀態，取代原本容易出錯的 .remove()
-            if (dot.dataset.baseHtml) {
-                dot.innerHTML = dot.dataset.baseHtml;
-            }
-        }
-    });
+            // === 处理队伍成员刷新 ===
+            const displayPartyIds = isAnyNsfw ? nsfwPartyIds : currentPartyIds;
+const sortedIdsForKey = [...displayPartyIds].sort(); 
+if (JSON.stringify(sortedIdsForKey) !== JSON.stringify(state.lastPartyIds)) {
+    renderParty(displayPartyIds);
+    state.lastPartyIds = sortedIdsForKey;
 }
-            // 2. 隊伍成員同步
-            const partyPromises = [
-                STscript('/xbgetvar 世界.妈妈.爱娜.在队状态').then(val => ({ id: '爱娜', val })),
-                STscript('/xbgetvar 世界.妈妈.琳.在队状态').then(val => ({ id: '琳', val })),
-                STscript('/xbgetvar 世界.妈妈.米拉露恩.在队状态').then(val => ({ id: '米拉露恩', val })),
-                STscript('/xbgetvar 世界.妈妈.黛芬妮.在队状态').then(val => ({ id: '黛芬妮', val })),
-                STscript('/xbgetvar 世界.妈妈.芙蕾嘉.在队状态').then(val => ({ id: '芙蕾嘉', val })),
-                STscript('/xbgetvar 世界.妈妈.穗.在队状态').then(val => ({ id: '穗', val })),
-                STscript('/xbgetvar 世界.妈妈.莉迪娅.在队状态').then(val => ({ id: '莉迪娅', val })),
-                STscript('/xbgetvar 世界.妈妈.璐法.在队状态').then(val => ({ id: '璐法', val })),
-                STscript('/xbgetvar 世界.妈妈.奈芙蒂.在队状态').then(val => ({ id: '奈芙蒂', val }))
-            ];
-            const partyResults = await Promise.all(partyPromises);
-            const currentPartyIds = partyResults
-                .filter(item => item.val === '是' || item.val === 'True' || item.val === 'true')
-                .map(item => item.id);
-            currentPartyIds.sort(() => Math.random() - 0.5);
-            const sortedIdsForKey = [...currentPartyIds].sort(); 
-            if (JSON.stringify(sortedIdsForKey) !== JSON.stringify(state.lastPartyIds)) {
-                renderParty(currentPartyIds);
-                state.lastPartyIds = sortedIdsForKey;
-            }
 
-            // 3. 音樂播放邏輯
-            // [修正點] 此處讀取到的必須是最新的狀態
+            // === 音乐播放逻辑 ===
             const isMuted = topWindow.RPG_GLOBAL_STATE.isMuted;
             if (isMuted) return; 
 
-            const nsfwPromises = [
-                STscript('/xbgetvar 世界.妈妈.爱娜.NSFW状态'),
-                STscript('/xbgetvar 世界.妈妈.琳.NSFW状态'),
-                STscript('/xbgetvar 世界.妈妈.米拉露恩.NSFW状态'),
-                STscript('/xbgetvar 世界.妈妈.黛芬妮.NSFW状态'),
-                STscript('/xbgetvar 世界.妈妈.芙蕾嘉.NSFW状态'),
-                STscript('/xbgetvar 世界.妈妈.穗.NSFW状态'),
-                STscript('/xbgetvar 世界.妈妈.莉迪娅.NSFW状态'),
-                STscript('/xbgetvar 世界.妈妈.璐法.NSFW状态'),
-                STscript('/xbgetvar 世界.妈妈.奈芙蒂.NSFW状态')
-            ];
-            const nsfwResults = await Promise.all(nsfwPromises);
-            const isAnyNsfw = nsfwResults.some(val => val === '是' || val === 'True' || val === 'true');
-            
             let targetMusicUrl = "";
             if (isAnyNsfw) {
                 targetMusicUrl = nsfwBgm;
@@ -4406,93 +5698,93 @@ let isGenerating = false;
 
             if (targetMusicUrl && targetMusicUrl !== state.currentMusicUrl) {
                 console.log("[RPG] 切換音樂至: ", targetMusicUrl);
-                await STscript(`/xbaudio "${targetMusicUrl}"`);
+                await playAudio('bgm', { url: targetMusicUrl });
                 state.currentMusicUrl = targetMusicUrl;
             }
 
         } catch(e) {
             console.error("同步失敗:", e);
+        } finally {
+            // 解开重入锁
+            scheduleBackgroundPreload(region, currentPartyIds);
+            isSyncing = false;
         }
     }
 
     // ============================================================
-    // PART 4: 初始化與事件綁定
-    // ============================================================
-    let streamTimeout = null;
-    let isGenerating = false;
-    let genResetTimer = null;
+// PART 4: 初始化與事件綁定
+// ============================================================
+let streamTimeout = null;
+let isGenerating = false;
+let genResetTimer = null;
 
-    window.updateTemplateVariables = function(data) {
-        const newText = extractContent(data);
-        
-        if (state.rawText !== newText) {
-            state.rawText = newText;
+window.updateTemplateVariables = function(data) {
+    if (!isGenerating) {
+        isGenerating = true;
+        const root = document.querySelector('.rpg-v7-root');
+        if (root) root.classList.add('generating');
+    }
 
-            // --- [新增] 開始生成：鎖定 UI ---
+    const rawString = typeof data === 'string' ? data : (data && data.RPG ? String(data.RPG) : "");
+
+    // ✅ isFinished 專用：單獨清洗，只為了準確判斷結尾標籤
+    let stringForFinishedCheck = rawString;
+    stringForFinishedCheck = stringForFinishedCheck.replace(/^[\s\S]*?<\/thinking>/i, '');
+    stringForFinishedCheck = stringForFinishedCheck.replace(/^[\s\S]*?<\/think>/i, '');
+    stringForFinishedCheck = stringForFinishedCheck.replace(/^[\s\S]*?\[\/metacognition\]/i, '');
+    const isFinished = stringForFinishedCheck.includes('</state>');
+
+    // ✅ 正文提取：直接傳原始字串給 extractContent，由它內部統一處理
+    const newText = extractContent(rawString);
+    const textStillHasTag = /^\s*(?:\[|<)\s*RPG\s*(?:\]|>)/i.test(newText);
+    if (textStillHasTag && isGenerating) {
+                   // 不更新 rawText，等下一幀
+                  return;
+           }
+    if (state.rawText !== newText) {
+        state.rawText = newText;
+        if (streamTimeout) cancelAnimationFrame(streamTimeout);
+        streamTimeout = requestAnimationFrame(() => {
+            refreshUI();
+            // 同步更新 state 面板（只在生成完成後才讀，避免頻繁更新）
             if (!isGenerating) {
-                isGenerating = true;
-                const root = document.querySelector('.rpg-v7-root');
-                if (root) root.classList.add('generating');
-                console.log("[RPG] 流式生成中，鎖定交互按鈕...");
+                updateStateViewer(extractStateContent(rawString));
             }
-            // -----------------------------
+        });
+    }
 
-            // 使用 requestAnimationFrame 節流
-            if (streamTimeout) cancelAnimationFrame(streamTimeout);
-            streamTimeout = requestAnimationFrame(() => {
-                refreshUI();
-            });
-
-            // 若超過 2000ms 沒收到新文字，視為生成結束
-            clearTimeout(genResetTimer);
-            genResetTimer = setTimeout(() => {
-                // --- [新增] 結束生成：解鎖 UI ---
-                isGenerating = false;
-                const root = document.querySelector('.rpg-v7-root');
-                if (root) root.classList.remove('generating');
-                console.log("[RPG] 生成結束，UI 解鎖。");
-  
-                // 👇 新增這行：生成結束後，強制重新讀取變數並更新介面
-                if (typeof syncGameState === 'function') syncGameState();
-                // -----------------------------
-            }, 2000);
-        }
-    };
-
+    clearTimeout(genResetTimer);
+if (isFinished) {
+    // isFinished = 內容看起來已完整，設短計時器備援
+    // 若 MESSAGE_RECEIVED 先觸發，clearTimeout 會讓這個不執行
+    genResetTimer = setTimeout(() => {
+        if (!isGenerating) return; // 事件監聽已處理過，直接跳出
+        isGenerating = false;
+        const root = document.querySelector('.rpg-v7-root');
+        if (root) root.classList.remove('generating');
+        updateStateViewer(extractStateContent(rawString));
+        setTimeout(() => syncGameState?.(), 500);
+    }, 800); // 給事件監聽留足夠的優先時間
+}
+};
     // =========================================
 // === RPG Bridge: 主程式與小遊戲的橋樑 ===
 // =========================================
 window.RPGBridge = {
     // 1. 讀取變量
-    xbgetvar: async function(varName) {
-        if (typeof STscript !== 'function') return null;
-        return await STscript(`/xbgetvar ${varName}`);
+    getVar: async function(varName) {
+        return getVariable(varName);
     },
 
-    // 2. 寫入/執行指令
+    // 2. 執行 slash 指令
     execute: async function(command) {
-        if (typeof STscript !== 'function') return;
-        return await STscript(command);
+        return await triggerSlash(command);
     },
 
-    // 3. 發送聊天室訊息 (整合 test.txt 邏輯)
+    // 3. 發送聊天室訊息
     sendChatMessage: async function(text) {
         console.log("[RPG Bridge] 嘗試發送訊息:", text);
-        
-        // 方法 A: 嘗試使用 SillyTavern 內部 API (如果是在 ST 腳本環境下)
-        // 注意：這通常需要父視窗權限
-        try {
-            if (window.parent && window.parent.createChatMessages) {
-                await window.parent.createChatMessages([{ role: 'user', message: text }]);
-                return;
-            } 
-        } catch(e) { console.warn("無法存取 window.parent API:", e); }
-
-        // 方法 B: 如果 API 不可用，使用 Slash Command 回傳
-        if (typeof STscript === 'function') {
-            // 使用 /send 指令模擬用戶發言
-            await STscript(`/send ${text}`);
-        }
+        await createChatMessages([{ role: 'user', message: text }]);
     },
 
     // 4. 關閉小遊戲
@@ -4513,140 +5805,51 @@ window.RPGBridge = {
     },
 
 
-// [新增] 6. 逆向修改當前樓層的原始文本
-    updateMessageContent: async function(narrativeText, autoVarsArray) {
-            try {
-                // 1. 暴力獲取當前樓層 ID
-                let mesId = currentMesId;
-                if ((mesId === null || isNaN(mesId)) && window.frameElement) {
-                    const mesNode = window.frameElement.closest('.mes');
-                    if (mesNode) {
-                        mesId = parseInt(mesNode.getAttribute('mesid'));
-                        currentMesId = mesId;
-                    }
-                }
-                if (mesId === null || isNaN(mesId)) return;
+// 6. 修改當前樓層的原始文本（酒館助手原生 API 版）
+    updateMessageContent: async function(narrativeText, _autoVarsArray) {
+        try {
+            const mesId = getCurrentMessageId();
+            if (mesId === null || mesId === undefined) return;
 
-                const parent = window.parent;
-                let chatArray = (parent && typeof parent.getContext === 'function') ? parent.getContext().chat :
-                                (parent && parent.SillyTavern) ? parent.SillyTavern.getContext().chat : 
-                                (parent && parent.chat) ? parent.chat : null;
+            const msgs = getChatMessages(mesId);
+            if (!msgs || !msgs.length) return;
+            let originalText = msgs[0].message;
 
-                if (!chatArray || !chatArray[mesId]) return;
-
-                let msg = chatArray[mesId];
-                let originalText = msg.mes;
-                let cleanText = originalText;
-                let existingVars = {};
-
-                // 2. 尋找並解析已存在的 [自动化变量] 區塊
-                const blockRegex = /\[自动化变量\]\s*<state>\s*([\s\S]*?)\s*<\/state>\s*\[\/自动化变量\]/i;
-                const blockMatch = originalText.match(blockRegex);
-                
-                if (blockMatch) {
-                    const lines = blockMatch[1].split('\n');
-                    lines.forEach(line => {
-                        const parts = line.split(':');
-                        if (parts.length >= 2) {
-                            existingVars[parts[0].trim()] = parts.slice(1).join(':').trim();
-                        }
-                    });
-                    // 將舊區塊從文本中拔除，稍後重組
-                    cleanText = originalText.replace(blockRegex, '').trimEnd();
-                }
-
-                // 3. 處理新進來的變數 (合併同項、累加數值)
-                if (autoVarsArray && autoVarsArray.length > 0) {
-                    autoVarsArray.forEach(change => {
-                        if (change.type === 'add') {
-                            let currentVal = parseFloat((existingVars[change.varName] || '0').replace('+', '')) || 0;
-                            let newVal = currentVal + change.value;
-                            // 自動加上正負號
-                            existingVars[change.varName] = (newVal > 0 ? '+' : '') + newVal;
-                        } else if (change.type === 'set') {
-                            existingVars[change.varName] = change.value;
-                        }
-                    });
-                }
-
-                // 4. 構建新的 [自动化变量] 區塊
-                let newBlock = "";
-                if (Object.keys(existingVars).length > 0) {
-                    let lines = Object.entries(existingVars).map(([k, v]) => `${k}: ${v}`);
-                    newBlock = `[自动化变量]\n<state>\n${lines.join('\n')}\n</state>\n[/自动化变量]`;
-                }
-
-                // 5. 安插「敘事文本」與修復標籤
-                let tempText = cleanText;
-                const tagEndRegex = /(?:\[|<)\/\s*RPG\s*(?:\]|>)/i;
-                
-                // [防呆機制 1]：先檢查文本是否有閉合標籤。如果 LLM 忘記寫，代碼強制幫它補上
-                if (!tempText.match(tagEndRegex)) {
-                    tempText = tempText.trimEnd() + '\n\n[/RPG]';
-                }
-
-                // [防呆機制 2]：只有當真的有敘事文本傳入時，才進行安插
-                if (narrativeText) {
-                    const currentMatch = tempText.match(tagEndRegex);
-                    const insertPos = currentMatch.index;
-                    
-                    // 清除標籤前多餘的空白與換行
-                    let beforeTag = tempText.substring(0, insertPos).trimEnd();
-                    // 完美重組
-                    tempText = beforeTag + '\n\n' + narrativeText + '\n\n' + tempText.substring(insertPos);
-                }
-                
-                // 6. 將自動化變量區塊安插在 [/RPG] 之後 (維持前次修改的優化不變)
-                let finalText = tempText;
-                if (newBlock) {
-                    let insertIndex = -1;
-                    
-                    // 優先尋找文本中最後一個原生 </state>
-                    const stateEndIndex = tempText.toLowerCase().lastIndexOf('</state>');
-                    
-                    if (stateEndIndex !== -1) {
-                        // 找到原生 </state>，將插入點設在該標籤結束處 (+8 為 '</state>'.length)
-                        insertIndex = stateEndIndex + 8; 
-                    } else {
-                        // 防呆機制：找不到 </state> 時，退回尋找 [/RPG] 結尾
-                        const finalTagMatch = tempText.match(tagEndRegex);
-                        if (finalTagMatch) {
-                            insertIndex = finalTagMatch.index + finalTagMatch[0].length;
-                        }
-                    }
-
-                    // 執行安插
-                    if (insertIndex !== -1) {
-                        let beforeContent = tempText.substring(0, insertIndex);
-                        let afterContent = tempText.substring(insertIndex).trim();
-                        
-                        finalText = beforeContent + '\n\n' + newBlock;
-                        if (afterContent) finalText += '\n\n' + afterContent;
-                    }
-                }
-
-                // 7. 寫入記憶體並平滑刷新畫面
-                msg.mes = finalText;
-                if (typeof parent.saveChatDebounced === 'function') parent.saveChatDebounced();
-                if (typeof window.updateTemplateVariables === 'function') window.updateTemplateVariables(finalText);
-                return finalText;
-
-            } catch (e) { console.error("[RPG Bridge] 寫入文本失敗:", e); }
-        }, 
-
-        // [新增] 5. 供子視窗呼叫，同步靜音狀態
-        updateMuteState: function(isMuted) {
-            console.log("[RPG Bridge] 子視窗更新靜音狀態:", isMuted);
-            if (window.parent.RPG_GLOBAL_STATE) {
-                window.parent.RPG_GLOBAL_STATE.isMuted = isMuted;
+            // 處理 narrativeText 安插（邏輯不變）
+            const tagEndRegex = /(?:\[|<)\/\s*RPG\s*(?:\]|>)/i;
+            let tempText = originalText;
+            if (!tempText.match(tagEndRegex)) {
+                tempText = tempText.trimEnd() + '\n\n[/RPG]';
             }
-            window.RPG_IS_MUTED = isMuted;
-            const event = new CustomEvent('RPG_BUTTON_SYNC', { 
-                detail: { isMuted: isMuted } 
-            });
-            window.parent.dispatchEvent(event);
+            if (narrativeText) {
+                const currentMatch = tempText.match(tagEndRegex);
+                const insertPos = currentMatch.index;
+                let beforeTag = tempText.substring(0, insertPos).trimEnd();
+                tempText = beforeTag + '\n\n' + narrativeText + '\n\n' + tempText.substring(insertPos);
+            }
+            const finalText = tempText;
+
+            // 寫回並刷新 UI
+            await setChatMessages(mesId, [{ role: 'assistant', message: finalText }], { refresh: 'none' });
+            if (typeof window.updateTemplateVariables === 'function') window.updateTemplateVariables(finalText);
+            return finalText;
+
+        } catch (e) { console.error("[RPG Bridge] 寫入文本失敗:", e); }
+    },
+
+    // 5. 供子視窗呼叫，同步靜音狀態
+    updateMuteState: function(isMuted) {
+        console.log("[RPG Bridge] 靜音狀態更新:", isMuted);
+        if (window.RPG_GLOBAL_STATE) {
+            window.RPG_GLOBAL_STATE.isMuted = isMuted;
         }
-    };
+        window.RPG_IS_MUTED = isMuted;
+        const event = new CustomEvent('RPG_BUTTON_SYNC', {
+            detail: { isMuted: isMuted }
+        });
+        window.dispatchEvent(event);
+    }
+};
 
     // =========================================
     // === 監聽與啟動邏輯 ===
@@ -4655,7 +5858,7 @@ window.RPGBridge = {
     // 檢查是否需要進入戰鬥 (建議放在 syncGameState 循環中呼叫)
     async function checkRaidStatus() {
     // 讀取當前攻略對象
-    const target = await STscript('/xbgetvar 世界.迷宫攻略.当前攻略对象');
+    const target = getVariable('世界.迷宫攻略.当前攻略对象');
     
     // 如果有值，且不是 "非攻略中"，且小遊戲尚未開啟
     const layer = document.getElementById('minigame-layer');
@@ -4728,6 +5931,11 @@ async function openMinigame(url) {
 	
 	// === [新增] 好感度單日上限攔截邏輯 ===
     // === [新增] 好感度單日上限攔截邏輯 (Promise.all 併發優化版) ===
+    // [DISABLED] 此功能已停用。核心變量「日基准好感」與「上次变动日期」實測效果不理想。
+    // 如需將來恢復此功能：
+    //   1. 解除此函數的 /* DISABLED START */ / /* DISABLED END */ 包裹
+    //   2. 在 syncGameState 中找到兩處 "[DISABLED]" 標記，恢復 enforceAffectionLimit 的呼叫
+    /* DISABLED START
     const MAX_DAILY_AFFECTION = 15; // 單日最大增長量
 
     async function enforceAffectionLimit(currentDateStr) {
@@ -4737,15 +5945,14 @@ async function openMinigame(url) {
         }
         const readPromises = [];
         for (const name of heroineList) {
-            readPromises.push(STscript(`/xbgetvar 世界.妈妈.${name}.好感度`));
-            readPromises.push(STscript(`/xbgetvar 世界.妈妈.${name}.日基准好感`));
-            readPromises.push(STscript(`/xbgetvar 世界.妈妈.${name}.上次变动日期`));
+            readPromises.push(Promise.resolve(getVariable(`世界.妈妈.${name}.好感度`)));
+            readPromises.push(Promise.resolve(getVariable(`世界.妈妈.${name}.日基准好感`)));
+            readPromises.push(Promise.resolve(getVariable(`世界.妈妈.${name}.上次变动日期`)));
         }
 
         const results = await Promise.all(readPromises);
         
         const writePromises = [];
-        let autoVars = []; // [新增] 用來收集好感度結算的自動化變量
 
         for (let i = 0; i < heroineList.length; i++) {
             const name = heroineList[i];
@@ -4760,12 +5967,12 @@ async function openMinigame(url) {
             if (isNaN(baseAffection)) { 
                 baseAffection = currentAffection;
                 isFirstInit = true; 
-                writePromises.push(STscript(`/xbsetvar 世界.妈妈.${name}.日基准好感 ${baseAffection}`));
+                writePromises.push(Promise.resolve(setGlobalVariable(`世界.妈妈.${name}.日基准好感`, baseAffection)));
             }
             if (!lastDate || lastDate === '0') { 
                 lastDate = currentDateStr;
                 isFirstInit = true;
-                writePromises.push(STscript(`/xbsetvar 世界.妈妈.${name}.上次变动日期 ${lastDate}`));
+                writePromises.push(Promise.resolve(setGlobalVariable(`世界.妈妈.${name}.上次变动日期`, lastDate)));
             }
 
             // --- 核心限制邏輯 ---
@@ -4774,36 +5981,28 @@ async function openMinigame(url) {
                 let legalYesterdayAffection = Math.min(currentAffection, baseAffection + MAX_DAILY_AFFECTION);
                 baseAffection = legalYesterdayAffection;
             
-                writePromises.push(STscript(`/xbsetvar 世界.妈妈.${name}.日基准好感 ${baseAffection}`));
-                writePromises.push(STscript(`/xbsetvar 世界.妈妈.${name}.上次变动日期 ${currentDateStr}`));
-                // 收集換日變量
-                autoVars.push({ varName: `世界.妈妈.${name}.日基准好感`, type: 'set', value: baseAffection });
-                autoVars.push({ varName: `世界.妈妈.${name}.上次变动日期`, type: 'set', value: currentDateStr });
+                writePromises.push(Promise.resolve(setGlobalVariable(`世界.妈妈.${name}.日基准好感`, baseAffection)));
+                writePromises.push(Promise.resolve(setGlobalVariable(`世界.妈妈.${name}.上次变动日期`, currentDateStr)));
             
                 if (currentAffection > legalYesterdayAffection) {
-                    writePromises.push(STscript(`/xbsetvar 世界.妈妈.${name}.好感度 ${legalYesterdayAffection}`));
-                    autoVars.push({ varName: `世界.妈妈.${name}.好感度`, type: 'set', value: legalYesterdayAffection });
+                    writePromises.push(Promise.resolve(setGlobalVariable(`世界.妈妈.${name}.好感度`, legalYesterdayAffection)));
                 }
             } else if (!isFirstInit) {
                 // 【同日檢查】
                 let maxAllowedToday = baseAffection + MAX_DAILY_AFFECTION;
                 if (currentAffection > maxAllowedToday) {
                     console.log(`[好感度攔截] ${name} 數值異常(${currentAffection})，壓回上限(${maxAllowedToday})`);
-                    writePromises.push(STscript(`/xbsetvar 世界.妈妈.${name}.好感度 ${maxAllowedToday}`));
-                    autoVars.push({ varName: `世界.妈妈.${name}.好感度`, type: 'set', value: maxAllowedToday });
+                    writePromises.push(Promise.resolve(setGlobalVariable(`世界.妈妈.${name}.好感度`, maxAllowedToday)));
                 }
             }
         }
 
-        // 一次性寫入內存與文本
+        // 一次性寫入內存
         if (writePromises.length > 0) {
             await Promise.all(writePromises);
-            // [新增] 將結算日誌寫在文本最下方
-            if (window.RPGBridge && window.RPGBridge.updateMessageContent) {
-                await window.RPGBridge.updateMessageContent(null, autoVars);
-            }
         }
     }
+    DISABLED END */
 
 
     const init = () => {
@@ -4815,35 +6014,7 @@ async function openMinigame(url) {
 
         const mapArea = root.querySelector('.map-area');
 
-        // === 1. 創建主題切換按鈕 (Theme Toggle) ===
-        // 位置：放在音樂按鈕上方 (bottom: 58px)
-        let themeBtn = root.querySelector('.theme-toggle');
-        if (!themeBtn && mapArea) {
-            themeBtn = document.createElement('div');
-            themeBtn.className = 'icon-btn theme-toggle';
-            themeBtn.style.position = 'absolute';
-            themeBtn.style.bottom = '58px'; /* 12px(bottom) + 36px(height) + 10px(gap) */
-            themeBtn.style.right = '12px';
-            themeBtn.style.zIndex = '100';
-            themeBtn.innerHTML = ICON_MOON; // 預設深色模式顯示月亮 (或可顯示太陽代表"切換到亮色")，這裡用月亮代表當前是深色
-            themeBtn.title = "切換顯示風格";
-            
-            // 點擊事件
-            themeBtn.onclick = (e) => {
-                e.stopPropagation();
-                root.classList.toggle('light-mode');
-                
-                // 根據當前模式切換圖標
-                const isLight = root.classList.contains('light-mode');
-                themeBtn.innerHTML = isLight ? ICON_SUN : ICON_MOON;
-                
-                // 切換按鈕背景色以適應主題 (可選)
-                themeBtn.style.background = isLight ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)';
-                themeBtn.style.color = isLight ? '#333' : '#fff';
-            };
 
-            mapArea.appendChild(themeBtn);
-        }
 
         let musicBtn = root.querySelector('.music-toggle');
         if (!musicBtn) {
@@ -4896,8 +6067,16 @@ async function openMinigame(url) {
             mHeight: root.querySelector('#m-height'),
             mStatus: root.querySelector('#m-status'),
             mBond: root.querySelector('#m-bond'),
-            memberDesc: root.querySelector('#member-desc')
+            memberDesc: root.querySelector('#member-desc'),
+            qScaler: document.getElementById('quest-scaler'),
+            bScaler: document.getElementById('bag-scaler'),
+            sScaler: document.getElementById('status-scaler'),
+            mmScaler: document.getElementById('mini-modal-scaler'),
+            gameScaler: document.getElementById('minigame-scaler'),
+            wmScaler: document.getElementById('worldmap-scaler')
         };
+
+        if (state.rawText) refreshUI();
 
         // === [新增] 初始化手機專用的地圖資訊面板 ===
         if (els.mapArea && !document.getElementById('mobile-map-panel')) {
@@ -4937,7 +6116,7 @@ async function openMinigame(url) {
             // 3. 執行實際動作
             if (newMutedState) {
                 // 如果變為靜音 -> 暫停音樂
-                await STscript('/xbaudio play=off'); 
+                await pauseAudio('bgm'); 
                 state.currentMusicUrl = ""; 
             } else {
                 // 如果變為開啟 -> 觸發同步來播放
@@ -5007,9 +6186,9 @@ async function openMinigame(url) {
         const questMenuBtn = root.querySelector('.menu-opt[data-action="quest"]');
         if (questMenuBtn) {
             questMenuBtn.onclick = (e) => {
+                document.querySelectorAll('.location-action-btn-wrap').forEach(el => el.style.display = 'none');
                 e.stopPropagation();
                 const qLayer = document.getElementById('quest-layer');
-                
                 // 關閉 Bag (互斥)
                 const bLayer = document.getElementById('bag-layer');
                 if(bLayer) bLayer.classList.remove('active');
@@ -5033,6 +6212,7 @@ async function openMinigame(url) {
         const questCloseBtn = document.getElementById('quest-close-btn');
         if (questCloseBtn) {
             questCloseBtn.onclick = (e) => {
+                document.querySelectorAll('.location-action-btn-wrap').forEach(el => el.style.display = '');
                 e.stopPropagation(); 
                 document.getElementById('quest-layer').classList.remove('active');
             };
@@ -5047,6 +6227,7 @@ async function openMinigame(url) {
         const bagMenuBtn = root.querySelector('.menu-opt[data-action="bag"]');
         if (bagMenuBtn) {
             bagMenuBtn.onclick = (e) => {
+                document.querySelectorAll('.location-action-btn-wrap').forEach(el => el.style.display = 'none');
                 e.stopPropagation();
                 
                 // 關閉 Quest (互斥)
@@ -5068,6 +6249,7 @@ async function openMinigame(url) {
         const bagCloseBtn = document.getElementById('bag-close-btn');
         if (bagCloseBtn) {
             bagCloseBtn.onclick = (e) => {
+                document.querySelectorAll('.location-action-btn-wrap').forEach(el => el.style.display = '');
                 e.stopPropagation();
                 document.getElementById('bag-layer').classList.remove('active');
             };
@@ -5095,6 +6277,7 @@ async function openMinigame(url) {
         const statusMenuBtn = root.querySelector('.menu-opt[data-action="status"]');
         if (statusMenuBtn) {
             statusMenuBtn.onclick = (e) => {
+                document.querySelectorAll('.location-action-btn-wrap').forEach(el => el.style.display = 'none');
                 e.stopPropagation();
                 
                 // 1. 關閉互斥介面
@@ -5122,8 +6305,92 @@ async function openMinigame(url) {
         const statusCloseBtn = document.getElementById('status-close-btn');
         if (statusCloseBtn) {
             statusCloseBtn.onclick = (e) => {
+                document.querySelectorAll('.location-action-btn-wrap').forEach(el => el.style.display = '');
                 e.stopPropagation();
                 document.getElementById('status-layer').classList.remove('active');
+            };
+        }
+
+		// 切換圖床（會觸發完整的 UI 刷新）
+window.switchImageHost = function(host) {
+    topWindow.RPG_GLOBAL_STATE.imageHost = host;  // 替換原本的 window.__RPG_IMAGE_HOST = host
+    IMAGE_HOST = host;                             // 新增，同步更新本地變量
+    
+    window.top.__PRELOAD_DONE = new Set();
+    state.lastPartyIds = [];
+    if (els.mapArea) els.mapArea.dataset.currentMapUrl = '';
+    syncGameState();
+    console.log(`[RPG] 圖床已切換至: ${host}`);
+	
+};
+
+const displayMenuBtn = root.querySelector('.menu-opt[data-action="display"]');
+if (displayMenuBtn) {
+    displayMenuBtn.onclick = (e) => {
+        e.stopPropagation();
+        document.getElementById('display-layer').classList.add('active');
+        if (els.menuDrop) els.menuDrop.classList.remove('show');
+
+        // 同步主題
+        const isLight = root.classList.contains('light-mode');
+        document.getElementById('theme-dark-btn')?.classList.toggle('active', !isLight);
+        document.getElementById('theme-light-btn')?.classList.toggle('active', isLight);
+
+        // 同步圖床（從 RPG_GLOBAL_STATE 讀，不是從固定預設）
+        const currentHost = topWindow.RPG_GLOBAL_STATE?.imageHost || 'catbox';
+        document.querySelectorAll('.display-host-item').forEach(el => {
+            const isActive = el.id === `host-${currentHost}`;
+            el.classList.toggle('active', isActive);
+            const dot = el.querySelector('.display-host-dot');
+            if (dot) dot.style.background = isActive ? '#ffaa00' : '';
+        });
+    };
+}
+
+// 關閉按鈕
+['display-close-btn', 'display-footer-close'].forEach(id => {
+    document.getElementById(id)?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        document.getElementById('display-layer').classList.remove('active');
+    });
+});
+
+// 點遮罩關閉
+document.getElementById('display-layer')?.addEventListener('click', (e) => {
+    if (e.target === document.getElementById('display-layer')) {
+        document.getElementById('display-layer').classList.remove('active');
+    }
+});
+
+
+        // ==========================================
+        // === 世界地圖覆蓋層事件綁定 ===
+        // ==========================================
+
+        const worldmapMenuBtn = root.querySelector('.menu-opt[data-action="worldmap"]');
+        if (worldmapMenuBtn) {
+            worldmapMenuBtn.onclick = (e) => {
+                e.stopPropagation();
+
+                // 關閉其他互斥介面
+                document.getElementById('quest-layer')?.classList.remove('active');
+                document.getElementById('bag-layer')?.classList.remove('active');
+                document.getElementById('status-layer')?.classList.remove('active');
+
+                // 開啟世界地圖層
+                document.getElementById('worldmap-layer').classList.add('active');
+                if (els.menuDrop) els.menuDrop.classList.remove('show');
+
+                updateUIScale();
+                window.renderWorldMap();
+            };
+        }
+
+        const worldmapCloseBtn = document.getElementById('worldmap-close-btn');
+        if (worldmapCloseBtn) {
+            worldmapCloseBtn.onclick = (e) => {
+                e.stopPropagation();
+                document.getElementById('worldmap-layer').classList.remove('active');
             };
         }
 
@@ -5131,6 +6398,30 @@ async function openMinigame(url) {
         syncGameState();
     };
 	
+// ============================================================
+// === 流式生成結束偵測 ===
+// ============================================================
+
+eventOn(tavern_events.MESSAGE_RECEIVED, async (messageId, type) => {
+    console.log('[RPG] MESSAGE_RECEIVED 觸發, type:', type);
+    if (!['normal', 'regenerate', 'swipe', 'continue'].includes(type)) return;
+
+    const msgs = getChatMessages(messageId);
+    if (msgs.length && msgs[0].role !== 'assistant') return;
+
+    isGenerating = false;
+    clearTimeout(genResetTimer);
+    const root = document.querySelector('.rpg-v7-root');
+    if (root) root.classList.remove('generating');
+
+    updateStateViewer(extractStateContent(state.rawText || ''));
+
+    setTimeout(() => {
+        if (typeof syncGameState === 'function') syncGameState();
+    }, 500);
+});
+console.log('[RPG] 已啟用 MESSAGE_RECEIVED 事件監聽');
+
 	// === [新增] 全角色選擇器邏輯 ===
     
     window.openCharSelector = function() {
@@ -5238,10 +6529,9 @@ async function openMinigame(url) {
             }
 
         }, 100); // 100ms 緩衝
-	};
-
+    };
+	
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
     else init();
 })();
 </script>
-</html>
