@@ -3888,7 +3888,7 @@ const img = (imgchestUrl, catboxUrl) => {
                         ${currentFilter === '已失败' ? '<span>✖</span>' : ''}
                     </div>
                     ${isDeletable ? 
-                        `<div class="quest-delete-btn" title="刪除任務" onclick="deleteQuest('${qName.replace(/'/g, "\\'")}', '${currentCategory}', '${currentFilter}')">✖</div>` : ''}
+                        '<div class="quest-delete-btn" title="刪除任務">✖</div>' : ''}
                     <div class="q-desc">${qDesc}</div>
             `;
             
@@ -3902,6 +3902,14 @@ const img = (imgchestUrl, catboxUrl) => {
 
             htmlContent += `</div>`;
             card.innerHTML = htmlContent;
+            
+            // 用事件綁定取代 onclick 字串，避免巢狀 template literal 的語法問題
+            if (isDeletable) {
+                const deleteBtn = card.querySelector('.quest-delete-btn');
+                if (deleteBtn) {
+                    deleteBtn.onclick = () => deleteQuest(qName, currentCategory, currentFilter);
+                }
+            }
             
             // [優化] 掛載到 fragment 上，而非直接掛載到頁面上
             fragment.appendChild(card);
