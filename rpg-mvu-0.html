@@ -4146,10 +4146,12 @@ window.toggleStateViewer = function() {
 
             // === [修改] 加入刪除按鈕 ===
             card.innerHTML = `
-                <div class="item-delete-btn" title="丟棄物品" onclick="deleteItem('${item.rawName.replace(/'/g, "\\'")}', '${currentBagCategory}')">✖</div>
+                <div class="item-delete-btn" title="丟棄物品">✖</div>
                 <div class="item-name">${item.name}</div>
                 <div class="item-desc">${item.desc}</div>
             `;
+            // 用事件綁定取代 onclick 字串
+            card.querySelector('.item-delete-btn').onclick = () => deleteItem(item.rawName, currentBagCategory);
             
             fragment.appendChild(card);
         });
@@ -5633,10 +5635,7 @@ heroineList.forEach((id, i) => {
         const currentName = tipEl?.querySelector('strong')?.innerHTML || displayName;
         const currentDesc = tipEl?.querySelector(':scope > span')?.textContent || finalDesc || '';
 
-        mobilePanel.innerHTML = `
-            <strong>${currentName}</strong>
-            ${currentDesc ? `<span>${currentDesc}</span>` : ''}
-        `;
+        mobilePanel.innerHTML = '<strong>' + currentName + '</strong>' + (currentDesc ? '<span>' + currentDesc + '</span>' : '');
         mobilePanel.classList.remove('show');
         void mobilePanel.offsetWidth;
         mobilePanel.classList.add('show');
