@@ -2805,6 +2805,44 @@
 <script>
 
 (function() {
+    // === [修復關鍵] 跨層級尋找酒館 API ===
+    let tavernAPI = window;
+    
+    // 向上遞歸尋找，直到找到包含 getVariable 的視窗層級
+    try {
+        let current = window;
+        while (current !== window.top || current.parent !== current) {
+            if (current.getVariable) {
+                tavernAPI = current;
+                break;
+            }
+            current = current.parent;
+        }
+        // 如果 top 層也沒找到，最後嘗試一次 window.top
+        if (!tavernAPI.getVariable && window.top.getVariable) {
+            tavernAPI = window.top;
+        }
+    } catch (e) {
+        // 如果遇到跨域限制報錯，強制嘗試 window.parent
+        tavernAPI = window.parent;
+    }
+
+    // 將 API 映射到本地作用域，這樣你後面的代碼就不需要改動了
+    const getVariable = tavernAPI.getVariable;
+    const setGlobalVariable = tavernAPI.setGlobalVariable;
+    const triggerSlash = tavernAPI.triggerSlash;
+    const playAudio = tavernAPI.playAudio;
+    const pauseAudio = tavernAPI.pauseAudio;
+    const getChatMessages = tavernAPI.getChatMessages;
+    const setChatMessages = tavernAPI.setChatMessages;
+    const eventOn = tavernAPI.eventOn;
+    const tavern_events = tavernAPI.tavern_events;
+
+    // 容錯檢查：如果還是找不到，說明環境真的有問題
+    if (!getVariable) {
+        console.error("CRITICAL ERROR: 無法在任何視窗層級找到酒館內建 API。");
+        return; 
+    }
     window.RPG_IS_MUTED = true;    
 // === [新增] 全域快取與初始化標記 ===
     if (typeof window.__RPG_INIT_DONE === 'undefined') {
@@ -3497,7 +3535,11 @@ const img = (imgchestUrl, catboxUrl) => {
     let nameHtml = data.name;
     if (state.region === "自由都市" && state.location === "伦德" && state.subLocation && state.subLocation.includes("家")) {
         let btnText = isParty ? '取消同行' : '邀請同行';
-        nameHtml += `<span class="toggle-party-btn" onclick="togglePartyState('${data.name}', ${isParty})">${btnText}</span>`;
+        const _toggleSpan = document.createElement('span');
+        _toggleSpan.className = 'toggle-party-btn';
+        _toggleSpan.textContent = btnText;
+        _toggleSpan.onclick = () => togglePartyState(data.name, isParty);
+        nameHtml += _toggleSpan.outerHTML;
     }
     charNameBox.innerHTML = nameHtml;
 
@@ -4142,10 +4184,12 @@ window.toggleStateViewer = function() {
 
             // === [修改] 加入刪除按鈕 ===
             card.innerHTML = `
-                <div class="item-delete-btn" title="丟棄物品" onclick="deleteItem('${item.rawName.replace(/'/g, "\\'")}', '${currentBagCategory}')">✖</div>
+                <div class="item-delete-btn" title="丟棄物品">✖</div>
                 <div class="item-name">${item.name}</div>
                 <div class="item-desc">${item.desc}</div>
             `;
+            // 用事件綁定取代 onclick 字串
+            card.querySelector('.item-delete-btn').onclick = () => deleteItem(item.rawName, currentBagCategory);
             
             fragment.appendChild(card);
         });
@@ -5104,7 +5148,7 @@ panelParent.appendChild(mobilePanel);
         }
         desc = desc || '';
 
-        dot.innerHTML = `<div class="point-tip"><strong>${point.name}</strong>${desc ? `<span>${desc}</span>` : ''}</div>`;
+        dot.innerHTML = '<div class="point-tip"><strong>' + point.name + '</strong>' + (desc ? '<span>' + desc + '</span>' : '') + '</div>';
 
         dot.onclick = (e) => {
     // 用 scaler 視覺寬度判斷手機模式，跟 renderWorldMap 邏輯一致
@@ -5127,6 +5171,7 @@ panelParent.appendChild(mobilePanel);
         }
     }
 };
+});
 
     // 右下角區域名稱
     const labelEl = document.getElementById('wm-preview-label');
@@ -5629,10 +5674,7 @@ heroineList.forEach((id, i) => {
         const currentName = tipEl?.querySelector('strong')?.innerHTML || displayName;
         const currentDesc = tipEl?.querySelector(':scope > span')?.textContent || finalDesc || '';
 
-        mobilePanel.innerHTML = `
-            <strong>${currentName}</strong>
-            ${currentDesc ? `<span>${currentDesc}</span>` : ''}
-        `;
+        mobilePanel.innerHTML = '<strong>' + currentName + '</strong>' + (currentDesc ? '<span>' + currentDesc + '</span>' : '');
         mobilePanel.classList.remove('show');
         void mobilePanel.offsetWidth;
         mobilePanel.classList.add('show');
@@ -5641,7 +5683,7 @@ heroineList.forEach((id, i) => {
                         els.mapArea.appendChild(dot);
                     }
 
-                    const baseHTML = `<div class="point-tip"><strong>${displayName}</strong>${finalDesc ? `<span>${finalDesc}</span>` : ''}</div>`;
+                    const baseHTML = '<div class="point-tip"><strong>' + displayName + '</strong>' + (finalDesc ? '<span>' + finalDesc + '</span>' : '') + '</div>';
                     if (dot.dataset.baseHtml !== baseHTML) {
                         dot.innerHTML = baseHTML;
                         dot.dataset.baseHtml = baseHTML;
