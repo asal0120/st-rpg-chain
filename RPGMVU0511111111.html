@@ -1258,24 +1258,25 @@
 
     /* 1. 外部容器：負責隱藏/顯示與層級控制 */
     .status-layer-wrapper {
-    position: absolute; top: 0; left: 0; 
-    width: 100%; height: 100%;
-    min-height: 100%;           /* ← 加這行 */
-    z-index: 200; display: none; overflow: hidden; pointer-events: none;
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    min-height: 100%;
+    z-index: 200; display: none; 
+    overflow: hidden;        /* ← 從 status-scaler 移到這裡 */
+    pointer-events: none;
 }
     .status-layer-wrapper.active { display: block; }
 
     /* 2. 核心畫布：對應原本的 .game-viewport */
     /* 這裡鎖定 1080x720，作為所有絕對定位元素的父層 */
     .status-scaler {
-        position: absolute; top: 0; left: 0;
-        width: 1080px; height: 720px;
-        min-height: 720px;
-        transform-origin: top left;
-        background-color: #000;
-        box-shadow: 0 0 50px rgba(0,0,0,0.8);
-        pointer-events: auto;
-        overflow: hidden;
+    position: absolute; top: 0; left: 0;
+    width: 1080px; height: 720px;
+    min-height: 720px;
+    transform-origin: top left;
+    background-color: #000;
+    box-shadow: 0 0 50px rgba(0,0,0,0.8);
+    pointer-events: auto;
+    overflow: visible;       /* ← 改這裡 */
         font-family: "Noto Serif SC", "Noto Serif TC", serif;
 
         /* === 移植原始變量 === */
@@ -2894,10 +2895,10 @@ const img = (imgchestUrl, catboxUrl) => {
     // 取得實際用戶名，替換 {{user}}
 const _userName = (() => {
     try {
-        return TavernHelper?.getContext?.()?.name1 
-            || TavernHelper?.name1 
-            || "旅人";  // 最後備援
-    } catch(e) { return "旅人"; }
+        const result = TavernHelper.substitudeMacros('{{user}}');
+        if (result && result !== '{{user}}') return result;
+    } catch(e) {}
+    return "剑圣";
 })();
 
 
