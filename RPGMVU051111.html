@@ -2806,6 +2806,15 @@
 
 (function() {
 
+const getVariable = (dotPath, fallback = "0") => {
+    try {
+        const vars = getAllVariables();
+        const val = getPath(vars, 'stat_data.' + dotPath, undefined)
+                 ?? getPath(vars, dotPath, undefined);
+        if (val !== undefined && val !== null && val !== '') return String(val);
+    } catch(e) {}
+    return String(fallback);
+};
 
 const getChatMessages = typeof window.getChatMessages === 'function' 
     ? window.getChatMessages 
