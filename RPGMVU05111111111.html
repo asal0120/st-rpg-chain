@@ -1451,8 +1451,8 @@
     .status-scaler .tab-page.active { display: block; animation: fadeIn 0.4s ease; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); filter: blur(2px); } to { opacity: 1; transform: translateY(0); filter: blur(0); } }
 
-    .status-scaler .tachie-section { position: absolute; top: 0; right: 0; width: 60%; height: 100%; z-index: 5; pointer-events: none; }
-    .status-scaler .tachie-img { position: absolute; right: -50%; bottom: 0; height: 95%; width: auto; object-fit: contain; filter: drop-shadow(-20px 0 30px rgba(0,0,0,0.8)); opacity: 0; transform: translateX(50px); transition: all 0.5s ease-out; }
+    .status-scaler .tachie-section { position: absolute; top: 0; right: 0; width: 60%; height: 100%; z-index: 5; pointer-events: none; overflow: visible; }
+    .status-scaler .tachie-img { position: absolute; right: -50%; bottom: 0; height: 95%; width: auto; max-width: none; object-fit: contain; filter: drop-shadow(-20px 0 30px rgba(0,0,0,0.8)); opacity: 0; transform: translateX(50px); transition: all 0.5s ease-out; }
     .status-scaler .tachie-img.show { opacity: 1; transform: translateX(0); }
     
     .status-scaler .close-btn { position: absolute; top: 17px; right: 20px; font-size: 30px; color: var(--p-text-dim); cursor: pointer; z-index: 200; transition: color 0.2s; }
