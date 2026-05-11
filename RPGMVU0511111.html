@@ -2806,6 +2806,17 @@
 
 (function() {
 
+const getPath = (obj, path, fallback) => {
+    const keys = Array.isArray(path) ? path : String(path).split('.');
+    let cur = obj;
+    for (let i = 0; i < keys.length; i++) {
+        if (cur == null || !Object.prototype.hasOwnProperty.call(Object(cur), keys[i]))
+            return fallback;
+        cur = cur[keys[i]];
+    }
+    return cur === undefined ? fallback : cur;
+};
+
 const getVariable = (dotPath, fallback = "0") => {
     try {
         const vars = getAllVariables();
