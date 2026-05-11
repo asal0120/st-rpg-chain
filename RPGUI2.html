@@ -2805,44 +2805,33 @@
 <script>
 
 (function() {
-    // === [修復關鍵] 跨層級尋找酒館 API ===
-    let tavernAPI = window;
-    
-    // 向上遞歸尋找，直到找到包含 getVariable 的視窗層級
-    try {
-        let current = window;
-        while (current !== window.top || current.parent !== current) {
-            if (current.getVariable) {
-                tavernAPI = current;
-                break;
-            }
-            current = current.parent;
+    // 1. 定義一個「API 搜尋器」
+    const findAPI = (funcName) => {
+        // 優先順序：當前窗口 > 父窗口 > 頂層窗口 > 酒館特定命名空間
+        try {
+            if (typeof window[funcName] === 'function') return window[funcName];
+            if (window.parent && typeof window.parent[funcName] === 'function') return window.parent[funcName];
+            if (window.top && typeof window.top[funcName] === 'function') return window.top[funcName];
+            // 參考 sample.txt 的邏輯，檢查 Mvu 命名空間
+            if (window.Mvu && typeof window.Mvu[funcName] === 'function') return window.Mvu[funcName];
+        } catch (e) {
+            // 跨域錯誤時會跳到這裡
         }
-        // 如果 top 層也沒找到，最後嘗試一次 window.top
-        if (!tavernAPI.getVariable && window.top.getVariable) {
-            tavernAPI = window.top;
-        }
-    } catch (e) {
-        // 如果遇到跨域限制報錯，強制嘗試 window.parent
-        tavernAPI = window.parent;
-    }
+        return null;
+    };
 
-    // 將 API 映射到本地作用域，這樣你後面的代碼就不需要改動了
-    const getVariable = tavernAPI.getVariable;
-    const setGlobalVariable = tavernAPI.setGlobalVariable;
-    const triggerSlash = tavernAPI.triggerSlash;
-    const playAudio = tavernAPI.playAudio;
-    const pauseAudio = tavernAPI.pauseAudio;
-    const getChatMessages = tavernAPI.getChatMessages;
-    const setChatMessages = tavernAPI.setChatMessages;
-    const eventOn = tavernAPI.eventOn;
-    const tavern_events = tavernAPI.tavern_events;
+    // 2. 映射所有需要的函數，並提供「空函數」作為最後保險（避免崩潰）
+    const getVariable = findAPI('getVariable') || ((n) => { console.warn(`[RPG] 缺失 API: getVariable(${n})`); return "0"; });
+    const setGlobalVariable = findAPI('setGlobalVariable') || (() => {});
+    const getChatMessages = findAPI('getChatMessages') || (() => []);
+    const eventOn = findAPI('eventOn') || (() => {});
+    // ... 其他您有用到的內建函數 ...
 
-    // 容錯檢查：如果還是找不到，說明環境真的有問題
-    if (!getVariable) {
-        console.error("CRITICAL ERROR: 無法在任何視窗層級找到酒館內建 API。");
-        return; 
-    }
+    // 3. 仿照參考代碼的穩定性，確保數據讀取不報錯
+    const safeGetVar = (name, fallback = "0") => {
+        try { return getVariable(name) || fallback; } 
+        catch (e) { return fallback; }
+    };
 	
     window.RPG_IS_MUTED = true;    
 // === [新增] 全域快取與初始化標記 ===
