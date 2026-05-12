@@ -1141,7 +1141,21 @@
 
 
     async function setST(varName, val) {
-    return await window.parent.RPGBridge.setVar(varName, val);
+    try {
+        if (window.parent && window.parent.RPGBridge && typeof window.parent.RPGBridge.setVar === 'function') {
+            return await window.parent.RPGBridge.setVar(varName, val);
+        }
+    } catch(e) {
+        console.warn('[Mini] setST via Bridge 失敗，嘗試 fallback:', e);
+    }
+    // Fallback：直接呼叫 top window 的 setGlobalVariable
+    try {
+        if (typeof window.top.setGlobalVariable === 'function') {
+            return window.top.setGlobalVariable(varName, val);
+        }
+    } catch(e2) {
+        console.error('[Mini] setST 所有方式皆失敗:', e2);
+    }
 }
 
 async function execST(cmd) {
@@ -2003,9 +2017,9 @@ async function handleVictory() {
         setTimeout(() => {
             window.parent?.RPGBridge?.closeGame?.();
         }, 1000);
-    } catch (e) {
-        console.error("结算失败:", e);
-        showLog("结算发生错误: " + e.message);
+    } catch (err) {          
+        console.error("结算失败:", err);
+        showLog("结算发生错误: " + (err?.message || String(err)));
     }
 }
 
