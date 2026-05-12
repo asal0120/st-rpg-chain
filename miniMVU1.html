@@ -1127,11 +1127,10 @@
     async function toggleLocalMusic() {
     isLocalMuted = !isLocalMuted;
     updateBgmButtonUI();
-
     if (isLocalMuted) {
-        try { await pauseAudio('bgm'); } catch(e) {}
+        await window.parent.RPGBridge.pauseBgm();
     } else {
-        playBattleMusic(); 
+        playBattleMusic();
     }
 }
     
@@ -1508,16 +1507,10 @@ async function execST(cmd) {
     }
 
 async function playBattleMusic() {
-    if (isLocalMuted) {
-        updateBgmButtonUI();
-        return; 
-    }
+    if (isLocalMuted) { updateBgmButtonUI(); return; }
     if (currentEnemyData && currentEnemyData.bgm) {
-        console.log("[Minigame] 播放战斗音乐:", currentEnemyData.bgm);
-        if (window.parent && window.parent.RPGBridge) {
-            await window.parent.RPGBridge.execute(`/xbaudio "${currentEnemyData.bgm}"`);
-            updateBgmButtonUI();
-        }
+        await window.parent.RPGBridge.playBgm(currentEnemyData.bgm);
+        updateBgmButtonUI();
     }
 }
 
