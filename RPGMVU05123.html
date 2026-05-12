@@ -5838,6 +5838,17 @@ window.RPGBridge = {
         return getVariable(varName);
     },
 
+setVar: async function(varName, value) {
+    setGlobalVariable(varName, value);
+},
+
+playBgm: async function(url) {
+    try { await playAudio('bgm', { url }); } catch(e) { console.warn('[RPGBridge] playBgm 失敗:', e); }
+},
+pauseBgm: async function() {
+    try { await pauseAudio('bgm'); } catch(e) { console.warn('[RPGBridge] pauseBgm 失敗:', e); }
+},
+
     // 2. 執行 slash 指令
     execute: async function(command) {
         return await triggerSlash(command);
