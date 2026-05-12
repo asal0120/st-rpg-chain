@@ -1469,7 +1469,14 @@
     .status-scaler .faces-track { display: flex; height: 100%; align-items: center; will-change: transform; padding-left: 5px; }
 
     .status-scaler .face-card { width: var(--card-size); height: var(--card-size); margin-right: var(--card-gap); position: relative; background: #000; border: 2px solid #5a4a35; box-shadow: 0 5px 15px rgba(0,0,0,0.8); cursor: pointer; transition: transform 0.3s, border-color 0.3s, box-shadow 0.3s; flex-shrink: 0; transform: skewX(0deg); overflow: hidden; }
-    .status-scaler .face-card img { width: 140%; height: 100%; object-fit: cover; transform: skewX(15deg) translateX(-15%); filter: grayscale(80%) sepia(30%) brightness(0.6); transition: filter 0.4s; }
+    .status-scaler .face-card img { 
+    width: 140%; height: 100%; 
+    max-width: none;        /* ← 加這行 */
+    object-fit: cover; 
+    transform: skewX(15deg) translateX(-15%); 
+    filter: grayscale(80%) sepia(30%) brightness(0.6); 
+    transition: filter 0.4s; 
+}
     .status-scaler .face-card:hover { transform: translateY(-8px); border-color: var(--p-text); z-index: 5; }
     .status-scaler .face-card:hover img { filter: grayscale(0%) brightness(1); }
     .status-scaler .face-card.active { border-color: var(--p-gold); transform: scale(1.15) translateY(-12px); box-shadow: 0 0 15px rgba(200, 170, 110, 0.4), 0 10px 20px rgba(0,0,0,0.9); z-index: 10; }
