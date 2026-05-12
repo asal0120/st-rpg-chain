@@ -1137,33 +1137,12 @@
     
     // === 2. 通訊與初始化 ===
     async function getST(varName) {
-    // 舊：window.parent.RPGBridge.getVar(varName)
-    try {
-        const vars = getAllVariables();
-        const keys = ('stat_data.' + varName).split('.');
-        let cur = vars;
-        for (const k of keys) {
-            if (cur == null || !Object.prototype.hasOwnProperty.call(cur, k)) return null;
-            cur = cur[k];
-        }
-        return cur ?? null;
-    } catch(e) { return null; }
+    return await window.parent.RPGBridge.getVar(varName);
 }
 
 
     async function setST(varName, val) {
-    // 舊：window.parent.RPGBridge.setVar(varName, val)
-    try {
-        const keys = ('stat_data.' + varName).split('.');
-        const nested = {};
-        let cur = nested;
-        for (let i = 0; i < keys.length - 1; i++) {
-            cur[keys[i]] = {};
-            cur = cur[keys[i]];
-        }
-        cur[keys[keys.length - 1]] = val;
-        updateVariablesWith(nested);
-    } catch(e) { console.warn('[Mini] setST 失敗:', varName, e); }
+    return await window.parent.RPGBridge.setVar(varName, val);
 }
 
 async function execST(cmd) {
@@ -2023,7 +2002,7 @@ async function handleVictory() {
             await setST('世界.迷宫攻略.当前攻略对象', '非攻略中');
 
             // 發訊息通知 AI
-            const success = sendMsgViaDOM(`战斗结束！成功攻略${currentTargetName}！ test`);
+            const success = sendMsgViaDOM(`战斗结束！成功攻略${currentTargetName}！ debug`);
             if (!success) {
                 showLog("訊息發送失敗，請手動發送");
             }
