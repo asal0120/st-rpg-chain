@@ -5839,21 +5839,13 @@ window.RPGBridge = {
     },
 
 setVar: async function(varName, value) {
-    if (typeof setGlobalVariable === 'function') {
-        setGlobalVariable(varName, value);
-    } else if (typeof window.updateVariablesWith === 'function') {
-        const keys = ('stat_data.' + varName).split('.');
-        const nested = {};
-        let cur = nested;
-        for (let i = 0; i < keys.length - 1; i++) {
-            cur[keys[i]] = {};
-            cur = cur[keys[i]];
-        }
-        cur[keys[keys.length - 1]] = value;
-        window.updateVariablesWith(nested);
-    } else {
-        console.error('[RPGBridge] setVar: 找不到可用的寫入函數', varName, value);
-    }
+    window.updateVariablesWith(
+        function(variables) {
+            _.set(variables, varName, value);
+            return variables;
+        },
+        { type: 'chat' }
+    );
 },
 
 playBgm: async function(url) {
