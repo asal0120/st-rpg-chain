@@ -5841,13 +5841,12 @@ window.RPGBridge = {
 setVar: async function(varName, value) {
     window.updateVariablesWith(
         function(variables) {
-            _.set(variables, varName, value);
+            _.set(variables, 'stat_data.' + varName, value);
             return variables;
         },
-        { type: 'chat' }
+        { type: 'message' }   // 寫入當前最新樓層
     );
 },
-
 playBgm: async function(url) {
     try { await playAudio('bgm', { url }); } catch(e) { console.warn('[RPGBridge] playBgm 失敗:', e); }
 },
