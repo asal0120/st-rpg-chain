@@ -1,0 +1,2316 @@
+<!DOCTYPE html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>接龙</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-color: #0f0a08; /* 預設深褐色背景 */
+            --panel-bg: rgba(20, 15, 12, 0.9); /* 介面底色 */
+            
+            --c-gold: #c5a059;   /* 古銅金 */
+            --c-gold-dim: #8a6d3b;
+            --c-text: #e0d6c8;   /* 羊皮紙白 */
+            
+            --c-red: #8a1c1c;    
+            --c-red-bright: #ff4d4d;
+            --c-blue: #1c4e8a;   
+            --c-blue-bright: #4dabf7;
+            --c-green: #2b5933;  
+            --c-green-bright: #51cf66;
+            --c-yellow: #b08d00; 
+            --c-orange: #d97706; 
+            
+            --border-style: 2px solid var(--c-gold);
+        }
+
+        * { box-sizing: border-box; user-select: none; }
+
+        body {
+            font-family: "Noto Serif SC", serif;
+            background-color: var(--bg-color);
+            /* 預設背景，會被 JS 覆蓋 */
+            background-image: radial-gradient(circle at center, #1a1512, #050403);
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            color: var(--c-text); 
+            margin: 0; overflow: hidden; position: relative;
+            width: 1080px; height: 720px;
+            transition: background-image 0.5s ease-in-out; /* 背景切換動畫 */
+        }
+
+        h1, h2, .defeat-title, .sel-title, .boss-title-row, .cell-big-text, .php-val {
+            font-family: "Cinzel", "Noto Serif SC", serif; 
+            text-transform: uppercase;
+        }
+
+        /* === 載入與結束畫面 === */
+        #loading-screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; z-index: 2000;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 2rem; color: var(--c-gold);
+            font-family: "Cinzel", serif;
+            border: 4px double var(--c-gold);
+        }
+
+        #defeat-modal {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95); z-index: 3000;
+            display: none; flex-direction: column; justify-content: center; align-items: center; gap: 30px;
+            animation: fadeIn 0.5s;
+            backdrop-filter: blur(5px);
+        }
+        .defeat-title { 
+            font-size: 4rem; color: var(--c-red-bright); 
+            text-shadow: 0 0 20px #500; margin-bottom: 20px; 
+            letter-spacing: 5px; border-bottom: 2px solid var(--c-red);
+        }
+        .defeat-btn-group { display: flex; gap: 40px; }
+        .d-btn {
+            padding: 15px 40px; font-size: 1.5rem; 
+            border: 2px solid var(--c-text); 
+            background: rgba(0,0,0,0.5); color: var(--c-text);
+            cursor: pointer; transition: 0.2s; border-radius: 4px; 
+            font-family: "Cinzel", serif;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+        .d-btn:hover { transform: scale(1.05); background: var(--c-text); color: #000; }
+        .d-btn.skip { border-color: var(--c-gold); color: var(--c-gold); }
+        .d-btn.skip:hover { background: var(--c-gold); color: #000; box-shadow: 0 0 20px var(--c-gold); }
+
+        /* === 遊戲主場景 === */
+        #game-stage {
+            width: 100%; height: 100%; position: relative; display: none;
+            /* 微微的暗角效果 */
+            box-shadow: inset 0 0 100px rgba(0,0,0,0.8);
+        }
+
+        /* === 選擇介面 === */
+        #selection-screen {
+            width: 100%; height: 100%;
+            position: absolute; top: 0; left: 0; z-index: 999;
+            background: rgba(10, 8, 6, 0.98);
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .sel-header { display: flex; flex-direction: column; align-items: center; margin-bottom: 20px; }
+        .sel-grid {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px;
+            max-width: 900px; margin: 20px;
+        }
+        .sel-card {
+            background: linear-gradient(to bottom, #2a2522, #1a1512); 
+            border: 1px solid #554433; 
+            padding: 15px; border-radius: 4px; 
+            cursor: pointer; transition: 0.2s;
+            display: flex; flex-direction: column; gap: 5px;
+            width: 200px; height: 140px; position: relative;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+        }
+        .sel-card.selected { 
+            border-color: var(--c-gold); 
+            background: #2b2210; 
+            box-shadow: 0 0 15px var(--c-gold), inset 0 0 10px var(--c-gold-dim); 
+        }
+        .sel-card:hover { transform: translateY(-5px); border-color: #888; }
+        .sel-title { font-weight: bold; color: var(--c-gold); font-size: 1.1rem; border-bottom: 1px solid #443322; padding-bottom: 2px;}
+        .sel-owner { font-size: 0.8rem; color: #aaa; margin-bottom: 5px; font-style: italic; }
+        .sel-desc { font-size: 0.8rem; color: #ccc; line-height: 1.4; font-family: "Noto Serif SC", serif; }
+        
+        .enemy-selector {
+            padding: 10px; font-size: 1.2rem; background: #000; color: var(--c-gold); 
+            border: 1px solid var(--c-gold); margin-top: 10px; font-family: inherit;
+        }
+
+        .btn-start {
+            padding: 10px 50px; font-size: 1.5rem; font-weight: bold;
+            background: var(--c-gold); color: #1a0f00; border: 2px solid #fff; 
+            cursor: pointer; margin-top: 20px; border-radius: 2px;
+            font-family: "Cinzel", "Noto Serif SC", serif;
+            box-shadow: 0 0 20px rgba(197, 160, 89, 0.4);
+        }
+        .btn-start:hover { filter: brightness(1.2); letter-spacing: 2px; transition: 0.3s; }
+
+        /* === BOSS 區域 === */
+        .area-top { 
+            /* 左側 buff 面板寬 80px，間距 10px，所以從 100px 開始 */
+            position: absolute; top: 10px; left: 100px; right: 280px; height: 140px; 
+            display: flex; flex-direction: column; align-items: center; z-index: 10; 
+        }
+        /* Boss 標題列：名字 + inline orb + HP數字 */
+        .boss-title-row { 
+            display: flex; justify-content: space-between; align-items: center;
+            font-size: 1.2rem; margin-bottom: 5px; color: var(--c-gold); 
+            text-shadow: 0 2px 2px #000; gap: 8px; width: 100%;
+        }
+        .boss-name-text { flex: 1; font-family: "Cinzel", "Noto Serif SC", serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        /* 標題列內嵌的小 orb 群 */
+        .inline-orb-row { display: flex; gap: 4px; align-items: center; flex-shrink: 0; }
+        .inline-orb {
+            width: 13px; height: 13px;
+            background: radial-gradient(circle at 35% 30%, #ff6060, #6a0000);
+            border-radius: 50%;
+            border: 1px solid #442222;
+            box-shadow: 0 0 4px rgba(180,20,20,0.5), inset 1px 1px 2px rgba(255,255,255,0.25);
+            transition: 0.25s; flex-shrink: 0;
+        }
+        .inline-orb.lost {
+            background: #111; border-color: #2a1a1a;
+            box-shadow: none; transform: scale(0.7); opacity: 0.3;
+        }
+        .hp-text-val { 
+            font-family: "Cinzel", serif; font-size: 1rem; 
+            color: #c08080; flex-shrink: 0; text-shadow: 0 1px 3px #000;
+        }
+        .boss-hp-box { 
+            width: 100%; 
+            border: 1px solid #6a4e1a;
+            border-top: 3px solid #8a6422;
+            border-bottom: 3px solid #8a6422;
+            padding: 8px; 
+            background: 
+                linear-gradient(to bottom, #1a1208, #120d06),
+                repeating-linear-gradient(90deg, transparent, transparent 30px, rgba(0,0,0,0.06) 30px, rgba(0,0,0,0.06) 31px);
+            position: relative; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.6), inset 0 0 20px rgba(0,0,0,0.5);
+        }
+        .boss-title-row { display: flex; justify-content: space-between; font-size: 1.3rem; margin-bottom: 5px; color: var(--c-gold); text-shadow: 0 2px 2px #000; }
+        .hp-track { 
+            width: 100%; height: 20px; 
+            background: #150505; 
+            border: 1px solid #2a1010;
+            box-shadow: inset 0 2px 6px rgba(0,0,0,0.8), inset 0 0 10px rgba(0,0,0,0.5);
+        }
+        .hp-fill { 
+            height: 100%; 
+            background: linear-gradient(to right, #4a0000, #8a1010 40%, #b01818);
+            width: 100%; transition: width 0.15s ease-out; 
+            box-shadow: 0 0 8px rgba(150,20,20,0.4);
+            /* 斜條紋增加質感 */
+            background-image: 
+                repeating-linear-gradient(60deg, transparent, transparent 6px, rgba(0,0,0,0.15) 6px, rgba(0,0,0,0.15) 12px),
+                linear-gradient(to right, #4a0000, #8a1010 40%, #b01818);
+        }
+        
+        .condition-box { 
+            margin-top: 8px; 
+            border: 1px solid #4a3820;
+            border-left: 3px solid #8a6422;
+            background: 
+                linear-gradient(to right, #1a1208, #120d06),
+                repeating-linear-gradient(0deg, transparent, transparent 4px, rgba(0,0,0,0.08) 4px, rgba(0,0,0,0.08) 5px);
+            padding: 6px 20px; font-size: 1rem; color: #b09060; 
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.6);
+            transition: all 0.3s; text-align: center; width: 100%;
+            font-family: "Noto Serif SC", serif;
+            letter-spacing: 0.5px;
+        }
+
+        .special-status-box, .sum-display-box {
+            margin-top: 5px; font-size: 1.2rem; color: var(--c-gold);
+            font-weight: bold; text-shadow: 0 0 5px #000; display: none; gap: 15px;
+        }
+        .check-item.done { color: var(--c-green-bright); text-shadow: 0 0 10px var(--c-green-bright); }
+        .sum-display-box { animation: pulseText 2s infinite alternate; }
+
+        .ingame-skip-btn {
+            position: absolute; right: -37px; top: 0;
+            width: 30px; height: 30px; background: #222; border: 1px solid #444; color: #666;
+            display: flex; justify-content: center; align-items: center; cursor: pointer;
+            font-size: 1.2rem; border-radius: 4px; transition: 0.2s;
+        }
+        .ingame-skip-btn:hover { color: var(--c-gold); border-color: var(--c-gold); }
+
+        /* === 左側 Buff 狀態面板 === */
+        .area-left { 
+            position: absolute; top: 10px; left: 10px; width: 80px;
+            display: none; /* 預設隱藏，有 buff 時才顯示 */
+            flex-direction: column; align-items: center; 
+            padding: 6px 4px 4px; gap: 4px; z-index: 10;
+            border: 1px solid #3a2e18;
+            border-top: 2px solid #5a4520;
+            border-bottom: 2px solid #5a4520;
+            background: 
+                linear-gradient(to bottom, #150e04, #0e0904 30%, #0a0603 70%, #150e04),
+                repeating-linear-gradient(0deg, transparent, transparent 5px, rgba(0,0,0,0.1) 5px, rgba(0,0,0,0.1) 6px);
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.6), 0 0 10px rgba(0,0,0,0.4);
+            overflow: hidden;
+        }
+        .buff-panel-title {
+            font-family: "Cinzel", serif; font-size: 0.6rem; letter-spacing: 1px;
+            color: #6a5a3a; text-align: center; width: 100%;
+            border-bottom: 1px solid #3a2810; padding-bottom: 4px;
+            text-transform: uppercase; flex-shrink: 0;
+        }
+        .buff-chip {
+            width: 100%;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 6px 3px;
+            border-top: 1px solid #5a4020;
+            background: linear-gradient(to bottom, #1f1608, #120d04);
+            animation: fadeIn 0.3s;
+            flex-shrink: 0;
+        }
+        .buff-chip-icon { font-size: 1rem; line-height: 1; margin-bottom: 2px; }
+        .buff-chip-name { 
+            font-family: "Noto Serif SC", serif; font-size: 0.58rem; 
+            color: #a09060; text-align: center; line-height: 1.3;
+        }
+        .buff-chip-turns {
+            font-family: "Cinzel", serif; font-size: 1.2rem; font-weight: bold;
+            color: #c5a059; text-shadow: 0 0 6px rgba(180,130,50,0.4);
+            line-height: 1; margin-top: 2px;
+        }
+        .buff-chip-turns-label {
+            font-family: "Cinzel", serif; font-size: 0.5rem;
+            color: #6a5a3a; letter-spacing: 1px;
+        }
+
+        /* === 敵方意圖 === */
+        .area-right-top { 
+            position: absolute; top: 10px; right: 20px; width: 220px; height: 130px; 
+            border: 1px solid #5a2020;
+            border-top: 3px solid #7a2a2a;
+            border-bottom: 3px solid #7a2a2a;
+            background: 
+                linear-gradient(160deg, #200808, #160404 40%, #0e0202),
+                repeating-linear-gradient(0deg, transparent, transparent 4px, rgba(0,0,0,0.08) 4px, rgba(0,0,0,0.08) 5px);
+            padding: 10px; 
+            text-align: center; z-index: 10;
+            display: flex; flex-direction: column; justify-content: center;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.7), inset 0 0 20px rgba(0,0,0,0.5);
+            /* 去掉現代clip-path，改用側邊裝飾線 */
+        }
+        /* 裝飾性角章 */
+        .area-right-top::before {
+            content: "⚔";
+            position: absolute;
+            top: 4px; right: 6px;
+            font-size: 0.7rem;
+            color: #5a2020;
+            opacity: 0.7;
+        }
+        .area-right-top.broken {
+            border-color: #2a6a35;
+            border-top-color: #3a8a45;
+            border-bottom-color: #3a8a45;
+            background: 
+                linear-gradient(160deg, #081a0a, #040e05 40%, #020802),
+                repeating-linear-gradient(0deg, transparent, transparent 4px, rgba(0,0,0,0.08) 4px, rgba(0,0,0,0.08) 5px);
+        }
+        .intent-label { font-size: 1rem; color: #ffa8a8; font-weight: bold; margin-bottom: 5px; font-family: "Cinzel", serif; }
+        .dmg-val { 
+            font-size: 3.5rem; color: #ff4d4d; font-weight: bold; 
+            line-height: 1; text-shadow: 0 0 10px #500; margin-bottom: 5px;
+            font-family: "Cinzel", serif;
+        }
+        .def-info { font-size: 0.9rem; color: #aaa; }
+        .def-val { color: var(--c-green-bright); font-weight: bold; margin-left: 5px; font-size: 1.1rem; }
+
+        /* === [修改] 技能欄：2x2 網格佈局 === */
+        .area-right-mid { 
+            position: absolute; top: 150px; right: 20px; bottom: 260px; 
+            width: 220px; 
+            /* 古卷/法典風格邊框 */
+            border: 1px solid #5a3e1a;
+            border-top: 3px solid #7a5522;
+            border-bottom: 3px solid #7a5522;
+            background: 
+                linear-gradient(to bottom, #1a1208, #120d06 30%, #0e0a04 70%, #1a1208),
+                repeating-linear-gradient(90deg, transparent, transparent 20px, rgba(0,0,0,0.08) 20px, rgba(0,0,0,0.08) 21px);
+            display: flex; flex-direction: column; 
+            padding: 8px; gap: 8px;
+            z-index: 10;
+            box-shadow: inset 0 0 30px rgba(0,0,0,0.7), 2px 0 8px rgba(0,0,0,0.4), -2px 0 8px rgba(0,0,0,0.4);
+        }
+        /* 裝飾性邊角 */
+        .area-right-mid::before, .area-right-mid::after {
+            content: "✦";
+            position: absolute;
+            color: #7a5522;
+            font-size: 0.8rem;
+            opacity: 0.6;
+        }
+        .area-right-mid::before { top: 4px; left: 6px; }
+        .area-right-mid::after { top: 4px; right: 6px; }
+        
+        .skill-title {
+            color: #c5a059; 
+            font-weight: bold; 
+            text-align: center;
+            padding-bottom: 4px;
+            padding-top: 2px;
+            border-bottom: 1px solid #3a2810;
+            font-family: "Cinzel", serif;
+            font-size: 0.85rem;
+            letter-spacing: 2px;
+            text-shadow: 0 0 8px rgba(180,130,50,0.4);
+        }
+
+        .skill-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 6px;
+            flex-grow: 1;
+        }
+        
+        .skill-btn {
+            /* 羊皮紙/石板風格 */
+            background: 
+                linear-gradient(160deg, #252018 0%, #1a1610 40%, #111009 100%);
+            border: 1px solid #4a3515; 
+            border-top: 1px solid #5a4520;
+            color: #d0c090; 
+            cursor: pointer; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: flex-end;
+            align-items: center;
+            text-align: center;
+            width: 100%; height: 100%; 
+            transition: 0.2s;
+            border-radius: 1px;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5), 0 2px 4px rgba(0,0,0,0.4);
+            padding: 5px;
+            position: relative;
+            overflow: hidden;
+        }
+        /* 技能按鈕的石刻裝飾線 */
+        .skill-btn::before {
+            content: "";
+            position: absolute;
+            inset: 3px;
+            border: 1px solid rgba(180,130,50,0.1);
+            pointer-events: none;
+        }
+        .skill-btn .s-img {
+            position: absolute;
+            top: 5px;
+            height: 65%;
+            width: auto;
+            object-fit: contain;
+            filter: drop-shadow(0 0 5px rgba(0,0,0,0.8)) sepia(0.2);
+            transition: 0.2s;
+            z-index: 1;
+        }
+
+        .skill-btn .s-name { 
+            font-family: "Noto Serif SC", serif;
+            font-weight: bold; 
+            font-size: 1rem; 
+            color: #e0d0a0;
+            text-shadow: 0 1px 3px #000, 0 0 5px rgba(0,0,0,0.8);
+            z-index: 2;
+            margin-bottom: 1px;
+        }
+        .skill-btn .s-cost { font-size: 0.75rem; color: #8a7a5a; }
+        .skill-btn .s-count { 
+            font-family: "Cinzel", serif;
+            font-size: 0.8rem; 
+            color: #c5a059; 
+            font-weight: bold;
+            text-shadow: 0 1px 2px #000;
+            z-index: 2;
+            letter-spacing: 1px;
+        }
+        .skill-btn:hover:not(:disabled) .s-img {
+            transform: scale(1.1);
+            filter: drop-shadow(0 0 8px rgba(180,130,50,0.5)) sepia(0.1);
+        }
+
+        .skill-btn:hover:not(:disabled) { 
+            background: linear-gradient(160deg, #302818 0%, #221c0e 40%, #1a1409 100%);
+            border-color: #7a5522;
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.3), 0 0 8px rgba(120,80,20,0.2);
+        }
+        .skill-btn.active { 
+            border-color: var(--c-gold); 
+            background: linear-gradient(160deg, #3d3015, #2b2010, #201800);
+            box-shadow: 0 0 12px rgba(180,130,40,0.4), inset 0 0 10px rgba(180,130,40,0.1); 
+        }
+        .skill-btn.targetable-skill { border-color: #2a6a35; background: #071a0a; cursor: crosshair; }
+        .skill-btn:disabled { 
+            opacity: 0.4; 
+            cursor: not-allowed; 
+            filter: grayscale(0.9) brightness(0.6); 
+        }
+
+        /* === 玩家 HP === */
+        .area-right-bot { 
+            position: absolute; bottom: 20px; right: 20px; width: 220px; height: 230px; 
+            /* 改為八角形紋章盾牌造型，告別現代圓形UI */
+            border: none;
+            background: none;
+            display: flex; flex-direction: column; justify-content: center; align-items: center; 
+            z-index: 10;
+        }
+        /* 用 SVG clip-path 做盾牌/紋章形狀 */
+        .area-right-bot::before {
+            content: "";
+            position: absolute; inset: 0;
+            background: radial-gradient(ellipse at 40% 30%, #0a2a0a, #001800 60%, #000d00);
+            clip-path: polygon(50% 0%, 90% 15%, 100% 50%, 90% 90%, 50% 100%, 10% 90%, 0% 50%, 10% 15%);
+            border: none;
+            z-index: -1;
+        }
+        .area-right-bot::after {
+            content: "";
+            position: absolute; inset: 3px;
+            background: transparent;
+            clip-path: polygon(50% 0%, 90% 15%, 100% 50%, 90% 90%, 50% 100%, 10% 90%, 0% 50%, 10% 15%);
+            border: 2px solid #1a6b2a;
+            box-shadow: 0 0 20px rgba(40,140,60,0.3), inset 0 0 30px rgba(0,60,0,0.5);
+            z-index: -1;
+            outline: 1px solid #0d3d18;
+            outline-offset: 4px;
+        }
+        .php-val { font-size: 4.5rem; font-weight: bold; line-height: 1; color: #6ddb7a; text-shadow: 0 0 20px #0a4010, 0 2px 0 #001800; letter-spacing: -2px; }
+        .php-lbl { font-size: 0.85rem; color: #4a9a58; margin-top: 5px; font-family: "Cinzel", serif; letter-spacing: 3px; text-transform: uppercase; }
+
+        /* === 儀表板 === */
+        .dashboard-container { 
+            position: absolute; bottom: 160px; left: 120px; right: 260px; height: 200px; 
+            z-index: 20; 
+            transform: perspective(800px) rotateX(20deg); 
+            transform-origin: bottom center; 
+            /* 石板/木板紋理感 */
+            border: 3px solid #3e2e18;
+            border-top: 4px solid #5a4020;
+            border-bottom: 4px solid #5a4020;
+            background-color: #1a1508;
+            background-image: 
+                repeating-linear-gradient(90deg, transparent, transparent 60px, rgba(0,0,0,0.12) 60px, rgba(0,0,0,0.12) 61px),
+                repeating-linear-gradient(0deg, transparent, transparent 8px, rgba(255,255,255,0.015) 8px, rgba(255,255,255,0.015) 9px),
+                linear-gradient(to bottom, #211a0a, #1a1206 30%, #120e04 70%, #1a1508);
+            display: grid; grid-template-columns: 1fr 240px; 
+            box-shadow: 0 30px 60px rgba(0,0,0,0.9), inset 0 0 40px rgba(0,0,0,0.7);
+        }
+        .dash-left { border-right: 2px solid #3e3025; padding: 10px 20px; display: flex; flex-direction: column; }
+        .track-box { 
+    flex-grow: 1; background: rgba(0,0,0,0.4); border: 1px inset #554433; 
+    display: flex; align-items: center; padding: 0 10px; gap: 5px;
+    overflow-x: auto;   /* ← hidden 改為 auto */
+    overflow-y: hidden;
+    scrollbar-width: none; /* 隱藏 scrollbar 保持美觀 */
+}
+.track-box::-webkit-scrollbar { display: none; }
+        
+        .dash-right { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
+        .dash-cell { border-bottom: 1px solid #3e3025; border-right: 1px solid #3e3025; display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; }
+        .dash-cell:nth-child(2n) { border-right: none; } .dash-cell:nth-child(n+3) { border-bottom: none; }
+        .cell-tag { position: absolute; top: 5px; left: 5px; font-size: 0.7rem; color: #887766; font-family: "Cinzel", serif; }
+        .cell-big-text { font-size: 2rem; font-weight: bold; color: #e0d6c8; }
+        
+        .btn-full { width: 100%; height: 100%; border: none; font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: 0.2s; font-family: "Noto Serif SC", serif; }
+        .btn-restart { 
+            background: linear-gradient(to bottom, #2a2015, #1a1408); 
+            color: #8a7a5a; 
+            border-top: 1px solid #3a2e18;
+        } 
+        .btn-restart:hover { color: #d0b870; background: linear-gradient(to bottom, #352818, #221a0a); }
+        .btn-end { 
+            background: linear-gradient(to bottom, #201808, #150f04); 
+            color: #c5a059; 
+            border-top: 2px solid #5a4020; 
+        } 
+        .btn-end:hover { 
+            background: linear-gradient(to bottom, #2b2010, #1a1208); 
+            box-shadow: inset 0 0 20px rgba(180,130,40,0.2); 
+            text-shadow: 0 0 10px rgba(180,130,40,0.6); 
+            color: #e0c070;
+        }
+
+        /* === 手牌區 === */
+        .area-hand { 
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 170px; 
+            background: linear-gradient(to top, rgba(0,0,0,1), rgba(0,0,0,0)); 
+            display: flex; justify-content: center; align-items: center; gap: 10px; z-index: 50; 
+            padding-bottom: 10px;
+        }
+        
+        .card { 
+            width: 90px; height: 120px; 
+            background: #1a1208;
+            border-radius: 2px; 
+            border: 2px solid #6b4c20;
+            outline: 1px solid #3a2810;
+            outline-offset: -5px;
+            display: flex; justify-content: center; align-items: center; 
+            font-size: 2.5rem; font-weight: bold; color: #f0e8d0; 
+            cursor: pointer; transition: transform 0.15s, filter 0.2s; 
+            position: relative; 
+            box-shadow: 0 6px 16px rgba(0,0,0,0.8), inset 0 0 20px rgba(0,0,0,0.6);
+            font-family: "Cinzel", serif;
+            /* 羊皮紙紋理：用多層線性漸層模擬木刻壓印感 */
+            background-image:
+                repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.04) 3px, rgba(0,0,0,0.04) 4px),
+                linear-gradient(160deg, rgba(255,255,255,0.04) 0%, transparent 50%, rgba(0,0,0,0.2) 100%);
+        }
+        /* 卡牌角落裝飾紋 */
+        .card::before {
+            content: "";
+            position: absolute;
+            inset: 4px;
+            border: 1px solid rgba(255,255,255,0.08);
+            pointer-events: none;
+        }
+        .card:hover { transform: translateY(-30px) scale(1.1); border-color: #d4af37; z-index: 100; box-shadow: 0 12px 30px rgba(0,0,0,0.9), 0 0 15px rgba(180,130,40,0.4); }
+        
+        .card.red { 
+            background-color: #2d0a0a;
+            background-image:
+                repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.05) 3px, rgba(0,0,0,0.05) 4px),
+                linear-gradient(160deg, rgba(180,30,30,0.15) 0%, transparent 60%, rgba(0,0,0,0.3) 100%);
+            border-color: #7a2a2a; 
+            color: #ffb3b3;
+            text-shadow: 0 0 8px #800, 2px 2px 0 #1a0000;
+        } 
+        .card.blue { 
+            background-color: #050f2a;
+            background-image:
+                repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.05) 3px, rgba(0,0,0,0.05) 4px),
+                linear-gradient(160deg, rgba(20,60,160,0.2) 0%, transparent 60%, rgba(0,0,0,0.3) 100%);
+            border-color: #2a4a8a; 
+            color: #9bbfff;
+            text-shadow: 0 0 8px #006, 2px 2px 0 #000d33;
+        } 
+        .card.green { 
+            background-color: #071a0a;
+            background-image:
+                repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.05) 3px, rgba(0,0,0,0.05) 4px),
+                linear-gradient(160deg, rgba(20,100,40,0.2) 0%, transparent 60%, rgba(0,0,0,0.3) 100%);
+            border-color: #2a6a35; 
+            color: #8ddb9a;
+            text-shadow: 0 0 8px #040, 2px 2px 0 #001a08;
+        } 
+        .card.yellow { 
+            background-color: #1f1400;
+            background-image:
+                repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.05) 3px, rgba(0,0,0,0.05) 4px),
+                linear-gradient(160deg, rgba(180,120,0,0.2) 0%, transparent 60%, rgba(0,0,0,0.3) 100%);
+            border-color: #7a5a00; 
+            color: #ffd060;
+            text-shadow: 0 0 8px #840, 2px 2px 0 #1a0f00;
+        }
+        
+        .card.token::after { 
+            content: "⚜"; position: absolute; top: 4px; right: 4px; 
+            font-size: 0.8rem; color: #d4af37; 
+            text-shadow: 0 0 4px #000;
+            font-family: serif;
+        }
+
+        .card.disabled { 
+            filter: brightness(0.6) saturate(0.4); 
+            opacity: 0.6; cursor: not-allowed; transform: scale(0.93);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+        }
+        .card.disabled:hover { transform: scale(0.93); z-index: 0; border-color: #3a2810; }
+        .card.targetable { animation: glow 1s infinite alternate; border-color: #d4af37; cursor: crosshair; filter: brightness(1.2); }
+
+        .mini-card { 
+            width: 30px; height: 45px; 
+            border-radius: 1px; 
+            border: 1px solid rgba(180,130,50,0.2); 
+            display: flex; justify-content: center; align-items: center; font-size: 0.9rem; font-weight: bold; 
+            flex-shrink: 0; text-shadow: 1px 1px 0 #000; 
+            font-family: "Cinzel", serif;
+        }
+        .mini-card.red { background: #3d0a0a; color: #c06060; border-color: rgba(120,40,40,0.5); } 
+        .mini-card.blue { background: #060f2a; color: #5070c0; border-color: rgba(30,60,130,0.5); } 
+        .mini-card.green { background: #071a0a; color: #407850; border-color: rgba(30,80,40,0.5); } 
+        .mini-card.yellow { background: #1f1400; color: #a08030; border-color: rgba(120,90,0,0.5); }
+        
+        .boss-img-container { 
+            position: absolute; top: 250px; left: 160px; right: 280px; bottom: 200px; 
+            pointer-events: none; z-index: 5; display: flex; justify-content: center; align-items: center; 
+        }
+        .boss-img { max-height: 230%; max-width: 230%; filter: drop-shadow(0 0 20px rgba(0,0,0,0.8)); animation: float 3s infinite ease-in-out; }
+
+        #log-overlay { 
+            position: fixed; top: 150px; left: 50%; transform: translateX(-50%); 
+            text-align: center; pointer-events: none; z-index: 9999; 
+            text-shadow: 0 0 10px black; font-size: 2.5rem; font-weight: bold; 
+            color: var(--c-gold); opacity: 0; transition: opacity 0.2s; 
+            font-family: "Cinzel", serif; letter-spacing: 2px;
+        }
+        
+        /* === 顏色選擇器（法陣封印風格）=== */
+        #color-picker { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            /* 半透明暗幕，帶細紋 */
+            background: 
+                repeating-linear-gradient(45deg, transparent, transparent 3px, rgba(0,0,0,0.04) 3px, rgba(0,0,0,0.04) 6px),
+                rgba(5, 3, 2, 0.93);
+            z-index: 2000; 
+            display: none; justify-content: center; align-items: center; flex-direction: column; gap: 24px; 
+        }
+        /* 選色器標題 */
+        #color-picker h2 {
+            font-family: "Cinzel", serif !important;
+            color: #c5a059 !important;
+            font-size: 1.2rem !important;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            border-bottom: 1px solid #5a4020;
+            padding-bottom: 10px;
+            margin: 0 !important;
+            text-shadow: 0 0 12px rgba(180,130,50,0.4);
+        }
+        .cp-options { 
+            display: flex; gap: 20px;
+            padding: 20px 28px;
+            background: linear-gradient(to bottom, #1a1208, #0e0a04);
+            border: 1px solid #5a4020;
+            border-top: 3px solid #7a5522;
+            border-bottom: 3px solid #7a5522;
+            box-shadow: inset 0 0 30px rgba(0,0,0,0.6), 0 0 40px rgba(0,0,0,0.5);
+        }
+        .cp-btn { 
+            /* 菱形封印寶石造型 */
+            width: 72px; height: 72px; 
+            border: none;
+            cursor: pointer; 
+            clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+            transition: transform 0.15s, filter 0.15s;
+            position: relative;
+            filter: brightness(0.7) saturate(0.8);
+        }
+        .cp-btn:hover { 
+            transform: scale(1.18) rotate(5deg); 
+            filter: brightness(1.1) saturate(1.2);
+        }
+        /* 去掉原本的圓形內框線，菱形不需要 */
+        .cp-btn::after { content: none; }
+        /* 取消按鈕——石碑刻字風格 */
+        .cp-cancel-btn {
+            background: transparent;
+            border: none;
+            border-top: 1px solid #3a2810;
+            color: #6a5a3a;
+            font-family: "Cinzel", serif;
+            font-size: 0.9rem;
+            letter-spacing: 3px;
+            padding: 8px 30px;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .cp-cancel-btn:hover { color: #c5a059; }
+
+        @keyframes glow { from { box-shadow: 0 0 5px white; } to { box-shadow: 0 0 20px gold; transform: translateY(-20px); } }
+        @keyframes pulse { 0% { border-color: var(--c-orange); } 50% { border-color: white; box-shadow: 0 0 15px var(--c-orange); } 100% { border-color: var(--c-orange); } }
+        @keyframes shake { 0% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } 100% { transform: translateX(0); } }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes pulseText { from { opacity: 0.7; } to { opacity: 1; text-shadow: 0 0 15px var(--c-gold); } }
+        
+        .shake { animation: shake 0.3s; }
+        .phase-flash { animation: phaseFlash 1s; }
+        @keyframes phaseFlash {
+            0% { filter: brightness(1); }
+            50% { filter: brightness(2) sepia(1) hue-rotate(-50deg); }
+            100% { filter: brightness(1); }
+        }
+
+        #bgm-toggle-btn {
+            position: absolute; bottom: 10px; right: 5px; width: 44px; height: 44px;
+            background: linear-gradient(to bottom, #1a1208, #0e0904);
+            border: 1px solid #3a2810;
+            border-top: 2px solid #5a3e18;
+            color: #7a6040;
+            font-size: 18px; display: flex; justify-content: center; align-items: center;
+            cursor: pointer; z-index: 1000; transition: all 0.2s;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+        }
+        #bgm-toggle-btn:hover { border-color: #7a5522; color: #c5a059; }
+		
+		/* === 未來視界的牌預覽現在整合進左側 buff 面板，此容器保留但不再獨立顯示 === */
+.future-sight-container {
+    position: absolute;
+    left: 10px; width: 80px;
+    /* top 由 JS 動態設定，或用固定值：buff面板約 200px 高，再加間距 */
+    top: 220px;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    z-index: 15;
+    background: 
+        linear-gradient(to bottom, #150e04, #0e0904 40%, #0a0603 70%, #150e04),
+        repeating-linear-gradient(0deg, transparent, transparent 5px, rgba(0,0,0,0.1) 5px, rgba(0,0,0,0.1) 6px);
+    border: 1px solid #3a2810;
+    border-top: 2px solid #5a3e18;
+    border-bottom: 2px solid #5a3e18;
+    padding: 6px 5px;
+    box-shadow: inset 0 0 15px rgba(0,0,0,0.6), 0 0 10px rgba(0,0,0,0.4);
+    animation: fadeIn 0.5s;
+}
+
+.fs-label {
+    font-size: 0.7rem;
+    color: #8a7a5a;
+    font-family: "Cinzel", serif;
+    text-align: center;
+    border-bottom: 1px solid #3a2810;
+    padding-bottom: 5px;
+    width: 100%;
+    letter-spacing: 1px;
+}
+
+.fs-card-slot {
+    width: 40px; 
+    height: 56px;
+    font-size: 1.2rem;
+    box-shadow: 0 0 5px #000;
+}
+
+/* === 閱讀確認彈窗 (Ready Screen) === */
+        #ready-screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(10, 8, 6, 0.95); z-index: 2500;
+            display: none; flex-direction: column; justify-content: center; align-items: center; gap: 20px;
+            backdrop-filter: blur(5px);
+        }
+        .ready-title {
+            font-size: 3rem; color: var(--c-gold);
+            text-shadow: 0 0 15px var(--c-gold-dim); margin-bottom: 10px;
+            letter-spacing: 3px; font-family: "Cinzel", "Noto Serif SC", serif;
+        }
+        .ready-desc {
+            font-size: 1.2rem; color: #ccc;
+            margin-bottom: 20px; font-family: "Noto Serif SC", serif;
+        }
+        .btn-ready {
+            padding: 15px 50px; font-size: 1.5rem; font-weight: bold;
+            background: rgba(0,0,0,0.5); color: var(--c-gold); border: 2px solid var(--c-gold);
+            cursor: pointer; border-radius: 4px; transition: 0.3s;
+            font-family: "Noto Serif SC", serif; box-shadow: 0 0 15px rgba(197, 160, 89, 0.2);
+        }
+        .btn-ready:hover {
+            background: var(--c-gold); color: #000; box-shadow: 0 0 25px var(--c-gold);
+            transform: scale(1.05);
+        }
+		
+		#turn-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    z-index: 1500;
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    pointer-events: none;
+}
+#turn-overlay.visible {
+    display: flex;
+    animation: fadeIn 0.3s ease-in;
+}
+#turn-overlay-text {
+    font-family: "Cinzel", serif;
+    font-size: 3.5rem;
+    font-weight: bold;
+    letter-spacing: 8px;
+    text-shadow: 0 0 30px currentColor;
+}
+#turn-overlay-sub {
+    font-family: "Noto Serif SC", serif;
+    font-size: 1.3rem;
+    color: #aaa;
+    letter-spacing: 2px;
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+    </style>
+</head>
+<body>
+    <div id="bgm-toggle-btn" class="sys-btn" onclick="toggleLocalMusic()">🔊</div>
+    <div id="loading-screen">
+        正在读取战斗...
+    </div>
+    <div id="ready-screen">
+        <div class="ready-title">Mother Duel</div>
+        <div class="ready-desc">请先阅读完剧情文本，再开始战斗</div>
+        <button class="btn-ready" onclick="confirmReady()">开始战斗</button>
+    </div>
+    <div id="selection-screen">
+        <div class="sel-header">
+            <h1 style="color:var(--c-orange); margin-bottom: 5px;">战前准备</h1>
+            <div style="color:#aaa; margin-bottom: 10px;">选择最多 4 个母爱支援</div>
+            
+            <div style="display:flex; flex-direction:column; align-items:center;">
+                <label style="color:#888; font-size:0.9rem;">测试敌人选择 (Debug)</label>
+                <select id="debug-enemy-select" class="enemy-selector" onchange="loadBattleData()">
+                    </select>
+            </div>
+        </div>
+
+        <div class="sel-grid" id="skill-grid"></div>
+        <button id="btn-start-game" class="btn-start" onclick="finalizeSelection()">开始战斗</button>
+    </div>
+
+    <div id="defeat-modal">
+        <div class="defeat-title" id="defeat-title">失败</div>
+        <div class="defeat-btn-group">
+            <button class="d-btn" onclick="retryGame()">↻ 重新挑战</button>
+            <button class="d-btn skip" onclick="skipBattle()">⏩ 跳过战斗</button>
+        </div>
+    </div>
+
+    <div id="color-picker">
+        <h2>选择转换后的目标颜色</h2>
+        <div class="cp-options">
+            <!-- 顏色改成更暗沉的奇幻色調，配合卡牌系統 -->
+            <div class="cp-btn" style="background: linear-gradient(135deg, #8a1a1a, #3d0808)" onclick="resolveColorPick('red')"></div>
+            <div class="cp-btn" style="background: linear-gradient(135deg, #1a3a7a, #060f2a)" onclick="resolveColorPick('blue')"></div>
+            <div class="cp-btn" style="background: linear-gradient(135deg, #1a5a28, #071a0a)" onclick="resolveColorPick('green')"></div>
+            <div class="cp-btn" style="background: linear-gradient(135deg, #8a6200, #3d2a00)" onclick="resolveColorPick('yellow')"></div>
+        </div>
+        <button class="cp-cancel-btn" onclick="cancelColorPick()">— 取消 —</button>
+    </div>
+
+    <div id="log-overlay"></div>
+    <div id="turn-overlay">
+        <div id="turn-overlay-text"></div>
+        <div id="turn-overlay-sub"></div>
+    </div>
+    <div id="game-stage">
+        <div class="area-top">
+            <div class="boss-hp-box">
+                <div class="boss-title-row">
+                    <span class="boss-name-text" id="enemy-name">BOSS</span>
+                    <span class="inline-orb-row" id="inline-orb-row"></span>
+                    <span class="hp-text-val" id="hp-text">200/200</span>
+                </div>
+                <div class="hp-track"><div id="hp-bar" class="hp-fill"></div></div>
+                <div class="ingame-skip-btn" onclick="skipBattle()" title="作弊：直接勝利">⏩</div>
+            </div>
+            <div class="condition-box" id="condition-text">胜利条件: 击败敌人</div>
+            
+            <div class="sum-display-box" id="sum-display">当前总和: 0 / 目标: 15</div>
+            
+            <div class="special-status-box" id="special-status">
+                </div>
+        </div>
+
+        <div class="area-left" id="buff-panel">
+            <div class="buff-panel-title">Buffs</div>
+        </div>
+        <div id="future-sight-area" class="future-sight-container">
+            <div class="fs-label">NEXT<br>DRAWS</div>
+            <div id="fs-cards-list" style="display:flex; flex-direction:column; gap:6px;"></div>
+        </div>
+
+        <div class="area-right-top" id="intent-box">
+            <div class="intent-label" id="intent-label">伤害预兆</div>
+            <div class="dmg-val" id="enemy-intent-val">0</div>
+            <div class="def-info">连击减伤: <span class="def-val" id="def-rate-text">3</span></div>
+        </div>
+
+        <div class="area-right-mid" id="equipped-skills-area">
+            </div>
+
+        <div class="area-right-bot">
+            <div class="php-val" id="player-hp-text">100</div>
+            <div class="php-lbl">PLAYER HP</div>
+        </div>
+        <div class="dashboard-container">
+            <div class="dash-left">
+                <div style="font-size:0.9rem; color:#aaa; margin-bottom:5px;">HISTORY</div>
+                <div class="track-box" id="played-cards-track"><span>等待出牌...</span></div>
+            </div>
+            <div class="dash-right">
+                <div class="dash-cell">
+                    <span class="cell-tag">COMBO</span>
+                    <span class="cell-big-text" style="color:var(--c-red)" id="combo-count">0</span>
+                </div>
+                <div class="dash-cell">
+                    <span class="cell-tag">DECK</span>
+                    <span class="cell-big-text" id="deck-count">40</span>
+                </div>
+                <div class="dash-cell">
+                    <button class="btn-full btn-restart" onclick="retryGame()">重新<br>准备</button>
+                </div>
+                <div class="dash-cell">
+                    <button class="btn-full btn-end" onclick="endTurn()">结束<br>回合</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="area-hand" id="hand-area"></div>
+        
+        <div class="boss-img-container">
+            <img id="boss-img" class="boss-img" src="">
+        </div>
+    </div>
+
+<script>
+	const IS_DEBUG_MODE = false ;
+
+    // === 1. 技能數據庫 (8個) ===
+    const SKILLS_DB = [
+        { id: 1, owner: "爱娜", name: "无中生有", cost: 1, max: 3, desc: "抽 2 张牌 (手牌为 0 则 4 张)" },
+        { id: 2, owner: "米拉露恩", name: "龙语转化", cost: 1, max: 2, desc: "选取其它母爱支援发动效果" },
+        { id: 3, owner: "琳", name: "鲜血契约", cost: 1, max: 2, desc: "选一张牌丢弃，恢复 20 生命" },
+        { id: 4, owner: "黛芬妮", name: "灵魂裁剪", cost: 1, max: 2, desc: "将一张牌切分为两张" },
+        { id: 5, owner: "芙蕾嘉", name: "未来视界", cost: 1, max: 1, desc: "3回合内，显示牌库顶的 3 张牌" },
+        { id: 6, owner: "穗", name: "千变万化", cost: 1, max: 2, desc: "转换手牌某颜色为指定颜色" },
+        { id: 7, owner: "璐法", name: "鼓舞之心", cost: 1, max: 1, desc: "3回合内，开始时多抽 2 张牌" },
+        { id: 8, owner: "莉迪娅", name: "不动信念", cost: 1, max: 1, desc: "3回合内，结束时不弃牌" }
+    ];
+
+	const SKILL_ICONS = {
+    "爱娜": "https://cdn.imgchest.com/files/4a138a01617e.png",    
+    "琳": "https://cdn.imgchest.com/files/30a480088b23.png",     
+    "米拉露恩": "https://cdn.imgchest.com/files/c0c61c8c8475.png", 
+    "黛芬妮": "https://cdn.imgchest.com/files/ca5ce96a0344.png",
+    "芙蕾嘉": "https://cdn.imgchest.com/files/973c56e2f7af.png",
+    "穗": "https://cdn.imgchest.com/files/c8a84a967a69.png",
+    "莉迪娅": "https://cdn.imgchest.com/files/62c350200304.png",
+    "璐法": "https://cdn.imgchest.com/files/c4dee393ba2d.png"
+};
+  
+    const ENEMIES_DB = {
+        "enemy_1": { 
+            name: "高塔的魔女 - 爱娜", 
+            img: "https://cdn.imgchest.com/files/ffded04458b1.png",
+			bgm: "https://files.catbox.moe/vlllik.ogg",
+            bg: "linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('https://cdn.imgchest.com/files/fde1e6539f6e.png')",
+            phases: [
+                { hp: 5, atk: 10, mode: "count", desc: "基础：出一张牌造成 1 点伤害" },
+                { hp: 7, atk: 15, mode: "count", desc: "基础：出一张牌造成 1 点伤害" },
+                { hp: 8, atk: 20, mode: "count", desc: "基础：出一张牌造成 1 点伤害" },
+                { hp: 10, atk: 25, mode: "count", desc: "基础：出一张牌造成 1 点伤害" }
+            ]
+        },
+        "enemy_2": { 
+            name: "机巧人偶 - 黛芬妮", 
+            img: "https://cdn.imgchest.com/files/7396e46c9622.png",
+			bgm: "https://files.catbox.moe/ep9wz3.ogg",
+            bg: "linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('https://cdn.imgchest.com/files/a5c7463338b2.png')",
+            phases: [
+                { hp: 7, atk: 20, mode: "color_chain", params: {color:'red'}, desc: "红色连击：连续出红牌造成 1 点伤害" },
+                { hp: 7, atk: 23, mode: "color_chain", params: {color:'blue'}, desc: "蓝色连击：连续出蓝牌造成 1 点伤害" },
+                { hp: 7, atk: 26, mode: "color_chain", params: {color:'green'}, desc: "绿色连击：连续出绿牌造成 1 点伤害" },
+                { hp: 7, atk: 29, mode: "color_chain", params: {color:'yellow'}, desc: "黄色连击：连续出黄牌造成 1 点伤害" }
+            ]
+        },
+        "enemy_3": { 
+            name: "丰饶之狐仙 - 穗", 
+			img: "https://cdn.imgchest.com/files/299c6a475806.png",
+			bgm: "https://files.catbox.moe/6dk58a.ogg",
+            bg: "linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('https://cdn.imgchest.com/files/8ce1992d18ee.png')",
+            phases: [
+                { hp: 5, atk: 12, mode: "color_switch", desc: "变幻：切换颜色时造成 1 点伤害" },
+                { hp: 5, atk: 15, mode: "color_switch", desc: "变幻：切换颜色时造成 1 点伤害" },
+                { hp: 5, atk: 18, mode: "color_switch", desc: "变幻：切换颜色时造成 1 点伤害" },
+                { hp: 5, atk: 21, mode: "color_switch", desc: "变幻：切换颜色时造成 1 点伤害" }
+            ]
+        },
+        "enemy_4": { 
+            name: "血月真祖 - 琳", 
+			img: "https://cdn.imgchest.com/files/9cd9c13142a8.png",
+			bgm: "https://files.catbox.moe/r2nk9x.ogg",
+            bg: "linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('https://cdn.imgchest.com/files/6610a1163c98.png')",
+            phases: [
+                { hp: 20, atk: 20, mode: "diff", desc: "落差：造成前后牌差值的伤害" },
+                { hp: 25, atk: 22, mode: "diff", desc: "落差：造成前后牌差值的伤害" },
+                { hp: 30, atk: 25, mode: "diff", desc: "落差：造成前后牌差值的伤害" },
+                { hp: 35, atk: 28, mode: "diff", desc: "落差：造成前后牌差值的伤害" }
+            ]
+        },
+        "enemy_5": { 
+            name: "生命之树的园丁 - 芙蕾嘉", 
+			img: "https://cdn.imgchest.com/files/44a7eab2e247.png",
+			bgm: "https://files.catbox.moe/ho39fr.ogg",
+            bg: "linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('https://cdn.imgchest.com/files/c497ed656454.png')",
+            phases: [
+                { hp: 7, atk: 12, mode: "combo_mod", params: {mod:2}, desc: "二连拍：每 2 连击造成 1 伤害" },
+                { hp: 5, atk: 15, mode: "combo_mod", params: {mod:3}, desc: "三连拍：每 3 连击造成 1 伤害" },
+                { hp: 4, atk: 18, mode: "combo_mod", params: {mod:4}, desc: "四连拍：每 4 连击造成 1 伤害" },
+                { hp: 3, atk: 21, mode: "combo_mod", params: {mod:5}, desc: "五连拍：每 5 连击造成 1 伤害" }
+            ]
+        },
+        "enemy_6": { 
+            name: "无尽书库的古龙 - 米拉露恩", 
+			img: "https://cdn.imgchest.com/files/3f5735d532e0.png",
+			bgm: "https://files.catbox.moe/yi2xi9.ogg",
+            bg: "linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('https://cdn.imgchest.com/files/a4f7ce51ac53.png')",
+            phases: [
+                { hp: 1, atk: 20, mode: "sum_target", params: {target:15}, desc: "总和 15：出牌总和刚好 15 造成 1 伤害" },
+                { hp: 1, atk: 22, mode: "sum_target", params: {target:20}, desc: "总和 20：出牌总和刚好 20 造成 1 伤害" },
+                { hp: 1, atk: 25, mode: "sum_target", params: {target:25}, desc: "总和 25：出牌总和刚好 25 造成 1 伤害" },
+                { hp: 1, atk: 28, mode: "sum_target", params: {target:30}, desc: "总和 30：出牌总和刚好 30 造成 1 伤害" }
+            ]
+        },
+        "enemy_7": { 
+            name: "千年帝国的皇女 - 莉迪娅", 
+			img: "https://cdn.imgchest.com/files/fa9164f2fb93.png",
+			bgm: "https://files.catbox.moe/025ta8.ogg",
+            bg: "linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('https://cdn.imgchest.com/files/bf860e2b694a.png')",
+            phases: [
+                { hp: 40, atk: 20, mode: "value", desc: "重击：牌面数值 = 伤害" },
+                { hp: 60, atk: 25, mode: "value", desc: "重击：牌面数值 = 伤害" },
+                { hp: 80, atk: 30, mode: "value", desc: "重击：牌面数值 = 伤害" },
+                { hp: 100, atk: 35, mode: "value", desc: "重击：牌面数值 = 伤害" }
+            ]
+        },
+        "enemy_8": { 
+            name: "起始与终局之魔王 - 奈芙蒂", 
+			img: "https://cdn.imgchest.com/files/d0d789082cd8.png",
+			bgm: "https://files.catbox.moe/p6396r.ogg",
+            bg: "linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('https://cdn.imgchest.com/files/a5f6e89b8fcd.png')",
+            phases: [
+                { hp: 1, atk: 30 },
+                { hp: 1, atk: 35 },
+                { hp: 1, atk: 40 },
+                { hp: 1, atk: 50 }
+            ]
+        },
+        "enemy_9": { 
+            name: "神选之圣女 - 璐法", 
+            img: "https://cdn.imgchest.com/files/65aa8ceb2b4f.png", 
+			bgm: "https://files.catbox.moe/ypyat2.ogg",
+            bg: "linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('https://cdn.imgchest.com/files/9a2a15de37c1.png')",
+            phases: [
+                { hp: 6, atk: 20, mode: "compare_asc", desc: "升序：后牌 > 前牌 时伤害" },
+                { hp: 6, atk: 20, mode: "compare_desc", desc: "降序：后牌 < 前牌 时伤害" },
+                { hp: 3, atk: 20, mode: "compare_eq", desc: "同号：后牌 = 前牌 时伤害" },
+                { hp: 1, atk: 25, mode: "compare_all", desc: "全序：单回合内集齐 升/降/同 时伤害" }
+            ]
+        },
+        "默认": { 
+            name: "訓練木樁", 
+            img: "https://files.catbox.moe/cb2da1.png",
+            phases: [{ hp: 50, atk: 5, mode: "count", desc: "練習：出一張牌 1 傷害" }]
+        }
+    };
+
+	const CHAR_TO_ENEMY_MAP = {
+		"爱娜": "enemy_1", 
+		"琳": "enemy_4",   
+		"米拉露恩": "enemy_6",
+		"黛芬妮": "enemy_2",
+		"芙蕾嘉": "enemy_5",
+		"穗": "enemy_3",
+		"莉迪娅": "enemy_7",
+		"璐法": "enemy_9",
+		"奈芙蒂": "enemy_8" 
+	};
+
+	let currentTargetName = "";
+    let isLocalMuted = (typeof window.INJECTED_MUTE_STATE !== 'undefined') ? window.INJECTED_MUTE_STATE : false;
+
+	function updateBgmButtonUI() {
+        const btn = document.getElementById('bgm-toggle-btn');
+        if (!btn) return;
+        
+        if (isLocalMuted) {
+            btn.innerText = "🔇";
+            btn.style.color = "#ff6b6b";
+        } else {
+            btn.innerText = "🔊";
+            btn.style.color = "#fff";
+        }
+    }
+
+    // 切換音樂開關
+    async function toggleLocalMusic() {
+        const btn = document.getElementById('bgm-toggle-btn');
+        isLocalMuted = !isLocalMuted; // 切換狀態
+
+        updateBgmButtonUI(); // 更新圖標
+
+
+        if (isLocalMuted) {
+            if (window.parent && window.parent.RPGBridge) {
+                await pauseAudio('bgm');
+            }
+        } else {
+            playBattleMusic(); 
+        }
+    }
+    
+    // === 2. 通訊與初始化 ===
+    async function getST(varName) {
+    // 舊：window.parent.RPGBridge.getVar(varName)
+    try {
+        const vars = getAllVariables();
+        const keys = ('stat_data.' + varName).split('.');
+        let cur = vars;
+        for (const k of keys) {
+            if (cur == null || !Object.prototype.hasOwnProperty.call(cur, k)) return null;
+            cur = cur[k];
+        }
+        return cur ?? null;
+    } catch(e) { return null; }
+}
+
+
+    async function setST(varName, val) {
+    // 舊：window.parent.RPGBridge.setVar(varName, val)
+    try {
+        const keys = ('stat_data.' + varName).split('.');
+        const nested = {};
+        let cur = nested;
+        for (let i = 0; i < keys.length - 1; i++) {
+            cur[keys[i]] = {};
+            cur = cur[keys[i]];
+        }
+        cur[keys[keys.length - 1]] = val;
+        updateVariablesWith(nested);
+    } catch(e) { console.warn('[Mini] setST 失敗:', varName, e); }
+}
+
+async function execST(cmd) {
+    // 舊：window.parent.RPGBridge.execute(cmd)
+    try { return await triggerSlash(cmd); } 
+    catch(e) { console.warn('[Mini] execST 失敗:', cmd, e); }
+}
+
+    window.onload = async function() {
+        initEnemySelector();
+        await loadBattleData();
+		updateBgmButtonUI();
+        document.getElementById('loading-screen').style.display = 'none';
+        document.getElementById('ready-screen').style.display = 'flex';
+    };
+	window.confirmReady = function() {
+        document.getElementById('ready-screen').style.display = 'none';
+        // 交給跳轉中樞判定（無技能直接開打，有技能進準備畫面）
+        proceedToNextScreen(); 
+    };
+
+    function initEnemySelector() {
+		const sel = document.getElementById('debug-enemy-select');
+		if (!sel) return;
+
+		if (!IS_DEBUG_MODE) {
+			if (sel.parentElement) sel.parentElement.style.display = 'none';
+			return;
+		}
+        let html = '';
+        Object.keys(ENEMIES_DB).forEach(key => {
+            const name = ENEMIES_DB[key].name;
+            html += `<option value="${key}">${name} (${key})</option>`;
+        });
+        sel.innerHTML = html;
+        sel.value = "enemy_1";
+    }
+
+    let currentEnemyData = null;
+    let availableSkills = [];
+
+    async function loadBattleData() {
+        const sel = document.getElementById('debug-enemy-select');
+        let targetName = "默认";
+        
+        if (window.parent && window.parent.RPGBridge) {
+            targetName = await window.parent.RPGBridge.getVar('世界.迷宫攻略.当前攻略对象');
+        }
+        
+        console.log("当前攻略对象:", targetName);
+        currentTargetName = targetName; 
+
+        let enemyId = "enemy_1"; 
+
+        if (!IS_DEBUG_MODE) {
+            if (targetName && CHAR_TO_ENEMY_MAP[targetName]) {
+                enemyId = CHAR_TO_ENEMY_MAP[targetName];
+            } else {
+                console.warn("正式模式下未讀取到有效目標，使用預設敵人");
+                enemyId = "enemy_1"; 
+            }
+        } else {
+            if (sel && sel.value) {
+                enemyId = sel.value;
+            } else if (targetName && CHAR_TO_ENEMY_MAP[targetName]) {
+                enemyId = CHAR_TO_ENEMY_MAP[targetName];
+            }
+        }
+        
+        if (!ENEMIES_DB[enemyId]) enemyId = "enemy_1";
+        currentEnemyData = JSON.parse(JSON.stringify(ENEMIES_DB[enemyId]));
+        
+        // [新增] 應用 BOSS 專屬背景
+        if (currentEnemyData.bg) {
+            document.body.style.backgroundImage = currentEnemyData.bg;
+        } else {
+             document.body.style.backgroundImage = "radial-gradient(circle at center, #1a1512, #050403)";
+        }
+
+        // 隨機化處理
+        if (enemyId === "enemy_2") {
+    // 只抽出顏色部分來打亂
+    const colors = currentEnemyData.phases.map(p => p.params.color);
+    const descs = {
+        'red': '红色连击：连续出红牌造成 1 点伤害',
+        'blue': '蓝色连击：连续出蓝牌造成 1 点伤害',
+        'green': '绿色连击：连续出绿牌造成 1 点伤害',
+        'yellow': '黄色连击：连续出黄牌造成 1 点伤害'
+    };
+    
+    // 打亂顏色順序
+    for (let i = colors.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [colors[i], colors[j]] = [colors[j], colors[i]];
+    }
+    
+    // 顏色套回各階段，atk 保持原本遞增設定不動
+    currentEnemyData.phases.forEach((p, i) => {
+        p.params = { color: colors[i] };
+        p.desc = descs[colors[i]];
+    });
+}
+
+        if (enemyId === "enemy_9") {
+            const firstThree = [currentEnemyData.phases[0], currentEnemyData.phases[1], currentEnemyData.phases[2]];
+            for (let i = firstThree.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [firstThree[i], firstThree[j]] = [firstThree[j], firstThree[i]];
+            }
+            currentEnemyData.phases[0] = firstThree[0];
+            currentEnemyData.phases[1] = firstThree[1];
+            currentEnemyData.phases[2] = firstThree[2];
+        }
+
+        if (enemyId === "enemy_8") {
+            const modeGenerators = [
+                // 1. 基礎計數 (參考 Enemy 1)
+                // 原版 HP 10，BOSS 版提升至 20
+                () => ({ 
+                    mode: "count", 
+                    hp: 15,
+                    params: {}, 
+                    desc: "计数：出一张牌造成 1 伤害" 
+                }),
+                
+                // 2. 顏色連擊 (參考 Enemy 2)
+
+                () => {
+                    const colors = ['red', 'blue', 'green', 'yellow'];
+                    const cMap = {'red':'红', 'blue':'蓝', 'green':'绿', 'yellow':'黄'};
+                    const picked = colors[Math.floor(Math.random() * colors.length)];
+                    return { 
+                        mode: "color_chain", 
+                        hp: 10,
+                        params: { color: picked }, 
+                        desc: `同色：连续出${cMap[picked]}牌造成伤害` 
+                    };
+                },
+
+                // 3. 顏色變換 (參考 Enemy 3)
+                () => ({ 
+                    mode: "color_switch", 
+                    hp: 7,
+                    params: {}, 
+                    desc: "变幻：切换颜色时造成伤害" 
+                }),
+
+                // 4. 數值落差 (參考 Enemy 4)
+                () => ({ 
+                    mode: "diff", 
+                    hp: 40,
+                    params: {}, 
+                    desc: "落差：造成前后牌差值的伤害" 
+                }),
+
+                // 5. 連擊節奏 (參考 Enemy 5)
+                // 攻擊頻率極低 (每 3~5 張牌才打一下)，HP 必須極低
+                () => {
+                    const mod = Math.floor(Math.random() * 3) + 3; // 隨機 3, 4, 5 連擊
+
+                    const adjustedHp = Math.floor(60 / mod / 4); 
+                    return { 
+                        mode: "combo_mod", 
+                        hp: adjustedHp, 
+                        params: { mod: mod }, 
+                        desc: `节奏：每 ${mod} 连击造成伤害` 
+                    };
+                },
+
+                // 6. 總和目標 (參考 Enemy 6)
+                () => {
+                    const targets = [15, 20, 25]; 
+                    const t = targets[Math.floor(Math.random() * targets.length)];
+                    return { 
+                        mode: "sum_target", 
+                        hp: 2, 
+                        params: { target: t }, 
+                        desc: `总和：总和刚好 ${t} 造成伤害` 
+                    };
+                },
+
+                // 7. 數值重擊 (參考 Enemy 7)
+       
+                () => ({ 
+                    mode: "value", 
+                    hp: 120, 
+                    params: {}, 
+                    desc: "重击：牌面数值即为伤害" 
+                }),
+
+                // 8. 比較大小 (參考 Enemy 9)
+                () => {
+                    const types = [
+                        { m: "compare_asc", d: "升序：后牌 > 前牌", hp: 10 },
+                        { m: "compare_desc", d: "降序：后牌 < 前牌", hp: 10 },
+                        { m: "compare_eq", d: "同号：后牌 = 前牌", hp: 5 }, 
+                        { m: "compare_all", d: "全序：集齐 升/降/同", hp: 1 } 
+                    ];
+                    const t = types[Math.floor(Math.random() * types.length)];
+                    return { 
+                        mode: t.m, 
+                        hp: t.hp,
+                        params: {}, 
+                        desc: `${t.d} 时伤害` 
+                    };
+                }
+            ];
+
+            // 1. 洗牌
+            for (let i = modeGenerators.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [modeGenerators[i], modeGenerators[j]] = [modeGenerators[j], modeGenerators[i]];
+            }
+
+            currentEnemyData.phases.forEach((p, index) => {
+                const generator = modeGenerators[index % modeGenerators.length];
+                const config = generator();
+                
+
+                const stageMultiplier = 1 ; 
+                
+                p.mode = config.mode;
+                p.params = config.params;
+                p.hp = Math.floor(config.hp * stageMultiplier); // 這裡設定血量
+                p.maxHp = p.hp; // 記得更新 maxHp
+                p.desc = `[混沌${index+1}] ${config.desc}`;
+            });
+        }
+        // === 修改結束 ===
+
+        availableSkills = [];
+        for (let skill of SKILLS_DB) {
+            if (IS_DEBUG_MODE) {
+                availableSkills.push(skill);
+            } else {
+                let status = await getST(`世界.妈妈.${skill.owner}.状态`);
+                if (status === '3' || status === 3 ) {
+                    availableSkills.push(skill);
+                }
+            }
+        }
+    }
+
+    function closeGame() {
+        if (window.parent && window.parent.RPGBridge) {
+            window.parent.RPGBridge.closeGame();
+        }
+    }
+
+    // === 3. 遊戲核心邏輯 ===
+    const COLORS = ['red', 'blue', 'green', 'yellow'];
+    const NUMBERS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+    const DEFENSE_PER_CARD = 3; 
+
+    let deck = [], hand = [], discardPile = [], currentTurnCards = [];
+    let enemy = { phaseIndex: 0, hp: 0, maxHp: 0, atk: 0, mode: "count", params: {} };
+    let battleState = { sumAccumulator: 0, colorChainCount: 0, compareFlags: { asc: false, desc: false, eq: false } };
+    let player = { hp: 100, maxHp: 100, equippedSkills: [], lives: 3 }; 
+    let turnStats = { cardsPlayed: 0, damageDealt: 0, combo: 0 };
+    let isFirstMoveOfTurn = false;
+    let buffs = { extraDrawTurns: 0, keepHandTurns: 0 };
+    
+    let isPhaseBrokenThisTurn = false;
+
+    let targetingMode = null; 
+    let pendingColorSrc = null; 
+    let selectedSkillIds = [];
+
+    function initSelectionUI() {
+        const grid = document.getElementById('skill-grid');
+        grid.innerHTML = availableSkills.map(s => `
+            <div class="sel-card" id="sel-skill-${s.id}" onclick="toggleSkillSelection(${s.id})">
+                <div class="sel-owner">${s.owner}</div>
+                <div class="sel-title">${s.name}</div>
+                <div class="sel-desc">${s.desc}</div>
+                <div style="margin-top:auto; font-size:0.8rem; color:#666; border-top:1px solid #444; padding-top:5px;">
+                    次数: ${s.max} 
+                </div>
+            </div>
+        `).join('');
+        updateSelectionUI();
+    }
+    
+    function toggleSkillSelection(id) {
+        const idx = selectedSkillIds.indexOf(id);
+        if (idx >= 0) {
+            selectedSkillIds.splice(idx, 1);
+        } else {
+            if (selectedSkillIds.length < 4) selectedSkillIds.push(id);
+        }
+        updateSelectionUI();
+    }
+    
+    function updateSelectionUI() {
+        document.querySelectorAll('.sel-card').forEach(el => el.classList.remove('selected'));
+        selectedSkillIds.forEach(id => {
+            const el = document.getElementById(`sel-skill-${id}`);
+            if(el) el.classList.add('selected');
+        });
+    }
+    
+    function finalizeSelection() {
+        player.equippedSkills = selectedSkillIds.map(id => {
+            const proto = availableSkills.find(s => s.id === id);
+            return { ...proto, charges: proto.max };
+        });
+        document.getElementById('selection-screen').style.display = 'none';
+        document.getElementById('game-stage').style.display = 'block';
+        initGame();
+    }
+	function proceedToNextScreen() {
+        if (availableSkills.length === 0) {
+            // 情況 A：沒有任何技能可選，直接進入戰鬥
+            player.equippedSkills = []; // 清空裝備技能
+            document.getElementById('selection-screen').style.display = 'none';
+            document.getElementById('game-stage').style.display = 'block';
+            initGame();
+        } else {
+            // 情況 B：有技能可選，進入戰前準備介面
+            document.getElementById('selection-screen').style.display = 'flex';
+            initSelectionUI();
+        }
+    }
+
+    function initGame() {
+        document.getElementById('defeat-modal').style.display = 'none';
+        document.getElementById('enemy-name').innerText = currentEnemyData.name;
+        
+        // Orb 現在放在血量標題列內
+        const phaseCount = Math.min(4, currentEnemyData.phases.length);
+        const inlineOrbRow = document.getElementById('inline-orb-row');
+        let orbHtml = '';
+        for(let i = 0; i < phaseCount; i++) {
+            orbHtml += `<span class="inline-orb" id="orb-${i+1}"></span>`;
+        }
+        inlineOrbRow.innerHTML = orbHtml;
+
+        loadEnemyPhase(0);
+
+        const bossImg = document.getElementById('boss-img');
+        if (currentEnemyData.img) {
+            bossImg.src = currentEnemyData.img;
+            bossImg.style.display = 'block';
+        } else {
+            bossImg.style.display = 'none';
+        }
+
+        deck = []; discardPile = []; hand = []; currentTurnCards = [];
+        player.hp = 100;
+        player.equippedSkills.forEach(s => s.charges = s.max);
+        buffs = { extraDrawTurns: 0, keepHandTurns: 0, futureSightTurns: 0 };
+        
+        battleState = { sumAccumulator: 0, colorChainCount: 0, compareFlags: { asc: false, desc: false, eq: false } };
+        
+        COLORS.forEach(color => {
+            NUMBERS.forEach(num => {
+                deck.push({ color: color, number: num, isToken: false });
+            });
+        });
+        shuffle(deck);
+        startNewTurn();
+		playBattleMusic();
+    }
+
+	async function playBattleMusic() {
+        if (isLocalMuted) {
+            updateBgmButtonUI();
+            return; 
+        }
+
+        if (currentEnemyData && currentEnemyData.bgm) {
+            console.log("[Minigame] 播放战斗音乐:", currentEnemyData.bgm);
+            if (window.parent && window.parent.RPGBridge) {
+                await playAudio('bgm', { url: currentEnemyData.bgm });
+                updateBgmButtonUI();
+            }
+        }
+    }
+
+    function loadEnemyPhase(index) {
+        const phases = currentEnemyData.phases;
+        if (index >= phases.length) return false; 
+
+        const pData = phases[index];
+        enemy.phaseIndex = index;
+        enemy.hp = pData.hp;
+        enemy.maxHp = pData.hp;
+        enemy.atk = pData.atk;
+        enemy.mode = pData.mode;
+        enemy.params = pData.params || {};
+        
+        document.getElementById('condition-text').innerText = pData.desc || "擊敗敵人";
+        
+        battleState.sumAccumulator = 0;
+        battleState.colorChainCount = 0;
+        battleState.compareFlags = { asc: false, desc: false, eq: false };
+
+        const bossImg = document.getElementById('boss-img');
+        bossImg.classList.remove('phase-flash');
+        void bossImg.offsetWidth;
+        bossImg.classList.add('phase-flash');
+        
+        updateUI();
+        return true;
+    }
+    
+    async function retryGame() { 
+        document.getElementById('defeat-modal').style.display = 'none';
+        document.getElementById('game-stage').style.display = 'none';
+		await loadBattleData();
+        proceedToNextScreen(); 
+    }
+
+    async function skipBattle() {
+        document.getElementById('defeat-modal').style.display = 'none';
+        await handleVictory();
+    }
+
+    function startNewTurn() {
+        turnStats.cardsPlayed = 0; turnStats.damageDealt = 0; turnStats.combo = 0;
+        currentTurnCards = []; isFirstMoveOfTurn = true;
+        
+        cancelTargetingMode();
+        
+        battleState.colorChainCount = 0; 
+        battleState.sumAccumulator = 0; 
+        battleState.compareFlags = { asc: false, desc: false, eq: false };
+        
+        isPhaseBrokenThisTurn = false;
+		
+		if (buffs.futureSightTurns > 0) {
+        buffs.futureSightTurns--;
+        if (buffs.futureSightTurns === 0) {
+            showLog("未来视界效果结束");
+        }
+    }
+		
+        if (buffs.keepHandTurns > 0) {
+            showLog(`Buff: 保留手牌 (${buffs.keepHandTurns})`);
+            buffs.keepHandTurns--;
+        } else {
+            if (hand.length > 0) {
+                hand.forEach(c => { if(!c.isToken) discardPile.push(c); });
+                hand = [];
+            }
+        }
+
+        let drawCount = 5;
+        if (buffs.extraDrawTurns > 0) {
+            drawCount += 2;
+            showLog(`Buff: 多抽2张 (${buffs.extraDrawTurns})`);
+            buffs.extraDrawTurns--;
+        }
+
+        for(let i=0; i<drawCount; i++) {
+            const c = drawCardFromDeck();
+            if(c) hand.push(c);
+        }
+        updateUI();
+    }
+
+    function drawCardFromDeck() {
+        if (deck.length === 0) {
+            const validDiscard = discardPile.filter(c => !c.isToken);
+            if (validDiscard.length <= 0) return null; 
+            
+            deck = [...validDiscard];
+            discardPile = [];
+            shuffle(deck);
+        }
+        return deck.pop();
+    }
+
+    function playCard(index) {
+        const card = hand[index];
+        
+        let effectiveTopCard = null;
+        if (currentTurnCards.length > 0) {
+            effectiveTopCard = currentTurnCards[currentTurnCards.length - 1];
+        } else {
+            effectiveTopCard = discardPile[discardPile.length - 1];
+        }
+
+        let isValid = false;
+
+        if (isFirstMoveOfTurn) isValid = true;
+        else if (effectiveTopCard) {
+            if (card.color === effectiveTopCard.color || Math.abs(card.number - effectiveTopCard.number) === 1 || card.number === effectiveTopCard.number) isValid = true;
+        }
+
+        if (isValid) {
+            hand.splice(index, 1);
+            if (!card.isToken) discardPile.push(card);
+            currentTurnCards.push(card);
+            turnStats.cardsPlayed++;
+            turnStats.combo++; 
+
+            let bonusDraw = false;
+            if (!isFirstMoveOfTurn && effectiveTopCard) {
+    const sameColor = card.color === effectiveTopCard.color;
+    const sameNum = card.number === effectiveTopCard.number;
+    const adjNum = Math.abs(card.number - effectiveTopCard.number) === 1;
+    
+    if ((sameColor && adjNum) || (!sameColor && sameNum) || (sameColor && sameNum)) bonusDraw = true;
+}
+
+            isFirstMoveOfTurn = false;
+            if (bonusDraw) {
+                const newCard = drawCardFromDeck();
+                if (newCard) hand.push(newCard);
+                showLog("BONUS DRAW!");
+            }
+            
+            processDamageAction();
+            updateUI();
+        } else {
+            const el = document.querySelectorAll('#hand-area .card')[index];
+            if(el) { el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); }
+        }
+    }
+
+    function calculateInstantDamage() {
+        const mode = enemy.mode || "count";
+        const lastCard = currentTurnCards[currentTurnCards.length - 1];
+        if (!lastCard) return 0; 
+
+        let dmg = 0;
+
+        if (mode === "count") {
+            dmg = 1; 
+        } 
+        else if (mode === "color_chain") {
+            const targetColor = enemy.params.color;
+            if (lastCard.color !== targetColor) return 0;
+            
+            if (currentTurnCards.length >= 2) {
+                const prev = currentTurnCards[currentTurnCards.length - 2];
+                if (prev.color === targetColor) {
+                    dmg = 1;
+                }
+            }
+        }
+        else if (mode === "color_switch") {
+            if (currentTurnCards.length >= 2) {
+                const prev = currentTurnCards[currentTurnCards.length - 2];
+                if (lastCard.color !== prev.color) dmg = 1;
+            }
+        }
+        else if (mode === "diff") {
+            if (currentTurnCards.length >= 2) {
+                const prev = currentTurnCards[currentTurnCards.length - 2];
+                dmg = Math.abs(lastCard.number - prev.number);
+            }
+        }
+        else if (mode === "combo_mod") {
+            const mod = enemy.params.mod || 3;
+            if (turnStats.combo > 0 && turnStats.combo % mod === 0) dmg = 1;
+        }
+        else if (mode === "sum_target") {
+            const target = enemy.params.target || 15;
+            battleState.sumAccumulator += lastCard.number;
+            
+            if (battleState.sumAccumulator === target) {
+                dmg = 1;
+                battleState.sumAccumulator = 0; 
+            } else if (battleState.sumAccumulator > target) {
+                battleState.sumAccumulator -= target; 
+            }
+        }
+        else if (mode === "value") {
+            dmg = lastCard.number;
+        }
+        else if (mode === "compare_asc") {
+            if (currentTurnCards.length >= 2) {
+                const prev = currentTurnCards[currentTurnCards.length - 2];
+                if (lastCard.number > prev.number) dmg = 1;
+            }
+        }
+        else if (mode === "compare_desc") {
+            if (currentTurnCards.length >= 2) {
+                const prev = currentTurnCards[currentTurnCards.length - 2];
+                if (lastCard.number < prev.number) dmg = 1;
+            }
+        }
+        else if (mode === "compare_eq") {
+            if (currentTurnCards.length >= 2) {
+                const prev = currentTurnCards[currentTurnCards.length - 2];
+                if (lastCard.number === prev.number) dmg = 1;
+            }
+        }
+        else if (mode === "compare_all") {
+            if (currentTurnCards.length >= 2) {
+                const prev = currentTurnCards[currentTurnCards.length - 2];
+                if (lastCard.number > prev.number) battleState.compareFlags.asc = true;
+                else if (lastCard.number < prev.number) battleState.compareFlags.desc = true;
+                else battleState.compareFlags.eq = true;
+                
+                if (battleState.compareFlags.asc && battleState.compareFlags.desc && battleState.compareFlags.eq) {
+                    dmg = 1;
+                    battleState.compareFlags = { asc: false, desc: false, eq: false };
+                }
+            }
+        }
+
+        return dmg;
+    }
+
+    function processDamageAction() {
+        const damage = calculateInstantDamage();
+        if (damage > 0) {
+            enemy.hp = Math.max(0, enemy.hp - damage);
+            showLog(`- ${damage} `);
+        }
+
+        if (enemy.hp <= 0) {
+            const hasNextPhase = loadEnemyPhase(enemy.phaseIndex + 1);
+            if (hasNextPhase) {
+                isPhaseBrokenThisTurn = true;
+                showLog("BREAK!!");
+            } else {
+                handleVictory();
+            }
+        }
+    }
+
+    function cancelTargetingMode() {
+        if (!targetingMode) return;
+        targetingMode = null;
+        pendingColorSrc = null;
+        document.getElementById('color-picker').style.display = 'none';
+        showLog("操作已取消");
+        updateUI();
+    }
+
+    function useSkill(index) {
+        if (targetingMode) {
+            if (targetingMode.type === 'MIMIC_SELECT') {
+                if (index === targetingMode.skillIndex) {
+                    cancelTargetingMode();
+                    return;
+                }
+                resolveMimicSelection(index);
+                return;
+            }
+            
+            cancelTargetingMode();
+            return;
+        }
+        
+        const skill = player.equippedSkills[index];
+        if (skill.charges <= 0) { showLog("次数已用尽！"); return; }
+
+        if (skill.id === 2) { 
+             if (player.equippedSkills.length <= 1) { showLog("无其它支援可选择"); return; }
+             showLog("请点击另一个支援...");
+             targetingMode = { type: 'MIMIC_SELECT', skillIndex: index }; 
+             updateUI();
+             return;
+        }
+        executeSkillLogic(skill.id, index);
+    }
+
+    function resolveMimicSelection(targetIndex) {
+        const sourceIndex = targetingMode.skillIndex;
+        const targetSkill = player.equippedSkills[targetIndex];
+        if (targetSkill.id === 2) { showLog("无法选择自身"); return; }
+        showLog(`发动了 ${targetSkill.name}`);
+        targetingMode = null; 
+        executeSkillLogic(targetSkill.id, sourceIndex);
+    }
+
+    function executeSkillLogic(skillId, costIndex) {
+        const costSkill = player.equippedSkills[costIndex];
+        switch (skillId) {
+            case 1:
+                costSkill.charges--;
+                const count = hand.length === 0 ? 4 : 2;
+                for(let i=0; i<count; i++) { const c=drawCardFromDeck(); if(c) hand.push(c); }
+                showLog(`抽牌 +${count}`); 
+                updateUI(); 
+                break;
+            case 3:
+                showLog("选择丢弃手牌...");
+                targetingMode = { type: 'DISCARD_HEAL', skillIndex: costIndex };
+                updateUI(); break;
+            case 4:
+                showLog("选择切割手牌...");
+                targetingMode = { type: 'SPLIT', skillIndex: costIndex };
+                updateUI(); break;
+            case 5: // 芙蕾嘉的新技能邏輯
+        costSkill.charges--;
+        buffs.futureSightTurns = 3; // 設定 Buff 持續 3 回合 (本回合開始算)
+        showLog("开启未来视界 (3回合)"); 
+        updateUI(); 
+        break;
+            case 6:
+                showLog("选择来源颜色...");
+                targetingMode = { type: 'COLOR_SRC', skillIndex: costIndex };
+                updateUI(); break;
+            case 7:
+                costSkill.charges--;
+                buffs.extraDrawTurns += 3;
+                showLog("Buff: 回合抽牌增加"); updateUI(); break;
+            case 8:
+                costSkill.charges--;
+                buffs.keepHandTurns += 3;
+                showLog("Buff: 手牌保留"); updateUI(); break;
+        }
+    }
+
+    function handleCardClick(index) {
+        if (targetingMode) {
+            if (targetingMode.type === 'MIMIC_SELECT') {
+                cancelTargetingMode();
+                return;
+            }
+
+            const card = hand[index];
+            const skillIdx = targetingMode.skillIndex; 
+
+            if (targetingMode.type === 'DISCARD_HEAL') {
+                hand.splice(index, 1);
+                if (!card.isToken) discardPile.push(card);
+                player.hp = Math.min(player.maxHp, player.hp + 20);
+                player.equippedSkills[skillIdx].charges--;
+                showLog("生命 +20");
+                targetingMode = null;
+            }
+            else if (targetingMode.type === 'SPLIT') {
+                if (card.number <= 1) { showLog("數字太小無法切割"); return; }
+                hand.splice(index, 1);
+                if (!card.isToken) discardPile.push(card);
+                const v1 = Math.floor(Math.random() * (card.number - 1)) + 1;
+                const v2 = card.number - v1;
+                hand.push({color:card.color, number:v1, isToken:true, id:Math.random()}, {color:card.color, number:v2, isToken:true, id:Math.random()});
+                player.equippedSkills[skillIdx].charges--;
+                showLog(`切割為 ${v1} & ${v2}`);
+                targetingMode = null;
+            }
+            else if (targetingMode.type === 'COLOR_SRC') {
+                pendingColorSrc = card.color;
+                document.getElementById('color-picker').style.display = 'flex';
+                return;
+            }
+            updateUI();
+        } else {
+            playCard(index);
+        }
+    }
+
+    function resolveColorPick(targetColor) {
+        const skillIdx = targetingMode.skillIndex;
+        const srcColor = pendingColorSrc;
+        let count = 0;
+        for (let i = 0; i < hand.length; i++) {
+            if (hand[i].color === srcColor) {
+                const old = hand[i];
+                hand[i] = { color: targetColor, number: old.number, isToken: true, id: Math.random() };
+                if (!old.isToken) discardPile.push(old);
+                count++;
+            }
+        }
+        player.equippedSkills[skillIdx].charges--;
+        showLog(`轉化了 ${count} 張牌`);
+        document.getElementById('color-picker').style.display = 'none';
+        targetingMode = null; pendingColorSrc = null;
+        updateUI();
+    }
+
+    function cancelColorPick() {
+        cancelTargetingMode();
+    }
+
+    async function endTurn() {
+    if (targetingMode) { 
+        cancelTargetingMode();
+        return; 
+    }
+
+    // 先把所有按鈕鎖住，防止重複點擊
+    document.getElementById('game-stage').style.pointerEvents = 'none';
+
+    const currentEnemyAtk = isPhaseBrokenThisTurn ? 0 : enemy.atk;
+    const defense = turnStats.cardsPlayed * DEFENSE_PER_CARD;
+    const incoming = Math.max(0, currentEnemyAtk - defense);
+
+    // === 第一幕：Enemy Turn ===
+    const overlay = document.getElementById('turn-overlay');
+    const overlayText = document.getElementById('turn-overlay-text');
+    const overlaySub = document.getElementById('turn-overlay-sub');
+
+    overlayText.style.color = '#ff4d4d';
+    overlayText.innerText = 'ENEMY ATTACK!';
+
+    if (isPhaseBrokenThisTurn) {
+        overlaySub.innerText = '— STUNNED —';
+        overlayText.style.color = '#51cf66';
+        overlayText.innerText = 'BREAK!';
+    } else if (incoming > 0) {
+        overlaySub.innerText = `受到 ${incoming} 点伤害`;
+    } else {
+        overlaySub.innerText = '— GUARD —';
+        overlayText.style.color = '#4dabf7';
+    }
+
+    overlay.classList.add('visible');
+    await sleep(700);
+
+	overlay.style.animation = 'fadeOut 0.3s ease-out forwards';
+	await sleep(300);
+	overlay.classList.remove('visible');
+	overlay.style.animation = '';
+
+    // 實際結算傷害
+    if (incoming > 0) {
+        player.hp = Math.max(0, player.hp - incoming);
+        updateUI();
+    }
+
+    if (player.hp <= 0) {
+        overlay.classList.remove('visible');
+        document.getElementById('game-stage').style.pointerEvents = '';
+        document.getElementById('defeat-modal').style.display = 'flex';
+        return;
+    }
+
+    // === 第二幕：Your Turn ===
+	await sleep(300);
+    overlayText.style.color = '#c5a059';
+    overlayText.innerText = 'YOUR TURN';
+    overlaySub.innerText = 'FORWARD!';
+	overlay.classList.add('visible');
+    await sleep(600);
+
+    // 淡出遮罩
+    overlay.style.animation = 'fadeOut 0.3s ease-out forwards';
+    await sleep(300);
+    overlay.classList.remove('visible');
+    overlay.style.animation = '';
+
+    document.getElementById('game-stage').style.pointerEvents = '';
+
+    startNewTurn();
+}
+
+// 輔助函數
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+    async function handleVictory() {
+        showLog("勝利！");
+        
+        
+
+        try {
+            if (currentTargetName && currentTargetName !== '非攻略中') {
+                
+
+                // === 發送訊息 ===
+                const success = sendMsgViaDOM(`战斗结束！成功攻略${currentTargetName}！
+<state>
+世界.妈妈.${currentTargetName}.状态: 3
+世界.妈妈.${currentTargetName}.在队状态: 是
+世界.迷宫攻略.当前攻略对象: 非攻略中
+</state>
+				`);
+                
+                if (!success) {
+                    showLog("訊息發送失敗，請手動發送");
+                }
+            }
+            
+            setTimeout(() => {
+                window.parent?.RPGBridge?.closeGame?.();
+            }, 1000);
+
+        } catch (e) {
+            console.error("结算失败:", e);
+            showLog("结算发生错误: " + e.message);
+        }
+    }
+
+	function sendMsgViaDOM(message) {
+        try {
+            // 1. 尝试获取顶层窗口 (SillyTavern 主窗口)
+            // 使用 window.top 比 window.parent 更安全，防止多层嵌套
+            const targetWin = window.top; 
+            const targetDoc = targetWin.document;
+
+            // 2. 查找关键元素
+            const textarea = targetDoc.getElementById('send_textarea');
+            const sendButton = targetDoc.getElementById('send_but');
+
+            if (!textarea || !sendButton) {
+                // 如果找不到，很可能是因为开启了"沉浸模式"(Immersive Mode)导致UI被隐藏
+                showLog("错误: 找不到发送按钮 (请关闭沉浸模式)");
+                console.error("DOM Elements missing. Textarea:", textarea, "Btn:", sendButton);
+                return false;
+            }
+
+            // 3. 填入消息 (优先使用 jQuery 触发，确保 ST 识别到变动)
+            if (targetWin.jQuery) {
+                const $ = targetWin.jQuery;
+                $(textarea).val(message).trigger('input').trigger('change'); // 同时触发 input 和 change
+            } else {
+                // 降级方案：原生 JS
+                textarea.value = message;
+                textarea.dispatchEvent(new Event('input', { bubbles: true }));
+                textarea.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+
+            // 4. 模拟点击 (优先使用 jQuery 点击)
+            if (targetWin.jQuery) {
+                const $ = targetWin.jQuery;
+                $(sendButton).click();
+            } else {
+                sendButton.click();
+            }
+            
+            showLog("指令已发送至 ST");
+            return true;
+
+        } catch (e) {
+            // 将错误打印到游戏屏幕上，方便调试
+            showLog("发送失败: " + e.message);
+            console.error("DOM Send Error:", e);
+            return false;
+        }
+    }
+
+    function shuffle(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+    }
+
+    function updateUI() {
+        const handDiv = document.getElementById('hand-area');
+        
+        let effectiveTopCard = null;
+        if (!isFirstMoveOfTurn) {
+            if (currentTurnCards.length > 0) {
+                effectiveTopCard = currentTurnCards[currentTurnCards.length - 1];
+            } else {
+                effectiveTopCard = discardPile[discardPile.length - 1];
+            }
+        }
+
+        handDiv.innerHTML = hand.map((c, i) => {
+            let cls = `card ${c.color}`;
+            if (c.isToken) cls += " token";
+            if (targetingMode) {
+                if (['DISCARD_HEAL', 'SPLIT', 'COLOR_SRC'].includes(targetingMode.type)) cls += " targetable";
+            } else {
+                if (effectiveTopCard) {
+                    const match = (c.color === effectiveTopCard.color || Math.abs(c.number - effectiveTopCard.number) === 1 || c.number === effectiveTopCard.number);
+                    if (!match) cls += " disabled";
+                }
+            }
+            return `<div class="${cls}" onclick="handleCardClick(${i})">${c.number}</div>`;
+        }).join('');
+
+        const skillDiv = document.getElementById('equipped-skills-area');
+        if (skillDiv) {
+    skillDiv.innerHTML = `
+        <div class="skill-title">母爱支援</div>
+        <div class="skill-container">
+            ${player.equippedSkills.map((s, i) => {
+                let cls = 'skill-btn';
+                if (targetingMode && targetingMode.skillIndex === i) cls += ' active';
+                if (targetingMode && targetingMode.type === 'MIMIC_SELECT' && s.id !== 2) cls += ' targetable-skill';
+                
+                // MIMIC_SELECT 模式下，被選擇的目標技能無視 charges，強制可點擊
+                const isMimicTarget = targetingMode && targetingMode.type === 'MIMIC_SELECT' && s.id !== 2;
+                const isDisabled = !isMimicTarget && s.charges <= 0;
+                const imgUrl = SKILL_ICONS[s.owner] || "";
+                
+                return `
+                <button class="${cls}" onclick="useSkill(${i})" ${isDisabled ? 'disabled' : ''}>
+                    <img src="${imgUrl}" class="s-img" alt="${s.owner}">
+                    
+                    <span class="s-name">${s.name}</span>
+                    
+                    <span class="s-count">剩余: ${s.charges}</span>
+                </button>
+            `}).join('')}
+        </div>
+    `;
+	// 未來視界、鼓舞之心、不動信念的顯示統一由 updateBuffPanel() 處理（在 updateUI 末段呼叫）
+}
+
+        document.getElementById('hp-text').innerText = `${enemy.hp}/${enemy.maxHp}`;
+        document.getElementById('hp-bar').style.width = `${(enemy.hp / enemy.maxHp) * 100}%`;
+        document.getElementById('player-hp-text').innerText = player.hp;
+        
+        const defense = turnStats.cardsPlayed * DEFENSE_PER_CARD;
+        const currentEnemyAtk = isPhaseBrokenThisTurn ? 0 : enemy.atk;
+        const incoming = Math.max(0, currentEnemyAtk - defense);
+        
+        const intentBox = document.getElementById('intent-box');
+        const intentLabel = document.getElementById('intent-label');
+        const intentVal = document.getElementById('enemy-intent-val');
+
+        if (isPhaseBrokenThisTurn) {
+            intentBox.classList.add('broken');
+            intentLabel.innerText = "BOSS STUNNED";
+            intentVal.innerText = "BREAK";
+        } else {
+            intentBox.classList.remove('broken');
+            intentLabel.innerText = "伤害预兆";
+            intentVal.innerText = incoming;
+        }
+
+        document.getElementById('def-rate-text').innerText = DEFENSE_PER_CARD;
+        document.getElementById('combo-count').innerText = turnStats.combo;
+        document.getElementById('deck-count').innerText = deck.length;
+        
+        const sumDisplay = document.getElementById('sum-display');
+        const specialStatus = document.getElementById('special-status');
+        
+        if (enemy.mode === 'sum_target') {
+            sumDisplay.style.display = 'block';
+            specialStatus.style.display = 'none';
+            sumDisplay.innerText = `当前总和: ${battleState.sumAccumulator} / 目标: ${enemy.params.target}`;
+        } 
+        else if (enemy.mode === 'compare_all') {
+            sumDisplay.style.display = 'none';
+            specialStatus.style.display = 'flex';
+            specialStatus.innerHTML = `
+                <span class="check-item ${battleState.compareFlags.asc ? 'done' : ''}">[升]</span>
+                <span class="check-item ${battleState.compareFlags.desc ? 'done' : ''}">[降]</span>
+                <span class="check-item ${battleState.compareFlags.eq ? 'done' : ''}">[同]</span>
+            `;
+        }
+        else {
+            sumDisplay.style.display = 'none';
+            specialStatus.style.display = 'none';
+        }
+        
+        const phaseTotal = Math.min(4, currentEnemyData.phases.length);
+        const phasesLeft = currentEnemyData.phases.length - enemy.phaseIndex; 
+        for(let i=1; i<=phaseTotal; i++) {
+            const orb = document.getElementById(`orb-${i}`);
+            if(orb) {
+                if (i <= phasesLeft) orb.classList.remove('lost'); 
+                else orb.classList.add('lost');
+            }
+        }
+        
+        // 更新左側 buff 面板
+        updateBuffPanel();
+
+        const trackDiv = document.getElementById('played-cards-track');
+        if (currentTurnCards.length === 0) trackDiv.innerHTML = `<span>等待出牌...</span>`;
+        else {
+			const displayCards = currentTurnCards.slice(-11);
+            trackDiv.innerHTML = displayCards.map(c => `<div class="mini-card ${c.color}">${c.number}</div>`).join('');
+            trackDiv.scrollLeft = trackDiv.scrollWidth;
+        }
+    }
+
+    function updateBuffPanel() {
+        const panel = document.getElementById('buff-panel');
+        if (!panel) return;
+
+        // 清除舊 chip（保留標題）
+        panel.querySelectorAll('.buff-chip').forEach(el => el.remove());
+
+        const chips = [];
+
+        if (buffs.extraDrawTurns > 0) {
+            chips.push(`
+                <div class="buff-chip">
+                    <div class="buff-chip-icon">✦</div>
+                    <div class="buff-chip-name">鼓舞<br>之心</div>
+                    <div class="buff-chip-turns">${buffs.extraDrawTurns}</div>
+                    <div class="buff-chip-turns-label">TURNS</div>
+                </div>`);
+        }
+
+        if (buffs.keepHandTurns > 0) {
+            chips.push(`
+                <div class="buff-chip">
+                    <div class="buff-chip-icon">🛡</div>
+                    <div class="buff-chip-name">不动<br>信念</div>
+                    <div class="buff-chip-turns">${buffs.keepHandTurns}</div>
+                    <div class="buff-chip-turns-label">TURNS</div>
+                </div>`);
+        }
+
+        // 整個面板：有 buff 才顯示
+        if (chips.length === 0) {
+            panel.style.display = 'none';
+        } else {
+            panel.style.display = 'flex';
+            chips.forEach(html => {
+                const tmp = document.createElement('div');
+                tmp.innerHTML = html.trim();
+                panel.appendChild(tmp.firstElementChild);
+            });
+        }
+
+        // 未來視界：獨立面板
+        const fsArea = document.getElementById('future-sight-area');
+        const fsList = document.getElementById('fs-cards-list');
+        if (fsArea && fsList) {
+            if (buffs.futureSightTurns > 0 && deck.length > 0) {
+                fsArea.style.display = 'flex';
+                let previewHtml = '';
+                const peekCount = Math.min(3, deck.length);
+                for (let i = 1; i <= peekCount; i++) {
+                    const card = deck[deck.length - i];
+                    previewHtml += `<div class="mini-card fs-card-slot ${card.color}">${card.number}</div>`;
+                }
+                fsList.innerHTML = previewHtml;
+            } else {
+                fsArea.style.display = 'none';
+            }
+        }
+    }
+
+    function showLog(msg) {
+        const el = document.getElementById('log-overlay');
+        el.innerText = msg; el.style.opacity = 1;
+        setTimeout(() => el.style.opacity = 0, 1500);
+    }
+
+    window.addEventListener('click', function(e) {
+        if (!targetingMode) return;
+
+        if (e.target.closest('.card') || 
+            e.target.closest('.skill-btn') || 
+            e.target.closest('.btn-full') || 
+            e.target.closest('.ingame-skip-btn') ||
+            e.target.closest('#color-picker')) {
+            return;
+        }
+
+        cancelTargetingMode();
+    });
+</script>
+</body>
+</html>
