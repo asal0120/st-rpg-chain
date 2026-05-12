@@ -1125,20 +1125,15 @@
 
     // 切換音樂開關
     async function toggleLocalMusic() {
-        const btn = document.getElementById('bgm-toggle-btn');
-        isLocalMuted = !isLocalMuted; // 切換狀態
+    isLocalMuted = !isLocalMuted;
+    updateBgmButtonUI();
 
-        updateBgmButtonUI(); // 更新圖標
-
-
-        if (isLocalMuted) {
-            if (window.parent && window.parent.RPGBridge) {
-                await pauseAudio('bgm');
-            }
-        } else {
-            playBattleMusic(); 
-        }
+    if (isLocalMuted) {
+        try { await pauseAudio('bgm'); } catch(e) {}
+    } else {
+        playBattleMusic(); 
     }
+}
     
     // === 2. 通訊與初始化 ===
     async function getST(varName) {
@@ -1541,10 +1536,10 @@ async function execST(cmd) {
 
         if (currentEnemyData && currentEnemyData.bgm) {
             console.log("[Minigame] 播放战斗音乐:", currentEnemyData.bgm);
-            if (window.parent && window.parent.RPGBridge) {
-                await playAudio('bgm', { url: currentEnemyData.bgm });
-                updateBgmButtonUI();
-            }
+            try {
+    await playAudio('bgm', { url: currentEnemyData.bgm });
+    updateBgmButtonUI();
+} catch(e) { console.warn('[Mini] 音樂播放失敗:', e); }
         }
     }
 
@@ -2029,13 +2024,7 @@ function sleep(ms) {
                 
 
                 // === 發送訊息 ===
-                const success = sendMsgViaDOM(`战斗结束！成功攻略${currentTargetName}！
-<state>
-世界.妈妈.${currentTargetName}.状态: 3
-世界.妈妈.${currentTargetName}.在队状态: 是
-世界.迷宫攻略.当前攻略对象: 非攻略中
-</state>
-				`);
+                const success = sendMsgViaDOM(`战斗结束！成功攻略${currentTargetName}！`);
                 
                 if (!success) {
                     showLog("訊息發送失敗，請手動發送");
