@@ -5955,7 +5955,7 @@ async function openMinigame(url) {
     fallbackBtn.style.display = 'none'; // 預設隱藏
 
     if (fallbackTarget && fallbackTarget !== '非攻略中' && fallbackTarget !== '0') {
-        fallbackBtn.innerHTML = `⚠️ 遊戲無法載入？<br><strong>點此直接完成攻略：${fallbackTarget}</strong>`;
+        fallbackBtn.innerHTML = `⚠️ 游戏无法载入？<br><strong>点此直接完成攻略：${fallbackTarget}</strong>`;
         fallbackBtn.onclick = () => _triggerVictoryFallback(fallbackTarget);
     }
 
@@ -6015,7 +6015,6 @@ function _triggerVictoryFallback(targetName) {
     const layer = document.getElementById('minigame-layer');
     const frame = document.getElementById('minigame-frame');
     
-    // 關閉小遊戲層
     if (layer) layer.classList.remove('active');
     if (frame) setTimeout(() => frame.src = '', 300);
     if (window.gameLoopPaused) {
@@ -6023,18 +6022,19 @@ function _triggerVictoryFallback(targetName) {
         setTimeout(syncGameState, 100);
     }
 
-    // 直接用 triggerSlash 發送勝利訊息（不經過 mini.html 的 sendMsgViaDOM）
-    const message = `战斗结束！成功攻略${targetName}！`;
+    // 先直接寫變量，不依賴 AI
+    try {
+        setGlobalVariable(`世界.妈妈.${targetName}.状态`, '3');
+        setGlobalVariable(`世界.妈妈.${targetName}.在队状态`, '是');
+        setGlobalVariable('世界.迷宫攻略.当前攻略对象', '非攻略中');
+        setTimeout(syncGameState, 300);
+    } catch(e) {
+        console.warn('[RPG] 直接寫變量失敗:', e);
+    }
 
-    triggerSlash(`/send ${message}`)
-        .catch(() => {
-            // triggerSlash 失敗時備援：直接寫變量
-            console.warn('[RPG] triggerSlash 失敗，直接寫變量');
-            setGlobalVariable(`世界.妈妈.${targetName}.状态`, '3');
-            setGlobalVariable(`世界.妈妈.${targetName}.在队状态`, '是');
-            setGlobalVariable('世界.迷宫攻略.当前攻略对象', '非攻略中');
-            setTimeout(syncGameState, 300);
-        });
+    // 再發訊息讓 AI 知道發生了什麼（敘事用，不依賴它更新變量）
+    triggerSlash(`/send 战斗结束！成功攻略${targetName}！`)
+        .catch(e => console.warn('[RPG] 發送訊息失敗:', e));
 }
 
 	
@@ -6516,7 +6516,8 @@ const _initEventListeners = () => {
         console.log('[RPG] MESSAGE_RECEIVED 觸發, type:', type);
         if (!['normal', 'regenerate', 'swipe', 'continue'].includes(type)) return;
         const msgs = getChatMessages(messageId);
-        if (msgs.length && msgs[0].role !== 'assistant') return;
+const firstMsg = Array.isArray(msgs) ? msgs[0] : msgs;
+if (firstMsg && firstMsg.role !== 'assistant') return;
         isGenerating = false;
         clearTimeout(genResetTimer);
         const root = document.querySelector('.rpg-v7-root');
