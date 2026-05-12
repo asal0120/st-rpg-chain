@@ -1528,20 +1528,19 @@ async function execST(cmd) {
 		playBattleMusic();
     }
 
-	async function playBattleMusic() {
-        if (isLocalMuted) {
+async function playBattleMusic() {
+    if (isLocalMuted) {
+        updateBgmButtonUI();
+        return; 
+    }
+    if (currentEnemyData && currentEnemyData.bgm) {
+        console.log("[Minigame] 播放战斗音乐:", currentEnemyData.bgm);
+        if (window.parent && window.parent.RPGBridge) {
+            await window.parent.RPGBridge.execute(`/xbaudio "${currentEnemyData.bgm}"`);
             updateBgmButtonUI();
-            return; 
-        }
-
-        if (currentEnemyData && currentEnemyData.bgm) {
-            console.log("[Minigame] 播放战斗音乐:", currentEnemyData.bgm);
-            try {
-    await playAudio('bgm', { url: currentEnemyData.bgm });
-    updateBgmButtonUI();
-} catch(e) { console.warn('[Mini] 音樂播放失敗:', e); }
         }
     }
+}
 
     function loadEnemyPhase(index) {
         const phases = currentEnemyData.phases;
@@ -2014,32 +2013,29 @@ function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-    async function handleVictory() {
-        showLog("勝利！");
-        
-        
+async function handleVictory() {
+    showLog("勝利！");
+    try {
+        if (currentTargetName && currentTargetName !== '非攻略中') {
+            // 直接更新變量
+            await setST(`世界.妈妈.${currentTargetName}.状态`, '3');
+            await setST(`世界.妈妈.${currentTargetName}.在队状态`, '是');
+            await setST('世界.迷宫攻略.当前攻略对象', '非攻略中');
 
-        try {
-            if (currentTargetName && currentTargetName !== '非攻略中') {
-                
-
-                // === 發送訊息 ===
-                const success = sendMsgViaDOM(`战斗结束！成功攻略${currentTargetName}！`);
-                
-                if (!success) {
-                    showLog("訊息發送失敗，請手動發送");
-                }
+            // 發訊息通知 AI
+            const success = sendMsgViaDOM(`战斗结束！成功攻略${currentTargetName}！ test`);
+            if (!success) {
+                showLog("訊息發送失敗，請手動發送");
             }
-            
-            setTimeout(() => {
-                window.parent?.RPGBridge?.closeGame?.();
-            }, 1000);
-
-        } catch (e) {
-            console.error("结算失败:", e);
-            showLog("结算发生错误: " + e.message);
         }
+        setTimeout(() => {
+            window.parent?.RPGBridge?.closeGame?.();
+        }, 1000);
+    } catch (e) {
+        console.error("结算失败:", e);
+        showLog("结算发生错误: " + e.message);
     }
+}
 
 	function sendMsgViaDOM(message) {
         try {
