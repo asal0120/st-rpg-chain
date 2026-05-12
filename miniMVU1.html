@@ -1132,9 +1132,8 @@
 
 
         if (isLocalMuted) {
-            if (window.parent && window.parent.RPGBridge) {
-                await pauseAudio('bgm');
-            }
+    try { await pauseAudio('bgm'); } catch(e) {}
+}
         } else {
             playBattleMusic(); 
         }
@@ -1214,10 +1213,7 @@ async function execST(cmd) {
         const sel = document.getElementById('debug-enemy-select');
         let targetName = "默认";
         
-        if (window.parent && window.parent.RPGBridge) {
-            targetName = await window.parent.RPGBridge.getVar('世界.迷宫攻略.当前攻略对象');
-        }
-        
+        targetName = await getST('世界.迷宫攻略.当前攻略对象') || "非攻略中";
         console.log("当前攻略对象:", targetName);
         currentTargetName = targetName; 
 
@@ -1541,10 +1537,10 @@ async function execST(cmd) {
 
         if (currentEnemyData && currentEnemyData.bgm) {
             console.log("[Minigame] 播放战斗音乐:", currentEnemyData.bgm);
-            if (window.parent && window.parent.RPGBridge) {
-                await playAudio('bgm', { url: currentEnemyData.bgm });
-                updateBgmButtonUI();
-            }
+            try {
+    await playAudio('bgm', { url: currentEnemyData.bgm });
+    updateBgmButtonUI();
+} catch(e) { console.warn('[Mini] 音樂播放失敗:', e); }
         }
     }
 
