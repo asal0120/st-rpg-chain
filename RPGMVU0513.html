@@ -5774,6 +5774,16 @@ let isGenerating = false;
 let genResetTimer = null;
 
 window.updateTemplateVariables = function(data) {
+
+    clearTimeout(window.__safeUnlockTimer);
+    window.__safeUnlockTimer = setTimeout(() => {
+        if (isGenerating) {
+            isGenerating = false;
+            document.querySelector('.rpg-v7-root')?.classList.remove('generating');
+            console.log('[RPG] 安全重置：串流逾時，generating 已強制解除');
+        }
+}, 8000);
+
     if (!isGenerating) {
         isGenerating = true;
         const root = document.querySelector('.rpg-v7-root');
@@ -6562,6 +6572,15 @@ document.getElementById('display-layer')?.addEventListener('click', (e) => {
 
         // 啟動同步
         syncGameState();
+    // [安全重置] 頁面載入後強制解除 generating 鎖定
+        // 防止初始渲染時 isGenerating=true 卻沒有觸發 MESSAGE_RECEIVED 的情況
+        setTimeout(() => {
+            if (isGenerating) {
+                isGenerating = false;
+                document.querySelector('.rpg-v7-root')?.classList.remove('generating');
+                console.log('[RPG] 安全重置：generating 狀態已強制解除');
+            }
+        }, 3000);
     };
 	
 // ============================================================
