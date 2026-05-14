@@ -5787,7 +5787,7 @@ window.updateTemplateVariables = function(data) {
     stringForFinishedCheck = stringForFinishedCheck.replace(/^[\s\S]*?<\/thinking>/i, '');
     stringForFinishedCheck = stringForFinishedCheck.replace(/^[\s\S]*?<\/think>/i, '');
     stringForFinishedCheck = stringForFinishedCheck.replace(/^[\s\S]*?\[\/metacognition\]/i, '');
-    const isFinished = stringForFinishedCheck.includes('</state>');
+    const isFinished = stringForFinishedCheck.includes('</UpdateVariable>');
 
     // ✅ 正文提取：直接傳原始字串給 extractContent，由它內部統一處理
     const newText = extractContent(rawString);
