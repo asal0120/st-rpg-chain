@@ -2009,7 +2009,7 @@ async function handleVictory() {
             await setST('世界.迷宫攻略.当前攻略对象', '非攻略中');
 
             // 發訊息通知 AI
-            const success = sendMsgViaDOM(`战斗结束！成功攻略${currentTargetName}！ debug`);
+            const success = sendMsgViaDOM(`战斗结束！成功攻略${currentTargetName}！`);
             if (!success) {
                 showLog("訊息發送失敗，請手動發送");
             }
