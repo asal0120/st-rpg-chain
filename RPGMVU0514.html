@@ -2833,9 +2833,13 @@ const getVariable = (dotPath, fallback = "0") => {
         const vars = getAllVariables();
         const val = getPath(vars, 'stat_data.' + dotPath, undefined)
                  ?? getPath(vars, dotPath, undefined);
-        if (val !== undefined && val !== null && val !== '') return String(val);
+        if (val !== undefined && val !== null && val !== '') {
+            // 物件或陣列直接回傳，不轉字串
+            if (typeof val === 'object') return val;
+            return String(val);
+        }
     } catch(e) {}
-    return String(fallback);
+    return fallback === "0" ? "0" : fallback;
 };
 
 const getChatMessages = typeof window.getChatMessages === 'function' 
