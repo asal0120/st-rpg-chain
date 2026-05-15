@@ -1258,21 +1258,25 @@
 
     /* 1. 外部容器：負責隱藏/顯示與層級控制 */
     .status-layer-wrapper {
-        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-        z-index: 200; display: none; overflow: hidden; pointer-events: none;
-    }
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    min-height: 100%;
+    z-index: 200; display: none; 
+    overflow: hidden;        /* ← 從 status-scaler 移到這裡 */
+    pointer-events: none;
+}
     .status-layer-wrapper.active { display: block; }
 
     /* 2. 核心畫布：對應原本的 .game-viewport */
     /* 這裡鎖定 1080x720，作為所有絕對定位元素的父層 */
     .status-scaler {
-        position: absolute; top: 0; left: 0;
-        width: 1080px; height: 720px;
-        transform-origin: top left;
-        background-color: #000;
-        box-shadow: 0 0 50px rgba(0,0,0,0.8);
-        pointer-events: auto;
-        overflow: hidden;
+    position: absolute; top: 0; left: 0;
+    width: 1080px; height: 720px;
+    min-height: 720px;
+    transform-origin: top left;
+    background-color: #000;
+    box-shadow: 0 0 50px rgba(0,0,0,0.8);
+    pointer-events: auto;
+    overflow: visible;       /* ← 改這裡 */
         font-family: "Noto Serif SC", "Noto Serif TC", serif;
 
         /* === 移植原始變量 === */
@@ -1447,8 +1451,8 @@
     .status-scaler .tab-page.active { display: block; animation: fadeIn 0.4s ease; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); filter: blur(2px); } to { opacity: 1; transform: translateY(0); filter: blur(0); } }
 
-    .status-scaler .tachie-section { position: absolute; top: 0; right: 0; width: 60%; height: 100%; z-index: 5; pointer-events: none; }
-    .status-scaler .tachie-img { position: absolute; right: -50%; bottom: 0; height: 95%; width: auto; object-fit: contain; filter: drop-shadow(-20px 0 30px rgba(0,0,0,0.8)); opacity: 0; transform: translateX(50px); transition: all 0.5s ease-out; }
+    .status-scaler .tachie-section { position: absolute; top: 0; right: 0; width: 60%; height: 100%; z-index: 5; pointer-events: none; overflow: visible; }
+    .status-scaler .tachie-img { position: absolute; right: -50%; bottom: 0; height: 95%; width: auto; max-width: none; object-fit: contain; filter: drop-shadow(-20px 0 30px rgba(0,0,0,0.8)); opacity: 0; transform: translateX(50px); transition: all 0.5s ease-out; }
     .status-scaler .tachie-img.show { opacity: 1; transform: translateX(0); }
     
     .status-scaler .close-btn { position: absolute; top: 17px; right: 20px; font-size: 30px; color: var(--p-text-dim); cursor: pointer; z-index: 200; transition: color 0.2s; }
@@ -1465,7 +1469,14 @@
     .status-scaler .faces-track { display: flex; height: 100%; align-items: center; will-change: transform; padding-left: 5px; }
 
     .status-scaler .face-card { width: var(--card-size); height: var(--card-size); margin-right: var(--card-gap); position: relative; background: #000; border: 2px solid #5a4a35; box-shadow: 0 5px 15px rgba(0,0,0,0.8); cursor: pointer; transition: transform 0.3s, border-color 0.3s, box-shadow 0.3s; flex-shrink: 0; transform: skewX(0deg); overflow: hidden; }
-    .status-scaler .face-card img { width: 140%; height: 100%; object-fit: cover; transform: skewX(15deg) translateX(-15%); filter: grayscale(80%) sepia(30%) brightness(0.6); transition: filter 0.4s; }
+    .status-scaler .face-card img { 
+    width: 140%; height: 100%; 
+    max-width: none;        /* ← 加這行 */
+    object-fit: cover; 
+    transform: skewX(15deg) translateX(-15%); 
+    filter: grayscale(80%) sepia(30%) brightness(0.6); 
+    transition: filter 0.4s; 
+}
     .status-scaler .face-card:hover { transform: translateY(-8px); border-color: var(--p-text); z-index: 5; }
     .status-scaler .face-card:hover img { filter: grayscale(0%) brightness(1); }
     .status-scaler .face-card.active { border-color: var(--p-gold); transform: scale(1.15) translateY(-12px); box-shadow: 0 0 15px rgba(200, 170, 110, 0.4), 0 10px 20px rgba(0,0,0,0.9); z-index: 10; }
@@ -2805,57 +2816,31 @@
 <script>
 
 (function() {
-    // 1. 定義一個「API 搜尋器」
-    // ============================================================
-// === 環境偵測橋接層（改用 getAllVariables 模式）===
-// ============================================================
-
-// 取得整個變量物件
-const _getAllVars = () => {
-    try {
-        if (typeof getAllVariables === 'function') return getAllVariables();
-        if (window.parent && typeof window.parent.getAllVariables === 'function') 
-            return window.parent.getAllVariables();
-        if (window.top && typeof window.top.getAllVariables === 'function') 
-            return window.top.getAllVariables();
-    } catch(e) {}
-    return {};
-};
-
 
 const getPath = (obj, path, fallback) => {
     const keys = Array.isArray(path) ? path : String(path).split('.');
     let cur = obj;
     for (let i = 0; i < keys.length; i++) {
-        if (cur == null || !Object.prototype.hasOwnProperty.call(Object(cur), keys[i])) 
+        if (cur == null || !Object.prototype.hasOwnProperty.call(Object(cur), keys[i]))
             return fallback;
         cur = cur[keys[i]];
     }
     return cur === undefined ? fallback : cur;
 };
 
-// getVariable 改用「先 getAllVariables，再 getPath 走點分路徑」
 const getVariable = (dotPath, fallback = "0") => {
     try {
-        const vars = _getAllVars();
-        
-        // 先嘗試從 stat_data 底下找（符合實際結構）
-        const fromStatData = getPath(vars, 'stat_data.' + dotPath, undefined);
-        if (fromStatData !== undefined && fromStatData !== null && fromStatData !== '') 
-            return String(fromStatData);
-        
-        // 備援：直接從根找（兼容其他可能的結構）
-        const fromRoot = getPath(vars, dotPath, undefined);
-        if (fromRoot !== undefined && fromRoot !== null && fromRoot !== '') 
-            return String(fromRoot);
-            
+        const vars = getAllVariables();
+        const val = getPath(vars, 'stat_data.' + dotPath, undefined)
+                 ?? getPath(vars, dotPath, undefined);
+        if (val !== undefined && val !== null && val !== '') {
+            // 物件或陣列直接回傳，不轉字串
+            if (typeof val === 'object') return val;
+            return String(val);
+        }
     } catch(e) {}
-    return String(fallback);
+    return fallback === "0" ? "0" : fallback;
 };
-
-const setGlobalVariable = typeof window.setGlobalVariable === 'function' 
-    ? window.setGlobalVariable 
-    : (() => {});
 
 const getChatMessages = typeof window.getChatMessages === 'function' 
     ? window.getChatMessages 
@@ -2918,12 +2903,20 @@ const img = (imgchestUrl, catboxUrl) => {
     const VAR_LEVEL = '世界.玩家状态.综合实力.实际等级';
     const VAR_RANK = '世界.玩家状态.综合实力.实际位阶';
 
+    // 取得實際用戶名，替換 {{user}}
+const _userName = (() => {
+    try {
+        const result = TavernHelper.substitudeMacros('{{user}}');
+        if (result && result !== '{{user}}') return result;
+    } catch(e) {}
+    return "剑圣";
+})();
 
 
     // 您的原始角色數據 (完整保留)
     const fullPartyData = [
         { 
-            id: "p1", name: "{{user}}",
+            id: "p1", name: _userName,
             dataA: "---", dataB: "冒险者", dataC: "---", 
             desc: "我。", 
             img:     img("https://cdn.imgchest.com/files/7dcbb8b9ba87.png", "https://files.catbox.moe/sq441t.png"),
@@ -3051,7 +3044,7 @@ const img = (imgchestUrl, catboxUrl) => {
         const targetState = isCurrentlyInParty ? '否' : '是';
         try {
             document.body.style.cursor = 'wait';
-            setGlobalVariable(`世界.妈妈.${charName}.在队状态`, targetState);
+            setVar(`世界.妈妈.${charName}.在队状态`, targetState);
 
             // 重新刷新當前 Status UI 及全域隊伍狀態
             if (typeof updateSelectionFromCenter === 'function') updateSelectionFromCenter(true);
@@ -3076,12 +3069,11 @@ const img = (imgchestUrl, catboxUrl) => {
             activePartyData.push(...fullPartyData.slice(1));
         } else {
             // [优化 1] 并行请求所有角色的状态
-            const checks = fullPartyData.slice(1).map(char =>
-                Promise.resolve(getVariable(`世界.妈妈.${char.name}.状态`))
-                    .then(s => ({ char, ok: parseInt(s) >= 3 }))
-                    .catch(e => { console.log("角色状态读取失败:", e); return { char, ok: false }; })
-            );
-            const results = await Promise.all(checks);
+            const checks = fullPartyData.slice(1).map(char => {
+                const s = getVariable(`世界.妈妈.${char.name}.状态`);
+                return { char, ok: parseInt(s) >= 3 };
+            });
+            const results = checks;
             
             // 过滤出符合条件的角色并推入 activePartyData
             activePartyData.push(...results.filter(r => r.ok).map(r => r.char));
@@ -3351,19 +3343,19 @@ const img = (imgchestUrl, catboxUrl) => {
 
         // 點數一次扣 amount 點
         let newPoints = parseInt(window.__RPG_CACHE.points) - amount;
-        setGlobalVariable(VAR_POINTS, newPoints);
+        setVar(VAR_POINTS, newPoints);
         window.__RPG_CACHE.points = newPoints;
 
         if (type === 'HP') {
             // HP 一次加 amount * 10
             let newHp = parseInt(window.__RPG_CACHE.hp) + (10 * amount);
-            setGlobalVariable(VAR_HP, newHp);
+            setVar(VAR_HP, newHp);
             window.__RPG_CACHE.hp = newHp;
         }
         else if (type === 'ATK') {
             // ATK 一次加 amount * 5
             let newAtk = parseInt(window.__RPG_CACHE.atk) + (5 * amount);
-            setGlobalVariable(VAR_ATK, newAtk);
+            setVar(VAR_ATK, newAtk);
             window.__RPG_CACHE.atk = newAtk;
         }
 
@@ -3377,7 +3369,7 @@ const img = (imgchestUrl, catboxUrl) => {
         const calcLv = Math.floor(rawScore / 54) + 70;
         let currentLv = parseInt(getVariable(VAR_LEVEL)) || 0;
         if (calcLv > currentLv) {
-            setGlobalVariable(VAR_LEVEL, calcLv);
+            setVar(VAR_LEVEL, calcLv);
             window.__RPG_CACHE.level = calcLv; 
             let newRank = "";
             if (calcLv >= 301) newRank = "黄金种";
@@ -3385,7 +3377,7 @@ const img = (imgchestUrl, catboxUrl) => {
             if (newRank) {
                 let currentRank = window.__RPG_CACHE.rank;
                 if (currentRank !== newRank) {
-                    setGlobalVariable(VAR_RANK, newRank);
+                    setVar(VAR_RANK, newRank);
                     window.__RPG_CACHE.rank = newRank;
                 }
             }
@@ -3497,11 +3489,11 @@ const img = (imgchestUrl, catboxUrl) => {
         try {
     // === [效能優化] 5 個循序請求合併為並行請求 ===
     const [rank, lv, valHP, valATK, valPoints] = await Promise.all([
-        Promise.resolve(getVariable(VAR_RANK)),
-        Promise.resolve(getVariable(VAR_LEVEL)),
-        Promise.resolve(getVariable(VAR_HP)),
-        Promise.resolve(getVariable(VAR_ATK)),
-        Promise.resolve(getVariable(VAR_POINTS))
+        getVariable(VAR_RANK),
+        getVariable(VAR_LEVEL),
+        getVariable(VAR_HP),
+        getVariable(VAR_ATK),
+        getVariable(VAR_POINTS)
     ]);
 
     if(rank && rank !== "0" && els.playerA) els.playerA.innerText = rank;
@@ -3535,8 +3527,8 @@ const img = (imgchestUrl, catboxUrl) => {
         try {
     // === [效能優化] 2 個循序請求合併為並行請求 ===
     const [bond, statusVal] = await Promise.all([
-        Promise.resolve(getVariable(`世界.妈妈.${data.name}.好感度`)),
-        Promise.resolve(getVariable(`世界.妈妈.${data.name}.在队状态`))
+        getVariable(`世界.妈妈.${data.name}.好感度`),
+        getVariable(`世界.妈妈.${data.name}.在队状态`)
     ]);
 
     if (els.mBond) els.mBond.innerText = bond || "0";
@@ -3581,7 +3573,7 @@ const img = (imgchestUrl, catboxUrl) => {
     // === [效能優化] 捨棄 for 迴圈內的 await，改為一次性並行請求 ===
     // 產生所有的 Promise 陣列，並加上 catch 避免單一變量缺失導致整個報錯
     const promises = items.map(item => 
-        Promise.resolve(getVariable(`世界.妈妈.${name}.NSFW.${catName}.${item}`)).catch(() => "0")
+        (getVariable(`世界.妈妈.${name}.NSFW.${catName}.${item}`) ?? "0")
     );
     
     // 一口氣等待所有結果回來 (原本要等 5 次的網路來回，現在只需 1 次)
@@ -3741,9 +3733,11 @@ const img = (imgchestUrl, catboxUrl) => {
             const result = getVariable(varName);
 
             // 3. 類型判斷與處理
-            if (!result || result === '0') {
-                // 狀況 A: 變量不存在或為空 -> 保持 dataList 為空物件
-            } 
+            if (!result || result === '0' || 
+    (Array.isArray(result) && result.length === 0)) {
+    listContainer.innerHTML = '<div class="empty-state">- 暂无相关记录 -</div>';
+    return;
+}
             else if (typeof result === 'object') {
                 // 狀況 B: ST 已經幫你轉成物件了 (這是導致原本報錯的原因)
                 // 直接使用，不需要 parse，也不需要 trim
@@ -3811,7 +3805,7 @@ const img = (imgchestUrl, catboxUrl) => {
             const jsonStr = JSON.stringify(newDataList);
 
             // 5. 將去重後的陣列透過酒館助手 API 寫回變量
-            setGlobalVariable(varName, newDataList);
+            setVar(varName, newDataList);
 
             // 6. 延遲後重新渲染前端 UI
             await window.renderQuests();
@@ -3842,8 +3836,8 @@ const img = (imgchestUrl, catboxUrl) => {
         if (currentFilter === '进行中') {
             try {
                 const [completedRaw, failedRaw] = await Promise.all([
-                    Promise.resolve(getVariable(`世界.任务.${currentCategory}.已完成`)).catch(() => null),
-                    Promise.resolve(getVariable(`世界.任务.${currentCategory}.已失败`)).catch(() => null)
+                    (getVariable(`世界.任务.${currentCategory}.已完成`) ?? null),
+                    (getVariable(`世界.任务.${currentCategory}.已失败`) ?? null)
                 ]);
 
                 const archivedKeys = new Set();
@@ -3874,7 +3868,7 @@ const img = (imgchestUrl, catboxUrl) => {
                         console.log(`[RPG Quest] 跨列表防呆移除 ${questArray.length - filtered.length} 筆，正在寫回進行中...`);
                         cleanedQuestArray = filtered;
                         try {
-                            setGlobalVariable(varName, cleanedQuestArray);
+                            setVar(varName, cleanedQuestArray);
                             console.log(`[RPG Quest] 跨列表防呆寫回完成。`);
                         } catch(e) {
                             console.error("[RPG Quest] 跨列表防呆寫回失敗:", e);
@@ -3903,7 +3897,7 @@ const img = (imgchestUrl, catboxUrl) => {
         if (deduplicatedArray.length !== cleanedQuestArray.length) {
             console.log(`[RPG Quest] 發現 ${cleanedQuestArray.length - deduplicatedArray.length} 筆同列表重複，正在自動修復並寫回變量...`);
             try {
-                setGlobalVariable(varName, deduplicatedArray);
+                setVar(varName, deduplicatedArray);
                 console.log(`[RPG Quest] 重複任務自動修復完成，變量已同步。`);
             } catch(e) {
                 console.error("[RPG Quest] 自動修復寫回時發生錯誤:", e);
@@ -4046,7 +4040,7 @@ const img = (imgchestUrl, catboxUrl) => {
             }
 
             // 4. 透過酒館助手 API 寫回變量
-            setGlobalVariable(varName, itemList);
+            setVar(varName, itemList);
 
             // 5. 重新渲染前端 UI
             await window.renderInventory();
@@ -4123,14 +4117,8 @@ window.toggleStateViewer = function() {
         
         try {
             [rawMoney, result] = await Promise.all([
-                Promise.resolve(getVariable('世界.储物袋.货币')).catch(e => {
-                    console.error("金幣讀取失敗", e);
-                    return "0";
-                }),
-                Promise.resolve(getVariable(varName)).catch(e => {
-                    console.error("背包數據讀取失敗:", e);
-                    return null;
-                })
+                getVariable('世界.储物袋.货币'),
+                getVariable(varName)
             ]);
         } catch (e) {
             console.error("背包並行讀取發生預期外錯誤:", e);
@@ -4144,9 +4132,11 @@ window.toggleStateViewer = function() {
         // --- B. 處理物品列表 ---
         let itemList = {};
         
-        if (!result || result === '0') {
-            // 空
-        } 
+        if (!result || result === '0' || 
+    (typeof result === 'object' && Object.keys(result).length === 0)) {
+    grid.innerHTML = '<div class="empty-state">- 背包空空如也 -</div>';
+    return;
+}
         else if (typeof result === 'object') {
             itemList = result;
         } 
@@ -5083,7 +5073,7 @@ function scheduleBackgroundPreload(currentRegion, currentPartyIds) {
     let statusFetchFailed = false;
     try {
         const statusResults = await Promise.all(
-            heroineList.map(id => Promise.resolve(getVariable(`世界.妈妈.${id}.状态`)).catch(() => '-1'))
+            heroineList.map(id => (getVariable(`世界.妈妈.${id}.状态`) ?? '-1'))
         );
         heroineList.forEach((id, i) => {
             statusMap[id] = statusResults[i] || '-1';
@@ -5193,6 +5183,7 @@ panelParent.appendChild(mobilePanel);
         }
     }
 };
+previewArea.appendChild(dot);
 });
 
     // 右下角區域名稱
@@ -5349,7 +5340,7 @@ const LOCATION_BUTTONS = [
         }
         // 並行讀取所有條件變量
         const results = await Promise.all(
-            cfg.conditions.map(c => Promise.resolve(getVariable(c.varName)).catch(() => null))
+            cfg.conditions.map(c => (getVariable(c.varName) ?? null))
         );
         const allMet = cfg.conditions.every((c, i) => {
     if (c.value !== undefined) return results[i] == c.value;   // 符合某值
@@ -5382,7 +5373,7 @@ const LOCATION_BUTTONS = [
                 ? cfg.actions
                 : Array.isArray(cfg.action) ? cfg.action : [cfg.action];
             for (const act of actList) {
-                setGlobalVariable(act.varName, act.value);
+                setVar(act.varName, act.value);
             }
             await syncGameState();
         };
@@ -5451,8 +5442,8 @@ const STANDALONE_LOCATIONS = [
 const _standaloneMatch = STANDALONE_LOCATIONS.find(l => l.name === subLocation);
 if (_standaloneMatch) {
     console.warn(`[RPG 防呆] 子地點「${subLocation}」應為獨立地點，自動修正...`);
-    setGlobalVariable('世界.位置.地点', _standaloneMatch.name);
-    setGlobalVariable('世界.位置.子地点', _standaloneMatch.defaultSub);
+    setVar('世界.位置.地点', _standaloneMatch.name);
+    setVar('世界.位置.子地点', _standaloneMatch.defaultSub);
     // 同步更新本次 sync 用的變量，避免後續邏輯還讀舊值
     state.location = _standaloneMatch.name;
     state.subLocation = _standaloneMatch.defaultSub;
@@ -5492,8 +5483,8 @@ const [pLevelRaw, valHP, valATK, valPoints, rank] = playerData;
             try {
                 const [isPunished, remainDays] = punishData;
                 if (isPunished === '是' && parseInt(remainDays) === 0) {
-                    setGlobalVariable('世界.玩家状态.惩罚.惩罚中', '否');
-                    setGlobalVariable('世界.玩家状态.惩罚.效果', '无');
+                    setVar('世界.玩家状态.惩罚.惩罚中', '否');
+                    setVar('世界.玩家状态.惩罚.效果', '无');
                     console.log("[RPG 系统] 惩罚天数已归零，自动解除惩罚状态。");
                 }
             } catch(e) { console.error("惩罚状态自动检测失败:", e); }
@@ -5520,10 +5511,10 @@ const [pLevelRaw, valHP, valATK, valPoints, rank] = playerData;
             // === [优化 2] 合并所有的角色状态请求 (状态、好感、在队、NSFW) ===
             // ============================================================
             const charPromises = heroineList.flatMap(id => [
-                Promise.resolve(getVariable(`世界.妈妈.${id}.状态`)).catch(() => '-1'),
-                Promise.resolve(getVariable(`世界.妈妈.${id}.好感度`)).catch(() => '0'),
-                Promise.resolve(getVariable(`世界.妈妈.${id}.在队状态`)).catch(() => '否'),
-                Promise.resolve(getVariable(`世界.妈妈.${id}.NSFW状态`)).catch(() => '否')
+                (getVariable(`世界.妈妈.${id}.状态`) ?? '-1'),
+                (getVariable(`世界.妈妈.${id}.好感度`) ?? '0'),
+                (getVariable(`世界.妈妈.${id}.在队状态`) ?? '否'),
+                (getVariable(`世界.妈妈.${id}.NSFW状态`) ?? '否')
             ]);
             
             const charResults = await Promise.all(charPromises);
@@ -5614,7 +5605,7 @@ heroineList.forEach((id, i) => {
             if (currentrelationshipCount >= 8) {
                 const currentNephStatus = statusMap['奈芙蒂'] || '-1';  // 直接用已有的
                 if (currentNephStatus === '-1' || currentNephStatus == '-1' || currentNephStatus === '' || currentNephStatus === '0') {
-                    setGlobalVariable('世界.妈妈.奈芙蒂.状态', '1');
+                    setVar('世界.妈妈.奈芙蒂.状态', '1');
                 }
             }
 
@@ -5791,6 +5782,16 @@ let isGenerating = false;
 let genResetTimer = null;
 
 window.updateTemplateVariables = function(data) {
+
+    clearTimeout(window.__safeUnlockTimer);
+    window.__safeUnlockTimer = setTimeout(() => {
+        if (isGenerating) {
+            isGenerating = false;
+            document.querySelector('.rpg-v7-root')?.classList.remove('generating');
+            console.log('[RPG] 安全重置：串流逾時，generating 已強制解除');
+        }
+}, 8000);
+
     if (!isGenerating) {
         isGenerating = true;
         const root = document.querySelector('.rpg-v7-root');
@@ -5804,7 +5805,7 @@ window.updateTemplateVariables = function(data) {
     stringForFinishedCheck = stringForFinishedCheck.replace(/^[\s\S]*?<\/thinking>/i, '');
     stringForFinishedCheck = stringForFinishedCheck.replace(/^[\s\S]*?<\/think>/i, '');
     stringForFinishedCheck = stringForFinishedCheck.replace(/^[\s\S]*?\[\/metacognition\]/i, '');
-    const isFinished = stringForFinishedCheck.includes('</state>');
+    const isFinished = stringForFinishedCheck.includes('</UpdateVariable>');
 
     // ✅ 正文提取：直接傳原始字串給 extractContent，由它內部統一處理
     const newText = extractContent(rawString);
@@ -5847,6 +5848,22 @@ window.RPGBridge = {
     getVar: async function(varName) {
         return getVariable(varName);
     },
+
+setVar: async function(varName, value) {
+    window.updateVariablesWith(
+        function(variables) {
+            _.set(variables, 'stat_data.' + varName, value);
+            return variables;
+        },
+        { type: 'message' }   // 寫入當前最新樓層
+    );
+},
+playBgm: async function(url) {
+    try { await playAudio('bgm', { url }); } catch(e) { console.warn('[RPGBridge] playBgm 失敗:', e); }
+},
+pauseBgm: async function() {
+    try { await pauseAudio('bgm'); } catch(e) { console.warn('[RPGBridge] pauseBgm 失敗:', e); }
+},
 
     // 2. 執行 slash 指令
     execute: async function(command) {
@@ -5940,7 +5957,7 @@ window.RPGBridge = {
     }
 }
 
-const MINIGAME_RAW_URL = "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/mini.html";
+const MINIGAME_RAW_URL = "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/miniMVU1.html";
 
 window.__MINIGAME_CACHE = window.__MINIGAME_CACHE || {};
 
@@ -5954,6 +5971,42 @@ async function openMinigame(url) {
     const scale = mapArea.offsetWidth / 1080;
     if(scaler) scaler.style.transform = `scale(${scale})`;
 
+    const fallbackTarget = getVariable('世界.迷宫攻略.当前攻略对象') || '';
+
+    // === [防呆] 建立或更新備援按鈕 ===
+    let fallbackBtn = document.getElementById('minigame-fallback-btn');
+    if (!fallbackBtn) {
+        fallbackBtn = document.createElement('div');
+        fallbackBtn.id = 'minigame-fallback-btn';
+        fallbackBtn.style.cssText = `
+            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+            z-index: 9999; background: rgba(30,20,10,0.92); border: 1px solid #c8aa6e;
+            color: #c8aa6e; padding: 12px 24px; border-radius: 6px; cursor: pointer;
+            font-size: 14px; text-align: center; display: none;
+        `;
+        layer.appendChild(fallbackBtn);
+    }
+    fallbackBtn.style.display = 'none'; // 預設隱藏
+
+    if (fallbackTarget && fallbackTarget !== '非攻略中' && fallbackTarget !== '0') {
+        fallbackBtn.innerHTML = `⚠️ 游戏无法载入？<br><strong>点此直接完成攻略：${fallbackTarget}</strong>`;
+        fallbackBtn.onclick = () => _triggerVictoryFallback(fallbackTarget);
+    }
+
+    // === [防呆] 超時計時器：10秒後顯示備援按鈕 ===
+    const fallbackTimer = setTimeout(() => {
+        console.warn('[RPG] 小遊戲載入超時，顯示備援按鈕');
+        if (fallbackBtn) fallbackBtn.style.display = 'block';
+    }, 10000);
+
+    // iframe 成功載入後取消計時器
+    frame.onload = () => {
+        // blob URL 載入成功，內容不是空的才算真正載入
+        if (frame.src && frame.src !== 'about:blank' && frame.src !== '') {
+            clearTimeout(fallbackTimer);
+        }
+    };
+
     try {
         let targetUrl = url;
         if (!url.startsWith('http') && MINIGAME_RAW_URL && MINIGAME_RAW_URL.startsWith('http')) {
@@ -5961,38 +6014,29 @@ async function openMinigame(url) {
         }
 
         let htmlText = "";
-
-        // === [新增] 檢查快取 ===
         if (window.__MINIGAME_CACHE[targetUrl]) {
-            console.log("[RPG] 從記憶體快取讀取小遊戲...");
             htmlText = window.__MINIGAME_CACHE[targetUrl];
         } else {
             console.log("[RPG] 正在從 GitHub 下載小遊戲...");
             const response = await fetch(targetUrl);
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             htmlText = await response.text();
-            
-            // 寫入快取
             window.__MINIGAME_CACHE[targetUrl] = htmlText;
         }
 
-        // === 注入靜音狀態 ===
-        let currentMuted = true;
-        if (window.top && window.top.RPG_GLOBAL_STATE) {
-            currentMuted = window.top.RPG_GLOBAL_STATE.isMuted;
-        } else if (typeof window.RPG_IS_MUTED !== 'undefined') {
-            currentMuted = window.RPG_IS_MUTED;
-        }
-
-        const injectionScript = '<script>window.INJECTED_MUTE_STATE = ' + currentMuted + ';</' + 'script>';
+        const injectionScript = '<script>window.INJECTED_MUTE_STATE = ' + (window.RPG_IS_MUTED ?? true) + ';</' + 'script>';
         htmlText = htmlText.replace('<head>', '<head>' + injectionScript);
 
         const blob = new Blob([htmlText], { type: 'text/html' });
         const blobUrl = URL.createObjectURL(blob);
         frame.src = blobUrl;
-        
+
     } catch (e) {
         console.error("[RPG] 小遊戲載入失敗:", e);
+        clearTimeout(fallbackTimer);
+        // === [防呆] fetch 失敗立即顯示備援按鈕 ===
+        if (fallbackBtn) fallbackBtn.style.display = 'block';
+        // 嘗試直連備援
         frame.src = url;
     }
 
@@ -6000,7 +6044,75 @@ async function openMinigame(url) {
     window.gameLoopPaused = true;
 }
 
-	
+// === [防呆] 備援勝利結算函數 ===
+function _triggerVictoryFallback(targetName) {
+    const layer = document.getElementById('minigame-layer');
+    const frame = document.getElementById('minigame-frame');
+    
+    if (layer) layer.classList.remove('active');
+    if (frame) setTimeout(() => frame.src = '', 300);
+    if (window.gameLoopPaused) {
+        window.gameLoopPaused = false;
+        setTimeout(syncGameState, 100);
+    }
+
+    // 先直接寫變量，不依賴 AI
+    try {
+        setVar(`世界.妈妈.${targetName}.状态`, '3');
+        setVar(`世界.妈妈.${targetName}.在队状态`, '是');
+        setVar('世界.迷宫攻略.当前攻略对象', '非攻略中');
+        setTimeout(syncGameState, 300);
+    } catch(e) {
+        console.warn('[RPG] 直接寫變量失敗:', e);
+    }
+
+    // 再發訊息讓 AI 知道發生了什麼（敘事用，不依賴它更新變量）
+    sendMsgViaDOM(`战斗结束！成功攻略${targetName}！`);
+}
+
+// === 變量寫入 helper（替代 setGlobalVariable）===
+function setVar(dotPath, value) {
+    updateVariablesWith(
+        function(variables) {
+            _.set(variables, 'stat_data.' + dotPath, value);
+            return variables;
+        },
+        { type: 'message' }
+    );
+}
+
+// === 發送訊息並觸發 AI 生成（模擬點擊，不需手動操作）===
+function sendMsgViaDOM(message) {
+    try {
+        const targetWin = window.top;
+        const targetDoc = targetWin.document;
+        const textarea = targetDoc.getElementById('send_textarea');
+        const sendButton = targetDoc.getElementById('send_but');
+
+        if (!textarea || !sendButton) {
+            console.error('[RPG] sendMsgViaDOM: 找不到發送元素（請確認沉浸模式已關閉）');
+            return false;
+        }
+
+        if (targetWin.jQuery) {
+            const $ = targetWin.jQuery;
+            $(textarea).val(message).trigger('input').trigger('change');
+            $(sendButton).click();
+        } else {
+            textarea.value = message;
+            textarea.dispatchEvent(new Event('input', { bubbles: true }));
+            textarea.dispatchEvent(new Event('change', { bubbles: true }));
+            sendButton.click();
+        }
+
+        console.log('[RPG] sendMsgViaDOM: 訊息已送出:', message);
+        return true;
+    } catch(e) {
+        console.error('[RPG] sendMsgViaDOM 失敗:', e);
+        return false;
+    }
+}
+
 	// === [新增] 好感度單日上限攔截邏輯 ===
     // === [新增] 好感度單日上限攔截邏輯 (Promise.all 併發優化版) ===
     // [DISABLED] 此功能已停用。核心變量「日基准好感」與「上次变动日期」實測效果不理想。
@@ -6017,9 +6129,9 @@ async function openMinigame(url) {
         }
         const readPromises = [];
         for (const name of heroineList) {
-            readPromises.push(Promise.resolve(getVariable(`世界.妈妈.${name}.好感度`)));
-            readPromises.push(Promise.resolve(getVariable(`世界.妈妈.${name}.日基准好感`)));
-            readPromises.push(Promise.resolve(getVariable(`世界.妈妈.${name}.上次变动日期`)));
+            readPromises.push(getVariable(`世界.妈妈.${name}.好感度`));
+            readPromises.push(getVariable(`世界.妈妈.${name}.日基准好感`));
+            readPromises.push(getVariable(`世界.妈妈.${name}.上次变动日期`));
         }
 
         const results = await Promise.all(readPromises);
@@ -6039,12 +6151,12 @@ async function openMinigame(url) {
             if (isNaN(baseAffection)) { 
                 baseAffection = currentAffection;
                 isFirstInit = true; 
-                writePromises.push(Promise.resolve(setGlobalVariable(`世界.妈妈.${name}.日基准好感`, baseAffection)));
+                writePromises.push(setVar(`世界.妈妈.${name}.日基准好感`, baseAffection));
             }
             if (!lastDate || lastDate === '0') { 
                 lastDate = currentDateStr;
                 isFirstInit = true;
-                writePromises.push(Promise.resolve(setGlobalVariable(`世界.妈妈.${name}.上次变动日期`, lastDate)));
+                writePromises.push(setVar(`世界.妈妈.${name}.上次变动日期`, lastDate));
             }
 
             // --- 核心限制邏輯 ---
@@ -6053,18 +6165,18 @@ async function openMinigame(url) {
                 let legalYesterdayAffection = Math.min(currentAffection, baseAffection + MAX_DAILY_AFFECTION);
                 baseAffection = legalYesterdayAffection;
             
-                writePromises.push(Promise.resolve(setGlobalVariable(`世界.妈妈.${name}.日基准好感`, baseAffection)));
-                writePromises.push(Promise.resolve(setGlobalVariable(`世界.妈妈.${name}.上次变动日期`, currentDateStr)));
+                writePromises.push(setVar(`世界.妈妈.${name}.日基准好感`, baseAffection));
+                writePromises.push(setVar(`世界.妈妈.${name}.上次变动日期`, currentDateStr));
             
                 if (currentAffection > legalYesterdayAffection) {
-                    writePromises.push(Promise.resolve(setGlobalVariable(`世界.妈妈.${name}.好感度`, legalYesterdayAffection)));
+                    writePromises.push(setVar(`世界.妈妈.${name}.好感度`, legalYesterdayAffection));
                 }
             } else if (!isFirstInit) {
                 // 【同日檢查】
                 let maxAllowedToday = baseAffection + MAX_DAILY_AFFECTION;
                 if (currentAffection > maxAllowedToday) {
                     console.log(`[好感度攔截] ${name} 數值異常(${currentAffection})，壓回上限(${maxAllowedToday})`);
-                    writePromises.push(Promise.resolve(setGlobalVariable(`世界.妈妈.${name}.好感度`, maxAllowedToday)));
+                    writePromises.push(setVar(`世界.妈妈.${name}.好感度`, maxAllowedToday));
                 }
             }
         }
@@ -6468,31 +6580,50 @@ document.getElementById('display-layer')?.addEventListener('click', (e) => {
 
         // 啟動同步
         syncGameState();
+    // [安全重置] 頁面載入後強制解除 generating 鎖定
+        // 防止初始渲染時 isGenerating=true 卻沒有觸發 MESSAGE_RECEIVED 的情況
+        setTimeout(() => {
+            if (isGenerating) {
+                isGenerating = false;
+                document.querySelector('.rpg-v7-root')?.classList.remove('generating');
+                console.log('[RPG] 安全重置：generating 狀態已強制解除');
+            }
+        }, 3000);
     };
 	
 // ============================================================
 // === 流式生成結束偵測 ===
 // ============================================================
 
-eventOn(tavern_events.MESSAGE_RECEIVED, async (messageId, type) => {
-    console.log('[RPG] MESSAGE_RECEIVED 觸發, type:', type);
-    if (!['normal', 'regenerate', 'swipe', 'continue'].includes(type)) return;
+const _initEventListeners = () => {
+    eventOn(tavern_events.MESSAGE_RECEIVED, async (messageId, type) => {
+        console.log('[RPG] MESSAGE_RECEIVED 觸發, type:', type);
+        if (!['normal', 'regenerate', 'swipe', 'continue'].includes(type)) return;
+        const msgs = getChatMessages(messageId);
+const firstMsg = Array.isArray(msgs) ? msgs[0] : msgs;
+if (firstMsg && firstMsg.role !== 'assistant') return;
+        isGenerating = false;
+        clearTimeout(genResetTimer);
+        const root = document.querySelector('.rpg-v7-root');
+        if (root) root.classList.remove('generating');
+        updateStateViewer(extractStateContent(state.rawText || ''));
+        setTimeout(() => {
+            if (typeof syncGameState === 'function') syncGameState();
+        }, 500);
+    });
+	setAudioSettings('bgm', { mode: 'repeat_one' });
+};
 
-    const msgs = getChatMessages(messageId);
-    if (msgs.length && msgs[0].role !== 'assistant') return;
-
-    isGenerating = false;
-    clearTimeout(genResetTimer);
-    const root = document.querySelector('.rpg-v7-root');
-    if (root) root.classList.remove('generating');
-
-    updateStateViewer(extractStateContent(state.rawText || ''));
-
-    setTimeout(() => {
-        if (typeof syncGameState === 'function') syncGameState();
-    }, 500);
-});
-console.log('[RPG] 已啟用 MESSAGE_RECEIVED 事件監聽');
+if (typeof tavern_events !== 'undefined') {
+    _initEventListeners();
+} else {
+    const _waitTimer = setInterval(() => {
+        if (typeof tavern_events !== 'undefined') {
+            clearInterval(_waitTimer);
+            _initEventListeners();
+        }
+    }, 100);
+}
 
 	// === [新增] 全角色選擇器邏輯 ===
     
