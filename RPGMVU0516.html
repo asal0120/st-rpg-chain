@@ -2833,9 +2833,13 @@ const getVariable = (dotPath, fallback = "0") => {
         const vars = getAllVariables();
         const val = getPath(vars, 'stat_data.' + dotPath, undefined)
                  ?? getPath(vars, dotPath, undefined);
-        if (val !== undefined && val !== null && val !== '') return String(val);
+        if (val !== undefined && val !== null && val !== '') {
+            // 物件或陣列直接回傳，不轉字串
+            if (typeof val === 'object') return val;
+            return String(val);
+        }
     } catch(e) {}
-    return String(fallback);
+    return fallback === "0" ? "0" : fallback;
 };
 
 const getChatMessages = typeof window.getChatMessages === 'function' 
@@ -3040,7 +3044,7 @@ const _userName = (() => {
         const targetState = isCurrentlyInParty ? '否' : '是';
         try {
             document.body.style.cursor = 'wait';
-            setGlobalVariable(`世界.妈妈.${charName}.在队状态`, targetState);
+            setVar(`世界.妈妈.${charName}.在队状态`, targetState);
 
             // 重新刷新當前 Status UI 及全域隊伍狀態
             if (typeof updateSelectionFromCenter === 'function') updateSelectionFromCenter(true);
@@ -3065,12 +3069,11 @@ const _userName = (() => {
             activePartyData.push(...fullPartyData.slice(1));
         } else {
             // [优化 1] 并行请求所有角色的状态
-            const checks = fullPartyData.slice(1).map(char =>
-                Promise.resolve(getVariable(`世界.妈妈.${char.name}.状态`))
-                    .then(s => ({ char, ok: parseInt(s) >= 3 }))
-                    .catch(e => { console.log("角色状态读取失败:", e); return { char, ok: false }; })
-            );
-            const results = await Promise.all(checks);
+            const checks = fullPartyData.slice(1).map(char => {
+                const s = getVariable(`世界.妈妈.${char.name}.状态`);
+                return { char, ok: parseInt(s) >= 3 };
+            });
+            const results = checks;
             
             // 过滤出符合条件的角色并推入 activePartyData
             activePartyData.push(...results.filter(r => r.ok).map(r => r.char));
@@ -3340,19 +3343,19 @@ const _userName = (() => {
 
         // 點數一次扣 amount 點
         let newPoints = parseInt(window.__RPG_CACHE.points) - amount;
-        setGlobalVariable(VAR_POINTS, newPoints);
+        setVar(VAR_POINTS, newPoints);
         window.__RPG_CACHE.points = newPoints;
 
         if (type === 'HP') {
             // HP 一次加 amount * 10
             let newHp = parseInt(window.__RPG_CACHE.hp) + (10 * amount);
-            setGlobalVariable(VAR_HP, newHp);
+            setVar(VAR_HP, newHp);
             window.__RPG_CACHE.hp = newHp;
         }
         else if (type === 'ATK') {
             // ATK 一次加 amount * 5
             let newAtk = parseInt(window.__RPG_CACHE.atk) + (5 * amount);
-            setGlobalVariable(VAR_ATK, newAtk);
+            setVar(VAR_ATK, newAtk);
             window.__RPG_CACHE.atk = newAtk;
         }
 
@@ -3366,7 +3369,7 @@ const _userName = (() => {
         const calcLv = Math.floor(rawScore / 54) + 70;
         let currentLv = parseInt(getVariable(VAR_LEVEL)) || 0;
         if (calcLv > currentLv) {
-            setGlobalVariable(VAR_LEVEL, calcLv);
+            setVar(VAR_LEVEL, calcLv);
             window.__RPG_CACHE.level = calcLv; 
             let newRank = "";
             if (calcLv >= 301) newRank = "黄金种";
@@ -3374,7 +3377,7 @@ const _userName = (() => {
             if (newRank) {
                 let currentRank = window.__RPG_CACHE.rank;
                 if (currentRank !== newRank) {
-                    setGlobalVariable(VAR_RANK, newRank);
+                    setVar(VAR_RANK, newRank);
                     window.__RPG_CACHE.rank = newRank;
                 }
             }
@@ -3486,11 +3489,11 @@ const _userName = (() => {
         try {
     // === [效能優化] 5 個循序請求合併為並行請求 ===
     const [rank, lv, valHP, valATK, valPoints] = await Promise.all([
-        Promise.resolve(getVariable(VAR_RANK)),
-        Promise.resolve(getVariable(VAR_LEVEL)),
-        Promise.resolve(getVariable(VAR_HP)),
-        Promise.resolve(getVariable(VAR_ATK)),
-        Promise.resolve(getVariable(VAR_POINTS))
+        getVariable(VAR_RANK),
+        getVariable(VAR_LEVEL),
+        getVariable(VAR_HP),
+        getVariable(VAR_ATK),
+        getVariable(VAR_POINTS)
     ]);
 
     if(rank && rank !== "0" && els.playerA) els.playerA.innerText = rank;
@@ -3524,8 +3527,8 @@ const _userName = (() => {
         try {
     // === [效能優化] 2 個循序請求合併為並行請求 ===
     const [bond, statusVal] = await Promise.all([
-        Promise.resolve(getVariable(`世界.妈妈.${data.name}.好感度`)),
-        Promise.resolve(getVariable(`世界.妈妈.${data.name}.在队状态`))
+        getVariable(`世界.妈妈.${data.name}.好感度`),
+        getVariable(`世界.妈妈.${data.name}.在队状态`)
     ]);
 
     if (els.mBond) els.mBond.innerText = bond || "0";
@@ -3570,7 +3573,7 @@ const _userName = (() => {
     // === [效能優化] 捨棄 for 迴圈內的 await，改為一次性並行請求 ===
     // 產生所有的 Promise 陣列，並加上 catch 避免單一變量缺失導致整個報錯
     const promises = items.map(item => 
-        Promise.resolve(getVariable(`世界.妈妈.${name}.NSFW.${catName}.${item}`)).catch(() => "0")
+        (getVariable(`世界.妈妈.${name}.NSFW.${catName}.${item}`) ?? "0")
     );
     
     // 一口氣等待所有結果回來 (原本要等 5 次的網路來回，現在只需 1 次)
@@ -3715,45 +3718,42 @@ const _userName = (() => {
 
     // 3. 渲染任務列表 (適配 Object 鍵值對結構)
     window.renderQuests = async function() {
-        const listContainer = document.getElementById('quest-list-container');
-        if (!listContainer) return;
-        
-        listContainer.innerHTML = ''; 
+    const listContainer = document.getElementById('quest-list-container');
+    if (!listContainer) return;
 
-        let dataList = {};
+    listContainer.innerHTML = '';
 
-        // 1. 組合變量名稱
-        const varName = `世界.任务.${currentCategory}.${currentFilter}`;
+    let dataRecord = {};
 
-        try {
-            // 2. 向 ST 請求變量內容
-            const result = getVariable(varName);
+    // 組合變量名稱
+    const varName = `世界.任务.${currentCategory}.${currentFilter}`;
 
-            // 3. 類型判斷與處理
-            if (!result || result === '0') {
-                // 狀況 A: 變量不存在或為空 -> 保持 dataList 為空物件
-            } 
-            else if (typeof result === 'object') {
-                // 狀況 B: ST 已經幫你轉成物件了 (這是導致原本報錯的原因)
-                // 直接使用，不需要 parse，也不需要 trim
-                dataList = result;
-            } 
-            else if (typeof result === 'string') {
-                // 狀況 C: ST 回傳的是 JSON 字串
-                // 只有字串才能用 trim()
-                if (result.trim() !== '') {
-                    // 嘗試解析
-                    try {
-                         dataList = JSON.parse(result);
-                    } catch(jsonErr) {
-                         console.error("JSON 解析失败，可能是格式错误:", result);
-                    }
+    try {
+        const result = getVariable(varName);
+
+        // 類型判斷與處理
+        if (!result || result === '0' ||
+            (typeof result === 'object' && !Array.isArray(result) && Object.keys(result).length === 0)) {
+            listContainer.innerHTML = '<div class="empty-state">- 暂无相关记录 -</div>';
+            return;
+        }
+        else if (typeof result === 'object' && !Array.isArray(result)) {
+            // ST 已經轉成物件，直接使用
+            dataRecord = result;
+        }
+        else if (typeof result === 'string') {
+            if (result.trim() !== '') {
+                try {
+                    dataRecord = JSON.parse(result);
+                } catch(jsonErr) {
+                    console.error("JSON 解析失败，可能是格式错误:", result);
                 }
             }
-
-        } catch(e) {
-            console.error("数据读取过程发生错误:", e);
         }
+
+    } catch(e) {
+        console.error("数据读取过程发生错误:", e);
+    }
 
 // === [新增] 刪除任務核心邏輯 ===
     window.deleteQuest = async function(questName, category, filter) {
@@ -3763,46 +3763,37 @@ const _userName = (() => {
             return;
         }
 
-        // 1. 彈出確認視窗 (原生阻塞)
+        // 1. 彈出確認視窗
         if (!confirm(`確定要刪除任務「${questName}」的紀錄嗎？\n(刪除後將無法恢復)`)) {
             return;
         }
 
         try {
             document.body.style.cursor = 'wait';
-            
-            // 2. 組合變數名稱並抓取當前完整陣列
+
+            // 2. 組合變數名稱並抓取當前 record
             const varName = `世界.任务.${category}.${filter}`;
             const result = getVariable(varName);
-            
-            let dataList = [];
-            if (typeof result === 'object') {
-                dataList = Object.values(result);
+
+            let dataRecord = {};
+            if (typeof result === 'object' && !Array.isArray(result)) {
+                dataRecord = result;
             } else if (typeof result === 'string' && result.trim() !== '') {
-                try { dataList = JSON.parse(result); } catch(e) { console.error("JSON 解析失敗", e); }
-            }
-            if (!Array.isArray(dataList)) {
-                dataList = Object.values(dataList || {});
+                try { dataRecord = JSON.parse(result); } catch(e) { console.error("JSON 解析失敗", e); }
             }
 
-            // 3. 在前端過濾掉該筆任務 (只刪除第一筆匹配，保留其餘同名項目)
-            // 注意：使用 flag 確保重複任務中只有第一筆被刪除，避免誤刪原本的那筆
-            let removedOnce = false;
-            const newDataList = dataList.filter(q => {
-                if (!removedOnce && q["任务名"] === questName) {
-                    removedOnce = true;
-                    return false; // 只刪這一筆
-                }
-                return true;
-            });
+            // 3. 確認任務存在後直接 delete
+            if (!(questName in dataRecord)) {
+                console.warn(`[RPG] 任務「${questName}」不存在於 ${filter} 中`);
+                return;
+            }
 
-            // 4. 序列化為 JSON 字串 (單行，無換行格式)
-            const jsonStr = JSON.stringify(newDataList);
+            delete dataRecord[questName];
 
-            // 5. 將去重後的陣列透過酒館助手 API 寫回變量
-            setGlobalVariable(varName, newDataList);
+            // 4. 寫回變量
+            setVar(varName, dataRecord);
 
-            // 6. 延遲後重新渲染前端 UI
+            // 5. 重新渲染
             await window.renderQuests();
 
         } catch (e) {
@@ -3813,164 +3804,133 @@ const _userName = (() => {
         }
     };
 
-        // 4. 渲染邏輯 (這部分維持原本的 Object.entries 結構)
-        if (!dataList || Object.keys(dataList).length === 0) {
-            listContainer.innerHTML = '<div class="empty-state">- 暂无相关记录 -</div>';
-            return;
-        }
-
-        const questArray = Array.isArray(dataList) ? dataList : (Object.keys(dataList).length === 0 ? [] : Object.values(dataList));
-
-        if (questArray.length === 0) {
-            listContainer.innerHTML = '<div class="empty-state">- 暂无相关记录 -</div>';
-            return;
-        }
-
-        // === [新增] 跨列表防呆：若「进行中」某任务與「已完成」或「已失败」完全一致，代表歸檔時出錯，自動從「进行中」刪除 ===
-        let cleanedQuestArray = questArray; // 預設沿用原陣列，不改動
-        if (currentFilter === '进行中') {
-            try {
-                const [completedRaw, failedRaw] = await Promise.all([
-                    Promise.resolve(getVariable(`世界.任务.${currentCategory}.已完成`)).catch(() => null),
-                    Promise.resolve(getVariable(`世界.任务.${currentCategory}.已失败`)).catch(() => null)
-                ]);
-
-                const archivedKeys = new Set();
-                for (const raw of [completedRaw, failedRaw]) {
-                    if (!raw || raw === '0') continue;
-                    let list = [];
-                    if (typeof raw === 'object') list = Object.values(raw);
-                    else if (typeof raw === 'string' && raw.trim()) {
-                        try { list = JSON.parse(raw); } catch(e) {}
-                    }
-                    if (!Array.isArray(list)) list = Object.values(list || {});
-                    list.forEach(q => {
-                        const key = `${q["任务名"] || ""}__${q["时间"] || ""}`;
-                        if (key !== "__") archivedKeys.add(key);
-                    });
-                }
-
-                if (archivedKeys.size > 0) {
-                    const filtered = questArray.filter(q => {
-                        const key = `${q["任务名"] || ""}__${q["时间"] || ""}`;
-                        if (archivedKeys.has(key)) {
-                            console.warn(`[RPG Quest] 跨列表防呆：「${q["任务名"]}」(${q["时间"]}) 已存在於歸檔中，從進行中移除`);
-                            return false;
-                        }
-                        return true;
-                    });
-                    if (filtered.length !== questArray.length) {
-                        console.log(`[RPG Quest] 跨列表防呆移除 ${questArray.length - filtered.length} 筆，正在寫回進行中...`);
-                        cleanedQuestArray = filtered;
-                        try {
-                            setGlobalVariable(varName, cleanedQuestArray);
-                            console.log(`[RPG Quest] 跨列表防呆寫回完成。`);
-                        } catch(e) {
-                            console.error("[RPG Quest] 跨列表防呆寫回失敗:", e);
-                        }
-                    }
-                }
-            } catch(e) {
-                console.error("[RPG Quest] 跨列表防呆比對失敗:", e);
-            }
-        }
-        // === 跨列表防呆結束 ===
-
-        // === [現有] 同列表內重複任務自動修復：偵測到重複時，自動將去重後的乾淨陣列寫回變量 ===
-        const seenKeys = new Set();
-        const deduplicatedArray = cleanedQuestArray.filter(quest => {
-            const key = `${quest["任务名"] || ""}__${quest["时间"] || ""}`;
-            if (seenKeys.has(key)) {
-                console.warn(`[RPG Quest] 偵測到重複任務: 「${quest["任务名"]}」(${quest["时间"]})`);
-                return false;
-            }
-            seenKeys.add(key);
-            return true;
-        });
-
-        // 如果過濾前後長度不同，代表確實有重複，觸發自動寫回
-        if (deduplicatedArray.length !== cleanedQuestArray.length) {
-            console.log(`[RPG Quest] 發現 ${cleanedQuestArray.length - deduplicatedArray.length} 筆同列表重複，正在自動修復並寫回變量...`);
-            try {
-                setGlobalVariable(varName, deduplicatedArray);
-                console.log(`[RPG Quest] 重複任務自動修復完成，變量已同步。`);
-            } catch(e) {
-                console.error("[RPG Quest] 自動修復寫回時發生錯誤:", e);
-            }
-        }
-        // === 去重結束 ===
-
-        const fragment = document.createDocumentFragment();
-
-        deduplicatedArray.forEach((quest, index) => {
-            let statusClass = 'status-active';
-            if (currentFilter === '已完成') statusClass = 'status-completed';
-            if (currentFilter === '已失败') statusClass = 'status-failed';
-
-            let qName = quest["任务名"] || "未知任务";
-            let qDesc = quest["描述"] || "暂无描述";
-            
-            let qNpc = "";
-            if (Array.isArray(quest["在场妈妈"]) && quest["在场妈妈"].length > 0) {
-                qNpc = quest["在场妈妈"].join("、");
-            } else if (typeof quest["在场妈妈"] === 'string') {
-                qNpc = quest["在场妈妈"]; 
-            }
-
-            const card = document.createElement('div');
-            card.className = `quest-card ${statusClass}`;
-            // 減少動畫延遲計算的複雜度，直接寫入 style
-            card.style.animationDelay = `${index * 0.05}s`;
-
-            // 判斷是否為可刪除狀態
-            let isDeletable = (currentFilter === '已完成' || currentFilter === '已失败');
-
-            // [新增] 當日保護邏輯：若任務有紀錄時間，且時間等於當前遊戲日期，則強制禁止刪除
-            // window.__LAST_CHECKED_DATE 是在 syncGameState 中同步的 "YYYY-MM-DD" 字串
-            if (isDeletable && quest["时间"]) {
-                if (window.__LAST_CHECKED_DATE && quest["时间"] === window.__LAST_CHECKED_DATE) {
-                    isDeletable = false;
-                }
-            }
-            
-            let htmlContent = `
-                <div class="quest-inner">
-                    <div class="q-title">
-                        ${qName}
-                        ${currentFilter === '已完成' ? '<span>✔</span>' : ''}
-                        ${currentFilter === '已失败' ? '<span>✖</span>' : ''}
-                    </div>
-                    ${isDeletable ? 
-                        '<div class="quest-delete-btn" title="刪除任務">✖</div>' : ''}
-                    <div class="q-desc">${qDesc}</div>
-            `;
-            
-            if (qNpc) {
-                htmlContent += `
-                    <div class="q-npc">
-                        在场妈妈: <b><span>${qNpc}</span></b>
-                    </div>
-                `;
-            }
-
-            htmlContent += `</div>`;
-            card.innerHTML = htmlContent;
-            
-            // 用事件綁定取代 onclick 字串，避免巢狀 template literal 的語法問題
-            if (isDeletable) {
-                const deleteBtn = card.querySelector('.quest-delete-btn');
-                if (deleteBtn) {
-                    deleteBtn.onclick = () => deleteQuest(qName, currentCategory, currentFilter);
-                }
-            }
-            
-            // [優化] 掛載到 fragment 上，而非直接掛載到頁面上
-            fragment.appendChild(card);
-        });
-
-        // [優化] 最後一次性將所有卡片掛載到真實 DOM
-        listContainer.appendChild(fragment);
+    // 渲染前檢查
+    if (!dataRecord || Object.keys(dataRecord).length === 0) {
+        listContainer.innerHTML = '<div class="empty-state">- 暂无相关记录 -</div>';
+        return;
     }
+
+    // === 跨列表防呆：若「进行中」某任務已存在於「已完成」或「已失败」，自動從「进行中」移除 ===
+    if (currentFilter === '进行中') {
+        try {
+            const [completedRaw, failedRaw] = await Promise.all([
+                (getVariable(`世界.任务.${currentCategory}.已完成`) ?? null),
+                (getVariable(`世界.任务.${currentCategory}.已失败`) ?? null)
+            ]);
+
+            const archivedKeys = new Set();
+            for (const raw of [completedRaw, failedRaw]) {
+                if (!raw || raw === '0') continue;
+                let record = {};
+                if (typeof raw === 'object' && !Array.isArray(raw)) {
+                    record = raw;
+                } else if (typeof raw === 'string' && raw.trim()) {
+                    try { record = JSON.parse(raw); } catch(e) {}
+                }
+                Object.entries(record).forEach(([qName, qData]) => {
+                    const key = `${qName}__${qData["时间"] || ""}`;
+                    if (key !== "__") archivedKeys.add(key);
+                });
+            }
+
+            if (archivedKeys.size > 0) {
+                const cleanedRecord = {};
+                let removedCount = 0;
+                for (const [qName, qData] of Object.entries(dataRecord)) {
+                    const key = `${qName}__${qData["时间"] || ""}`;
+                    if (archivedKeys.has(key)) {
+                        console.warn(`[RPG Quest] 跨列表防呆：「${qName}」(${qData["时间"]}) 已存在於歸檔中，從進行中移除`);
+                        removedCount++;
+                    } else {
+                        cleanedRecord[qName] = qData;
+                    }
+                }
+                if (removedCount > 0) {
+                    console.log(`[RPG Quest] 跨列表防呆移除 ${removedCount} 筆，正在寫回進行中...`);
+                    dataRecord = cleanedRecord;
+                    try {
+                        setVar(varName, dataRecord);
+                        console.log(`[RPG Quest] 跨列表防呆寫回完成。`);
+                    } catch(e) {
+                        console.error("[RPG Quest] 跨列表防呆寫回失敗:", e);
+                    }
+                }
+            }
+        } catch(e) {
+            console.error("[RPG Quest] 跨列表防呆比對失敗:", e);
+        }
+    }
+    // === 跨列表防呆結束 ===
+
+    // record 的 key 天然唯一，不需要同列表去重
+
+    const fragment = document.createDocumentFragment();
+
+    Object.entries(dataRecord).forEach(([qName, quest], index) => {
+        let statusClass = 'status-active';
+        if (currentFilter === '已完成') statusClass = 'status-completed';
+        if (currentFilter === '已失败') statusClass = 'status-failed';
+
+        // qName 直接從 record key 取得
+        let qDesc = quest["描述"] || "暂无描述";
+
+        let qNpc = "";
+        if (Array.isArray(quest["在场妈妈"]) && quest["在场妈妈"].length > 0) {
+            qNpc = quest["在场妈妈"].join("、");
+        } else if (typeof quest["在场妈妈"] === 'string') {
+            qNpc = quest["在场妈妈"];
+        }
+
+        const card = document.createElement('div');
+        card.className = `quest-card ${statusClass}`;
+        card.style.animationDelay = `${index * 0.05}s`;
+
+        // 判斷是否為可刪除狀態
+        let isDeletable = (currentFilter === '已完成' || currentFilter === '已失败');
+
+        // 當日保護：任務時間等於當前遊戲日期時禁止刪除
+        if (isDeletable && quest["时间"]) {
+            if (window.__LAST_CHECKED_DATE && quest["时间"] === window.__LAST_CHECKED_DATE) {
+                isDeletable = false;
+            }
+        }
+
+        let htmlContent = `
+            <div class="quest-inner">
+                <div class="q-title">
+                    ${qName}
+                    ${currentFilter === '已完成' ? '<span>✔</span>' : ''}
+                    ${currentFilter === '已失败' ? '<span>✖</span>' : ''}
+                </div>
+                ${isDeletable ?
+                    '<div class="quest-delete-btn" title="刪除任務">✖</div>' : ''}
+                <div class="q-desc">${qDesc}</div>
+        `;
+
+        if (qNpc) {
+            htmlContent += `
+                <div class="q-npc">
+                    在场妈妈: <b><span>${qNpc}</span></b>
+                </div>
+            `;
+        }
+
+        htmlContent += `</div>`;
+        card.innerHTML = htmlContent;
+
+        // 事件綁定
+        if (isDeletable) {
+            const deleteBtn = card.querySelector('.quest-delete-btn');
+            if (deleteBtn) {
+                deleteBtn.onclick = () => deleteQuest(qName, currentCategory, currentFilter);
+            }
+        }
+
+        fragment.appendChild(card);
+    });
+
+    listContainer.appendChild(fragment);
+}
 
     // 4. 綁定給 HTML onclick 使用的切換函數
     window.setCategory = function(cat) {
@@ -4035,7 +3995,7 @@ const _userName = (() => {
             }
 
             // 4. 透過酒館助手 API 寫回變量
-            setGlobalVariable(varName, itemList);
+            setVar(varName, itemList);
 
             // 5. 重新渲染前端 UI
             await window.renderInventory();
@@ -4112,14 +4072,8 @@ window.toggleStateViewer = function() {
         
         try {
             [rawMoney, result] = await Promise.all([
-                Promise.resolve(getVariable('世界.储物袋.货币')).catch(e => {
-                    console.error("金幣讀取失敗", e);
-                    return "0";
-                }),
-                Promise.resolve(getVariable(varName)).catch(e => {
-                    console.error("背包數據讀取失敗:", e);
-                    return null;
-                })
+                getVariable('世界.储物袋.货币'),
+                getVariable(varName)
             ]);
         } catch (e) {
             console.error("背包並行讀取發生預期外錯誤:", e);
@@ -4133,9 +4087,11 @@ window.toggleStateViewer = function() {
         // --- B. 處理物品列表 ---
         let itemList = {};
         
-        if (!result || result === '0') {
-            // 空
-        } 
+        if (!result || result === '0' || 
+    (typeof result === 'object' && Object.keys(result).length === 0)) {
+    grid.innerHTML = '<div class="empty-state">- 背包空空如也 -</div>';
+    return;
+}
         else if (typeof result === 'object') {
             itemList = result;
         } 
@@ -5072,7 +5028,7 @@ function scheduleBackgroundPreload(currentRegion, currentPartyIds) {
     let statusFetchFailed = false;
     try {
         const statusResults = await Promise.all(
-            heroineList.map(id => Promise.resolve(getVariable(`世界.妈妈.${id}.状态`)).catch(() => '-1'))
+            heroineList.map(id => (getVariable(`世界.妈妈.${id}.状态`) ?? '-1'))
         );
         heroineList.forEach((id, i) => {
             statusMap[id] = statusResults[i] || '-1';
@@ -5339,7 +5295,7 @@ const LOCATION_BUTTONS = [
         }
         // 並行讀取所有條件變量
         const results = await Promise.all(
-            cfg.conditions.map(c => Promise.resolve(getVariable(c.varName)).catch(() => null))
+            cfg.conditions.map(c => (getVariable(c.varName) ?? null))
         );
         const allMet = cfg.conditions.every((c, i) => {
     if (c.value !== undefined) return results[i] == c.value;   // 符合某值
@@ -5372,7 +5328,7 @@ const LOCATION_BUTTONS = [
                 ? cfg.actions
                 : Array.isArray(cfg.action) ? cfg.action : [cfg.action];
             for (const act of actList) {
-                setGlobalVariable(act.varName, act.value);
+                setVar(act.varName, act.value);
             }
             await syncGameState();
         };
@@ -5441,8 +5397,8 @@ const STANDALONE_LOCATIONS = [
 const _standaloneMatch = STANDALONE_LOCATIONS.find(l => l.name === subLocation);
 if (_standaloneMatch) {
     console.warn(`[RPG 防呆] 子地點「${subLocation}」應為獨立地點，自動修正...`);
-    setGlobalVariable('世界.位置.地点', _standaloneMatch.name);
-    setGlobalVariable('世界.位置.子地点', _standaloneMatch.defaultSub);
+    setVar('世界.位置.地点', _standaloneMatch.name);
+    setVar('世界.位置.子地点', _standaloneMatch.defaultSub);
     // 同步更新本次 sync 用的變量，避免後續邏輯還讀舊值
     state.location = _standaloneMatch.name;
     state.subLocation = _standaloneMatch.defaultSub;
@@ -5482,8 +5438,8 @@ const [pLevelRaw, valHP, valATK, valPoints, rank] = playerData;
             try {
                 const [isPunished, remainDays] = punishData;
                 if (isPunished === '是' && parseInt(remainDays) === 0) {
-                    setGlobalVariable('世界.玩家状态.惩罚.惩罚中', '否');
-                    setGlobalVariable('世界.玩家状态.惩罚.效果', '无');
+                    setVar('世界.玩家状态.惩罚.惩罚中', '否');
+                    setVar('世界.玩家状态.惩罚.效果', '无');
                     console.log("[RPG 系统] 惩罚天数已归零，自动解除惩罚状态。");
                 }
             } catch(e) { console.error("惩罚状态自动检测失败:", e); }
@@ -5510,10 +5466,10 @@ const [pLevelRaw, valHP, valATK, valPoints, rank] = playerData;
             // === [优化 2] 合并所有的角色状态请求 (状态、好感、在队、NSFW) ===
             // ============================================================
             const charPromises = heroineList.flatMap(id => [
-                Promise.resolve(getVariable(`世界.妈妈.${id}.状态`)).catch(() => '-1'),
-                Promise.resolve(getVariable(`世界.妈妈.${id}.好感度`)).catch(() => '0'),
-                Promise.resolve(getVariable(`世界.妈妈.${id}.在队状态`)).catch(() => '否'),
-                Promise.resolve(getVariable(`世界.妈妈.${id}.NSFW状态`)).catch(() => '否')
+                (getVariable(`世界.妈妈.${id}.状态`) ?? '-1'),
+                (getVariable(`世界.妈妈.${id}.好感度`) ?? '0'),
+                (getVariable(`世界.妈妈.${id}.在队状态`) ?? '否'),
+                (getVariable(`世界.妈妈.${id}.NSFW状态`) ?? '否')
             ]);
             
             const charResults = await Promise.all(charPromises);
@@ -5524,7 +5480,7 @@ const [pLevelRaw, valHP, valATK, valPoints, rank] = playerData;
             let isAnyNsfw = false;
 
             // 每 4 笔为一组解构
-            let nsfwPartyIds = [];   // 新增：NSFW 狀態為「是」的在隊角色
+            let nsfwIds = [];   // 新增：NSFW 狀態為「是」的在隊角色
 
 heroineList.forEach((id, i) => {
     const [status, fav, party, nsfw] = charResults.slice(i * 4, i * 4 + 4);
@@ -5534,7 +5490,7 @@ heroineList.forEach((id, i) => {
     if (status == '3') currentRecruitedCount++;
     if ((parseInt(fav) || 0) >= 150) currentrelationshipCount++;
     if (inParty) currentPartyIds.push(id);
-    if (isNsfw) { isAnyNsfw = true; if (inParty) nsfwPartyIds.push(id); }
+    if (isNsfw) { isAnyNsfw = true; nsfwIds.push(id); }
     // 也收集：任一角色NSFW（不限在隊），供判斷是否進入純NSFW顯示模式
 });
 
@@ -5604,7 +5560,7 @@ heroineList.forEach((id, i) => {
             if (currentrelationshipCount >= 8) {
                 const currentNephStatus = statusMap['奈芙蒂'] || '-1';  // 直接用已有的
                 if (currentNephStatus === '-1' || currentNephStatus == '-1' || currentNephStatus === '' || currentNephStatus === '0') {
-                    setGlobalVariable('世界.妈妈.奈芙蒂.状态', '1');
+                    setVar('世界.妈妈.奈芙蒂.状态', '1');
                 }
             }
 
@@ -5740,7 +5696,7 @@ heroineList.forEach((id, i) => {
             }
 
             // === 处理队伍成员刷新 ===
-            const displayPartyIds = isAnyNsfw ? nsfwPartyIds : currentPartyIds;
+            const displayPartyIds = isAnyNsfw ? nsfwIds : currentPartyIds;
 const sortedIdsForKey = [...displayPartyIds].sort(); 
 if (JSON.stringify(sortedIdsForKey) !== JSON.stringify(state.lastPartyIds)) {
     renderParty(displayPartyIds);
@@ -5781,6 +5737,16 @@ let isGenerating = false;
 let genResetTimer = null;
 
 window.updateTemplateVariables = function(data) {
+
+    clearTimeout(window.__safeUnlockTimer);
+    window.__safeUnlockTimer = setTimeout(() => {
+        if (isGenerating) {
+            isGenerating = false;
+            document.querySelector('.rpg-v7-root')?.classList.remove('generating');
+            console.log('[RPG] 安全重置：串流逾時，generating 已強制解除');
+        }
+}, 8000);
+
     if (!isGenerating) {
         isGenerating = true;
         const root = document.querySelector('.rpg-v7-root');
@@ -5794,7 +5760,7 @@ window.updateTemplateVariables = function(data) {
     stringForFinishedCheck = stringForFinishedCheck.replace(/^[\s\S]*?<\/thinking>/i, '');
     stringForFinishedCheck = stringForFinishedCheck.replace(/^[\s\S]*?<\/think>/i, '');
     stringForFinishedCheck = stringForFinishedCheck.replace(/^[\s\S]*?\[\/metacognition\]/i, '');
-    const isFinished = stringForFinishedCheck.includes('</state>');
+    const isFinished = stringForFinishedCheck.includes('</UpdateVariable>');
 
     // ✅ 正文提取：直接傳原始字串給 extractContent，由它內部統一處理
     const newText = extractContent(rawString);
@@ -6047,20 +6013,61 @@ function _triggerVictoryFallback(targetName) {
 
     // 先直接寫變量，不依賴 AI
     try {
-        setGlobalVariable(`世界.妈妈.${targetName}.状态`, '3');
-        setGlobalVariable(`世界.妈妈.${targetName}.在队状态`, '是');
-        setGlobalVariable('世界.迷宫攻略.当前攻略对象', '非攻略中');
+        setVar(`世界.妈妈.${targetName}.状态`, '3');
+        setVar(`世界.妈妈.${targetName}.在队状态`, '是');
+        setVar('世界.迷宫攻略.当前攻略对象', '非攻略中');
         setTimeout(syncGameState, 300);
     } catch(e) {
         console.warn('[RPG] 直接寫變量失敗:', e);
     }
 
     // 再發訊息讓 AI 知道發生了什麼（敘事用，不依賴它更新變量）
-    triggerSlash(`/send 战斗结束！成功攻略${targetName}！`)
-        .catch(e => console.warn('[RPG] 發送訊息失敗:', e));
+    sendMsgViaDOM(`战斗结束！成功攻略${targetName}！`);
 }
 
-	
+// === 變量寫入 helper（替代 setGlobalVariable）===
+function setVar(dotPath, value) {
+    updateVariablesWith(
+        function(variables) {
+            _.set(variables, 'stat_data.' + dotPath, value);
+            return variables;
+        },
+        { type: 'message' }
+    );
+}
+
+// === 發送訊息並觸發 AI 生成（模擬點擊，不需手動操作）===
+function sendMsgViaDOM(message) {
+    try {
+        const targetWin = window.top;
+        const targetDoc = targetWin.document;
+        const textarea = targetDoc.getElementById('send_textarea');
+        const sendButton = targetDoc.getElementById('send_but');
+
+        if (!textarea || !sendButton) {
+            console.error('[RPG] sendMsgViaDOM: 找不到發送元素（請確認沉浸模式已關閉）');
+            return false;
+        }
+
+        if (targetWin.jQuery) {
+            const $ = targetWin.jQuery;
+            $(textarea).val(message).trigger('input').trigger('change');
+            $(sendButton).click();
+        } else {
+            textarea.value = message;
+            textarea.dispatchEvent(new Event('input', { bubbles: true }));
+            textarea.dispatchEvent(new Event('change', { bubbles: true }));
+            sendButton.click();
+        }
+
+        console.log('[RPG] sendMsgViaDOM: 訊息已送出:', message);
+        return true;
+    } catch(e) {
+        console.error('[RPG] sendMsgViaDOM 失敗:', e);
+        return false;
+    }
+}
+
 	// === [新增] 好感度單日上限攔截邏輯 ===
     // === [新增] 好感度單日上限攔截邏輯 (Promise.all 併發優化版) ===
     // [DISABLED] 此功能已停用。核心變量「日基准好感」與「上次变动日期」實測效果不理想。
@@ -6077,9 +6084,9 @@ function _triggerVictoryFallback(targetName) {
         }
         const readPromises = [];
         for (const name of heroineList) {
-            readPromises.push(Promise.resolve(getVariable(`世界.妈妈.${name}.好感度`)));
-            readPromises.push(Promise.resolve(getVariable(`世界.妈妈.${name}.日基准好感`)));
-            readPromises.push(Promise.resolve(getVariable(`世界.妈妈.${name}.上次变动日期`)));
+            readPromises.push(getVariable(`世界.妈妈.${name}.好感度`));
+            readPromises.push(getVariable(`世界.妈妈.${name}.日基准好感`));
+            readPromises.push(getVariable(`世界.妈妈.${name}.上次变动日期`));
         }
 
         const results = await Promise.all(readPromises);
@@ -6099,12 +6106,12 @@ function _triggerVictoryFallback(targetName) {
             if (isNaN(baseAffection)) { 
                 baseAffection = currentAffection;
                 isFirstInit = true; 
-                writePromises.push(Promise.resolve(setGlobalVariable(`世界.妈妈.${name}.日基准好感`, baseAffection)));
+                writePromises.push(setVar(`世界.妈妈.${name}.日基准好感`, baseAffection));
             }
             if (!lastDate || lastDate === '0') { 
                 lastDate = currentDateStr;
                 isFirstInit = true;
-                writePromises.push(Promise.resolve(setGlobalVariable(`世界.妈妈.${name}.上次变动日期`, lastDate)));
+                writePromises.push(setVar(`世界.妈妈.${name}.上次变动日期`, lastDate));
             }
 
             // --- 核心限制邏輯 ---
@@ -6113,18 +6120,18 @@ function _triggerVictoryFallback(targetName) {
                 let legalYesterdayAffection = Math.min(currentAffection, baseAffection + MAX_DAILY_AFFECTION);
                 baseAffection = legalYesterdayAffection;
             
-                writePromises.push(Promise.resolve(setGlobalVariable(`世界.妈妈.${name}.日基准好感`, baseAffection)));
-                writePromises.push(Promise.resolve(setGlobalVariable(`世界.妈妈.${name}.上次变动日期`, currentDateStr)));
+                writePromises.push(setVar(`世界.妈妈.${name}.日基准好感`, baseAffection));
+                writePromises.push(setVar(`世界.妈妈.${name}.上次变动日期`, currentDateStr));
             
                 if (currentAffection > legalYesterdayAffection) {
-                    writePromises.push(Promise.resolve(setGlobalVariable(`世界.妈妈.${name}.好感度`, legalYesterdayAffection)));
+                    writePromises.push(setVar(`世界.妈妈.${name}.好感度`, legalYesterdayAffection));
                 }
             } else if (!isFirstInit) {
                 // 【同日檢查】
                 let maxAllowedToday = baseAffection + MAX_DAILY_AFFECTION;
                 if (currentAffection > maxAllowedToday) {
                     console.log(`[好感度攔截] ${name} 數值異常(${currentAffection})，壓回上限(${maxAllowedToday})`);
-                    writePromises.push(Promise.resolve(setGlobalVariable(`世界.妈妈.${name}.好感度`, maxAllowedToday)));
+                    writePromises.push(setVar(`世界.妈妈.${name}.好感度`, maxAllowedToday));
                 }
             }
         }
@@ -6528,6 +6535,15 @@ document.getElementById('display-layer')?.addEventListener('click', (e) => {
 
         // 啟動同步
         syncGameState();
+    // [安全重置] 頁面載入後強制解除 generating 鎖定
+        // 防止初始渲染時 isGenerating=true 卻沒有觸發 MESSAGE_RECEIVED 的情況
+        setTimeout(() => {
+            if (isGenerating) {
+                isGenerating = false;
+                document.querySelector('.rpg-v7-root')?.classList.remove('generating');
+                console.log('[RPG] 安全重置：generating 狀態已強制解除');
+            }
+        }, 3000);
     };
 	
 // ============================================================
@@ -6550,6 +6566,7 @@ if (firstMsg && firstMsg.role !== 'assistant') return;
             if (typeof syncGameState === 'function') syncGameState();
         }, 500);
     });
+	setAudioSettings('bgm', { mode: 'repeat_one' });
 };
 
 if (typeof tavern_events !== 'undefined') {
