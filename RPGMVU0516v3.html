@@ -3036,25 +3036,31 @@ const _userName = (() => {
     let isStatProcessing = false;
 
     window.togglePartyState = async function(charName, isCurrentlyInParty) {
-        // [新增] 如果正在生成中，直接阻擋執行
-        if (isGenerating) {
-            console.warn("生成中，禁止切換隊伍狀態");
-            return;
-        }
-        const targetState = isCurrentlyInParty ? '否' : '是';
-        try {
-            document.body.style.cursor = 'wait';
-            setVar(`世界.妈妈.${charName}.在队状态`, targetState);
+    if (isGenerating) {
+        console.warn("生成中，禁止切換隊伍狀態");
+        return;
+    }
 
-            // 重新刷新當前 Status UI 及全域隊伍狀態
-            if (typeof updateSelectionFromCenter === 'function') updateSelectionFromCenter(true);
-            if (typeof syncGameState === 'function') syncGameState(); 
-        } catch(e) { 
-            console.error("隊伍狀態切換失敗:", e);
-        } finally {
-            document.body.style.cursor = 'default';
+    const targetState = isCurrentlyInParty ? '否' : '是';
+
+    try {
+        document.body.style.cursor = 'wait';
+
+        await setVar(`世界.妈妈.${charName}.在队状态`, targetState);
+
+        if (typeof updateSelectionFromCenter === 'function') {
+            await updateSelectionFromCenter(true);
         }
-    };
+
+        if (typeof syncGameState === 'function') {
+            await syncGameState();
+        }
+    } catch(e) {
+        console.error("隊伍狀態切換失敗:", e);
+    } finally {
+        document.body.style.cursor = 'default';
+    }
+};
 
     // [修改] 初始化函數 (原本是 init)
     // [修改] 初始化函數 (原本是 init)
@@ -3546,17 +3552,26 @@ const _userName = (() => {
     // === 同行切換按鈕邏輯 ===
     // (注意這裡我們也順便使用了前面建立的 els 快取)
     const charNameBox = els.charName || document.getElementById('char-name');
-    let nameHtml = data.name;
-    if (state.region === "自由都市" && state.location === "伦德" && state.subLocation && state.subLocation.includes("家")) {
-        let btnText = isParty ? '取消同行' : '邀請同行';
-        const _toggleSpan = document.createElement('span');
-        _toggleSpan.className = 'toggle-party-btn';
-        _toggleSpan.textContent = btnText;
-        _toggleSpan.onclick = () => togglePartyState(data.name, isParty);
-        nameHtml += _toggleSpan.outerHTML;
-    }
-    charNameBox.innerHTML = nameHtml;
 
+charNameBox.textContent = data.name;
+
+if (
+    state.region === "自由都市" &&
+    state.location === "伦德" &&
+    state.subLocation &&
+    state.subLocation.includes("家")
+) {
+    const btnText = isParty ? '取消同行' : '邀請同行';
+
+    const toggleBtn = document.createElement('span');
+    toggleBtn.className = 'toggle-party-btn';
+    toggleBtn.textContent = btnText;
+
+    toggleBtn.onclick = () => {
+        togglePartyState(data.name, isParty);
+    };
+
+    charNameBox.appendChild(toggleBtn);
 } catch(e) { 
     if (els.mBond) els.mBond.innerText = "???";
     if (els.mStatus) els.mStatus.innerText = "---";
@@ -6040,7 +6055,7 @@ function _triggerVictoryFallback(targetName) {
 
 // === 變量寫入 helper（替代 setGlobalVariable）===
 function setVar(dotPath, value) {
-    updateVariablesWith(
+    return updateVariablesWith(
         function(variables) {
             _.set(variables, 'stat_data.' + dotPath, value);
             return variables;
