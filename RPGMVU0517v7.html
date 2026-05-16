@@ -2920,6 +2920,34 @@ const eventOn = typeof window.eventOn === 'function'
         };
     }
 
+function requestParentResize() {
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            try {
+                const root = document.querySelector('.rpg-v7-root');
+                const body = document.body;
+                const html = document.documentElement;
+
+                const height = Math.max(
+                    root?.scrollHeight || 0,
+                    root?.offsetHeight || 0,
+                    body?.scrollHeight || 0,
+                    body?.offsetHeight || 0,
+                    html?.scrollHeight || 0,
+                    720
+                );
+
+                window.parent?.postMessage({
+                    type: 'RPG_MVU_RESIZE',
+                    height,
+                }, '*');
+            } catch (e) {
+                console.warn('[RPG] 回報 iframe 高度失敗:', e);
+            }
+        });
+    });
+}
+
 window.setTheme = function(mode) {
     const root = document.querySelector('.rpg-v7-root');
     if (mode === 'light') root.classList.add('light-mode');
@@ -4798,6 +4826,7 @@ window.toggleStateViewer = function() {
             
             els.display.classList.add('show-drop-cap');
         }
+		requestParentResize();
     };
 
     const updateButtons = () => {
@@ -6502,15 +6531,31 @@ await syncGameState();
 
         // UI 相關
         els.modeBtn.onclick = (e) => {
-            e.preventDefault();
-            state.isPaged = !state.isPaged;
-            root.classList.toggle('paged-mode', state.isPaged);
-            els.modeBtn.innerText = state.isPaged ? "切換全文模式" : "切換分頁模式";
-            state.currPage = 0;
-            refreshUI();
-        };
-        els.prevBtn.onclick = () => { if (state.isPaged && state.currPage > 0) { state.currPage--; refreshUI(); } };
-        els.nextBtn.onclick = () => { if (state.isPaged && state.currPage < state.pages.length - 1) { state.currPage++; refreshUI(); } };
+    e.preventDefault();
+
+    state.isPaged = !state.isPaged;
+    root.classList.toggle('paged-mode', state.isPaged);
+    els.modeBtn.innerText = state.isPaged ? "切换全文模式" : "切换分页模式";
+    state.currPage = 0;
+
+    refreshUI();
+    requestParentResize();
+};
+        els.prevBtn.onclick = () => {
+    if (state.isPaged && state.currPage > 0) {
+        state.currPage--;
+        refreshUI();
+        requestParentResize();
+    }
+};
+
+        els.nextBtn.onclick = () => {
+    if (state.isPaged && state.currPage < state.pages.length - 1) {
+        state.currPage++;
+        refreshUI();
+        requestParentResize();
+    }
+};
         
         if (els.menuBtn && els.menuDrop) {
             els.menuBtn.onclick = (e) => {
