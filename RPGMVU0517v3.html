@@ -6045,7 +6045,7 @@ async function openMinigame(url) {
     fallbackBtn.style.display = 'none'; // 預設隱藏
 
     if (fallbackTarget && fallbackTarget !== '非攻略中' && fallbackTarget !== '0') {
-        fallbackBtn.innerHTML = `⚠️ 游戏无法载入？<br><strong>点此直接完成攻略：${fallbackTarget}</strong>`;
+        fallbackBtn.innerHTML = `⚠️ 小游戏未成功显示？<br><strong>点此直接完成攻略：${fallbackTarget}</strong>`;
         fallbackBtn.onclick = () => _triggerVictoryFallback(fallbackTarget);
     }
 
