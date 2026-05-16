@@ -2817,6 +2817,34 @@
 
 (function() {
 
+// ============================================================
+// PART 0: 跨 iframe 共用狀態初始化
+// 必須放在最前面，因為 img() / fullPartyData 很早就會使用
+// ============================================================
+let topWindow = window;
+
+try {
+    topWindow =
+        window.RPG_PARENT ||
+        window.parent ||
+        window.top ||
+        window;
+} catch (e) {
+    topWindow = window;
+}
+
+if (!topWindow.RPG_GLOBAL_STATE) {
+    topWindow.RPG_GLOBAL_STATE = {
+        isMuted: true,
+        theme: 'dark',
+        imageHost: 'imgchest'
+    };
+}
+
+// 兼容舊程式：讓 window.RPG_GLOBAL_STATE 也指向同一份物件
+window.RPG_GLOBAL_STATE = topWindow.RPG_GLOBAL_STATE;
+window.RPG_IS_MUTED = topWindow.RPG_GLOBAL_STATE.isMuted;
+
 const getPath = (obj, path, fallback) => {
     const keys = Array.isArray(path) ? path : String(path).split('.');
     let cur = obj;
@@ -4197,28 +4225,8 @@ window.toggleStateViewer = function() {
     // ============================================================
     // PART 1: 全域通訊核心 (只負責同步按鈕狀態)
     // ============================================================
-    let topWindow = window;
+   
 
-try {
-    topWindow =
-        window.RPG_PARENT ||
-        window.parent ||
-        window.top ||
-        window;
-} catch (e) {
-    topWindow = window;
-}
-
-
-
-    // 初始化全域狀態變數 (如果不存在的話)
-    if (!topWindow.RPG_GLOBAL_STATE) {
-        topWindow.RPG_GLOBAL_STATE = {
-            isMuted: true,
-            theme: 'dark',       // 新增
-            imageHost: 'imgchest'  // 新增
-        };
-    }
 
     // 定義廣播函數：告訴所有人「狀態改變了」
     const broadcastState = (isMuted) => {
@@ -6005,7 +6013,7 @@ pauseBgm: async function() {
     }
 }
 
-const MINIGAME_RAW_URL = "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/miniMVU1.html";
+const MINIGAME_RAW_URL = "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/miniMVU2.html";
 
 window.__MINIGAME_CACHE = window.__MINIGAME_CACHE || {};
 
