@@ -5816,11 +5816,54 @@ if (isFinished) {
 // ============================================================
 // === RPG MVU 外部流式入口：給 Tavern Helper iframe 外殼呼叫 ===
 // ============================================================
-window.RPG_MVU_UPDATE = function(rawData, options = {}) {
+window.RPG_FORCE_REFRESH_FROM_VARIABLES = async function(rawData = '') {
+    try {
+        // 外部明確要求刷新時，視為生成已結束
+        isGenerating = false;
+
+        const root = document.querySelector('.rpg-v7-root');
+        if (root) root.classList.remove('generating');
+
+        clearTimeout(genResetTimer);
+        clearTimeout(window.__safeUnlockTimer);
+
+        // 如果有傳 rawData，同步更新 state viewer
+        if (rawData && typeof updateStateViewer === 'function' && typeof extractStateContent === 'function') {
+            updateStateViewer(extractStateContent(rawData));
+        }
+
+        // 如果 syncGameState 正在跑，短暫等待它釋放 isSyncing
+        for (let i = 0; i < 20 && isSyncing; i++) {
+            await new Promise(resolve => setTimeout(resolve, 50));
+        }
+
+        if (typeof syncGameState === 'function') {
+            await syncGameState();
+        }
+
+        if (typeof refreshUI === 'function') {
+            refreshUI();
+        }
+
+        return true;
+    } catch (e) {
+        console.error('[RPG MVU] RPG_FORCE_REFRESH_FROM_VARIABLES 失敗:', e);
+        return false;
+    }
+};
+
+window.RPG_MVU_UPDATE = async function(rawData, options = {}) {
     window.RPG_IS_STREAMING = !!options.streaming;
+    window.RPG_MESSAGE_ID = options.message_id ?? null;
 
     if (typeof window.updateTemplateVariables === 'function') {
         window.updateTemplateVariables(rawData);
+    }
+
+    // 生成完成時，由外部 helper 明確告知 streaming:false
+    // 此時不再只靠 </UpdateVariable> 的內部計時器，而是直接刷新變量狀態
+    if (!window.RPG_IS_STREAMING) {
+        await window.RPG_FORCE_REFRESH_FROM_VARIABLES(rawData);
     }
 };
 
