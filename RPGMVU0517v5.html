@@ -5748,21 +5748,50 @@ if (JSON.stringify(sortedIdsForKey) !== JSON.stringify(state.lastPartyIds)) {
 }
 　　　　　　if (window.gameLoopPaused) return;
             // === 音乐播放逻辑 ===
-            const isMuted = topWindow.RPG_GLOBAL_STATE.isMuted;
-            if (isMuted) return; 
+            if (window.gameLoopPaused) return;
 
-            let targetMusicUrl = "";
-            if (isAnyNsfw) {
-                targetMusicUrl = nsfwBgm;
-            } else {
-                targetMusicUrl = mapMusic[region] || mapMusic["默认"] || mapMusic["自由都市"];
-            }
+const isMuted = topWindow.RPG_GLOBAL_STATE.isMuted;
+if (isMuted) return;
 
-            if (targetMusicUrl && targetMusicUrl !== state.currentMusicUrl) {
-                console.log("[RPG] 切換音樂至: ", targetMusicUrl);
-                await playAudio('bgm', { url: targetMusicUrl });
-                state.currentMusicUrl = targetMusicUrl;
-            }
+if (!topWindow.RPG_AUDIO_STATE) {
+    topWindow.RPG_AUDIO_STATE = {
+        context: 'map',
+        currentUrl: '',
+        pendingUrl: '',
+        source: 'rpg'
+    };
+}
+
+let targetMusicUrl = "";
+if (isAnyNsfw) {
+    targetMusicUrl = nsfwBgm;
+} else {
+    targetMusicUrl = mapMusic[region] || mapMusic["默认"] || mapMusic["自由都市"];
+}
+
+if (!targetMusicUrl) return;
+
+const audioState = topWindow.RPG_AUDIO_STATE;
+
+// 小遊戲 / 戰鬥音樂接管時，主介面不要搶回地圖音樂
+if (audioState.source === 'minigame' || audioState.context === 'battle') {
+    return;
+}
+
+// 關鍵：全域已經是同一首，就不要重新 playAudio
+if (audioState.currentUrl === targetMusicUrl) {
+    state.currentMusicUrl = targetMusicUrl; // 只同步本 iframe 的本地記錄
+    return;
+}
+
+await playAudio('bgm', { url: targetMusicUrl });
+
+audioState.context = 'map';
+audioState.currentUrl = targetMusicUrl;
+audioState.pendingUrl = '';
+audioState.source = 'rpg';
+
+state.currentMusicUrl = targetMusicUrl;
 
         } catch(e) {
             console.error("同步失敗:", e);
