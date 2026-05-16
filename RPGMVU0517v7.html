@@ -3216,8 +3216,6 @@ const _userName = (() => {
             updateUIScale();
             // 呼叫 Status 的初始化與按鈕綁定
             if(window.initStatusInterface) window.initStatusInterface();
-            // 注意：這裡假設 bindStatusButtons 已經包含在 initStatusInterface 裡，
-            // 或者您之前有將其分開。如果有分開，記得在這裡也呼叫 bindStatusButtons();
             if(typeof bindStatusButtons === 'function') bindStatusButtons();
         }
     }
@@ -3341,7 +3339,6 @@ const _userName = (() => {
         // 4. 讀取好感度 (異步)
         let bondVal = 0;
         try {
-            // 嘗試從 ST 讀取，如果失敗則用 0
             if (charData.id === 'p1') {
                 bondVal = MAX_BOND_LIMIT; // 玩家自己預設為滿值
             } else {
@@ -3366,8 +3363,6 @@ const _userName = (() => {
         ringPath.setAttribute("d", describeCCWProgress(MM_CFG.cx, MM_CFG.cy, MM_CFG.r_ring, bondPercent));
 
         // 顏色邏輯 (建議改用百分比判斷，這樣以後改上限不用重寫這裡)
-        // >= 80% (即 400+) 變紅
-        // >= 40% (即 200+) 變藍
         if(bondPercent >= 90) ringPath.style.stroke = "#ff4d4d"; // 紅
         else if(bondPercent >= 70) ringPath.style.stroke = "#ffa64d"; // 橙
         else if(bondPercent >= 45) ringPath.style.stroke = "#ffff4d"; // 黃
@@ -3532,7 +3527,6 @@ const _userName = (() => {
         const data = activePartyData.find(p => p.id === id);
         
         if (data) {
-    // [修改] 使用快取的 DOM 節點
     if (els.charName) els.charName.innerText = data.name;
     if (els.dynamicBg) els.dynamicBg.style.backgroundImage = `url('${data.bg}')`;
     
@@ -3541,7 +3535,7 @@ const _userName = (() => {
     let currentTab = document.querySelector('#tabs-member .tab-btn.active')?.innerText || '资料';
             
             // 關鍵邏輯：如果是「切換角色」(!isDataRefresh) 且「不是玩家本人」，
-            // 我們強制將判斷基準設為 '资料'。
+            // 強制將判斷基準設為 '资料'。
             // 這樣可以忽略上一個角色殘留的 '经验' 或 '回忆' 狀態。
             if (!isDataRefresh && data.id !== 'p1') {
                 currentTab = '资料';
@@ -3553,8 +3547,6 @@ const _userName = (() => {
 
             if (!tachie.src.includes(targetImg)) {
                 tachie.classList.remove('show');
-                
-                // [修改] 移除無意義的 requestAnimationFrame 嵌套，直接使用 setTimeout
                 setTimeout(() => {
                     tachie.src = targetImg;
                     tachie.onload = () => tachie.classList.add('show');
@@ -3615,7 +3607,6 @@ const _userName = (() => {
         if (els.memberDesc) els.memberDesc.innerText = data.desc;
         
         try {
-    // === [效能優化] 2 個循序請求合併為並行請求 ===
     const [bond, statusVal] = await Promise.all([
         getVariable(`世界.妈妈.${data.name}.好感度`),
         getVariable(`世界.妈妈.${data.name}.在队状态`)
@@ -3634,7 +3625,6 @@ const _userName = (() => {
     if (els.mStatus) els.mStatus.innerText = statusText;
 
     // === 同行切換按鈕邏輯 ===
-    // (注意這裡我們也順便使用了前面建立的 els 快取)
     const charNameBox = els.charName || document.getElementById('char-name');
 
 charNameBox.textContent = data.name;
@@ -3671,16 +3661,14 @@ if (
     }
 
     async function updateExpColumn(colIndex, name, catName, items) {
-    // === [效能優化] 捨棄 for 迴圈內的 await，改為一次性並行請求 ===
+    // === 捨棄 for 迴圈內的 await，改為一次性並行請求 ===
     // 產生所有的 Promise 陣列，並加上 catch 避免單一變量缺失導致整個報錯
     const promises = items.map(item => 
         (getVariable(`世界.妈妈.${name}.NSFW.${catName}.${item}`) ?? "0")
     );
     
-    // 一口氣等待所有結果回來 (原本要等 5 次的網路來回，現在只需 1 次)
     const results = await Promise.all(promises);
 
-    // 拿到結果後再同步更新到 DOM 上
     for(let i = 0; i < items.length; i++) {
         const el = document.getElementById(`exp-${colIndex}-${i+1}`);
         if(el) {
@@ -3705,10 +3693,8 @@ if (
             } else {
                 card.innerHTML = `<div style="width:100%;height:100%;background:#1a1510;"></div>`;
                 
-                // 1. 滑鼠懸停的提示文字
                 card.title = "特殊CG还没做好！"; 
                 
-                // 2. [新增] 點擊時的彈窗提示
                 card.onclick = () => {
                     alert("特殊CG还没做好！");
                 };
@@ -3865,7 +3851,7 @@ if (
         }
 
         // 1. 彈出確認視窗
-        if (!confirm(`確定要刪除任務「${questName}」的紀錄嗎？\n(刪除後將無法恢復)`)) {
+        if (!confirm(`确定要删除任务「${questName}」的纪录吗？\n(删除后将无法恢复)`)) {
             return;
         }
 
@@ -3899,7 +3885,7 @@ if (
 
         } catch (e) {
             console.error("[RPG] 刪除任務發生錯誤:", e);
-            alert("刪除失敗，請查看控制台日誌。");
+            alert("删除失败，请查看控制台日志。");
         } finally {
             document.body.style.cursor = 'default';
         }
@@ -3986,10 +3972,8 @@ if (
         card.className = `quest-card ${statusClass}`;
         card.style.animationDelay = `${index * 0.05}s`;
 
-        // 判斷是否為可刪除狀態
         let isDeletable = (currentFilter === '已完成' || currentFilter === '已失败');
 
-        // 當日保護：任務時間等於當前遊戲日期時禁止刪除
         if (isDeletable && quest["时间"]) {
             if (window.__LAST_CHECKED_DATE && quest["时间"] === window.__LAST_CHECKED_DATE) {
                 isDeletable = false;
@@ -4067,7 +4051,7 @@ if (
         }
 
         // 1. 彈出確認視窗 (原生阻塞)
-        if (!confirm(`確定要丟棄物品「${itemName}」嗎？\n(丟棄後將無法恢復)`)) {
+        if (!confirm(`确定要丢弃物品「${itemName}」吗？\n(丢弃后将无法恢复)`)) {
             return;
         }
 
@@ -4103,7 +4087,7 @@ if (
 
         } catch (e) {
             console.error("[RPG] 丟棄物品發生錯誤:", e);
-            alert("丟棄失敗，請查看控制台日誌。");
+            alert("丢弃失败，请查看控制台日志。");
         } finally {
             document.body.style.cursor = 'default';
         }
@@ -4164,10 +4148,8 @@ window.toggleStateViewer = function() {
         
         grid.innerHTML = '';
         
-        // 提前定義變數名稱
         const varName = `世界.储物袋.${currentBagCategory}`;
         
-        // === [修改] 使用 Promise.all 並行請求，並加上 catch 獨立處理錯誤 ===
         let rawMoney = "0";
         let result = null;
         
@@ -4209,12 +4191,11 @@ window.toggleStateViewer = function() {
         // --- C. 渲染卡片 ---
         let itemsToRender = [];
         if (Array.isArray(itemList)) {
-            // 處理陣列格式 (相容舊版)
             itemsToRender = itemList.map(obj => {
                 const key = Object.keys(obj)[0];
                 const val = obj[key];
                 const descText = (typeof val === 'object' && val !== null) ? (val["描述"] || "") : val;
-                return { rawName: key, name: key, desc: descText }; // [新增] 紀錄 rawName
+                return { rawName: key, name: key, desc: descText }; // 
             });
         } else if (typeof itemList === 'object' && itemList !== null) {
             // 處理物件格式 (轉成陣列方便遍歷)
@@ -4252,7 +4233,7 @@ window.toggleStateViewer = function() {
 
             // === [修改] 加入刪除按鈕 ===
             card.innerHTML = `
-                <div class="item-delete-btn" title="丟棄物品">✖</div>
+                <div class="item-delete-btn" title="丟弃物品">✖</div>
                 <div class="item-name">${item.name}</div>
                 <div class="item-desc">${item.desc}</div>
             `;
@@ -4286,7 +4267,7 @@ window.toggleStateViewer = function() {
 
     // 定義廣播函數：告訴所有人「狀態改變了」
     const broadcastState = (isMuted) => {
-        // [關鍵修正] 立即更新內存中的狀態
+        // 立即更新內存中的狀態
         topWindow.RPG_GLOBAL_STATE.isMuted = isMuted;
         window.RPG_IS_MUTED = isMuted;
         // 發送事件給其他樓層
@@ -4317,9 +4298,9 @@ window.toggleStateViewer = function() {
         lastRegion: "", 
         lastPartyIds: [],
         currentMusicUrl: "",
-        region: "",          // 新增：當前區域
-        location: "",        // 新增：當前地點
-        subLocation: ""      // 新增：當前子地點
+        region: "",         
+        location: "",       
+        subLocation: ""      
     };
 
 
@@ -4407,7 +4388,7 @@ window.toggleStateViewer = function() {
                 paragraphsInPage = 0;
             }
             
-            // === [核心優化] 快取攔截 ===
+            // === 快取攔截 ===
             let styledText;
             if (window.__FORMAT_CACHE.has(p)) {
                 styledText = window.__FORMAT_CACHE.get(p); // 命中快取，直接取用 O(1)
@@ -4415,7 +4396,7 @@ window.toggleStateViewer = function() {
                 styledText = formatText(p); // 未命中，執行耗時的正則運算 O(N)
                 window.__FORMAT_CACHE.set(p, styledText); // 存入快取
                 
-                // [防護機制] 避免長時間對話導致記憶體溢出，設定 1000 筆上限
+                // 避免長時間對話導致記憶體溢出，設定 1000 筆上限
                 if (window.__FORMAT_CACHE.size > 1000) {
                     let count = 0;
                     // 直接使用迭代器清理，避免 Array.from 產生額外的記憶體開銷 (GC 壓力)
@@ -4864,7 +4845,7 @@ window.toggleStateViewer = function() {
                 img.style.animationDelay = Math.random() * 0.3 + 's';
 				
 				// [修改] 綁定點擊事件
-                // 這裡我們需要找到該角色在 fullPartyData 對應的 ID (p1, p2...)
+                // 需要找到該角色在 fullPartyData 對應的 ID (p1, p2...)
                 // 因為 partyIds 存的是名字 (如 "爱娜")，我們需要反查
                 img.onclick = (e) => {
                     e.stopPropagation();
@@ -4888,7 +4869,7 @@ window.toggleStateViewer = function() {
     };
 
 
-    // === [新增] 背景資源預載（低優先度，不阻塞主流程）===
+    // === 背景資源預載（低優先度，不阻塞主流程）===
 if (!window.top.__PRELOAD_DONE) window.top.__PRELOAD_DONE = new Set(); 
 const __PRELOAD_DONE = window.top.__PRELOAD_DONE;
 
@@ -5439,7 +5420,7 @@ const LOCATION_BUTTONS = [
         try {
             await checkRaidStatus();
             // ============================================================
-            // === [優化一] 並行數據請求 (Parallel Fetching) ===
+            // === 並行數據請求 (Parallel Fetching) ===
             // ============================================================
             
             const batchPromises = [
@@ -5642,7 +5623,7 @@ heroineList.forEach((id, i) => {
                 const markers = mapMarkers[region] || [];
                 const activeMarkers = new Map();
 
-                // 為了避免在迴圈內發起請求，我們改用前面已經抓好的角色狀態 (charResults)
+                // 避免在迴圈內發起請求，改用前面已經抓好的角色狀態 (charResults)
                 // 創建一個快速查找字典
                 const statusMap = {};
                 heroineList.forEach((id, i) => {
@@ -6860,7 +6841,7 @@ if (typeof tavern_events !== 'undefined') {
     }, 100);
 }
 
-	// === [新增] 全角色選擇器邏輯 ===
+	// === 全角色選擇器邏輯 ===
     
     window.openCharSelector = function() {
         // 1. 確保有最新的角色數據
