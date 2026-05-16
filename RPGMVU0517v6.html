@@ -2843,11 +2843,30 @@ if (!topWindow.RPG_GLOBAL_STATE) {
 
 if (!topWindow.RPG_AUDIO_STATE) {
     topWindow.RPG_AUDIO_STATE = {
-        context: 'map',       // map | battle | minigame
+        context: 'map',
         currentUrl: '',
         pendingUrl: '',
-        source: 'rpg'
+        source: 'rpg',
+        paused: true
     };
+}
+
+async function resumeBgm() {
+    try {
+        if (typeof audioPlay === 'function') {
+            await audioPlay({ type: 'bgm', play: true });
+            return true;
+        }
+
+        if (typeof triggerSlash === 'function') {
+            await triggerSlash('/audioplaypause type=bgm play=true');
+            return true;
+        }
+    } catch (e) {
+        console.warn('[RPG Audio] resumeBgm 失敗:', e);
+    }
+
+    return false;
 }
 
 // 兼容舊程式：讓 window.RPG_GLOBAL_STATE 也指向同一份物件
@@ -5746,7 +5765,6 @@ if (JSON.stringify(sortedIdsForKey) !== JSON.stringify(state.lastPartyIds)) {
     renderParty(displayPartyIds);
     state.lastPartyIds = sortedIdsForKey;
 }
-　　　　　　if (window.gameLoopPaused) return;
             // === 音乐播放逻辑 ===
             if (window.gameLoopPaused) return;
 
@@ -5758,7 +5776,8 @@ if (!topWindow.RPG_AUDIO_STATE) {
         context: 'map',
         currentUrl: '',
         pendingUrl: '',
-        source: 'rpg'
+        source: 'rpg',
+        paused: true
     };
 }
 
@@ -5780,16 +5799,22 @@ if (audioState.source === 'minigame' || audioState.context === 'battle') {
 
 // 關鍵：全域已經是同一首，就不要重新 playAudio
 if (audioState.currentUrl === targetMusicUrl) {
-    state.currentMusicUrl = targetMusicUrl; // 只同步本 iframe 的本地記錄
+    state.currentMusicUrl = targetMusicUrl;
+
+    if (audioState.paused) {
+        audioState.paused = false;
+        await resumeBgm();
+    }
+
     return;
 }
-
 await playAudio('bgm', { url: targetMusicUrl });
 
 audioState.context = 'map';
 audioState.currentUrl = targetMusicUrl;
 audioState.pendingUrl = '';
 audioState.source = 'rpg';
+audioState.paused = false;
 
 state.currentMusicUrl = targetMusicUrl;
 
@@ -5966,7 +5991,12 @@ playBgm: async function(url) {
     }
 },
 pauseBgm: async function() {
-    try { await pauseAudio('bgm'); } catch(e) { console.warn('[RPGBridge] pauseBgm 失敗:', e); }
+    try { 
+      await pauseAudio('bgm');
+      if (topWindow.RPG_AUDIO_STATE) {
+    topWindow.RPG_AUDIO_STATE.paused = true;
+}
+ } catch(e) { console.warn('[RPGBridge] pauseBgm 失敗:', e); }
 },
 
     // 2. 執行 slash 指令
@@ -6059,6 +6089,9 @@ if (topWindow.RPG_AUDIO_STATE) {
 
     if (isMuted) {
         await pauseAudio('bgm');
+        if (topWindow.RPG_AUDIO_STATE) {
+    topWindow.RPG_AUDIO_STATE.paused = true;
+}
         return;
     }
 
@@ -6446,14 +6479,24 @@ function sendMsgViaDOM(message) {
 
             // 3. 執行實際動作
             if (newMutedState) {
-                // 如果變為靜音 -> 暫停音樂
-                await pauseAudio('bgm'); 
-                state.currentMusicUrl = ""; 
-            } else {
-                // 如果變為開啟 -> 觸發同步來播放
-                state.currentMusicUrl = ""; // 強制重置，確保能再次觸發播放指令
-                await syncGameState();
-            }
+    // 關閉：只暫停，不清 URL，不清 currentMusicUrl
+    await pauseAudio('bgm');
+    if (topWindow.RPG_AUDIO_STATE) {
+        topWindow.RPG_AUDIO_STATE.paused = true;
+    }
+} else {
+    // 開啟：如果是同一首暫停中的 BGM，優先恢復播放
+    if (topWindow.RPG_AUDIO_STATE?.currentUrl) {
+    const resumed = await resumeBgm();
+
+    if (resumed) {
+        topWindow.RPG_AUDIO_STATE.paused = false;
+        return;
+    }
+}
+
+await syncGameState();
+}
         };
 		
 
