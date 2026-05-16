@@ -1127,10 +1127,15 @@
     async function toggleLocalMusic() {
     isLocalMuted = !isLocalMuted;
     updateBgmButtonUI();
+
+    if (window.parent?.RPGBridge?.updateMuteState) {
+        window.parent.RPGBridge.updateMuteState(isLocalMuted);
+    }
+
     if (isLocalMuted) {
         await window.parent.RPGBridge.pauseBgm();
     } else {
-        playBattleMusic();
+        await playBattleMusic();
     }
 }
     
