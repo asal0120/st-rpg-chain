@@ -796,7 +796,7 @@
     }
 	
 	/* ========================================= */
-    /* === [整合] Quest 系統任務介面樣式 === */
+    /* === [整合] Quest 系統任務界面樣式 === */
     /* ========================================= */
 
     /* 1. 外部包裹層：負責滿版覆蓋與隱藏/顯示 */
@@ -812,7 +812,7 @@
         pointer-events: none; /* 讓點擊穿透，只有內部元素可點 */
     }
 
-    /* 透過 JS 切換此 class 來顯示介面 */
+    /* 透過 JS 切換此 class 來顯示界面 */
     .quest-layer-wrapper.active {
         display: block;
     }
@@ -1217,7 +1217,7 @@
         padding-right: 5px; /* 避免文字貼著卷軸 */
     }
 
-    /* [新增] 美化內部卷軸 (讓它跟主介面風格統一) */
+    /* [新增] 美化內部卷軸 (讓它跟主界面風格統一) */
     .bag-scaler .item-desc::-webkit-scrollbar { width: 4px; }
     .bag-scaler .item-desc::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
     .bag-scaler .item-desc::-webkit-scrollbar-thumb { background: var(--p-gold-dim); border-radius: 2px; }
@@ -1253,7 +1253,7 @@
     }
 	
 	/* ============================================================ */
-    /* === [完美移植] Status 狀態介面 (Larian Style R19 Final) === */
+    /* === [完美移植] Status 狀態界面 (Larian Style R19 Final) === */
     /* ============================================================ */
 
     /* 1. 外部容器：負責隱藏/顯示與層級控制 */
@@ -1483,7 +1483,7 @@
     .status-scaler .face-card.active img { filter: grayscale(0%) brightness(1.1); }
 	
 	/* ========================================= */
-    /* === [新增] 介面間切換導航按鈕 === */
+    /* === [新增] 界面間切換導航按鈕 === */
     /* ========================================= */
     .interface-nav-btn { 
         position: absolute; top: 20px; right: 20px; font-size: 30px; width: 10px; height: 10px;
@@ -1669,7 +1669,7 @@
         height: 30px;
         border-radius: 4px; /* 方形圓角，比較像系統選單 */
         
-        /* 樣式與 Status 介面風格統一 */
+        /* 樣式與 Status 界面風格統一 */
         background: linear-gradient(to bottom, #2b2b2b, #1a1a1a);
         border: 1px solid #8a734b;
         color: #c8aa6e;
@@ -2500,11 +2500,11 @@
         </div>
         <div class="display-modal-body">
 
-            <!-- 介面主題 -->
-            <div class="display-section-label">介面主题</div>
+            <!-- 界面主題 -->
+            <div class="display-section-label">界面主题</div>
             <div class="display-btn-group">
                 <div class="display-opt-btn active" id="theme-dark-btn" onclick="setTheme('dark')">🌑 深色</div>
-                <div class="display-opt-btn" id="theme-light-btn" onclick="setTheme('light')">☀️ 淺色</div>
+                <div class="display-opt-btn" id="theme-light-btn" onclick="setTheme('light')">☀️ 浅色</div>
             </div>
 
             <!-- 圖片來源 -->
@@ -2614,7 +2614,7 @@
                     </div>
 
                     <div class="inventory-grid" id="inv-grid">
-                        <div class="empty-state">讀取中...</div>
+                        <div class="empty-state">读取中...</div>
                     </div>
                 </div>
 
@@ -2803,11 +2803,11 @@
 </div>
     
     <div class="control-panel">
-        <button class="mode-switch">切換全文模式</button>
+        <button class="mode-switch">切换全文模式</button>
         <div class="nav-group">
-            <button class="nav-btn btn-prev">上頁</button>
+            <button class="nav-btn btn-prev">上页</button>
             <span class="page-num">1/1</span>
-            <button class="nav-btn btn-next">下頁</button>
+            <button class="nav-btn btn-next">下页</button>
         </div>
     </div>
 </div>
@@ -3189,18 +3189,18 @@ const _userName = (() => {
     }
 
     // ==========================================
-    // === [新增] 介面快速切換控制器 ===
+    // === [新增] 界面快速切換控制器 ===
     // ==========================================
     
     window.switchInterface = function(targetName) {
-        // 1. 關閉所有介面層
+        // 1. 關閉所有界面層
         const layers = ['quest-layer', 'bag-layer', 'status-layer'];
         layers.forEach(id => {
             const el = document.getElementById(id);
             if(el) el.classList.remove('active');
         });
 
-        // 2. 根據目標名稱打開對應介面並初始化
+        // 2. 根據目標名稱打開對應界面並初始化
         if (targetName === 'quest') {
             document.getElementById('quest-layer').classList.add('active');
             updateUIScale();
@@ -3369,7 +3369,7 @@ const _userName = (() => {
         else if(bondPercent >= 20) ringPath.style.stroke = "#4da6ff"; // 藍
         else ringPath.style.stroke = "#888"; // 灰
 
-        // 6. 顯示介面
+        // 6. 顯示界面
         document.getElementById('mini-modal-layer').classList.add('active');
         // 7. 確保縮放正確
         updateUIScale();
@@ -3635,7 +3635,7 @@ if (
     state.subLocation &&
     state.subLocation.includes("家")
 ) {
-    const btnText = isParty ? '取消同行' : '邀請同行';
+    const btnText = isParty ? '取消同行' : '邀请同行';
 
     const toggleBtn = document.createElement('span');
     toggleBtn.className = 'toggle-party-btn';
@@ -3988,7 +3988,7 @@ if (
                     ${currentFilter === '已失败' ? '<span>✖</span>' : ''}
                 </div>
                 ${isDeletable ?
-                    '<div class="quest-delete-btn" title="刪除任務">✖</div>' : ''}
+                    '<div class="quest-delete-btn" title="删除任务">✖</div>' : ''}
                 <div class="q-desc">${qDesc}</div>
         `;
 
@@ -4095,9 +4095,9 @@ if (
 
 
 
-    // === [新增] State 查看面板邏輯 ===
+    // === [新增] 查看變量面板邏輯 ===
 
-// 從原始字串提取 <state> 內容
+// 從原始字串提取標籤內容
 function extractStateContent(rawString) {
     if (!rawString) return null;
     // 1. 先移除思考標籤
@@ -4105,8 +4105,8 @@ function extractStateContent(rawString) {
         .replace(/<thinking>[\s\S]*?<\/thinking>/gi, '')
         .replace(/<think>[\s\S]*?<\/think>/gi, '')
         .replace(/\[metacognition\][\s\S]*?\[\/metacognition\]/gi, '');
-    // 2. 提取第一個 <state>...</state>
-    const match = cleaned.match(/<state>([\s\S]*?)<\/state>/i);
+    // 2. 提取標籤
+    const match = cleaned.match(/<UpdateVariable>([\s\S]*?)<\/UpdateVariable>/i);
     return match ? match[1].trim() : null;
 }
 
@@ -4233,7 +4233,7 @@ window.toggleStateViewer = function() {
 
             // === [修改] 加入刪除按鈕 ===
             card.innerHTML = `
-                <div class="item-delete-btn" title="丟弃物品">✖</div>
+                <div class="item-delete-btn" title="丢弃物品">✖</div>
                 <div class="item-name">${item.name}</div>
                 <div class="item-desc">${item.desc}</div>
             `;
@@ -4895,7 +4895,7 @@ function scheduleBackgroundPreload(currentRegion, currentPartyIds) {
             if (!currentPartyIds.includes(name) && needsLoad(url)) queue.push(url);
         });
         
-        // 3. fullPartyData 中的 img / face / bg（Status 介面用的大圖）
+        // 3. fullPartyData 中的 img / face / bg（Status 界面用的大圖）
         fullPartyData.forEach(char => {
             [char.img, char.face, char.bg, char.imgDiff].forEach(url => {
                 if (needsLoad(url)) queue.push(url);
@@ -5802,7 +5802,7 @@ if (!targetMusicUrl) return;
 
 const audioState = topWindow.RPG_AUDIO_STATE;
 
-// 小遊戲 / 戰鬥音樂接管時，主介面不要搶回地圖音樂
+// 小遊戲 / 戰鬥音樂接管時，主界面不要搶回地圖音樂
 if (audioState.source === 'minigame' || audioState.context === 'battle') {
     return;
 }
@@ -6580,7 +6580,7 @@ await syncGameState();
         }
 
         // ==========================================
-        // === [新增] Quest 介面事件綁定 ===
+        // === [新增] Quest 界面事件綁定 ===
         // ==========================================
         
         const questMenuBtn = root.querySelector('.menu-opt[data-action="quest"]');
@@ -6621,7 +6621,7 @@ await syncGameState();
         // 注意：這裡移除了舊的 mapAreaObserver，因為下面會統一建立一個
 
         // ==========================================
-        // === [新增] Bag 背包介面事件綁定 ===
+        // === [新增] Bag 背包界面事件綁定 ===
         // ==========================================
         
         const bagMenuBtn = root.querySelector('.menu-opt[data-action="bag"]');
@@ -6656,7 +6656,7 @@ await syncGameState();
         }
 
         // ==========================================
-        // === [統一] 啟動 ResizeObserver (控制所有介面縮放) ===
+        // === [統一] 啟動 ResizeObserver (控制所有界面縮放) ===
         // ==========================================
         let resizeFrame;
         const mapAreaObserver = new ResizeObserver(() => {
@@ -6671,7 +6671,7 @@ await syncGameState();
         }
 
         // ==========================================
-        // === [更新] Status 狀態介面事件綁定 ===
+        // === [更新] Status 狀態界面事件綁定 ===
         // ==========================================
         
         const statusMenuBtn = root.querySelector('.menu-opt[data-action="status"]');
@@ -6680,7 +6680,7 @@ await syncGameState();
                 document.querySelectorAll('.location-action-btn-wrap').forEach(el => el.style.display = 'none');
                 e.stopPropagation();
                 
-                // 1. 關閉互斥介面
+                // 1. 關閉互斥界面
                 const qLayer = document.getElementById('quest-layer');
                 if(qLayer) qLayer.classList.remove('active');
                 const bLayer = document.getElementById('bag-layer');
@@ -6772,7 +6772,7 @@ document.getElementById('display-layer')?.addEventListener('click', (e) => {
             worldmapMenuBtn.onclick = (e) => {
                 e.stopPropagation();
 
-                // 關閉其他互斥介面
+                // 關閉其他互斥界面
                 document.getElementById('quest-layer')?.classList.remove('active');
                 document.getElementById('bag-layer')?.classList.remove('active');
                 document.getElementById('status-layer')?.classList.remove('active');
@@ -6853,7 +6853,7 @@ if (typeof tavern_events !== 'undefined') {
         const grid = document.getElementById('char-grid-content');
         grid.innerHTML = "";
 
-        // 2. 遍歷 activePartyData (這些是 Status 介面可見的角色)
+        // 2. 遍歷 activePartyData (這些是 Status 界面可見的角色)
         activePartyData.forEach(char => {
             const item = document.createElement('div');
             item.className = 'char-grid-item';
@@ -6888,11 +6888,11 @@ if (typeof tavern_events !== 'undefined') {
         // 1. 關閉選擇器
         closeCharSelector();
 
-        // 2. 切換到 Status 介面
+        // 2. 切換到 Status 界面
         switchInterface('status');
 
         // 3. 操作 DOM 來選中目標角色
-        // 這裡需要稍微延遲，等待 Status 介面初始化完成 (如果是第一次開啟)
+        // 這裡需要稍微延遲，等待 Status 界面初始化完成 (如果是第一次開啟)
         setTimeout(() => {
             const track = document.getElementById('faces-track');
             if (!track) return;
@@ -6902,7 +6902,7 @@ if (typeof tavern_events !== 'undefined') {
             
             if (targetIndex === -1) return;
 
-            // 邏輯：Status 介面預設 Index 1 (第二張卡) 是 Active
+            // 邏輯：Status 界面預設 Index 1 (第二張卡) 是 Active
             // 我們需要移動 DOM 元素，直到 targetId 變成了 Index 1
             
             // 如果目標在 Index 1，什麼都不用做，直接更新顯示
