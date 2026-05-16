@@ -2884,7 +2884,7 @@ window.selectHost = function(host) {
 };
 
 const img = (imgchestUrl, catboxUrl) => {
-    const host = window?.RPG_GLOBAL_STATE?.imageHost || 'imgchest';
+    const host = topWindow?.RPG_GLOBAL_STATE?.imageHost || 'imgchest';
     if (host === 'imgchest') return imgchestUrl;
     return catboxUrl || imgchestUrl;
 };
@@ -6072,8 +6072,14 @@ async function openMinigame(url) {
             window.__MINIGAME_CACHE[targetUrl] = htmlText;
         }
 
-        const injectionScript = '<script>window.INJECTED_MUTE_STATE = ' + (window.RPG_IS_MUTED ?? true) + ';</' + 'script>';
-        htmlText = htmlText.replace('<head>', '<head>' + injectionScript);
+        const injectedMuteState = !!topWindow.RPG_GLOBAL_STATE?.isMuted;
+
+const injectionScript =
+    '<script>window.INJECTED_MUTE_STATE = ' +
+    JSON.stringify(injectedMuteState) +
+    ';</' + 'script>';
+
+htmlText = htmlText.replace('<head>', '<head>' + injectionScript);
 
         const blob = new Blob([htmlText], { type: 'text/html' });
         const blobUrl = URL.createObjectURL(blob);
