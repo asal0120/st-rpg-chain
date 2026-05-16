@@ -2817,6 +2817,43 @@
 
 (function() {
 
+// ============================================================
+// PART 0: 跨 iframe 共用狀態初始化
+// 必須放在最前面，因為 img() / fullPartyData 很早就會使用
+// ============================================================
+let topWindow = window;
+
+try {
+    topWindow =
+        window.RPG_PARENT ||
+        window.parent ||
+        window.top ||
+        window;
+} catch (e) {
+    topWindow = window;
+}
+
+if (!topWindow.RPG_GLOBAL_STATE) {
+    topWindow.RPG_GLOBAL_STATE = {
+        isMuted: true,
+        theme: 'dark',
+        imageHost: 'imgchest'
+    };
+}
+
+if (!topWindow.RPG_AUDIO_STATE) {
+    topWindow.RPG_AUDIO_STATE = {
+        context: 'map',       // map | battle | minigame
+        currentUrl: '',
+        pendingUrl: '',
+        source: 'rpg'
+    };
+}
+
+// 兼容舊程式：讓 window.RPG_GLOBAL_STATE 也指向同一份物件
+window.RPG_GLOBAL_STATE = topWindow.RPG_GLOBAL_STATE;
+window.RPG_IS_MUTED = topWindow.RPG_GLOBAL_STATE.isMuted;
+
 const getPath = (obj, path, fallback) => {
     const keys = Array.isArray(path) ? path : String(path).split('.');
     let cur = obj;
@@ -2884,7 +2921,7 @@ window.selectHost = function(host) {
 };
 
 const img = (imgchestUrl, catboxUrl) => {
-    const host = window?.RPG_GLOBAL_STATE?.imageHost || 'imgchest';
+    const host = topWindow?.RPG_GLOBAL_STATE?.imageHost || 'imgchest';
     if (host === 'imgchest') return imgchestUrl;
     return catboxUrl || imgchestUrl;
 };
@@ -3036,25 +3073,31 @@ const _userName = (() => {
     let isStatProcessing = false;
 
     window.togglePartyState = async function(charName, isCurrentlyInParty) {
-        // [新增] 如果正在生成中，直接阻擋執行
-        if (isGenerating) {
-            console.warn("生成中，禁止切換隊伍狀態");
-            return;
-        }
-        const targetState = isCurrentlyInParty ? '否' : '是';
-        try {
-            document.body.style.cursor = 'wait';
-            setVar(`世界.妈妈.${charName}.在队状态`, targetState);
+    if (isGenerating) {
+        console.warn("生成中，禁止切換隊伍狀態");
+        return;
+    }
 
-            // 重新刷新當前 Status UI 及全域隊伍狀態
-            if (typeof updateSelectionFromCenter === 'function') updateSelectionFromCenter(true);
-            if (typeof syncGameState === 'function') syncGameState(); 
-        } catch(e) { 
-            console.error("隊伍狀態切換失敗:", e);
-        } finally {
-            document.body.style.cursor = 'default';
+    const targetState = isCurrentlyInParty ? '否' : '是';
+
+    try {
+        document.body.style.cursor = 'wait';
+
+        await setVar(`世界.妈妈.${charName}.在队状态`, targetState);
+
+        if (typeof updateSelectionFromCenter === 'function') {
+            await updateSelectionFromCenter(true);
         }
-    };
+
+        if (typeof syncGameState === 'function') {
+            await syncGameState();
+        }
+    } catch(e) {
+        console.error("隊伍狀態切換失敗:", e);
+    } finally {
+        document.body.style.cursor = 'default';
+    }
+};
 
     // [修改] 初始化函數 (原本是 init)
     // [修改] 初始化函數 (原本是 init)
@@ -3546,16 +3589,27 @@ const _userName = (() => {
     // === 同行切換按鈕邏輯 ===
     // (注意這裡我們也順便使用了前面建立的 els 快取)
     const charNameBox = els.charName || document.getElementById('char-name');
-    let nameHtml = data.name;
-    if (state.region === "自由都市" && state.location === "伦德" && state.subLocation && state.subLocation.includes("家")) {
-        let btnText = isParty ? '取消同行' : '邀請同行';
-        const _toggleSpan = document.createElement('span');
-        _toggleSpan.className = 'toggle-party-btn';
-        _toggleSpan.textContent = btnText;
-        _toggleSpan.onclick = () => togglePartyState(data.name, isParty);
-        nameHtml += _toggleSpan.outerHTML;
-    }
-    charNameBox.innerHTML = nameHtml;
+
+charNameBox.textContent = data.name;
+
+if (
+    state.region === "自由都市" &&
+    state.location === "伦德" &&
+    state.subLocation &&
+    state.subLocation.includes("家")
+) {
+    const btnText = isParty ? '取消同行' : '邀請同行';
+
+    const toggleBtn = document.createElement('span');
+    toggleBtn.className = 'toggle-party-btn';
+    toggleBtn.textContent = btnText;
+
+    toggleBtn.onclick = () => {
+        togglePartyState(data.name, isParty);
+    };
+
+    charNameBox.appendChild(toggleBtn);
+} 
 
 } catch(e) { 
     if (els.mBond) els.mBond.innerText = "???";
@@ -4180,18 +4234,8 @@ window.toggleStateViewer = function() {
     // ============================================================
     // PART 1: 全域通訊核心 (只負責同步按鈕狀態)
     // ============================================================
-    const topWindow = window;
+   
 
-
-
-    // 初始化全域狀態變數 (如果不存在的話)
-    if (!topWindow.RPG_GLOBAL_STATE) {
-        topWindow.RPG_GLOBAL_STATE = {
-            isMuted: true,
-            theme: 'dark',       // 新增
-            imageHost: 'imgchest'  // 新增
-        };
-    }
 
     // 定義廣播函數：告訴所有人「狀態改變了」
     const broadcastState = (isMuted) => {
@@ -5702,7 +5746,7 @@ if (JSON.stringify(sortedIdsForKey) !== JSON.stringify(state.lastPartyIds)) {
     renderParty(displayPartyIds);
     state.lastPartyIds = sortedIdsForKey;
 }
-
+　　　　　　if (window.gameLoopPaused) return;
             // === 音乐播放逻辑 ===
             const isMuted = topWindow.RPG_GLOBAL_STATE.isMuted;
             if (isMuted) return; 
@@ -5795,6 +5839,62 @@ if (isFinished) {
     }, 800); // 給事件監聽留足夠的優先時間
 }
 };
+
+// ============================================================
+// === RPG MVU 外部流式入口：給 Tavern Helper iframe 外殼呼叫 ===
+// ============================================================
+window.RPG_FORCE_REFRESH_FROM_VARIABLES = async function(rawData = '') {
+    try {
+        // 外部明確要求刷新時，視為生成已結束
+        isGenerating = false;
+
+        const root = document.querySelector('.rpg-v7-root');
+        if (root) root.classList.remove('generating');
+
+        clearTimeout(genResetTimer);
+        clearTimeout(window.__safeUnlockTimer);
+
+        // 如果有傳 rawData，同步更新 state viewer
+        if (rawData && typeof updateStateViewer === 'function' && typeof extractStateContent === 'function') {
+            updateStateViewer(extractStateContent(rawData));
+        }
+
+        // 如果 syncGameState 正在跑，短暫等待它釋放 isSyncing
+        for (let i = 0; i < 20 && isSyncing; i++) {
+            await new Promise(resolve => setTimeout(resolve, 50));
+        }
+
+        if (typeof syncGameState === 'function') {
+            await syncGameState();
+        }
+
+        if (typeof refreshUI === 'function') {
+            refreshUI();
+        }
+
+        return true;
+    } catch (e) {
+        console.error('[RPG MVU] RPG_FORCE_REFRESH_FROM_VARIABLES 失敗:', e);
+        return false;
+    }
+};
+
+window.RPG_MVU_UPDATE = async function(rawData, options = {}) {
+    window.RPG_IS_STREAMING = !!options.streaming;
+    window.RPG_MESSAGE_ID = options.message_id ?? null;
+
+    if (typeof window.updateTemplateVariables === 'function') {
+        window.updateTemplateVariables(rawData);
+    }
+
+    // 生成完成時，由外部 helper 明確告知 streaming:false
+    // 此時不再只靠 </UpdateVariable> 的內部計時器，而是直接刷新變量狀態
+    if (!window.RPG_IS_STREAMING) {
+        await window.RPG_FORCE_REFRESH_FROM_VARIABLES(rawData);
+    }
+};
+
+window.RPG_MVU_READY = true;
     // =========================================
 // === RPG Bridge: 主程式與小遊戲的橋樑 ===
 // =========================================
@@ -5814,7 +5914,27 @@ setVar: async function(varName, value) {
     );
 },
 playBgm: async function(url) {
-    try { await playAudio('bgm', { url }); } catch(e) { console.warn('[RPGBridge] playBgm 失敗:', e); }
+    try {
+        if (!topWindow.RPG_AUDIO_STATE) {
+            topWindow.RPG_AUDIO_STATE = {
+                context: 'map',
+                currentUrl: '',
+                pendingUrl: '',
+                source: 'rpg'
+            };
+        }
+
+        topWindow.RPG_AUDIO_STATE.context = 'battle';
+        topWindow.RPG_AUDIO_STATE.pendingUrl = url;
+        topWindow.RPG_AUDIO_STATE.currentUrl = url;
+        topWindow.RPG_AUDIO_STATE.source = 'minigame';
+
+        if (!topWindow.RPG_GLOBAL_STATE?.isMuted) {
+            await playAudio('bgm', { url });
+        }
+    } catch(e) {
+        console.warn('[RPGBridge] playBgm 失敗:', e);
+    }
 },
 pauseBgm: async function() {
     try { await pauseAudio('bgm'); } catch(e) { console.warn('[RPGBridge] pauseBgm 失敗:', e); }
@@ -5845,7 +5965,13 @@ pauseBgm: async function() {
             window.gameLoopPaused = false;
             // [關鍵修正] 關閉後立即觸發一次同步，確保 BGM 能馬上切換回來
             setTimeout(syncGameState, 100); 
-        }
+        };
+if (topWindow.RPG_AUDIO_STATE) {
+    topWindow.RPG_AUDIO_STATE.context = 'map';
+    topWindow.RPG_AUDIO_STATE.source = 'rpg';
+    topWindow.RPG_AUDIO_STATE.pendingUrl = '';
+    topWindow.RPG_AUDIO_STATE.currentUrl = '';
+}
     },
 
 
@@ -5882,17 +6008,46 @@ pauseBgm: async function() {
     },
 
     // 5. 供子視窗呼叫，同步靜音狀態
-    updateMuteState: function(isMuted) {
-        console.log("[RPG Bridge] 靜音狀態更新:", isMuted);
-        if (window.RPG_GLOBAL_STATE) {
-            window.RPG_GLOBAL_STATE.isMuted = isMuted;
-        }
-        window.RPG_IS_MUTED = isMuted;
-        const event = new CustomEvent('RPG_BUTTON_SYNC', {
-            detail: { isMuted: isMuted }
-        });
-        window.dispatchEvent(event);
+    updateMuteState: async function(isMuted) {
+    console.log("[RPG Bridge] 靜音狀態更新:", isMuted);
+
+    if (!topWindow.RPG_GLOBAL_STATE) {
+        topWindow.RPG_GLOBAL_STATE = {
+            isMuted: true,
+            theme: 'dark',
+            imageHost: 'imgchest'
+        };
     }
+
+    topWindow.RPG_GLOBAL_STATE.isMuted = isMuted;
+    topWindow.RPG_IS_MUTED = isMuted;
+    window.RPG_IS_MUTED = isMuted;
+
+    const event = new CustomEvent('RPG_BUTTON_SYNC', {
+        detail: { isMuted: isMuted }
+    });
+    topWindow.dispatchEvent(event);
+
+    if (isMuted) {
+        await pauseAudio('bgm');
+        return;
+    }
+
+    const audioState = topWindow.RPG_AUDIO_STATE;
+
+    if (
+        audioState &&
+        audioState.source === 'minigame' &&
+        audioState.currentUrl
+    ) {
+        await playAudio('bgm', { url: audioState.currentUrl });
+        return;
+    }
+
+    if (typeof syncGameState === 'function') {
+        await syncGameState();
+    }
+}
 };
 
     // =========================================
@@ -5912,7 +6067,7 @@ pauseBgm: async function() {
     }
 }
 
-const MINIGAME_RAW_URL = "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/miniMVU1.html";
+const MINIGAME_RAW_URL = "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/miniMVU2.html";
 
 window.__MINIGAME_CACHE = window.__MINIGAME_CACHE || {};
 
@@ -5944,23 +6099,21 @@ async function openMinigame(url) {
     fallbackBtn.style.display = 'none'; // 預設隱藏
 
     if (fallbackTarget && fallbackTarget !== '非攻略中' && fallbackTarget !== '0') {
-        fallbackBtn.innerHTML = `⚠️ 游戏无法载入？<br><strong>点此直接完成攻略：${fallbackTarget}</strong>`;
+        fallbackBtn.innerHTML = `⚠️ 小游戏未成功显示？<br><strong>点此直接完成攻略：${fallbackTarget}</strong>`;
         fallbackBtn.onclick = () => _triggerVictoryFallback(fallbackTarget);
     }
 
     // === [防呆] 超時計時器：10秒後顯示備援按鈕 ===
-    const fallbackTimer = setTimeout(() => {
-        console.warn('[RPG] 小遊戲載入超時，顯示備援按鈕');
-        if (fallbackBtn) fallbackBtn.style.display = 'block';
-    }, 10000);
+    // === [防呆] 只在真正載入失敗時顯示，不用固定 10 秒倒數 ===
+let fallbackTimer = null;
 
-    // iframe 成功載入後取消計時器
-    frame.onload = () => {
-        // blob URL 載入成功，內容不是空的才算真正載入
-        if (frame.src && frame.src !== 'about:blank' && frame.src !== '') {
-            clearTimeout(fallbackTimer);
-        }
-    };
+frame.onload = () => {
+    if (fallbackTimer) {
+        clearTimeout(fallbackTimer);
+        fallbackTimer = null;
+    }
+    if (fallbackBtn) fallbackBtn.style.display = 'none';
+};
 
     try {
         let targetUrl = url;
@@ -5979,21 +6132,31 @@ async function openMinigame(url) {
             window.__MINIGAME_CACHE[targetUrl] = htmlText;
         }
 
-        const injectionScript = '<script>window.INJECTED_MUTE_STATE = ' + (window.RPG_IS_MUTED ?? true) + ';</' + 'script>';
-        htmlText = htmlText.replace('<head>', '<head>' + injectionScript);
+        const injectedMuteState = !!topWindow.RPG_GLOBAL_STATE?.isMuted;
+
+const injectionScript =
+    '<script>window.INJECTED_MUTE_STATE = ' +
+    JSON.stringify(injectedMuteState) +
+    ';</' + 'script>';
+
+htmlText = htmlText.replace('<head>', '<head>' + injectionScript);
 
         const blob = new Blob([htmlText], { type: 'text/html' });
         const blobUrl = URL.createObjectURL(blob);
         frame.src = blobUrl;
 
     } catch (e) {
-        console.error("[RPG] 小遊戲載入失敗:", e);
+    console.error("[RPG] 小遊戲載入失敗:", e);
+
+    if (fallbackTimer) {
         clearTimeout(fallbackTimer);
-        // === [防呆] fetch 失敗立即顯示備援按鈕 ===
-        if (fallbackBtn) fallbackBtn.style.display = 'block';
-        // 嘗試直連備援
-        frame.src = url;
+        fallbackTimer = null;
     }
+
+    if (fallbackBtn) fallbackBtn.style.display = 'block';
+
+    frame.src = url;
+}
 
     layer.classList.add('active');
     window.gameLoopPaused = true;
@@ -6027,7 +6190,7 @@ function _triggerVictoryFallback(targetName) {
 
 // === 變量寫入 helper（替代 setGlobalVariable）===
 function setVar(dotPath, value) {
-    updateVariablesWith(
+    return updateVariablesWith(
         function(variables) {
             _.set(variables, 'stat_data.' + dotPath, value);
             return variables;
