@@ -6050,18 +6050,16 @@ async function openMinigame(url) {
     }
 
     // === [防呆] 超時計時器：10秒後顯示備援按鈕 ===
-    const fallbackTimer = setTimeout(() => {
-        console.warn('[RPG] 小遊戲載入超時，顯示備援按鈕');
-        if (fallbackBtn) fallbackBtn.style.display = 'block';
-    }, 10000);
+    // === [防呆] 只在真正載入失敗時顯示，不用固定 10 秒倒數 ===
+let fallbackTimer = null;
 
-    // iframe 成功載入後取消計時器
-    frame.onload = () => {
-        // blob URL 載入成功，內容不是空的才算真正載入
-        if (frame.src && frame.src !== 'about:blank' && frame.src !== '') {
-            clearTimeout(fallbackTimer);
-        }
-    };
+frame.onload = () => {
+    if (fallbackTimer) {
+        clearTimeout(fallbackTimer);
+        fallbackTimer = null;
+    }
+    if (fallbackBtn) fallbackBtn.style.display = 'none';
+};
 
     try {
         let targetUrl = url;
@@ -6094,13 +6092,17 @@ htmlText = htmlText.replace('<head>', '<head>' + injectionScript);
         frame.src = blobUrl;
 
     } catch (e) {
-        console.error("[RPG] 小遊戲載入失敗:", e);
+    console.error("[RPG] 小遊戲載入失敗:", e);
+
+    if (fallbackTimer) {
         clearTimeout(fallbackTimer);
-        // === [防呆] fetch 失敗立即顯示備援按鈕 ===
-        if (fallbackBtn) fallbackBtn.style.display = 'block';
-        // 嘗試直連備援
-        frame.src = url;
+        fallbackTimer = null;
     }
+
+    if (fallbackBtn) fallbackBtn.style.display = 'block';
+
+    frame.src = url;
+}
 
     layer.classList.add('active');
     window.gameLoopPaused = true;
