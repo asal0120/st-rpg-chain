@@ -4106,7 +4106,7 @@ function extractStateContent(rawString) {
         .replace(/<think>[\s\S]*?<\/think>/gi, '')
         .replace(/\[metacognition\][\s\S]*?\[\/metacognition\]/gi, '');
     // 2. 提取標籤
-    const match = cleaned.match(/<UpdateVariable>([\s\S]*?)<\/UpdateVariable>/i);
+    const match = cleaned.match(/<JSONPatch>([\s\S]*?)<\/JSONPatch>/i);
     return match ? match[1].trim() : null;
 }
 
@@ -4115,7 +4115,6 @@ function updateStateViewer(content) {
     const body  = document.getElementById('state-viewer-body');
     if (!panel || !body) return;
     if (content) {
-        // 只在內容真的改變時才更新（避免不必要的 DOM 操作）
         if (body.textContent !== content) {
             body.textContent = content;
         }
@@ -5868,7 +5867,7 @@ window.updateTemplateVariables = function(data) {
     stringForFinishedCheck = stringForFinishedCheck.replace(/^[\s\S]*?<\/thinking>/i, '');
     stringForFinishedCheck = stringForFinishedCheck.replace(/^[\s\S]*?<\/think>/i, '');
     stringForFinishedCheck = stringForFinishedCheck.replace(/^[\s\S]*?\[\/metacognition\]/i, '');
-    const isFinished = stringForFinishedCheck.includes('</UpdateVariable>');
+    const isFinished = stringForFinishedCheck.includes('</JSONPatch>');
 
     // ✅ 正文提取：直接傳原始字串給 extractContent，由它內部統一處理
     const newText = extractContent(rawString);
@@ -5952,7 +5951,6 @@ window.RPG_MVU_UPDATE = async function(rawData, options = {}) {
     }
 
     // 生成完成時，由外部 helper 明確告知 streaming:false
-    // 此時不再只靠 </UpdateVariable> 的內部計時器，而是直接刷新變量狀態
     if (!window.RPG_IS_STREAMING) {
         await window.RPG_FORCE_REFRESH_FROM_VARIABLES(rawData);
     }
