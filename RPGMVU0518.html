@@ -388,7 +388,7 @@
     .rpg-v7-root .party-wrap { 
         position: absolute; 
         bottom: 0; 
-        left: 10px; 
+        left: clamp(6px, 1.2vw, 18px); 
         z-index: 160; 
         
         display: flex; 
@@ -409,7 +409,7 @@
         display: flex; 
         align-items: flex-end; 
         margin-bottom: 0; 
-        margin-left: 10px; 
+        margin-left: clamp(6px, 1.2vw, 18px); 
         
 
         height: 100%; 
@@ -796,7 +796,7 @@
     }
 	
 	/* ========================================= */
-    /* === [整合] Quest 系統任務介面樣式 === */
+    /* === [整合] Quest 系統任務界面樣式 === */
     /* ========================================= */
 
     /* 1. 外部包裹層：負責滿版覆蓋與隱藏/顯示 */
@@ -812,7 +812,7 @@
         pointer-events: none; /* 讓點擊穿透，只有內部元素可點 */
     }
 
-    /* 透過 JS 切換此 class 來顯示介面 */
+    /* 透過 JS 切換此 class 來顯示界面 */
     .quest-layer-wrapper.active {
         display: block;
     }
@@ -1217,7 +1217,7 @@
         padding-right: 5px; /* 避免文字貼著卷軸 */
     }
 
-    /* [新增] 美化內部卷軸 (讓它跟主介面風格統一) */
+    /* [新增] 美化內部卷軸 (讓它跟主界面風格統一) */
     .bag-scaler .item-desc::-webkit-scrollbar { width: 4px; }
     .bag-scaler .item-desc::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
     .bag-scaler .item-desc::-webkit-scrollbar-thumb { background: var(--p-gold-dim); border-radius: 2px; }
@@ -1253,7 +1253,7 @@
     }
 	
 	/* ============================================================ */
-    /* === [完美移植] Status 狀態介面 (Larian Style R19 Final) === */
+    /* === [完美移植] Status 狀態界面 (Larian Style R19 Final) === */
     /* ============================================================ */
 
     /* 1. 外部容器：負責隱藏/顯示與層級控制 */
@@ -1483,7 +1483,7 @@
     .status-scaler .face-card.active img { filter: grayscale(0%) brightness(1.1); }
 	
 	/* ========================================= */
-    /* === [新增] 介面間切換導航按鈕 === */
+    /* === [新增] 界面間切換導航按鈕 === */
     /* ========================================= */
     .interface-nav-btn { 
         position: absolute; top: 20px; right: 20px; font-size: 30px; width: 10px; height: 10px;
@@ -1669,7 +1669,7 @@
         height: 30px;
         border-radius: 4px; /* 方形圓角，比較像系統選單 */
         
-        /* 樣式與 Status 介面風格統一 */
+        /* 樣式與 Status 界面風格統一 */
         background: linear-gradient(to bottom, #2b2b2b, #1a1a1a);
         border: 1px solid #8a734b;
         color: #c8aa6e;
@@ -2500,11 +2500,11 @@
         </div>
         <div class="display-modal-body">
 
-            <!-- 介面主題 -->
-            <div class="display-section-label">介面主题</div>
+            <!-- 界面主題 -->
+            <div class="display-section-label">界面主题</div>
             <div class="display-btn-group">
                 <div class="display-opt-btn active" id="theme-dark-btn" onclick="setTheme('dark')">🌑 深色</div>
-                <div class="display-opt-btn" id="theme-light-btn" onclick="setTheme('light')">☀️ 淺色</div>
+                <div class="display-opt-btn" id="theme-light-btn" onclick="setTheme('light')">☀️ 浅色</div>
             </div>
 
             <!-- 圖片來源 -->
@@ -2614,7 +2614,7 @@
                     </div>
 
                     <div class="inventory-grid" id="inv-grid">
-                        <div class="empty-state">讀取中...</div>
+                        <div class="empty-state">读取中...</div>
                     </div>
                 </div>
 
@@ -2803,11 +2803,11 @@
 </div>
     
     <div class="control-panel">
-        <button class="mode-switch">切換全文模式</button>
+        <button class="mode-switch">切换全文模式</button>
         <div class="nav-group">
-            <button class="nav-btn btn-prev">上頁</button>
+            <button class="nav-btn btn-prev">上页</button>
             <span class="page-num">1/1</span>
-            <button class="nav-btn btn-next">下頁</button>
+            <button class="nav-btn btn-next">下页</button>
         </div>
     </div>
 </div>
@@ -2816,6 +2816,62 @@
 <script>
 
 (function() {
+
+// ============================================================
+// PART 0: 跨 iframe 共用狀態初始化
+// 必須放在最前面，因為 img() / fullPartyData 很早就會使用
+// ============================================================
+let topWindow = window;
+
+try {
+    topWindow =
+        window.RPG_PARENT ||
+        window.parent ||
+        window.top ||
+        window;
+} catch (e) {
+    topWindow = window;
+}
+
+if (!topWindow.RPG_GLOBAL_STATE) {
+    topWindow.RPG_GLOBAL_STATE = {
+        isMuted: true,
+        theme: 'dark',
+        imageHost: 'imgchest'
+    };
+}
+
+if (!topWindow.RPG_AUDIO_STATE) {
+    topWindow.RPG_AUDIO_STATE = {
+        context: 'map',
+        currentUrl: '',
+        pendingUrl: '',
+        source: 'rpg',
+        paused: true
+    };
+}
+
+async function resumeBgm() {
+    try {
+        if (typeof audioPlay === 'function') {
+            await audioPlay({ type: 'bgm', play: true });
+            return true;
+        }
+
+        if (typeof triggerSlash === 'function') {
+            await triggerSlash('/audioplaypause type=bgm play=true');
+            return true;
+        }
+    } catch (e) {
+        console.warn('[RPG Audio] resumeBgm 失敗:', e);
+    }
+
+    return false;
+}
+
+// 兼容舊程式：讓 window.RPG_GLOBAL_STATE 也指向同一份物件
+window.RPG_GLOBAL_STATE = topWindow.RPG_GLOBAL_STATE;
+window.RPG_IS_MUTED = topWindow.RPG_GLOBAL_STATE.isMuted;
 
 const getPath = (obj, path, fallback) => {
     const keys = Array.isArray(path) ? path : String(path).split('.');
@@ -2864,6 +2920,34 @@ const eventOn = typeof window.eventOn === 'function'
         };
     }
 
+function requestParentResize() {
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            try {
+                const root = document.querySelector('.rpg-v7-root');
+                const body = document.body;
+                const html = document.documentElement;
+
+                const height = Math.max(
+                    root?.scrollHeight || 0,
+                    root?.offsetHeight || 0,
+                    body?.scrollHeight || 0,
+                    body?.offsetHeight || 0,
+                    html?.scrollHeight || 0,
+                    720
+                );
+
+                window.parent?.postMessage({
+                    type: 'RPG_MVU_RESIZE',
+                    height,
+                }, '*');
+            } catch (e) {
+                console.warn('[RPG] 回報 iframe 高度失敗:', e);
+            }
+        });
+    });
+}
+
 window.setTheme = function(mode) {
     const root = document.querySelector('.rpg-v7-root');
     if (mode === 'light') root.classList.add('light-mode');
@@ -2884,7 +2968,7 @@ window.selectHost = function(host) {
 };
 
 const img = (imgchestUrl, catboxUrl) => {
-    const host = window?.RPG_GLOBAL_STATE?.imageHost || 'imgchest';
+    const host = topWindow?.RPG_GLOBAL_STATE?.imageHost || 'imgchest';
     if (host === 'imgchest') return imgchestUrl;
     return catboxUrl || imgchestUrl;
 };
@@ -3105,18 +3189,18 @@ const _userName = (() => {
     }
 
     // ==========================================
-    // === [新增] 介面快速切換控制器 ===
+    // === [新增] 界面快速切換控制器 ===
     // ==========================================
     
     window.switchInterface = function(targetName) {
-        // 1. 關閉所有介面層
+        // 1. 關閉所有界面層
         const layers = ['quest-layer', 'bag-layer', 'status-layer'];
         layers.forEach(id => {
             const el = document.getElementById(id);
             if(el) el.classList.remove('active');
         });
 
-        // 2. 根據目標名稱打開對應介面並初始化
+        // 2. 根據目標名稱打開對應界面並初始化
         if (targetName === 'quest') {
             document.getElementById('quest-layer').classList.add('active');
             updateUIScale();
@@ -3132,8 +3216,6 @@ const _userName = (() => {
             updateUIScale();
             // 呼叫 Status 的初始化與按鈕綁定
             if(window.initStatusInterface) window.initStatusInterface();
-            // 注意：這裡假設 bindStatusButtons 已經包含在 initStatusInterface 裡，
-            // 或者您之前有將其分開。如果有分開，記得在這裡也呼叫 bindStatusButtons();
             if(typeof bindStatusButtons === 'function') bindStatusButtons();
         }
     }
@@ -3257,7 +3339,6 @@ const _userName = (() => {
         // 4. 讀取好感度 (異步)
         let bondVal = 0;
         try {
-            // 嘗試從 ST 讀取，如果失敗則用 0
             if (charData.id === 'p1') {
                 bondVal = MAX_BOND_LIMIT; // 玩家自己預設為滿值
             } else {
@@ -3282,15 +3363,13 @@ const _userName = (() => {
         ringPath.setAttribute("d", describeCCWProgress(MM_CFG.cx, MM_CFG.cy, MM_CFG.r_ring, bondPercent));
 
         // 顏色邏輯 (建議改用百分比判斷，這樣以後改上限不用重寫這裡)
-        // >= 80% (即 400+) 變紅
-        // >= 40% (即 200+) 變藍
         if(bondPercent >= 90) ringPath.style.stroke = "#ff4d4d"; // 紅
         else if(bondPercent >= 70) ringPath.style.stroke = "#ffa64d"; // 橙
         else if(bondPercent >= 45) ringPath.style.stroke = "#ffff4d"; // 黃
         else if(bondPercent >= 20) ringPath.style.stroke = "#4da6ff"; // 藍
         else ringPath.style.stroke = "#888"; // 灰
 
-        // 6. 顯示介面
+        // 6. 顯示界面
         document.getElementById('mini-modal-layer').classList.add('active');
         // 7. 確保縮放正確
         updateUIScale();
@@ -3448,7 +3527,6 @@ const _userName = (() => {
         const data = activePartyData.find(p => p.id === id);
         
         if (data) {
-    // [修改] 使用快取的 DOM 節點
     if (els.charName) els.charName.innerText = data.name;
     if (els.dynamicBg) els.dynamicBg.style.backgroundImage = `url('${data.bg}')`;
     
@@ -3457,7 +3535,7 @@ const _userName = (() => {
     let currentTab = document.querySelector('#tabs-member .tab-btn.active')?.innerText || '资料';
             
             // 關鍵邏輯：如果是「切換角色」(!isDataRefresh) 且「不是玩家本人」，
-            // 我們強制將判斷基準設為 '资料'。
+            // 強制將判斷基準設為 '资料'。
             // 這樣可以忽略上一個角色殘留的 '经验' 或 '回忆' 狀態。
             if (!isDataRefresh && data.id !== 'p1') {
                 currentTab = '资料';
@@ -3469,8 +3547,6 @@ const _userName = (() => {
 
             if (!tachie.src.includes(targetImg)) {
                 tachie.classList.remove('show');
-                
-                // [修改] 移除無意義的 requestAnimationFrame 嵌套，直接使用 setTimeout
                 setTimeout(() => {
                     tachie.src = targetImg;
                     tachie.onload = () => tachie.classList.add('show');
@@ -3531,7 +3607,6 @@ const _userName = (() => {
         if (els.memberDesc) els.memberDesc.innerText = data.desc;
         
         try {
-    // === [效能優化] 2 個循序請求合併為並行請求 ===
     const [bond, statusVal] = await Promise.all([
         getVariable(`世界.妈妈.${data.name}.好感度`),
         getVariable(`世界.妈妈.${data.name}.在队状态`)
@@ -3550,7 +3625,6 @@ const _userName = (() => {
     if (els.mStatus) els.mStatus.innerText = statusText;
 
     // === 同行切換按鈕邏輯 ===
-    // (注意這裡我們也順便使用了前面建立的 els 快取)
     const charNameBox = els.charName || document.getElementById('char-name');
 
 charNameBox.textContent = data.name;
@@ -3561,7 +3635,7 @@ if (
     state.subLocation &&
     state.subLocation.includes("家")
 ) {
-    const btnText = isParty ? '取消同行' : '邀請同行';
+    const btnText = isParty ? '取消同行' : '邀请同行';
 
     const toggleBtn = document.createElement('span');
     toggleBtn.className = 'toggle-party-btn';
@@ -3587,16 +3661,14 @@ if (
     }
 
     async function updateExpColumn(colIndex, name, catName, items) {
-    // === [效能優化] 捨棄 for 迴圈內的 await，改為一次性並行請求 ===
+    // === 捨棄 for 迴圈內的 await，改為一次性並行請求 ===
     // 產生所有的 Promise 陣列，並加上 catch 避免單一變量缺失導致整個報錯
     const promises = items.map(item => 
         (getVariable(`世界.妈妈.${name}.NSFW.${catName}.${item}`) ?? "0")
     );
     
-    // 一口氣等待所有結果回來 (原本要等 5 次的網路來回，現在只需 1 次)
     const results = await Promise.all(promises);
 
-    // 拿到結果後再同步更新到 DOM 上
     for(let i = 0; i < items.length; i++) {
         const el = document.getElementById(`exp-${colIndex}-${i+1}`);
         if(el) {
@@ -3621,10 +3693,8 @@ if (
             } else {
                 card.innerHTML = `<div style="width:100%;height:100%;background:#1a1510;"></div>`;
                 
-                // 1. 滑鼠懸停的提示文字
                 card.title = "特殊CG还没做好！"; 
                 
-                // 2. [新增] 點擊時的彈窗提示
                 card.onclick = () => {
                     alert("特殊CG还没做好！");
                 };
@@ -3781,7 +3851,7 @@ if (
         }
 
         // 1. 彈出確認視窗
-        if (!confirm(`確定要刪除任務「${questName}」的紀錄嗎？\n(刪除後將無法恢復)`)) {
+        if (!confirm(`确定要删除任务「${questName}」的纪录吗？\n(删除后将无法恢复)`)) {
             return;
         }
 
@@ -3815,7 +3885,7 @@ if (
 
         } catch (e) {
             console.error("[RPG] 刪除任務發生錯誤:", e);
-            alert("刪除失敗，請查看控制台日誌。");
+            alert("删除失败，请查看控制台日志。");
         } finally {
             document.body.style.cursor = 'default';
         }
@@ -3902,10 +3972,8 @@ if (
         card.className = `quest-card ${statusClass}`;
         card.style.animationDelay = `${index * 0.05}s`;
 
-        // 判斷是否為可刪除狀態
         let isDeletable = (currentFilter === '已完成' || currentFilter === '已失败');
 
-        // 當日保護：任務時間等於當前遊戲日期時禁止刪除
         if (isDeletable && quest["时间"]) {
             if (window.__LAST_CHECKED_DATE && quest["时间"] === window.__LAST_CHECKED_DATE) {
                 isDeletable = false;
@@ -3920,7 +3988,7 @@ if (
                     ${currentFilter === '已失败' ? '<span>✖</span>' : ''}
                 </div>
                 ${isDeletable ?
-                    '<div class="quest-delete-btn" title="刪除任務">✖</div>' : ''}
+                    '<div class="quest-delete-btn" title="删除任务">✖</div>' : ''}
                 <div class="q-desc">${qDesc}</div>
         `;
 
@@ -3983,7 +4051,7 @@ if (
         }
 
         // 1. 彈出確認視窗 (原生阻塞)
-        if (!confirm(`確定要丟棄物品「${itemName}」嗎？\n(丟棄後將無法恢復)`)) {
+        if (!confirm(`确定要丢弃物品「${itemName}」吗？\n(丢弃后将无法恢复)`)) {
             return;
         }
 
@@ -4019,7 +4087,7 @@ if (
 
         } catch (e) {
             console.error("[RPG] 丟棄物品發生錯誤:", e);
-            alert("丟棄失敗，請查看控制台日誌。");
+            alert("丢弃失败，请查看控制台日志。");
         } finally {
             document.body.style.cursor = 'default';
         }
@@ -4027,9 +4095,9 @@ if (
 
 
 
-    // === [新增] State 查看面板邏輯 ===
+    // === [新增] 查看變量面板邏輯 ===
 
-// 從原始字串提取 <state> 內容
+// 從原始字串提取標籤內容
 function extractStateContent(rawString) {
     if (!rawString) return null;
     // 1. 先移除思考標籤
@@ -4037,8 +4105,8 @@ function extractStateContent(rawString) {
         .replace(/<thinking>[\s\S]*?<\/thinking>/gi, '')
         .replace(/<think>[\s\S]*?<\/think>/gi, '')
         .replace(/\[metacognition\][\s\S]*?\[\/metacognition\]/gi, '');
-    // 2. 提取第一個 <state>...</state>
-    const match = cleaned.match(/<state>([\s\S]*?)<\/state>/i);
+    // 2. 提取標籤
+    const match = cleaned.match(/<JSONPatch>([\s\S]*?)<\/JSONPatch>/i);
     return match ? match[1].trim() : null;
 }
 
@@ -4047,7 +4115,6 @@ function updateStateViewer(content) {
     const body  = document.getElementById('state-viewer-body');
     if (!panel || !body) return;
     if (content) {
-        // 只在內容真的改變時才更新（避免不必要的 DOM 操作）
         if (body.textContent !== content) {
             body.textContent = content;
         }
@@ -4080,10 +4147,8 @@ window.toggleStateViewer = function() {
         
         grid.innerHTML = '';
         
-        // 提前定義變數名稱
         const varName = `世界.储物袋.${currentBagCategory}`;
         
-        // === [修改] 使用 Promise.all 並行請求，並加上 catch 獨立處理錯誤 ===
         let rawMoney = "0";
         let result = null;
         
@@ -4125,12 +4190,11 @@ window.toggleStateViewer = function() {
         // --- C. 渲染卡片 ---
         let itemsToRender = [];
         if (Array.isArray(itemList)) {
-            // 處理陣列格式 (相容舊版)
             itemsToRender = itemList.map(obj => {
                 const key = Object.keys(obj)[0];
                 const val = obj[key];
                 const descText = (typeof val === 'object' && val !== null) ? (val["描述"] || "") : val;
-                return { rawName: key, name: key, desc: descText }; // [新增] 紀錄 rawName
+                return { rawName: key, name: key, desc: descText }; // 
             });
         } else if (typeof itemList === 'object' && itemList !== null) {
             // 處理物件格式 (轉成陣列方便遍歷)
@@ -4168,7 +4232,7 @@ window.toggleStateViewer = function() {
 
             // === [修改] 加入刪除按鈕 ===
             card.innerHTML = `
-                <div class="item-delete-btn" title="丟棄物品">✖</div>
+                <div class="item-delete-btn" title="丢弃物品">✖</div>
                 <div class="item-name">${item.name}</div>
                 <div class="item-desc">${item.desc}</div>
             `;
@@ -4197,22 +4261,12 @@ window.toggleStateViewer = function() {
     // ============================================================
     // PART 1: 全域通訊核心 (只負責同步按鈕狀態)
     // ============================================================
-    const topWindow = window;
+   
 
-
-
-    // 初始化全域狀態變數 (如果不存在的話)
-    if (!topWindow.RPG_GLOBAL_STATE) {
-        topWindow.RPG_GLOBAL_STATE = {
-            isMuted: true,
-            theme: 'dark',       // 新增
-            imageHost: 'imgchest'  // 新增
-        };
-    }
 
     // 定義廣播函數：告訴所有人「狀態改變了」
     const broadcastState = (isMuted) => {
-        // [關鍵修正] 立即更新內存中的狀態
+        // 立即更新內存中的狀態
         topWindow.RPG_GLOBAL_STATE.isMuted = isMuted;
         window.RPG_IS_MUTED = isMuted;
         // 發送事件給其他樓層
@@ -4243,9 +4297,9 @@ window.toggleStateViewer = function() {
         lastRegion: "", 
         lastPartyIds: [],
         currentMusicUrl: "",
-        region: "",          // 新增：當前區域
-        location: "",        // 新增：當前地點
-        subLocation: ""      // 新增：當前子地點
+        region: "",         
+        location: "",       
+        subLocation: ""      
     };
 
 
@@ -4333,7 +4387,7 @@ window.toggleStateViewer = function() {
                 paragraphsInPage = 0;
             }
             
-            // === [核心優化] 快取攔截 ===
+            // === 快取攔截 ===
             let styledText;
             if (window.__FORMAT_CACHE.has(p)) {
                 styledText = window.__FORMAT_CACHE.get(p); // 命中快取，直接取用 O(1)
@@ -4341,7 +4395,7 @@ window.toggleStateViewer = function() {
                 styledText = formatText(p); // 未命中，執行耗時的正則運算 O(N)
                 window.__FORMAT_CACHE.set(p, styledText); // 存入快取
                 
-                // [防護機制] 避免長時間對話導致記憶體溢出，設定 1000 筆上限
+                // 避免長時間對話導致記憶體溢出，設定 1000 筆上限
                 if (window.__FORMAT_CACHE.size > 1000) {
                     let count = 0;
                     // 直接使用迭代器清理，避免 Array.from 產生額外的記憶體開銷 (GC 壓力)
@@ -4752,6 +4806,7 @@ window.toggleStateViewer = function() {
             
             els.display.classList.add('show-drop-cap');
         }
+		requestParentResize();
     };
 
     const updateButtons = () => {
@@ -4789,7 +4844,7 @@ window.toggleStateViewer = function() {
                 img.style.animationDelay = Math.random() * 0.3 + 's';
 				
 				// [修改] 綁定點擊事件
-                // 這裡我們需要找到該角色在 fullPartyData 對應的 ID (p1, p2...)
+                // 需要找到該角色在 fullPartyData 對應的 ID (p1, p2...)
                 // 因為 partyIds 存的是名字 (如 "爱娜")，我們需要反查
                 img.onclick = (e) => {
                     e.stopPropagation();
@@ -4813,7 +4868,7 @@ window.toggleStateViewer = function() {
     };
 
 
-    // === [新增] 背景資源預載（低優先度，不阻塞主流程）===
+    // === 背景資源預載（低優先度，不阻塞主流程）===
 if (!window.top.__PRELOAD_DONE) window.top.__PRELOAD_DONE = new Set(); 
 const __PRELOAD_DONE = window.top.__PRELOAD_DONE;
 
@@ -4839,7 +4894,7 @@ function scheduleBackgroundPreload(currentRegion, currentPartyIds) {
             if (!currentPartyIds.includes(name) && needsLoad(url)) queue.push(url);
         });
         
-        // 3. fullPartyData 中的 img / face / bg（Status 介面用的大圖）
+        // 3. fullPartyData 中的 img / face / bg（Status 界面用的大圖）
         fullPartyData.forEach(char => {
             [char.img, char.face, char.bg, char.imgDiff].forEach(url => {
                 if (needsLoad(url)) queue.push(url);
@@ -5364,7 +5419,7 @@ const LOCATION_BUTTONS = [
         try {
             await checkRaidStatus();
             // ============================================================
-            // === [優化一] 並行數據請求 (Parallel Fetching) ===
+            // === 並行數據請求 (Parallel Fetching) ===
             // ============================================================
             
             const batchPromises = [
@@ -5567,7 +5622,7 @@ heroineList.forEach((id, i) => {
                 const markers = mapMarkers[region] || [];
                 const activeMarkers = new Map();
 
-                // 為了避免在迴圈內發起請求，我們改用前面已經抓好的角色狀態 (charResults)
+                // 避免在迴圈內發起請求，改用前面已經抓好的角色狀態 (charResults)
                 // 創建一個快速查找字典
                 const statusMap = {};
                 heroineList.forEach((id, i) => {
@@ -5719,23 +5774,58 @@ if (JSON.stringify(sortedIdsForKey) !== JSON.stringify(state.lastPartyIds)) {
     renderParty(displayPartyIds);
     state.lastPartyIds = sortedIdsForKey;
 }
-
             // === 音乐播放逻辑 ===
-            const isMuted = topWindow.RPG_GLOBAL_STATE.isMuted;
-            if (isMuted) return; 
+            if (window.gameLoopPaused) return;
 
-            let targetMusicUrl = "";
-            if (isAnyNsfw) {
-                targetMusicUrl = nsfwBgm;
-            } else {
-                targetMusicUrl = mapMusic[region] || mapMusic["默认"] || mapMusic["自由都市"];
-            }
+const isMuted = topWindow.RPG_GLOBAL_STATE.isMuted;
+if (isMuted) return;
 
-            if (targetMusicUrl && targetMusicUrl !== state.currentMusicUrl) {
-                console.log("[RPG] 切換音樂至: ", targetMusicUrl);
-                await playAudio('bgm', { url: targetMusicUrl });
-                state.currentMusicUrl = targetMusicUrl;
-            }
+if (!topWindow.RPG_AUDIO_STATE) {
+    topWindow.RPG_AUDIO_STATE = {
+        context: 'map',
+        currentUrl: '',
+        pendingUrl: '',
+        source: 'rpg',
+        paused: true
+    };
+}
+
+let targetMusicUrl = "";
+if (isAnyNsfw) {
+    targetMusicUrl = nsfwBgm;
+} else {
+    targetMusicUrl = mapMusic[region] || mapMusic["默认"] || mapMusic["自由都市"];
+}
+
+if (!targetMusicUrl) return;
+
+const audioState = topWindow.RPG_AUDIO_STATE;
+
+// 小遊戲 / 戰鬥音樂接管時，主界面不要搶回地圖音樂
+if (audioState.source === 'minigame' || audioState.context === 'battle') {
+    return;
+}
+
+// 關鍵：全域已經是同一首，就不要重新 playAudio
+if (audioState.currentUrl === targetMusicUrl) {
+    state.currentMusicUrl = targetMusicUrl;
+
+    if (audioState.paused) {
+        audioState.paused = false;
+        await resumeBgm();
+    }
+
+    return;
+}
+await playAudio('bgm', { url: targetMusicUrl });
+
+audioState.context = 'map';
+audioState.currentUrl = targetMusicUrl;
+audioState.pendingUrl = '';
+audioState.source = 'rpg';
+audioState.paused = false;
+
+state.currentMusicUrl = targetMusicUrl;
 
         } catch(e) {
             console.error("同步失敗:", e);
@@ -5777,28 +5867,30 @@ window.updateTemplateVariables = function(data) {
     stringForFinishedCheck = stringForFinishedCheck.replace(/^[\s\S]*?<\/thinking>/i, '');
     stringForFinishedCheck = stringForFinishedCheck.replace(/^[\s\S]*?<\/think>/i, '');
     stringForFinishedCheck = stringForFinishedCheck.replace(/^[\s\S]*?\[\/metacognition\]/i, '');
-    const isFinished = stringForFinishedCheck.includes('</UpdateVariable>');
+    const isFinished = /<\/JSONPatch>/i.test(stringForFinishedCheck);
 
-    // ✅ 正文提取：直接傳原始字串給 extractContent，由它內部統一處理
-    const newText = extractContent(rawString);
-    const textStillHasTag = /^\s*(?:\[|<)\s*RPG\s*(?:\]|>)/i.test(newText);
-    if (textStillHasTag && isGenerating) {
-                   // 不更新 rawText，等下一幀
-                  return;
-           }
-    if (state.rawText !== newText) {
-        state.rawText = newText;
-        if (streamTimeout) cancelAnimationFrame(streamTimeout);
-        streamTimeout = requestAnimationFrame(() => {
-            refreshUI();
-            // 同步更新 state 面板（只在生成完成後才讀，避免頻繁更新）
-            if (!isGenerating) {
-                updateStateViewer(extractStateContent(rawString));
-            }
-        });
-    }
+// ✅ 正文提取：直接傳原始字串給 extractContent，由它內部統一處理
+const newText = extractContent(rawString);
+const textStillHasTag = /^\s*(?:\[|<)\s*RPG\s*(?:\]|>)/i.test(newText);
+if (textStillHasTag && isGenerating) {
+    // 不更新 rawText，等下一幀
+    return;
+}
 
-    clearTimeout(genResetTimer);
+if (state.rawText !== newText) {
+    state.rawText = newText;
+    if (streamTimeout) cancelAnimationFrame(streamTimeout);
+    streamTimeout = requestAnimationFrame(() => {
+        refreshUI();
+    });
+}
+
+// ✅ JSONPatch 面板獨立於正文刷新；避免正文沒變時面板不更新
+if (!isGenerating) {
+    updateStateViewer(extractStateContent(rawString));
+}
+
+clearTimeout(genResetTimer);
 if (isFinished) {
     // isFinished = 內容看起來已完整，設短計時器備援
     // 若 MESSAGE_RECEIVED 先觸發，clearTimeout 會讓這個不執行
@@ -5861,7 +5953,6 @@ window.RPG_MVU_UPDATE = async function(rawData, options = {}) {
     }
 
     // 生成完成時，由外部 helper 明確告知 streaming:false
-    // 此時不再只靠 </UpdateVariable> 的內部計時器，而是直接刷新變量狀態
     if (!window.RPG_IS_STREAMING) {
         await window.RPG_FORCE_REFRESH_FROM_VARIABLES(rawData);
     }
@@ -5887,10 +5978,35 @@ setVar: async function(varName, value) {
     );
 },
 playBgm: async function(url) {
-    try { await playAudio('bgm', { url }); } catch(e) { console.warn('[RPGBridge] playBgm 失敗:', e); }
+    try {
+        if (!topWindow.RPG_AUDIO_STATE) {
+            topWindow.RPG_AUDIO_STATE = {
+                context: 'map',
+                currentUrl: '',
+                pendingUrl: '',
+                source: 'rpg'
+            };
+        }
+
+        topWindow.RPG_AUDIO_STATE.context = 'battle';
+        topWindow.RPG_AUDIO_STATE.pendingUrl = url;
+        topWindow.RPG_AUDIO_STATE.currentUrl = url;
+        topWindow.RPG_AUDIO_STATE.source = 'minigame';
+
+        if (!topWindow.RPG_GLOBAL_STATE?.isMuted) {
+            await playAudio('bgm', { url });
+        }
+    } catch(e) {
+        console.warn('[RPGBridge] playBgm 失敗:', e);
+    }
 },
 pauseBgm: async function() {
-    try { await pauseAudio('bgm'); } catch(e) { console.warn('[RPGBridge] pauseBgm 失敗:', e); }
+    try { 
+      await pauseAudio('bgm');
+      if (topWindow.RPG_AUDIO_STATE) {
+    topWindow.RPG_AUDIO_STATE.paused = true;
+}
+ } catch(e) { console.warn('[RPGBridge] pauseBgm 失敗:', e); }
 },
 
     // 2. 執行 slash 指令
@@ -5918,7 +6034,13 @@ pauseBgm: async function() {
             window.gameLoopPaused = false;
             // [關鍵修正] 關閉後立即觸發一次同步，確保 BGM 能馬上切換回來
             setTimeout(syncGameState, 100); 
-        }
+        };
+if (topWindow.RPG_AUDIO_STATE) {
+    topWindow.RPG_AUDIO_STATE.context = 'map';
+    topWindow.RPG_AUDIO_STATE.source = 'rpg';
+    topWindow.RPG_AUDIO_STATE.pendingUrl = '';
+    topWindow.RPG_AUDIO_STATE.currentUrl = '';
+}
     },
 
 
@@ -5955,17 +6077,49 @@ pauseBgm: async function() {
     },
 
     // 5. 供子視窗呼叫，同步靜音狀態
-    updateMuteState: function(isMuted) {
-        console.log("[RPG Bridge] 靜音狀態更新:", isMuted);
-        if (window.RPG_GLOBAL_STATE) {
-            window.RPG_GLOBAL_STATE.isMuted = isMuted;
-        }
-        window.RPG_IS_MUTED = isMuted;
-        const event = new CustomEvent('RPG_BUTTON_SYNC', {
-            detail: { isMuted: isMuted }
-        });
-        window.dispatchEvent(event);
+    updateMuteState: async function(isMuted) {
+    console.log("[RPG Bridge] 靜音狀態更新:", isMuted);
+
+    if (!topWindow.RPG_GLOBAL_STATE) {
+        topWindow.RPG_GLOBAL_STATE = {
+            isMuted: true,
+            theme: 'dark',
+            imageHost: 'imgchest'
+        };
     }
+
+    topWindow.RPG_GLOBAL_STATE.isMuted = isMuted;
+    topWindow.RPG_IS_MUTED = isMuted;
+    window.RPG_IS_MUTED = isMuted;
+
+    const event = new CustomEvent('RPG_BUTTON_SYNC', {
+        detail: { isMuted: isMuted }
+    });
+    topWindow.dispatchEvent(event);
+
+    if (isMuted) {
+        await pauseAudio('bgm');
+        if (topWindow.RPG_AUDIO_STATE) {
+    topWindow.RPG_AUDIO_STATE.paused = true;
+}
+        return;
+    }
+
+    const audioState = topWindow.RPG_AUDIO_STATE;
+
+    if (
+        audioState &&
+        audioState.source === 'minigame' &&
+        audioState.currentUrl
+    ) {
+        await playAudio('bgm', { url: audioState.currentUrl });
+        return;
+    }
+
+    if (typeof syncGameState === 'function') {
+        await syncGameState();
+    }
+}
 };
 
     // =========================================
@@ -5985,7 +6139,7 @@ pauseBgm: async function() {
     }
 }
 
-const MINIGAME_RAW_URL = "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/miniMVU1.html";
+const MINIGAME_RAW_URL = "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/miniMVU2.html";
 
 window.__MINIGAME_CACHE = window.__MINIGAME_CACHE || {};
 
@@ -6017,23 +6171,21 @@ async function openMinigame(url) {
     fallbackBtn.style.display = 'none'; // 預設隱藏
 
     if (fallbackTarget && fallbackTarget !== '非攻略中' && fallbackTarget !== '0') {
-        fallbackBtn.innerHTML = `⚠️ 游戏无法载入？<br><strong>点此直接完成攻略：${fallbackTarget}</strong>`;
+        fallbackBtn.innerHTML = `⚠️ 小游戏未成功显示？<br><strong>点此直接完成攻略：${fallbackTarget}</strong>`;
         fallbackBtn.onclick = () => _triggerVictoryFallback(fallbackTarget);
     }
 
     // === [防呆] 超時計時器：10秒後顯示備援按鈕 ===
-    const fallbackTimer = setTimeout(() => {
-        console.warn('[RPG] 小遊戲載入超時，顯示備援按鈕');
-        if (fallbackBtn) fallbackBtn.style.display = 'block';
-    }, 10000);
+    // === [防呆] 只在真正載入失敗時顯示，不用固定 10 秒倒數 ===
+let fallbackTimer = null;
 
-    // iframe 成功載入後取消計時器
-    frame.onload = () => {
-        // blob URL 載入成功，內容不是空的才算真正載入
-        if (frame.src && frame.src !== 'about:blank' && frame.src !== '') {
-            clearTimeout(fallbackTimer);
-        }
-    };
+frame.onload = () => {
+    if (fallbackTimer) {
+        clearTimeout(fallbackTimer);
+        fallbackTimer = null;
+    }
+    if (fallbackBtn) fallbackBtn.style.display = 'none';
+};
 
     try {
         let targetUrl = url;
@@ -6052,21 +6204,31 @@ async function openMinigame(url) {
             window.__MINIGAME_CACHE[targetUrl] = htmlText;
         }
 
-        const injectionScript = '<script>window.INJECTED_MUTE_STATE = ' + (window.RPG_IS_MUTED ?? true) + ';</' + 'script>';
-        htmlText = htmlText.replace('<head>', '<head>' + injectionScript);
+        const injectedMuteState = !!topWindow.RPG_GLOBAL_STATE?.isMuted;
+
+const injectionScript =
+    '<script>window.INJECTED_MUTE_STATE = ' +
+    JSON.stringify(injectedMuteState) +
+    ';</' + 'script>';
+
+htmlText = htmlText.replace('<head>', '<head>' + injectionScript);
 
         const blob = new Blob([htmlText], { type: 'text/html' });
         const blobUrl = URL.createObjectURL(blob);
         frame.src = blobUrl;
 
     } catch (e) {
-        console.error("[RPG] 小遊戲載入失敗:", e);
+    console.error("[RPG] 小遊戲載入失敗:", e);
+
+    if (fallbackTimer) {
         clearTimeout(fallbackTimer);
-        // === [防呆] fetch 失敗立即顯示備援按鈕 ===
-        if (fallbackBtn) fallbackBtn.style.display = 'block';
-        // 嘗試直連備援
-        frame.src = url;
+        fallbackTimer = null;
     }
+
+    if (fallbackBtn) fallbackBtn.style.display = 'block';
+
+    frame.src = url;
+}
 
     layer.classList.add('active');
     window.gameLoopPaused = true;
@@ -6327,28 +6489,54 @@ function sendMsgViaDOM(message) {
 
             // 3. 執行實際動作
             if (newMutedState) {
-                // 如果變為靜音 -> 暫停音樂
-                await pauseAudio('bgm'); 
-                state.currentMusicUrl = ""; 
-            } else {
-                // 如果變為開啟 -> 觸發同步來播放
-                state.currentMusicUrl = ""; // 強制重置，確保能再次觸發播放指令
-                await syncGameState();
-            }
+    // 關閉：只暫停，不清 URL，不清 currentMusicUrl
+    await pauseAudio('bgm');
+    if (topWindow.RPG_AUDIO_STATE) {
+        topWindow.RPG_AUDIO_STATE.paused = true;
+    }
+} else {
+    // 開啟：如果是同一首暫停中的 BGM，優先恢復播放
+    if (topWindow.RPG_AUDIO_STATE?.currentUrl) {
+    const resumed = await resumeBgm();
+
+    if (resumed) {
+        topWindow.RPG_AUDIO_STATE.paused = false;
+        return;
+    }
+}
+
+await syncGameState();
+}
         };
 		
 
         // UI 相關
         els.modeBtn.onclick = (e) => {
-            e.preventDefault();
-            state.isPaged = !state.isPaged;
-            root.classList.toggle('paged-mode', state.isPaged);
-            els.modeBtn.innerText = state.isPaged ? "切換全文模式" : "切換分頁模式";
-            state.currPage = 0;
-            refreshUI();
-        };
-        els.prevBtn.onclick = () => { if (state.isPaged && state.currPage > 0) { state.currPage--; refreshUI(); } };
-        els.nextBtn.onclick = () => { if (state.isPaged && state.currPage < state.pages.length - 1) { state.currPage++; refreshUI(); } };
+    e.preventDefault();
+
+    state.isPaged = !state.isPaged;
+    root.classList.toggle('paged-mode', state.isPaged);
+    els.modeBtn.innerText = state.isPaged ? "切换全文模式" : "切换分页模式";
+    state.currPage = 0;
+
+    refreshUI();
+    requestParentResize();
+};
+        els.prevBtn.onclick = () => {
+    if (state.isPaged && state.currPage > 0) {
+        state.currPage--;
+        refreshUI();
+        requestParentResize();
+    }
+};
+
+        els.nextBtn.onclick = () => {
+    if (state.isPaged && state.currPage < state.pages.length - 1) {
+        state.currPage++;
+        refreshUI();
+        requestParentResize();
+    }
+};
         
         if (els.menuBtn && els.menuDrop) {
             els.menuBtn.onclick = (e) => {
@@ -6392,7 +6580,7 @@ function sendMsgViaDOM(message) {
         }
 
         // ==========================================
-        // === [新增] Quest 介面事件綁定 ===
+        // === [新增] Quest 界面事件綁定 ===
         // ==========================================
         
         const questMenuBtn = root.querySelector('.menu-opt[data-action="quest"]');
@@ -6433,7 +6621,7 @@ function sendMsgViaDOM(message) {
         // 注意：這裡移除了舊的 mapAreaObserver，因為下面會統一建立一個
 
         // ==========================================
-        // === [新增] Bag 背包介面事件綁定 ===
+        // === [新增] Bag 背包界面事件綁定 ===
         // ==========================================
         
         const bagMenuBtn = root.querySelector('.menu-opt[data-action="bag"]');
@@ -6468,7 +6656,7 @@ function sendMsgViaDOM(message) {
         }
 
         // ==========================================
-        // === [統一] 啟動 ResizeObserver (控制所有介面縮放) ===
+        // === [統一] 啟動 ResizeObserver (控制所有界面縮放) ===
         // ==========================================
         let resizeFrame;
         const mapAreaObserver = new ResizeObserver(() => {
@@ -6483,7 +6671,7 @@ function sendMsgViaDOM(message) {
         }
 
         // ==========================================
-        // === [更新] Status 狀態介面事件綁定 ===
+        // === [更新] Status 狀態界面事件綁定 ===
         // ==========================================
         
         const statusMenuBtn = root.querySelector('.menu-opt[data-action="status"]');
@@ -6492,7 +6680,7 @@ function sendMsgViaDOM(message) {
                 document.querySelectorAll('.location-action-btn-wrap').forEach(el => el.style.display = 'none');
                 e.stopPropagation();
                 
-                // 1. 關閉互斥介面
+                // 1. 關閉互斥界面
                 const qLayer = document.getElementById('quest-layer');
                 if(qLayer) qLayer.classList.remove('active');
                 const bLayer = document.getElementById('bag-layer');
@@ -6584,7 +6772,7 @@ document.getElementById('display-layer')?.addEventListener('click', (e) => {
             worldmapMenuBtn.onclick = (e) => {
                 e.stopPropagation();
 
-                // 關閉其他互斥介面
+                // 關閉其他互斥界面
                 document.getElementById('quest-layer')?.classList.remove('active');
                 document.getElementById('bag-layer')?.classList.remove('active');
                 document.getElementById('status-layer')?.classList.remove('active');
@@ -6653,7 +6841,7 @@ if (typeof tavern_events !== 'undefined') {
     }, 100);
 }
 
-	// === [新增] 全角色選擇器邏輯 ===
+	// === 全角色選擇器邏輯 ===
     
     window.openCharSelector = function() {
         // 1. 確保有最新的角色數據
@@ -6665,7 +6853,7 @@ if (typeof tavern_events !== 'undefined') {
         const grid = document.getElementById('char-grid-content');
         grid.innerHTML = "";
 
-        // 2. 遍歷 activePartyData (這些是 Status 介面可見的角色)
+        // 2. 遍歷 activePartyData (這些是 Status 界面可見的角色)
         activePartyData.forEach(char => {
             const item = document.createElement('div');
             item.className = 'char-grid-item';
@@ -6700,11 +6888,11 @@ if (typeof tavern_events !== 'undefined') {
         // 1. 關閉選擇器
         closeCharSelector();
 
-        // 2. 切換到 Status 介面
+        // 2. 切換到 Status 界面
         switchInterface('status');
 
         // 3. 操作 DOM 來選中目標角色
-        // 這裡需要稍微延遲，等待 Status 介面初始化完成 (如果是第一次開啟)
+        // 這裡需要稍微延遲，等待 Status 界面初始化完成 (如果是第一次開啟)
         setTimeout(() => {
             const track = document.getElementById('faces-track');
             if (!track) return;
@@ -6714,7 +6902,7 @@ if (typeof tavern_events !== 'undefined') {
             
             if (targetIndex === -1) return;
 
-            // 邏輯：Status 介面預設 Index 1 (第二張卡) 是 Active
+            // 邏輯：Status 界面預設 Index 1 (第二張卡) 是 Active
             // 我們需要移動 DOM 元素，直到 targetId 變成了 Index 1
             
             // 如果目標在 Index 1，什麼都不用做，直接更新顯示
