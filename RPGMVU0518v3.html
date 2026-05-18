@@ -6822,7 +6822,8 @@ if (firstMsg && firstMsg.role !== 'assistant') return;
         clearTimeout(genResetTimer);
         const root = document.querySelector('.rpg-v7-root');
         if (root) root.classList.remove('generating');
-        updateStateViewer(extractStateContent(lastRawString || ''));
+        const fullText = firstMsg?.message || lastRawString || '';
+    updateStateViewer(extractStateContent(fullText));
         setTimeout(() => {
             if (typeof syncGameState === 'function') syncGameState();
         }, 500);
