@@ -4105,6 +4105,7 @@ function extractStateContent(rawString) {
         .replace(/<thinking>[\s\S]*?<\/thinking>/gi, '')
         .replace(/<think>[\s\S]*?<\/think>/gi, '')
         .replace(/\[metacognition\][\s\S]*?\[\/metacognition\]/gi, '');
+    console.log('[StateViewer] JSONPatch exists:', cleaned.includes('<JSONPatch>'));
     // 2. 提取標籤
     const match = cleaned.match(/<JSONPatch>([\s\S]*?)<\/JSONPatch>/i);
     return match ? match[1].trim() : null;
@@ -5898,7 +5899,7 @@ if (isFinished) {
         isGenerating = false;
         const root = document.querySelector('.rpg-v7-root');
         if (root) root.classList.remove('generating');
-        updateStateViewer(extractStateContent(rawString));
+        updateStateViewer(extractStateContent(lastRawString));
         setTimeout(() => syncGameState?.(), 500);
     }, 800); // 給事件監聽留足夠的優先時間
 }
