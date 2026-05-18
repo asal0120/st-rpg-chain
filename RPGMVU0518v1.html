@@ -5842,6 +5842,7 @@ state.currentMusicUrl = targetMusicUrl;
 let streamTimeout = null;
 let isGenerating = false;
 let genResetTimer = null;
+let lastRawString = '';
 
 window.updateTemplateVariables = function(data) {
 
@@ -5861,36 +5862,34 @@ window.updateTemplateVariables = function(data) {
     }
 
     const rawString = typeof data === 'string' ? data : (data && data.RPG ? String(data.RPG) : "");
-
+    lastRawString = rawString;
     // ✅ isFinished 專用：單獨清洗，只為了準確判斷結尾標籤
     let stringForFinishedCheck = rawString;
     stringForFinishedCheck = stringForFinishedCheck.replace(/^[\s\S]*?<\/thinking>/i, '');
     stringForFinishedCheck = stringForFinishedCheck.replace(/^[\s\S]*?<\/think>/i, '');
     stringForFinishedCheck = stringForFinishedCheck.replace(/^[\s\S]*?\[\/metacognition\]/i, '');
-    const isFinished = /<\/JSONPatch>/i.test(stringForFinishedCheck);
+    const isFinished = stringForFinishedCheck.includes('</JSONPatch>');
 
-// ✅ 正文提取：直接傳原始字串給 extractContent，由它內部統一處理
-const newText = extractContent(rawString);
-const textStillHasTag = /^\s*(?:\[|<)\s*RPG\s*(?:\]|>)/i.test(newText);
-if (textStillHasTag && isGenerating) {
-    // 不更新 rawText，等下一幀
-    return;
-}
+    // ✅ 正文提取：直接傳原始字串給 extractContent，由它內部統一處理
+    const newText = extractContent(rawString);
+    const textStillHasTag = /^\s*(?:\[|<)\s*RPG\s*(?:\]|>)/i.test(newText);
+    if (textStillHasTag && isGenerating) {
+                   // 不更新 rawText，等下一幀
+                  return;
+           }
+    if (state.rawText !== newText) {
+        state.rawText = newText;
+        if (streamTimeout) cancelAnimationFrame(streamTimeout);
+        streamTimeout = requestAnimationFrame(() => {
+            refreshUI();
+            // 同步更新 state 面板（只在生成完成後才讀，避免頻繁更新）
+            if (!isGenerating) {
+                updateStateViewer(extractStateContent(rawString));
+            }
+        });
+    }
 
-if (state.rawText !== newText) {
-    state.rawText = newText;
-    if (streamTimeout) cancelAnimationFrame(streamTimeout);
-    streamTimeout = requestAnimationFrame(() => {
-        refreshUI();
-    });
-}
-
-// ✅ JSONPatch 面板獨立於正文刷新；避免正文沒變時面板不更新
-if (!isGenerating) {
-    updateStateViewer(extractStateContent(rawString));
-}
-
-clearTimeout(genResetTimer);
+    clearTimeout(genResetTimer);
 if (isFinished) {
     // isFinished = 內容看起來已完整，設短計時器備援
     // 若 MESSAGE_RECEIVED 先觸發，clearTimeout 會讓這個不執行
@@ -6822,7 +6821,7 @@ if (firstMsg && firstMsg.role !== 'assistant') return;
         clearTimeout(genResetTimer);
         const root = document.querySelector('.rpg-v7-root');
         if (root) root.classList.remove('generating');
-        updateStateViewer(extractStateContent(state.rawText || ''));
+        updateStateViewer(extractStateContent(lastRawString || ''));
         setTimeout(() => {
             if (typeof syncGameState === 'function') syncGameState();
         }, 500);
