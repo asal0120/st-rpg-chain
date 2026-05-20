@@ -2873,6 +2873,130 @@ async function resumeBgm() {
 window.RPG_GLOBAL_STATE = topWindow.RPG_GLOBAL_STATE;
 window.RPG_IS_MUTED = topWindow.RPG_GLOBAL_STATE.isMuted;
 
+// === [新增] MVU sandbox 相容：自製確認框，取代原生 confirm() ===
+window.rpgConfirm = function(message, options = {}) {
+    return new Promise((resolve) => {
+        const old = document.getElementById('rpg-custom-confirm');
+        if (old) old.remove();
+
+        const confirmText = options.confirmText || '确定';
+        const cancelText = options.cancelText || '取消';
+        const title = options.title || '确认操作';
+
+        const overlay = document.createElement('div');
+        overlay.id = 'rpg-custom-confirm';
+        overlay.style.cssText = `
+            position: fixed;
+            inset: 0;
+            z-index: 999999;
+            background: rgba(0, 0, 0, 0.62);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: auto;
+            font-family: "Noto Serif SC", "Noto Serif TC", serif;
+        `;
+
+        const box = document.createElement('div');
+        box.style.cssText = `
+            width: min(420px, 86vw);
+            background: linear-gradient(to bottom, #2a2522, #15110f);
+            border: 1px solid #8a734b;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.75);
+            border-radius: 8px;
+            padding: 22px 24px 20px;
+            color: #e0d6c8;
+            text-align: center;
+            box-sizing: border-box;
+        `;
+
+        const titleEl = document.createElement('div');
+        titleEl.textContent = title;
+        titleEl.style.cssText = `
+            font-size: 20px;
+            color: #f0d38a;
+            margin-bottom: 14px;
+            font-weight: bold;
+        `;
+
+        const msgEl = document.createElement('div');
+        msgEl.textContent = message;
+        msgEl.style.cssText = `
+            font-size: 16px;
+            line-height: 1.7;
+            white-space: pre-line;
+            color: #d8cbb8;
+            margin-bottom: 22px;
+        `;
+
+        const btnRow = document.createElement('div');
+        btnRow.style.cssText = `
+            display: flex;
+            justify-content: center;
+            gap: 14px;
+        `;
+
+        const cancelBtn = document.createElement('button');
+        cancelBtn.type = 'button';
+        cancelBtn.textContent = cancelText;
+        cancelBtn.style.cssText = `
+            min-width: 96px;
+            padding: 8px 16px;
+            border: 1px solid #6f6254;
+            background: #2b2722;
+            color: #d8cbb8;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 15px;
+        `;
+
+        const okBtn = document.createElement('button');
+        okBtn.type = 'button';
+        okBtn.textContent = confirmText;
+        okBtn.style.cssText = `
+            min-width: 96px;
+            padding: 8px 16px;
+            border: 1px solid #a86666;
+            background: #5a2525;
+            color: #fff0e8;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 15px;
+        `;
+
+        const close = (result) => {
+            overlay.remove();
+            resolve(result);
+        };
+
+        cancelBtn.onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            close(false);
+        };
+
+        okBtn.onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            close(true);
+        };
+
+        overlay.onclick = (e) => {
+            if (e.target === overlay) close(false);
+        };
+
+        btnRow.appendChild(cancelBtn);
+        btnRow.appendChild(okBtn);
+        box.appendChild(titleEl);
+        box.appendChild(msgEl);
+        box.appendChild(btnRow);
+        overlay.appendChild(box);
+        document.body.appendChild(overlay);
+
+        okBtn.focus();
+    });
+};
+
 const getPath = (obj, path, fallback) => {
     const keys = Array.isArray(path) ? path : String(path).split('.');
     let cur = obj;
@@ -3842,6 +3966,9 @@ if (
         console.error("数据读取过程发生错误:", e);
     }
 
+
+
+
 // === [新增] 刪除任務核心邏輯 ===
     window.deleteQuest = async function(questName, category, filter) {
         // 防呆：生成中禁止操作
@@ -3851,9 +3978,18 @@ if (
         }
 
         // 1. 彈出確認視窗
-        if (!confirm(`确定要删除任务「${questName}」的纪录吗？\n(删除后将无法恢复)`)) {
-            return;
-        }
+        const ok = await window.rpgConfirm(
+    `确定要删除任务「${questName}」的纪录吗？\n删除后将无法恢复。`,
+    {
+        title: '删除任务',
+        confirmText: '删除',
+        cancelText: '取消'
+    }
+);
+
+if (!ok) {
+    return;
+}
 
         try {
             document.body.style.cursor = 'wait';
@@ -4051,9 +4187,18 @@ if (
         }
 
         // 1. 彈出確認視窗 (原生阻塞)
-        if (!confirm(`确定要丢弃物品「${itemName}」吗？\n(丢弃后将无法恢复)`)) {
-            return;
-        }
+        const ok = await window.rpgConfirm(
+    `确定要丢弃物品「${itemName}」吗？\n丢弃后将无法恢复。`,
+    {
+        title: '丢弃物品',
+        confirmText: '丢弃',
+        cancelText: '取消'
+    }
+);
+
+if (!ok) {
+    return;
+}
 
         try {
             document.body.style.cursor = 'wait';
