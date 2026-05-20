@@ -91,7 +91,7 @@
     .map-point:hover {
         background: #fff;
         transform: translate(-50%, -50%) scale(1.3);
-        z-index: 200;
+        z-index: 113;
         box-shadow: 0 0 10px rgba(255,255,255, 0.8);
     }
 
@@ -142,7 +142,7 @@
         color: #fff;
         padding: 8px 12px; /* 稍微增加內距讓文字不要太擠 */
         border-radius: 4px;
-        font-size: 16px;
+        font-size: 13px;
         
         /* === 關鍵修改開始 === */
         white-space: normal;      /* 允許文字換行 */
@@ -179,7 +179,7 @@
     /* 讓標題保持置中 */
     .point-tip strong {
         display: block;
-        font-size: 18px;
+        font-size: 14px;
         margin-bottom: 4px;
         color: #ffcc66;
         text-align: center;     /* 標題置中 */
@@ -195,19 +195,18 @@
         width: 100%;
     }
 
-   .map-point:hover .point-tip {
-    opacity: 1;
-    visibility: visible;
-    bottom: 160%;
-}
-.map-point.flip-down:hover .point-tip {
-    bottom: auto;
-    top: 170%;
-}
-.rpg-v7-root.mobile-layout .map-point:hover .point-tip {
-    opacity: 0;
-    visibility: hidden;
-}
+    /* === [修改] 僅在支援滑鼠的設備 (電腦) 啟用懸停效果 === */
+    @media (hover: hover) and (pointer: fine) {
+        .map-point:hover .point-tip {
+            opacity: 1;
+            visibility: visible;
+            bottom: 160%;
+        }
+        .map-point.flip-down:hover .point-tip {
+            bottom: auto;
+            top: 170%;
+        }
+    }
 
     /* === [新增] 手機端專用的全局底部面板 === */
     .mobile-map-panel {
@@ -552,7 +551,7 @@
         z-index: 20;
         color: var(--text-color);
         font-family: "Uncial Antiqua", "Noto Serif SC", "Noto Serif TC", serif;
-        transition: background 0.5s, color 0.5s, border 0.5s; /* 讓切换過程有絲滑動畫 */
+        transition: background 0.5s, color 0.5s, border 0.5s; /* 讓切換過程有絲滑動畫 */
     }
     
     .rpg-v7-root.paged-mode .text-area {
@@ -731,7 +730,7 @@
     .time-group {
         /* ▼▼▼ 時間的位置 ▼▼▼ */
         top: 13%;   
-        left: 26.5%;  
+        left: 28.5%;  
         
         /* ▼▼▼ 時間的文字大小 ▼▼▼ */
         font-size: clamp(14px, 1.9vw, 30px); 
@@ -752,7 +751,7 @@
 
 
     .hud-label {
-        font-size: 0.9em;
+        font-size: 0.75em;
         font-family: "Uncial Antiqua", "ZCOOL XiaoWei", "Noto Serif SC", "Noto Serif TC", serif;
         
         color: #E0E0E0;
@@ -765,7 +764,7 @@
     }
 
     .hud-value {
-        font-size: 1.1em;
+        font-size: 1em;
         font-family: "Uncial Antiqua", "ZCOOL XiaoWei", "Noto Serif SC", "Noto Serif TC", serif;
         
         color: #ffcc00;
@@ -789,7 +788,7 @@
         /* 關鍵：讓滑鼠穿透，才不會擋住點擊 */
         pointer-events: none;
         
-        /* 讓顏色切换時有漸變效果，看起來像是太陽慢慢下山 */
+        /* 讓顏色切換時有漸變效果，看起來像是太陽慢慢下山 */
         transition: background-color 1.5s ease, backdrop-filter 1.5s ease;
         
         /* 預設是透明 (白天) */
@@ -813,7 +812,7 @@
         pointer-events: none; /* 讓點擊穿透，只有內部元素可點 */
     }
 
-    /* 透過 JS 切换此 class 來顯示界面 */
+    /* 透過 JS 切換此 class 來顯示界面 */
     .quest-layer-wrapper.active {
         display: block;
     }
@@ -842,7 +841,7 @@
         --p-green-dim: #4b8a5f;
     }
 
-
+    /* === 以下為 QUEST.html 原本的樣式 (已限制範圍) === */
 
     /* 背景圖層 */
     .quest-scaler .bg-layer {
@@ -1020,7 +1019,7 @@
 
     .quest-scaler .empty-state {
         text-align: center; color: var(--p-text-dim); 
-        font-style: italic; margin-top: 195px; font-size: 24px;
+        font-style: italic; margin-top: 50px;
     }
 
     /* 關閉按鈕 */
@@ -1068,7 +1067,7 @@
         --p-text-dim: #9c9285;
     }
 
-
+    /* === 以下移植自 BAG.html === */
 
     /* 背景圖層 (注意：圖片與 Quest 不同) */
     .bag-scaler .bg-layer {
@@ -1152,7 +1151,7 @@
         /* === [修改] 將金幣移出排版流 === */
         position: absolute;
         right: 300px;        /* 靠右對齊 */
-        bottom: 1px;   /* 往下推移 (數值可依喜好微調，負值越大越往下) */
+        bottom: 4px;   /* 往下推移 (數值可依喜好微調，負值越大越往下) */
         
         /* 確保不被其他東西蓋住 */
         z-index: 20; 
@@ -1237,7 +1236,7 @@
 
     .bag-scaler .empty-state {
         grid-column: 1 / -1; text-align: center; color: var(--p-text-dim); 
-        font-style: italic; margin-top: 195px; font-size: 24px;
+        font-style: italic; margin-top: 50px; font-size: 18px;
     }
 
     /* 關閉按鈕 */
@@ -1296,6 +1295,7 @@
         --card-gap: 20px;
     }
 
+    /* === 以下為 STATUS.html 原始樣式 (加上 .status-scaler 前綴以隔離) === */
 
     .status-scaler .status-screen {
         position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 100;
@@ -1483,7 +1483,7 @@
     .status-scaler .face-card.active img { filter: grayscale(0%) brightness(1.1); }
 	
 	/* ========================================= */
-    /* === [新增] 界面間切换導航按鈕 === */
+    /* === [新增] 界面間切換導航按鈕 === */
     /* ========================================= */
     .interface-nav-btn { 
         position: absolute; top: 20px; right: 20px; font-size: 30px; width: 10px; height: 10px;
@@ -1592,7 +1592,7 @@
         pointer-events: none; 
     }
     
-    /* 如果要啟用，可以在 JS 中切换 class，或直接改這裡為 auto */
+    /* 如果要啟用，可以在 JS 中切換 class，或直接改這裡為 auto */
     .mm-zone-group.enabled { pointer-events: auto; }
 
     .mm-visual-arc {
@@ -1828,8 +1828,8 @@
     .rpg-v7-root.generating .btn-plus,        /* 加點按鈕 */
     .rpg-v7-root.generating .toggle-party-btn,/* 邀請同行按鈕 */
     .rpg-v7-root.generating .go-home-btn,     /* 回家按鈕 */
-    .rpg-v7-root.generating .cat-btn,         /* 任務/背包分類標籤 (防止切换過快) */
-    .rpg-v7-root.generating .filter-opt       /* 任務篩選 (防止切换過快) */
+    .rpg-v7-root.generating .cat-btn,         /* 任務/背包分類標籤 (防止切換過快) */
+    .rpg-v7-root.generating .filter-opt       /* 任務篩選 (防止切換過快) */
     {
         opacity: 0.5;
         cursor: not-allowed !important;
@@ -1851,27 +1851,16 @@
 
 /* === [新增] 任務刪除按鈕 === */
     .quest-scaler .quest-delete-btn {
-    position: absolute;
-    top: -40px;
-    right: -28px;
-
-    width: 72px;
-    height: 72px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    font-size: 40px;
-    line-height: 1;
-    color: var(--p-text-dim);
-    cursor: pointer;
-    z-index: 999;
-    opacity: 0.6;
-    pointer-events: auto;
-    user-select: none;
-
-    transition: color 0.2s, opacity 0.2s, text-shadow 0.2s, transform 0.2s;
-}
+        position: absolute;
+        top: -25px;
+        right: -25px;
+        font-size: 20px;
+        color: var(--p-text-dim);
+        cursor: pointer;
+        z-index: 10;
+        transition: all 0.2s;
+        opacity: 0.6;
+    }
     
     .quest-scaler .quest-delete-btn:hover {
         color: var(--p-red-dim);
@@ -1881,27 +1870,16 @@
     }
 /* === [新增] 物品刪除按鈕 === */
     .bag-scaler .item-delete-btn {
-    position: absolute;
-    top: -5px;
-    right: 5px;
-
-    width: 64px;
-    height: 64px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    font-size: 30px;
-    line-height: 1;
-    color: var(--p-text-dim);
-    cursor: pointer;
-    z-index: 999;
-    opacity: 0.6;
-    pointer-events: auto;
-    user-select: none;
-
-    transition: color 0.2s, opacity 0.2s, text-shadow 0.2s, transform 0.2s;
-}
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        font-size: 20px;
+        color: var(--p-text-dim);
+        cursor: pointer;
+        z-index: 10;
+        transition: all 0.2s;
+        opacity: 0.6;
+    }
     
     .bag-scaler .item-delete-btn:hover {
         color: #8a3b3b; /* 對應深紅色的 hover 效果 */
@@ -2036,7 +2014,7 @@
 }
 .wm-title {
     color: #ffcc66;
-    font-size: 27px;
+    font-size: 18px;
     font-family: "Cinzel", "Noto Serif SC", serif;
     letter-spacing: 0.08em;
 }
@@ -2044,10 +2022,10 @@
     background: none;
     border: 1px solid #5c4e36;
     color: #b0a080;
-    width: 45px;
-    height: 45px;
+    width: 30px;
+    height: 30px;
     border-radius: 4px;
-    font-size: 21px;
+    font-size: 14px;
     cursor: pointer;
     transition: border-color 0.2s, color 0.2s;
     display: flex;
@@ -2105,7 +2083,7 @@
     border-left: 3px solid transparent;
     color: #9a8a6a;
     font-family: "Noto Serif SC", serif;
-    font-size: 21px;
+    font-size: 14px;
     padding: 10px 16px;
     cursor: pointer;
     transition: background 0.15s, color 0.15s, border-color 0.15s;
@@ -2170,8 +2148,8 @@
 /* 右下角的區域名稱標示 */
 .wm-preview-label {
     position: absolute;
-    bottom: 10px;
-    right: 10px;
+    bottom: 14px;
+    right: 16px;
     background: rgba(16, 18, 26, 0.88);
     border: 1px solid #ffaa00;
     border-radius: 4px;
@@ -2280,8 +2258,8 @@
     border: 1px solid #ffaa00;
     color: #ffcc66;
     border-radius: 3px;
-    padding: 5px 11px;
-    font-size: 16px;
+    padding: 3px 8px;
+    font-size: 11px;
     font-family: "Noto Serif SC", serif;
     cursor: pointer;
     pointer-events: auto;
@@ -2458,7 +2436,7 @@
     border: 1px solid #5c4e36;
     color: #c8aa6e;
     font-family: "Uncial Antiqua", serif;
-    font-size: 16px;
+    font-size: 14px;
     text-align: center;
     padding: 2px 4px;
     border-radius: 2px;
@@ -2473,381 +2451,6 @@
 .rpg-v7-root.generating .batch-input {
     opacity: 0.5;
     pointer-events: none;
-}
-
-
-/* ==========================================
-   手机布局覆盖（.mobile-layout）
-   ========================================== */
-
-/* ---- Quest ---- */
-.rpg-v7-root.mobile-layout .quest-scaler .header-section {
-    padding-bottom: 60px;
-}
-.rpg-v7-root.mobile-layout .quest-scaler .page-title {
-    font-size: 70px;
-}
-.rpg-v7-root.mobile-layout .quest-scaler .category-tabs {
-    gap: 30px;
-}
-.rpg-v7-root.mobile-layout .quest-scaler .cat-btn {
-    padding: 16px 45px;
-    font-size: 30px;
-}
-.rpg-v7-root.mobile-layout .quest-scaler .filter-bar {
-    gap: 40px;
-}
-.rpg-v7-root.mobile-layout .quest-scaler .filter-opt {
-    font-size: 27px;
-}
-.rpg-v7-root.mobile-layout .quest-scaler .q-title {
-    font-size: 50px;
-}
-.rpg-v7-root.mobile-layout .quest-scaler .q-desc {
-    font-size: 35px;
-}
-.rpg-v7-root.mobile-layout .quest-scaler .q-npc {
-    font-size: 20px;
-}
-.rpg-v7-root.mobile-layout .quest-scaler .empty-state {
-    margin-top: 135px;
-    font-size: 30px;
-}
-.rpg-v7-root.mobile-layout .quest-scaler .close-btn {
-    top: -10px;
-    font-size: 60px;
-}
-.rpg-v7-root.mobile-layout .quest-scaler .quest-delete-btn {
-    top: -35px;
-    right: -28px;
-    width: 84px;
-    height: 84px;
-    font-size: 40px;
-}
-
-
-/* ---- Bag ---- */
-.rpg-v7-root.mobile-layout .bag-scaler .header-section {
-    padding-bottom: 60px;
-    margin-bottom: 60px;
-}
-.rpg-v7-root.mobile-layout .bag-scaler .empty-state {
-    margin-top: 135px;
-    font-size: 30px;
-}
-.rpg-v7-root.mobile-layout .bag-scaler .category-tabs {
-    gap: 30px;
-}
-.rpg-v7-root.mobile-layout .bag-scaler .cat-btn {
-    padding: 16px 45px;
-    font-size: 30px;
-}
-.rpg-v7-root.mobile-layout .bag-scaler .page-title {
-    font-size: 70px;
-}
-.rpg-v7-root.mobile-layout .bag-scaler .inv-container {
-    position: absolute;
-}
-
-.rpg-v7-root.mobile-layout .bag-scaler .currency-box {
-    position: absolute;
-    left: -509px;
-    top: 73px;
-    right: auto;
-    bottom: auto;
-    font-size: 32px;
-}
-.rpg-v7-root.mobile-layout .bag-scaler .inventory-grid {
-    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
-}
-.rpg-v7-root.mobile-layout .bag-scaler .item-card {
-    padding: 50px;
-}
-.rpg-v7-root.mobile-layout .bag-scaler .item-name {
-    font-size: 45px;
-    max-height: 60px;
-}
-.rpg-v7-root.mobile-layout .bag-scaler .item-desc {
-    font-size: 30px;
-    max-height: 100px;
-}
-.rpg-v7-root.mobile-layout .bag-scaler .close-btn {
-    top: -10px;
-    font-size: 60px;
-}
-.rpg-v7-root.mobile-layout .bag-scaler .item-delete-btn {
-    top: -5px;
-    right: 3px;
-    width: 84px;
-    height: 84px;
-    font-size: 40px;
-}
-
-/* ---- Status 布局覆盖 ---- */
-.rpg-v7-root.mobile-layout .status-scaler {
-    --card-skew: -15deg;
-}
-.rpg-v7-root.mobile-layout .status-scaler .data-section {
-    top: 1%;
-    left: 3.8%;
-    width: 67%;
-    height: 72%;
-    transform: skewX(var(--card-skew));
-    z-index: 30;
-}
-.rpg-v7-root.mobile-layout .status-scaler .char-name-box {
-    position: relative;
-    top: auto;
-    left: auto;
-    display: inline-flex;
-    align-items: center;
-    vertical-align: bottom;
-    margin-left: -11%;
-    margin-bottom: 0px;
-    padding: 11px 48px;
-    font-size: 51px;
-    letter-spacing: 3px;
-    white-space: nowrap;
-    border-left-width: 6px;
-    box-sizing: border-box;
-}
-.rpg-v7-root.mobile-layout .status-scaler .tab-row {
-    margin-left: 1px;
-    margin-bottom: -1px;
-    position: relative;
-    z-index: 6;
-    display: none;
-    vertical-align: bottom;
-}
-.rpg-v7-root.mobile-layout .status-scaler .tab-row.visible {
-    display: inline-flex;
-}
-.rpg-v7-root.mobile-layout .status-scaler .tab-btn {
-    padding: 11px 34px;
-    margin-right: 1px;
-    font-size: 27px;
-    letter-spacing: 1.5px;
-}
-.rpg-v7-root.mobile-layout .status-scaler .tab-btn.active {
-    padding-bottom: 13px;
-    margin-bottom: -1px;
-}
-.rpg-v7-root.mobile-layout .status-scaler .data-content {
-    height: calc(100% - 0px);
-    min-height: 0;
-    margin-left: 0;
-    padding: 42px 48px 46px 48px;
-    transform: skewX(15deg);
-    overflow-y: auto;
-}
-
-/* ---- Status 数值放大 ---- */
-.rpg-v7-root.mobile-layout .status-scaler .points-row {
-    margin-bottom: 12px;
-    padding-bottom: 12px;
-    border-bottom-width: 2px;
-}
-.rpg-v7-root.mobile-layout .status-scaler .points-row span {
-    font-size: 24px;
-}
-.rpg-v7-root.mobile-layout .status-scaler .points-val {
-    font-size: 40px;
-}
-.rpg-v7-root.mobile-layout .status-scaler .player-layout {
-    display: flex;
-    gap: 34px;
-    margin-bottom: 14px;
-}
-.rpg-v7-root.mobile-layout .status-scaler .player-layout .player-col:first-child {
-    flex: 0 0 40%;
-    max-width: 40%;
-}
-.rpg-v7-root.mobile-layout .status-scaler .player-layout .player-col:last-child {
-    flex: 1 1 auto;
-    min-width: 0;
-}
-.rpg-v7-root.mobile-layout .status-scaler .data-row,
-.rpg-v7-root.mobile-layout .status-scaler .stat-control-row {
-    height: 48px;
-    padding: 6px 0;
-}
-.rpg-v7-root.mobile-layout .status-scaler .data-row span:first-child,
-.rpg-v7-root.mobile-layout .status-scaler .stat-label {
-    font-size: 22px;
-}
-.rpg-v7-root.mobile-layout .status-scaler .data-val {
-    font-size: 30px;
-    line-height: 1.25;
-}
-.rpg-v7-root.mobile-layout .status-scaler .stat-val-group {
-    width: 76%;
-    gap: 8px;
-}
-.rpg-v7-root.mobile-layout .status-scaler .stat-num {
-    font-size: 30px;
-    min-width: 58px;
-    margin-right: 6px;
-}
-.rpg-v7-root.mobile-layout .status-scaler .batch-input {
-    width: 44px;
-    height: 30px;
-    font-size: 24px;
-}
-.rpg-v7-root.mobile-layout .status-scaler .btn-plus {
-    width: 32px;
-    height: 32px;
-    font-size: 22px;
-}
-.rpg-v7-root.mobile-layout .status-scaler #player-desc,
-.rpg-v7-root.mobile-layout .status-scaler #member-desc {
-    font-size: 28px;
-    line-height: 1.78;
-    margin-top: 12px;
-    padding-top: 12px;
-}
-.rpg-v7-root.mobile-layout .status-scaler .profile-grid {
-    grid-template-columns: minmax(0, 1.42fr) minmax(0, 0.78fr);
-    column-gap: 34px;
-    row-gap: 2px;
-    margin-bottom: 10px;
-}
-.rpg-v7-root.mobile-layout .status-scaler .profile-grid .data-val {
-    white-space: normal;
-    overflow-wrap: anywhere;
-}
-.rpg-v7-root.mobile-layout .status-scaler #tab-m-data .profile-grid + br {
-    display: none;
-}
-.rpg-v7-root.mobile-layout .status-scaler #member-desc {
-    margin-top: 28px;
-}
-.rpg-v7-root.mobile-layout .status-scaler .exp-container {
-    gap: 54px;
-}
-.rpg-v7-root.mobile-layout .status-scaler .exp-header {
-    font-size: 24px;
-    margin-bottom: 14px;
-    padding-bottom: 8px;
-}
-.rpg-v7-root.mobile-layout .status-scaler .exp-item {
-    font-size: 18px;
-    padding: 11px 0;
-}
-.rpg-v7-root.mobile-layout .status-scaler .exp-val {
-    font-size: 19px;
-}
-.rpg-v7-root.mobile-layout .status-scaler .gallery-grid {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 20px;
-    padding-top: 14px;
-}
-
-/* ---- Status 隊列條 ---- */
-.rpg-v7-root.mobile-layout .status-scaler .party-strip-container {
-    left: auto;
-    right: 10px;
-    bottom: 34px;
-    width: 340px;
-    height: 110px;
-    padding-left: 0;
-    z-index: 90;
-    transform: none;
-    transform-origin: center;
-}
-.rpg-v7-root.mobile-layout .status-scaler .strip-bg {
-    top: 16px;
-    left: 0;
-    width: 100%;
-    height: 82px;
-    transform: none;
-    background: rgba(0, 0, 0, 0.25);
-    border-top: 1px solid rgba(200, 170, 110, 0.25);
-    border-bottom: 1px solid rgba(200, 170, 110, 0.25);
-}
-.rpg-v7-root.mobile-layout .status-scaler .faces-window {
-    width: 250px;
-    height: 100%;
-    margin: 0 8px;
-    overflow: hidden;
-}
-.rpg-v7-root.mobile-layout .status-scaler .faces-track {
-    height: 100%;
-    align-items: center;
-    padding-left: 0;
-}
-.rpg-v7-root.mobile-layout .status-scaler .nav-arrow {
-    width: 34px;
-    height: 100%;
-    transform: none;
-}
-.rpg-v7-root.mobile-layout .status-scaler .nav-arrow:hover {
-    transform: scale(1.12);
-}
-.rpg-v7-root.mobile-layout .status-scaler .face-card {
-    width: 82px;
-    height: 82px;
-    margin-right: 12px;
-    transform: none;
-    border-radius: 4px;
-}
-.rpg-v7-root.mobile-layout .status-scaler .face-card img {
-    transform: none;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-.rpg-v7-root.mobile-layout .status-scaler .face-card:hover {
-    transform: translateY(-7px);
-}
-.rpg-v7-root.mobile-layout .status-scaler .face-card.active {
-    transform: translateY(-8px) scale(1.1);
-}
-
-/* ---- Status 其他按钮 ---- */
-.rpg-v7-root.mobile-layout .status-grid-btn {
-    left: auto;
-    right: 3px;
-    bottom: 3px;
-    width: 48px;
-    height: 48px;
-    font-size: 30px;
-    border-radius: 8px;
-    z-index: 170;
-}
-.rpg-v7-root.mobile-layout .status-scaler .interface-nav-btn.prev {
-    left: 10px;
-}
-.rpg-v7-root.mobile-layout .status-scaler .interface-nav-btn.next {
-    right: 16px;
-}
-.rpg-v7-root.mobile-layout .status-scaler .close-btn {
-    top: -15px;
-    right: 20px;
-    font-size: 60px;
-}
-
-/* ---- 世界地图 ---- */
-.rpg-v7-root.mobile-layout .worldmap-scaler .wm-title {
-    font-size: 36px;
-}
-.rpg-v7-root.mobile-layout .worldmap-scaler .wm-close-btn {
-    width: 60px;
-    height: 60px;
-    font-size: 36px;
-}
-.rpg-v7-root.mobile-layout .worldmap-scaler .wm-sidebar-label {
-    font-size: 30px;
-}
-.rpg-v7-root.mobile-layout .worldmap-scaler .wm-region-btn {
-    font-size: 24px;
-}
-.rpg-v7-root.mobile-layout .worldmap-scaler .location-action-btn {
-    font-size: 16px;
-    padding: 4px 8px;
-}
-
-.rpg-v7-root.mobile-layout .interface-nav-btn {
-    display: none;
 }
 </style>
 
@@ -2903,13 +2506,7 @@
                 <div class="display-opt-btn active" id="theme-dark-btn" onclick="setTheme('dark')">🌑 深色</div>
                 <div class="display-opt-btn" id="theme-light-btn" onclick="setTheme('light')">☀️ 浅色</div>
             </div>
-            <!-- 界面布局 -->
-<div class="display-section-label" style="margin-top:20px;">界面布局</div>
-<div class="display-btn-group">
-    <div class="display-opt-btn active" id="layout-auto-btn" onclick="setLayout('auto')">自动</div>
-    <div class="display-opt-btn" id="layout-desktop-btn" onclick="setLayout('desktop')">桌面</div>
-    <div class="display-opt-btn" id="layout-mobile-btn" onclick="setLayout('mobile')">手机</div>
-</div>
+
             <!-- 圖片來源 -->
             <div class="display-section-label" style="margin-top:20px;">图床</div>
             <div class="display-img-host-list" id="display-img-host-list">
@@ -3360,24 +2957,6 @@ window.setTheme = function(mode) {
     document.getElementById('theme-light-btn')?.classList.toggle('active', mode === 'light');
 };
 
-window.setLayout = function(mode) {
-    const root = document.querySelector('.rpg-v7-root');
-    topWindow.RPG_GLOBAL_STATE.layout = mode;
-
-    let effective = mode;
-    if (mode === 'auto') {
-        effective = window.matchMedia('(hover: hover) and (pointer: fine)').matches
-            ? 'desktop'
-            : 'mobile';
-    }
-
-    root.classList.toggle('mobile-layout', effective === 'mobile');
-
-    document.getElementById('layout-auto-btn')?.classList.toggle('active', mode === 'auto');
-    document.getElementById('layout-desktop-btn')?.classList.toggle('active', mode === 'desktop');
-    document.getElementById('layout-mobile-btn')?.classList.toggle('active', mode === 'mobile');
-};
-
 window.selectHost = function(host) {
     topWindow.RPG_GLOBAL_STATE.imageHost = host;  // 統一存這裡
     window.switchImageHost(host); // 已有的函數
@@ -3395,7 +2974,7 @@ const img = (imgchestUrl, catboxUrl) => {
 };
 
     // ==================================
-    const DEBUG_MODE = true; // 整合時設為 false 以讀取真實變數
+    const DEBUG_MODE = false; // 整合時設為 false 以讀取真實變數
     const EXP_CAT_1 = "侍奉经验"; 
     const EXP_CAT_2 = "亲密经验"; 
     const EXP_ITEMS_1 = ["口", "手", "足", "股", "乳"];
@@ -4700,11 +4279,8 @@ window.toggleStateViewer = function() {
     // 從全域狀態讀取並立刻套用，避免閃爍
     const _gs = topWindow.RPG_GLOBAL_STATE;
     if (_gs.theme === 'light') {
-    document.querySelector('.rpg-v7-root')?.classList.add('light-mode');
-}
-if (typeof window.setLayout === 'function') {
-    window.setLayout(_gs.layout || 'auto');
-}
+        document.querySelector('.rpg-v7-root')?.classList.add('light-mode');
+    }
 
     let IMAGE_HOST = topWindow.RPG_GLOBAL_STATE?.imageHost || 'imgchest';
 
@@ -5369,31 +4945,55 @@ function scheduleBackgroundPreload(currentRegion, currentPartyIds) {
 
     window.renderWorldMap = function() {
     const listEl = document.getElementById('wm-region-list');
+    const tabBar = document.getElementById('wm-tab-bar');
     if (!listEl) return;
     listEl.innerHTML = '';
+    if (tabBar) tabBar.innerHTML = '';
 
+    // [新增] 強制根據 scaler 實際顯示寬度決定模式，不依賴 media query
+    const scaler = document.getElementById('worldmap-scaler');
+    const scalerStyle = scaler ? window.getComputedStyle(scaler) : null;
+    const scaleVal = scalerStyle ? parseFloat(scalerStyle.transform.match(/matrix\(([^,]+)/)?.[1] || 1) : 1;
+    const visualWidth = 1080 * scaleVal;
+    const isMobile = visualWidth < 640;
+
+    // 強制套用手機/桌面佈局
     const sidebarEl = document.querySelector('.wm-sidebar');
-    const tabBar = document.getElementById('wm-tab-bar');
     const bodyEl = document.querySelector('.wm-body');
-    if (sidebarEl) sidebarEl.style.display = 'flex';
-    if (tabBar) tabBar.style.display = 'none';
-    if (bodyEl) bodyEl.style.flexDirection = '';
+    if (isMobile) {
+    if (sidebarEl) sidebarEl.style.display = 'none';
+    if (tabBar) tabBar.style.display = 'flex';
+    if (bodyEl) bodyEl.style.flexDirection = 'column';
 
     const previewArea = document.getElementById('wm-preview-area');
     if (previewArea) {
-        previewArea.style.aspectRatio = '';
-        previewArea.style.position = '';
-        previewArea.style.inset = '';
-        previewArea.style.width = '';
-        previewArea.style.height = '';
-        previewArea.style.backgroundImage = '';
-        previewArea.innerHTML = '';
-        const placeholder = document.createElement('div');
-        placeholder.className = 'wm-placeholder';
-        placeholder.textContent = '← 请选择一个区域';
-        previewArea.appendChild(placeholder);
+        previewArea.style.aspectRatio = 'unset';
+        previewArea.style.position = 'absolute';
+        previewArea.style.inset = '0';
+        previewArea.style.width = '100%';
+        previewArea.style.height = '100%';
     }
 
+    // [新增] 把 mobile-panel 移到 worldmap-layer（scaler 外層），脫離縮放
+    const layer = document.getElementById('worldmap-layer');
+    let panel = document.getElementById('wm-mobile-panel');
+    if (panel && layer && panel.parentElement !== layer) {
+        layer.appendChild(panel);
+    }
+    if (panel) {
+        // 直接用 viewport 固定在畫面底部
+        panel.style.position = 'fixed';
+        panel.style.bottom = '0';
+        panel.style.left = '0';
+        panel.style.right = '0';
+        panel.style.width = '100%';
+        panel.style.transform = '';
+        panel.style.fontSize = '14px';
+        panel.style.padding = '12px 16px';
+        panel.style.display = 'none'; // 初始隱藏，等點擊再 show
+    }
+} else {
+    // 桌面模式：panel 移回 wm-preview-wrap
     const previewWrap = document.querySelector('.wm-preview-wrap');
     let panel = document.getElementById('wm-mobile-panel');
     if (panel && previewWrap && panel.parentElement !== previewWrap) {
@@ -5407,10 +5007,37 @@ function scheduleBackgroundPreload(currentRegion, currentPartyIds) {
         panel.style.width = '';
         panel.style.fontSize = '';
         panel.style.padding = '';
-        panel.style.display = 'none';
     }
 
+    const previewArea = document.getElementById('wm-preview-area');
+    if (previewArea) {
+        previewArea.style.aspectRatio = '';
+        previewArea.style.position = '';
+        previewArea.style.inset = '';
+        previewArea.style.width = '';
+        previewArea.style.height = '';
+    }
+}
 
+
+    // 重置預覽區
+    const previewArea = document.getElementById('wm-preview-area');
+    if (previewArea) {
+        previewArea.style.backgroundImage = '';
+        previewArea.innerHTML = '';
+        const placeholder = document.createElement('div');
+        placeholder.className = 'wm-placeholder';
+        placeholder.textContent = '← 请选择一个区域';
+        previewArea.appendChild(placeholder);
+        const mobilePanel = document.createElement('div');
+        mobilePanel.className = 'wm-mobile-panel';
+        mobilePanel.id = 'wm-mobile-panel';
+        mobilePanel.innerHTML = `
+            <div class="wm-mobile-panel-name" id="wm-mobile-panel-name"></div>
+            <div class="wm-mobile-panel-desc" id="wm-mobile-panel-desc"></div>
+        `;
+        previewArea.appendChild(mobilePanel);
+    }
     const labelEl = document.getElementById('wm-preview-label');
     if (labelEl) labelEl.style.display = 'none';
 
@@ -5419,20 +5046,37 @@ function scheduleBackgroundPreload(currentRegion, currentPartyIds) {
 
     const onSelectRegion = (region, activeBtnEl) => {
         listEl.querySelectorAll('.wm-region-btn').forEach(b => b.classList.remove('active'));
+        if (tabBar) tabBar.querySelectorAll('.wm-tab-btn').forEach(b => b.classList.remove('active'));
         activeBtnEl.classList.add('active');
+        const sideBtn = listEl.querySelector(`.wm-region-btn[data-region="${region}"]`);
+        const tabBtn = tabBar?.querySelector(`.wm-tab-btn[data-region="${region}"]`);
+        if (sideBtn) sideBtn.classList.add('active');
+        if (tabBtn) tabBtn.classList.add('active');
         _renderWmPreview(region);
     };
 
     allRegions.forEach(region => {
+        // [修正 Bug1] 移除 currentRegion skip，兩側都要顯示全部區域
         const btn = document.createElement('button');
         btn.className = 'wm-region-btn';
         btn.dataset.region = region;
         btn.textContent = region;
-        if (region === currentRegion) btn.classList.add('active');
+        if (region === currentRegion) btn.classList.add('active');  // 預設高亮當前區域
         btn.onclick = () => onSelectRegion(region, btn);
         listEl.appendChild(btn);
+
+        if (tabBar) {
+            const tabBtn = document.createElement('button');
+            tabBtn.className = 'wm-tab-btn';
+            tabBtn.dataset.region = region;
+            tabBtn.textContent = region;
+            if (region === currentRegion) tabBtn.classList.add('active');  // 預設高亮當前區域
+            tabBtn.onclick = () => onSelectRegion(region, tabBtn);
+            tabBar.appendChild(tabBtn);
+        }
     });
 
+    // [修正 Bug1] 自動顯示當前區域地圖，手機上打開就有內容
     if (currentRegion && mapAssets[currentRegion]) {
         _renderWmPreview(currentRegion);
     }
@@ -5546,18 +5190,24 @@ panelParent.appendChild(mobilePanel);
         dot.innerHTML = '<div class="point-tip"><strong>' + point.name + '</strong>' + (desc ? '<span>' + desc + '</span>' : '') + '</div>';
 
         dot.onclick = (e) => {
- const isMobileLayout = document.querySelector('.rpg-v7-root')?.classList.contains('mobile-layout');
-    if (!isMobileLayout) return;
+    // 用 scaler 視覺寬度判斷手機模式，跟 renderWorldMap 邏輯一致
+    const scaler = document.getElementById('worldmap-scaler');
+    const matrix = scaler ? window.getComputedStyle(scaler).transform : '';
+    const scaleVal = parseFloat(matrix.match(/matrix\(([^,]+)/)?.[1] || 1);
+    const isMobileMode = (1080 * scaleVal) < 640;
 
-    e.stopPropagation();
-    const panel = document.getElementById('wm-mobile-panel');
-    const nameEl = document.getElementById('wm-mobile-panel-name');
-    const descEl = document.getElementById('wm-mobile-panel-desc');
-    if (panel && nameEl && descEl) {
-        nameEl.textContent = point.name;
-        descEl.textContent = desc || '';
-        panel.style.display = 'block';
-        requestAnimationFrame(() => panel.classList.add('show'));
+    if (isMobileMode) {
+        e.stopPropagation();
+        const panel = document.getElementById('wm-mobile-panel');
+        const nameEl = document.getElementById('wm-mobile-panel-name');
+        const descEl = document.getElementById('wm-mobile-panel-desc');
+        if (panel && nameEl && descEl) {
+            nameEl.textContent = point.name;
+            descEl.textContent = desc || '';
+            // 強制讓 panel display block 再加 show（繞過 media query 失效問題）
+            panel.style.display = 'block';
+            requestAnimationFrame(() => panel.classList.add('show'));
+        }
     }
 };
 previewArea.appendChild(dot);
@@ -5737,7 +5387,7 @@ const LOCATION_BUTTONS = [
         top: ${activeDot.style.top};
         transform: translate(-50%, 12px);
         display: flex; gap: 4px;
-        z-index: 199;
+        z-index: 200;
     `;
 
     visibleBtns.forEach(cfg => {
@@ -5754,8 +5404,8 @@ const LOCATION_BUTTONS = [
             }
             await syncGameState();
         };
-        wrap.appendChild(btn);   
-    });                       
+        wrap.appendChild(btn);   // ← 補回這行
+    });                          // ← forEach 結束（加分號更規範）
 
     els.mapArea.appendChild(wrap);
 }                     
@@ -6053,8 +5703,9 @@ heroineList.forEach((id, i) => {
                         dot.onclick = (e) => {
     e.stopPropagation();
 
-    const isMobileLayout = document.querySelector('.rpg-v7-root')?.classList.contains('mobile-layout');
-    if (!isMobileLayout) return;
+    const isHoverDevice = window.matchMedia('(hover: hover)').matches 
+                       && !window.matchMedia('(pointer: coarse)').matches;
+    if (isHoverDevice) return;
 
     const mobilePanel = document.getElementById('mobile-map-panel');
     if (mobilePanel) {
@@ -6431,8 +6082,7 @@ if (topWindow.RPG_AUDIO_STATE) {
         topWindow.RPG_GLOBAL_STATE = {
             isMuted: true,
             theme: 'dark',
-            imageHost: 'imgchest',
-            layout: 'auto'
+            imageHost: 'imgchest'
         };
     }
 
@@ -7083,12 +6733,6 @@ if (displayMenuBtn) {
         const isLight = root.classList.contains('light-mode');
         document.getElementById('theme-dark-btn')?.classList.toggle('active', !isLight);
         document.getElementById('theme-light-btn')?.classList.toggle('active', isLight);
-
-        // 同步布局
-        const currentLayout = topWindow.RPG_GLOBAL_STATE?.layout || 'auto';
-        document.getElementById('layout-auto-btn')?.classList.toggle('active', currentLayout === 'auto');
-        document.getElementById('layout-desktop-btn')?.classList.toggle('active', currentLayout === 'desktop');
-        document.getElementById('layout-mobile-btn')?.classList.toggle('active', currentLayout === 'mobile');
 
         // 同步圖床（從 RPG_GLOBAL_STATE 讀，不是從固定預設）
         const currentHost = topWindow.RPG_GLOBAL_STATE?.imageHost || 'catbox';
