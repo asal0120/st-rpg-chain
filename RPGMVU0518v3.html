@@ -2121,16 +2121,7 @@
     flex-shrink: 0;
 }
 
-/* [新增] 手機模式下地圖填滿容器，不用 aspect-ratio */
-@media (max-width: 600px) {
-    .wm-preview-area {
-        aspect-ratio: unset;
-        position: absolute;   /* 填滿 wm-preview-wrap */
-        inset: 0;
-        flex-shrink: unset;
-    }
-}
-/* 預覽區內的地標圖和標記點沿用全局的 .landmark-img / .map-point 樣式，無需額外定義 */
+
 
 /* 未選擇時的提示文字 */
 .wm-placeholder {
@@ -2162,32 +2153,6 @@
 }
 
 /* 手機：隱藏側欄，改用 tab bar */
-@media (max-width: 600px) {
-    .wm-body {
-        flex-direction: column;
-    }
-    .wm-sidebar {
-        display: none;
-    }
-    .wm-tab-bar {
-        display: flex;
-    }
-    .wm-mobile-panel {
-        display: block;
-    }
-    /* [新增] 縱向佈局時讓 preview-wrap 佔剩餘高度，不被截 */
-    .wm-preview-wrap {
-        flex: 1;
-        min-height: 0;
-        overflow-y: auto;
-    }
-    /* [新增] 縱向時 aspect-ratio 由寬度決定高度，允許自然展開 */
-    .wm-preview-area {
-        width: 100%;
-        height: auto;
-        min-height: 0;
-    }
-}
 
 /* Tab bar（手機專用，預設隱藏） */
 .wm-tab-bar {
@@ -2231,7 +2196,7 @@
     right: 0;
     background: rgba(16, 18, 26, 0.95);
     border-top: 1px solid #8a734b;
-    padding: 10px 16px;
+    padding: 25px 48px;
     z-index: 115;
     pointer-events: auto;
     transform: translateY(100%);
@@ -2242,13 +2207,13 @@
 }
 .wm-mobile-panel-name {
     color: #ffcc66;
-    font-size: 14px;
+    font-size: 35px;
     font-family: "Noto Serif SC", serif;
     margin-bottom: 4px;
 }
 .wm-mobile-panel-desc {
     color: #b0a080;
-    font-size: 12px;
+    font-size: 30px;
     font-family: "Noto Serif SC", serif;
     line-height: 1.5;
 }
