@@ -1851,16 +1851,27 @@
 
 /* === [新增] 任務刪除按鈕 === */
     .quest-scaler .quest-delete-btn {
-        position: absolute;
-        top: -40px;
-        right: -28px;
-        font-size: 40px;
-        color: var(--p-text-dim);
-        cursor: pointer;
-        z-index: 10;
-        transition: all 0.2s;
-        opacity: 0.6;
-    }
+    position: absolute;
+    top: -40px;
+    right: -28px;
+
+    width: 72px;
+    height: 72px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 40px;
+    line-height: 1;
+    color: var(--p-text-dim);
+    cursor: pointer;
+    z-index: 999;
+    opacity: 0.6;
+    pointer-events: auto;
+    user-select: none;
+
+    transition: color 0.2s, opacity 0.2s, text-shadow 0.2s, transform 0.2s;
+}
     
     .quest-scaler .quest-delete-btn:hover {
         color: var(--p-red-dim);
@@ -1870,16 +1881,27 @@
     }
 /* === [新增] 物品刪除按鈕 === */
     .bag-scaler .item-delete-btn {
-        position: absolute;
-        top: -5px;
-        right: 5px;
-        font-size: 30px;
-        color: var(--p-text-dim);
-        cursor: pointer;
-        z-index: 10;
-        transition: all 0.2s;
-        opacity: 0.6;
-    }
+    position: absolute;
+    top: -5px;
+    right: 5px;
+
+    width: 64px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 30px;
+    line-height: 1;
+    color: var(--p-text-dim);
+    cursor: pointer;
+    z-index: 999;
+    opacity: 0.6;
+    pointer-events: auto;
+    user-select: none;
+
+    transition: color 0.2s, opacity 0.2s, text-shadow 0.2s, transform 0.2s;
+}
     
     .bag-scaler .item-delete-btn:hover {
         color: #8a3b3b; /* 對應深紅色的 hover 效果 */
@@ -2497,8 +2519,12 @@
 }
 .rpg-v7-root.mobile-layout .quest-scaler .quest-delete-btn {
     top: -35px;
+    right: -28px;
+    width: 84px;
+    height: 84px;
     font-size: 40px;
 }
+
 
 /* ---- Bag ---- */
 .rpg-v7-root.mobile-layout .bag-scaler .header-section {
@@ -2552,6 +2578,8 @@
 .rpg-v7-root.mobile-layout .bag-scaler .item-delete-btn {
     top: -5px;
     right: 3px;
+    width: 84px;
+    height: 84px;
     font-size: 40px;
 }
 
@@ -3367,7 +3395,7 @@ const img = (imgchestUrl, catboxUrl) => {
 };
 
     // ==================================
-    const DEBUG_MODE = false; // 整合時設為 false 以讀取真實變數
+    const DEBUG_MODE = true; // 整合時設為 false 以讀取真實變數
     const EXP_CAT_1 = "侍奉经验"; 
     const EXP_CAT_2 = "亲密经验"; 
     const EXP_ITEMS_1 = ["口", "手", "足", "股", "乳"];
