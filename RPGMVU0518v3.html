@@ -2056,7 +2056,7 @@
 }
 .wm-sidebar-label {
     padding: 12px 16px 8px;
-    font-size: 11px;
+    font-size: 17px;
     color: #8a734b;
     letter-spacing: 0.1em;
     font-family: "Noto Serif SC", serif;
@@ -2551,7 +2551,7 @@
 }
 .rpg-v7-root.mobile-layout .bag-scaler .item-delete-btn {
     top: -5px;
-    right: 3px;
+    right: 5px;
     font-size: 40px;
 }
 
@@ -3256,7 +3256,7 @@ async function resumeBgm() {
 // 兼容舊程式：讓 window.RPG_GLOBAL_STATE 也指向同一份物件
 window.RPG_GLOBAL_STATE = topWindow.RPG_GLOBAL_STATE;
 window.RPG_IS_MUTED = topWindow.RPG_GLOBAL_STATE.isMuted;
-// === [新增] MVU sandbox 相容：自製確認框，取代原生 confirm() ===
+
 window.rpgConfirm = function(message, options = {}) {
     return new Promise((resolve) => {
         const old = document.getElementById('rpg-custom-confirm');
