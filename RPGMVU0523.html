@@ -2293,22 +2293,25 @@
 }
 
 .display-modal {
-    width: min(380px, 90%);  /* 手機上自動縮到 90% 寬 */
+    width: min(380px, 90%);
     max-height: 85%;
-    overflow-y: auto;
     background: linear-gradient(to bottom, #1c1e24, #10121a);
     border: 1px solid #8a734b;
     border-radius: 6px;
-    overflow-y: auto;
+    overflow: hidden;
     box-shadow: 0 12px 40px rgba(0,0,0,0.8);
     pointer-events: auto;
+    display: flex;
+    flex-direction: column;
 }
+
 .display-modal-body {
     padding: 20px 24px;
+    overflow-y: auto;
 }
 .display-section-label {
     color: #8a734b;
-    font-size: 11px;
+    font-size: 14px;
     letter-spacing: 0.1em;
     font-family: "Noto Serif SC", serif;
     margin-bottom: 10px;
@@ -2379,22 +2382,53 @@
 }
 
 /* === 文本過濾規則 === */
+.filter-toggle-label {
+    cursor: pointer;
+    user-select: none;
+}
+
 .filter-section-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
 }
+
 .filter-count-badge {
     color: #ffaa00;
     font-size: 11px;
     font-family: monospace;
 }
+
+.filter-collapse-mark {
+    color: #ffaa00;
+    font-size: 11px;
+    line-height: 1;
+    transition: transform 0.2s, color 0.2s;
+}
+
+.filter-toggle-label:hover .filter-collapse-mark {
+    color: #ffcc66;
+}
+
+.filter-toggle-label.is-collapsed .filter-collapse-mark {
+    transform: rotate(-90deg);
+}
+
+.filter-collapsible {
+    display: block;
+}
+
+.filter-collapsible.is-collapsed {
+    display: none;
+}
+
 .filter-rule-list {
     display: flex;
     flex-direction: column;
     gap: 8px;
     margin-top: 4px;
 }
+
 .filter-rule-item {
     border: 1px solid #3a3020;
     border-radius: 4px;
@@ -2403,12 +2437,14 @@
     align-items: center;
     gap: 8px;
 }
+
 .filter-rule-fields {
     flex: 1;
     display: flex;
     flex-direction: column;
     gap: 4px;
 }
+
 .filter-rule-arrow {
     text-align: center;
     color: #4a3a28;
@@ -2416,6 +2452,7 @@
     line-height: 1;
     pointer-events: none;
 }
+
 .filter-rule-input {
     background: #0e1018;
     border: 1px solid #3a3020;
@@ -2429,21 +2466,31 @@
     box-sizing: border-box;
     transition: border-color 0.2s;
 }
+
 .filter-rule-input:focus { border-color: #8a734b; }
 .filter-rule-input::placeholder { color: #3a3020; }
+
 .filter-rule-delete {
     flex-shrink: 0;
-    width: 24px; height: 24px;
+    width: 24px;
+    height: 24px;
     border: 1px solid #6a2020;
     background: rgba(180,40,40,0.15);
     color: #c04040;
     border-radius: 3px;
     cursor: pointer;
     font-size: 13px;
-    display: flex; align-items: center; justify-content: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     transition: all 0.2s;
 }
-.filter-rule-delete:hover { background: rgba(180,40,40,0.35); color: #ff6060; }
+
+.filter-rule-delete:hover {
+    background: rgba(180,40,40,0.35);
+    color: #ff6060;
+}
+
 .filter-add-btn {
     width: 100%;
     border: 1px dashed #3a3020;
@@ -2459,38 +2506,47 @@
     margin-top: 6px;
     box-sizing: border-box;
 }
-.filter-add-btn:hover { border-color: #8a734b; color: #9a8a6a; }
-.display-modal-footer {
-    border-top: 1px solid #2a2418;
-    padding: 12px 20px;
+
+.filter-add-btn:hover {
+    border-color: #8a734b;
+    color: #9a8a6a;
+}
+
+.filter-save-hint {
+    margin-top: 6px;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 8px;
 }
+
+.filter-rule-actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 14px;
+    padding-bottom: 2px;
+}
+
 .display-save-rules-btn {
     background: linear-gradient(to bottom, #2a3a2a, #1a2a1a);
     border: 1px solid #4a8a4b;
     color: #a0d0a0;
     font-size: 13px;
     font-family: "Noto Serif SC", serif;
-    padding: 6px 20px;
+    padding: 6px 24px;
     border-radius: 3px;
     cursor: pointer;
     transition: all 0.2s;
 }
-.display-save-rules-btn:hover { border-color: #6abf6b; color: #c0f0c0; }
-.display-save-rules-btn:active { background: linear-gradient(to bottom, #1a2a1a, #0d1a0d); }
-.display-close-footer-btn {
-    background: linear-gradient(to bottom, #2b2b2b, #1a1a1a);
-    border: 1px solid #8a734b;
-    color: #d0c8b6;
-    font-size: 13px;
-    font-family: "Noto Serif SC", serif;
-    padding: 6px 20px;
-    border-radius: 3px;
-    cursor: pointer;
+
+.display-save-rules-btn:hover {
+    border-color: #6abf6b;
+    color: #c0f0c0;
 }
-.display-close-footer-btn:hover { border-color: #ffaa00; color: #ffcc66; }
+
+.display-save-rules-btn:active {
+    background: linear-gradient(to bottom, #1a2a1a, #0d1a0d);
+}
 
 .batch-input {
     width: 36px;
@@ -2973,24 +3029,28 @@
             </div>
             <div class="display-host-hint">切换后需点击编辑以套用设定（或等待下一次回复）</div>
 
-            <!-- 文本過濾規則 -->
-            <div class="display-section-label" style="margin-top:24px;">
+                        <!-- 文本過濾 -->
+            <div class="display-section-label filter-toggle-label" id="filter-rules-toggle" style="margin-top:24px;">
                 <div class="filter-section-header">
-                    <span>文本过滤规则 <span class="filter-count-badge" id="filter-count-badge"></span></span>
-                    <span style="color:#4a3a28;font-size:10px;">过滤干扰内容（如思考标签）</span>
+                    <span>自定义文本规则 <span class="filter-count-badge" id="filter-count-badge"></span></span>
+                    <span class="filter-collapse-mark" id="filter-collapse-mark">▼</span>
                 </div>
             </div>
-            <div class="filter-rule-list" id="filter-rule-list"></div>
-            <button class="filter-add-btn" id="filter-add-btn">＋ 添加</button>
-            <div class="display-host-hint" style="margin-top:6px; display:flex; justify-content:space-between; align-items:center;">
-                <span>开头或结尾可留空</span>
-                <span id="filter-save-status" style="color:#5a8a5a; font-size:10px; opacity:0; transition:opacity 0.4s;"></span>
+
+            <div class="filter-collapsible" id="filter-collapsible">
+                <div class="filter-rule-list" id="filter-rule-list"></div>
+                <button class="filter-add-btn" id="filter-add-btn">＋ 新增</button>
+
+                <div class="display-host-hint filter-save-hint">
+                    <span>如未立刻生效，尝试编辑或等待下轮生成</span>
+                    <span id="filter-save-status" style="color:#5a8a5a; font-size:10px; opacity:0; transition:opacity 0.4s;"></span>
+                </div>
+
+                <div class="filter-rule-actions">
+                    <button class="display-save-rules-btn" id="filter-save-btn">保存规则</button>
+                </div>
             </div>
 
-        </div>
-        <div class="display-modal-footer">
-            <button class="display-close-footer-btn" id="display-footer-close">关闭</button>
-            <button class="display-save-rules-btn" id="filter-save-btn">保存规则</button>
         </div>
     </div>
 </div>
@@ -3605,24 +3665,19 @@ function renderFilterRules(rulesArg) {
         item.className = 'filter-rule-item';
         item.innerHTML =
             '<div class="filter-rule-fields">' +
-                '<input class="filter-rule-input" placeholder="开头标签（可留空）" value="' + _escAttr(rule.open) + '" data-idx="' + idx + '" data-field="open" />' +
+                '<input class="filter-rule-input" placeholder="开头" value="' + _escAttr(rule.open) + '" data-idx="' + idx + '" data-field="open" />' +
                 '<div class="filter-rule-arrow">↓</div>' +
-                '<input class="filter-rule-input" placeholder="结尾标签（可留空）" value="' + _escAttr(rule.close) + '" data-idx="' + idx + '" data-field="close" />' +
+                '<input class="filter-rule-input" placeholder="结尾" value="' + _escAttr(rule.close) + '" data-idx="' + idx + '" data-field="close" />' +
             '</div>' +
             '<button class="filter-rule-delete" data-idx="' + idx + '" title="删除">✕</button>';
         list.appendChild(item);
     });
 
     list.querySelectorAll('.filter-rule-input').forEach(function(input) {
-        // [修復] 用 input 事件即時追蹤編輯狀態，失焦時也自動保存
+        // 僅標記有未保存的變更，不自動保存或重渲染
+        // （自動保存會在 blur 時重建 DOM，導致另一側尚未填寫的欄位被清空）
         input.addEventListener('input', function() {
-            _filterDirty = true; // 標記有未保存的變更
-        });
-        input.addEventListener('blur', async function() {
-            if (!_filterDirty) return;
-            const currentRules = _readRulesFromDOM();
-            renderFilterRules(currentRules);
-            await _saveFilterWithFeedback(currentRules);
+            _filterDirty = true;
         });
     });
 
@@ -3697,7 +3752,34 @@ document.getElementById('filter-save-btn')?.addEventListener('click', async func
     renderFilterRules(rules);
     await _saveFilterWithFeedback(rules);
 });
+// 文本過濾規則收縮/展開
+(function() {
+    const toggle = document.getElementById('filter-rules-toggle');
+    const panel = document.getElementById('filter-collapsible');
+    const mark = document.getElementById('filter-collapse-mark');
+    if (!toggle || !panel) return;
 
+    function setFilterCollapsed(collapsed) {
+        panel.classList.toggle('is-collapsed', collapsed);
+        toggle.classList.toggle('is-collapsed', collapsed);
+        if (mark) mark.textContent = collapsed ? '▶' : '▼';
+    }
+
+    toggle.addEventListener('click', function(e) {
+        e.stopPropagation();
+        setFilterCollapsed(!panel.classList.contains('is-collapsed'));
+    });
+
+    toggle.addEventListener('keydown', function(e) {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        e.preventDefault();
+        setFilterCollapsed(!panel.classList.contains('is-collapsed'));
+    });
+
+    toggle.setAttribute('tabindex', '0');
+    toggle.setAttribute('role', 'button');
+    setFilterCollapsed(false);
+})();
 // display-modal 開啟時重新渲染，確保讀到最新值
 (function() {
     const layer = document.getElementById('display-layer');
@@ -5134,7 +5216,7 @@ if (typeof window.setLayout === 'function') {
             content = content.replace(new RegExp(_eo + '[\\s\\S]*$', 'gi'), '');
         } else if (!_open && _close) {
             // 只有結尾：從字串開頭到結尾標籤全切（裸露結尾情形）
-            content = content.replace(new RegExp('^[\\s\\S]*?' + _ec, 'gi'), '');
+            content = content.replace(new RegExp('^[\\s\\S]*?' + _ec, 'i'), '');
         }
     }
 
@@ -7503,7 +7585,7 @@ if (displayMenuBtn) {
 }
 
 // 關閉按鈕
-['display-close-btn', 'display-footer-close'].forEach(id => {
+['display-close-btn'].forEach(id => {
     document.getElementById(id)?.addEventListener('click', (e) => {
         e.stopPropagation();
         document.getElementById('display-layer').classList.remove('active');
@@ -7548,9 +7630,9 @@ document.getElementById('display-layer')?.addEventListener('click', (e) => {
                 document.getElementById('worldmap-layer').classList.remove('active');
             };
         }
-        refreshFilterRulesCache();
-        // 啟動同步
-        syncGameState();
+        refreshFilterRulesCache().finally(() => {
+    syncGameState();
+});
     // [安全重置] 頁面載入後強制解除 generating 鎖定
         // 防止初始渲染時 isGenerating=true 卻沒有觸發 MESSAGE_RECEIVED 的情況
         setTimeout(() => {
