@@ -2299,7 +2299,7 @@
     background: linear-gradient(to bottom, #1c1e24, #10121a);
     border: 1px solid #8a734b;
     border-radius: 6px;
-    overflow-y: auto
+    overflow-y: auto;
     box-shadow: 0 12px 40px rgba(0,0,0,0.8);
     pointer-events: auto;
 }
@@ -3537,8 +3537,9 @@ function _escAttr(str) {
     return String(str || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;');
 }
 
-function renderFilterRules() {
-    const rules = loadFilterRules();
+// [修復] 接受可選的 rules 參數，避免存儲回讀時序問題
+function renderFilterRules(rulesArg) {
+    const rules = Array.isArray(rulesArg) ? rulesArg : loadFilterRules();
     const list = document.getElementById('filter-rule-list');
     const badge = document.getElementById('filter-count-badge');
     if (!list) return;
@@ -3561,33 +3562,34 @@ function renderFilterRules() {
 
     list.querySelectorAll('.filter-rule-input').forEach(function(input) {
         input.addEventListener('change', async function() {
-            const rules = loadFilterRules();
+            // [修復] 基於當前渲染的陣列副本修改，不依賴存儲回讀時序
+            const currentRules = loadFilterRules();
             const idx = parseInt(input.dataset.idx);
             const field = input.dataset.field;
-            if (rules[idx] !== undefined) {
-                rules[idx][field] = input.value;
-                await saveFilterRules(rules);
-                renderFilterRules();
+            if (currentRules[idx] !== undefined) {
+                currentRules[idx][field] = input.value;
+                renderFilterRules(currentRules); // 先即時渲染
+                saveFilterRules(currentRules);   // 後台存儲
             }
         });
     });
 
     list.querySelectorAll('.filter-rule-delete').forEach(function(btn) {
         btn.addEventListener('click', async function() {
-            const rules = loadFilterRules();
+            const currentRules = loadFilterRules();
             const idx = parseInt(btn.dataset.idx);
-            rules.splice(idx, 1);
-            await saveFilterRules(rules);
-            renderFilterRules();
+            currentRules.splice(idx, 1);
+            renderFilterRules(currentRules); // 先即時渲染
+            saveFilterRules(currentRules);   // 後台存儲
         });
     });
 }
 
-document.getElementById('filter-add-btn')?.addEventListener('click', async function() {
+document.getElementById('filter-add-btn')?.addEventListener('click', function() {
     const rules = loadFilterRules();
     rules.push({ open: '', close: '' });
-    await saveFilterRules(rules);
-    renderFilterRules();
+    renderFilterRules(rules); // [修復] 先即時渲染，不等待存儲回讀
+    saveFilterRules(rules);   // 後台存儲
 });
 
 // display-modal 開啟時重新渲染，確保讀到最新值
