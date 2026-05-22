@@ -3537,8 +3537,22 @@ const FILTER_VAR_KEY = '系統.文本過濾規則';
 
 function loadFilterRules() {
     try {
-        const raw = getVariable(FILTER_VAR_KEY, '');
-        if (!raw || raw === '0') return [];
+        // [修復] FILTER_VAR_KEY 含有 '.'，ST 以扁平 key 儲存，
+        // 不能用 getPath() 的點路徑導航，必須直接以完整字串查找。
+        const vars = getAllVariables();
+        let raw;
+        if (vars) {
+            // 優先：直接在根物件查找扁平 key
+            raw = Object.prototype.hasOwnProperty.call(vars, FILTER_VAR_KEY)
+                ? vars[FILTER_VAR_KEY]
+                : undefined;
+            // 次選：在 stat_data 下查找扁平 key
+            if (raw === undefined && vars.stat_data &&
+                Object.prototype.hasOwnProperty.call(vars.stat_data, FILTER_VAR_KEY)) {
+                raw = vars.stat_data[FILTER_VAR_KEY];
+            }
+        }
+        if (raw === undefined || raw === null || raw === '' || raw === '0') return [];
         const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
         return Array.isArray(parsed) ? parsed : [];
     } catch (e) {
@@ -3547,8 +3561,14 @@ function loadFilterRules() {
 }
 
 async function saveFilterRules(rules) {
+    // [修復] 用引號包裹整個 JSON 字串，防止含空格或特殊符號時被 ST 截斷解析
     const json = JSON.stringify(rules);
     await triggerSlash('/setvar key=' + FILTER_VAR_KEY + ' ' + json);
+    // 同步寫入 getAllVariables() 的緩存，讓 loadFilterRules 能立即讀到
+    try {
+        const vars = getAllVariables();
+        if (vars) vars[FILTER_VAR_KEY] = json;
+    } catch(e) {}
 }
 
 function _escAttr(str) {
