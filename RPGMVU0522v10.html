@@ -3661,6 +3661,12 @@ async function _saveFilterWithFeedback(rules) {
     const statusEl = document.getElementById('filter-save-status');
     try {
         await saveFilterRules(rules);
+
+        // ★ 新增：直接用當前 iframe 內的 state.rawText 重新過一次 extractContent
+        if (typeof updateTemplateVariables === 'function' && state?.rawText) {
+            updateTemplateVariables(state.rawText);
+        }
+
         if (statusEl) {
             statusEl.textContent = '✓ 已保存';
             statusEl.style.color = '#5a8a5a';
