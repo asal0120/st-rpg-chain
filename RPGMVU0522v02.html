@@ -5129,7 +5129,7 @@ if (typeof window.setLayout === 'function') {
             content = content.replace(new RegExp(_eo + '[\\s\\S]*$', 'gi'), '');
         } else if (!_open && _close) {
             // 只有結尾：從字串開頭到結尾標籤全切（裸露結尾情形）
-            content = content.replace(new RegExp('^[\\s\\S]*?' + _ec, 'gi'), '');
+            content = content.replace(new RegExp('^[\\s\\S]*?' + _ec, 'i'), '');
         }
     }
 
