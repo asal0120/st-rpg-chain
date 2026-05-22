@@ -3563,7 +3563,7 @@ function _escAttr(str) {
 }
 
 // [修復] 接受可選的 rules 參數，避免存儲回讀時序問題
-function renderFilterRules(rulesArg) {
+async function renderFilterRules(rulesArg) {
     const rules = Array.isArray(rulesArg) ? rulesArg : await loadFilterRules();
     const list = document.getElementById('filter-rule-list');
     const badge = document.getElementById('filter-count-badge');
@@ -3593,7 +3593,7 @@ function renderFilterRules(rulesArg) {
         input.addEventListener('blur', async function() {
             if (!_filterDirty) return;
             const currentRules = _readRulesFromDOM();
-            renderFilterRules(currentRules);
+            await renderFilterRules(currentRules);
             await _saveFilterWithFeedback(currentRules);
         });
     });
@@ -3604,7 +3604,7 @@ function renderFilterRules(rulesArg) {
             const idx = parseInt(btn.dataset.idx);
             currentRules.splice(idx, 1);
             _filterDirty = false;
-            renderFilterRules(currentRules);
+            await renderFilterRules(currentRules);
             await _saveFilterWithFeedback(currentRules);
         });
     });
@@ -3653,14 +3653,14 @@ document.getElementById('filter-add-btn')?.addEventListener('click', function() 
     const rules = _readRulesFromDOM();
     rules.push({ open: '', close: '' });
     _filterDirty = false;
-    renderFilterRules(rules); // [修復] 先即時渲染，不等待存儲回讀
+    await renderFilterRules(rules); // [修復] 先即時渲染，不等待存儲回讀
     _saveFilterWithFeedback(rules); // 後台存儲
 });
 
 // [新增] 手動保存按鈕
 document.getElementById('filter-save-btn')?.addEventListener('click', async function() {
     const rules = _readRulesFromDOM();
-    renderFilterRules(rules);
+    await renderFilterRules(rules);
     await _saveFilterWithFeedback(rules);
 });
 
@@ -3668,11 +3668,11 @@ document.getElementById('filter-save-btn')?.addEventListener('click', async func
 (function() {
     const layer = document.getElementById('display-layer');
     if (!layer) return;
-    new MutationObserver(function(mutations) {
+    new MutationObserver(async function(mutations) {
         for (const m of mutations) {
             if (m.type === 'attributes' && m.attributeName === 'class') {
                 if (layer.classList.contains('active')) {
-                    renderFilterRules();
+                    await renderFilterRules();
                 }
             }
         }
