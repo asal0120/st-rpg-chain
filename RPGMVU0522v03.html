@@ -7543,9 +7543,9 @@ document.getElementById('display-layer')?.addEventListener('click', (e) => {
                 document.getElementById('worldmap-layer').classList.remove('active');
             };
         }
-        refreshFilterRulesCache();
-        // 啟動同步
-        syncGameState();
+        refreshFilterRulesCache().finally(() => {
+    syncGameState();
+});
     // [安全重置] 頁面載入後強制解除 generating 鎖定
         // 防止初始渲染時 isGenerating=true 卻沒有觸發 MESSAGE_RECEIVED 的情況
         setTimeout(() => {
