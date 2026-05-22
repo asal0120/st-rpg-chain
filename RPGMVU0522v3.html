@@ -2464,8 +2464,22 @@
     border-top: 1px solid #2a2418;
     padding: 12px 20px;
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between;
+    align-items: center;
 }
+.display-save-rules-btn {
+    background: linear-gradient(to bottom, #2a3a2a, #1a2a1a);
+    border: 1px solid #4a8a4b;
+    color: #a0d0a0;
+    font-size: 13px;
+    font-family: "Noto Serif SC", serif;
+    padding: 6px 20px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.display-save-rules-btn:hover { border-color: #6abf6b; color: #c0f0c0; }
+.display-save-rules-btn:active { background: linear-gradient(to bottom, #1a2a1a, #0d1a0d); }
 .display-close-footer-btn {
     background: linear-gradient(to bottom, #2b2b2b, #1a1a1a);
     border: 1px solid #8a734b;
@@ -2968,11 +2982,15 @@
             </div>
             <div class="filter-rule-list" id="filter-rule-list"></div>
             <button class="filter-add-btn" id="filter-add-btn">＋ 添加</button>
-            <div class="display-host-hint" style="margin-top:6px;">开头或结尾可留空；失焦后自动保存</div>
+            <div class="display-host-hint" style="margin-top:6px; display:flex; justify-content:space-between; align-items:center;">
+                <span>开头或结尾可留空</span>
+                <span id="filter-save-status" style="color:#5a8a5a; font-size:10px; opacity:0; transition:opacity 0.4s;"></span>
+            </div>
 
         </div>
         <div class="display-modal-footer">
             <button class="display-close-footer-btn" id="display-footer-close">关闭</button>
+            <button class="display-save-rules-btn" id="filter-save-btn">保存规则</button>
         </div>
     </div>
 </div>
@@ -3561,35 +3579,82 @@ function renderFilterRules(rulesArg) {
     });
 
     list.querySelectorAll('.filter-rule-input').forEach(function(input) {
-        input.addEventListener('change', async function() {
-            // [修復] 基於當前渲染的陣列副本修改，不依賴存儲回讀時序
-            const currentRules = loadFilterRules();
-            const idx = parseInt(input.dataset.idx);
-            const field = input.dataset.field;
-            if (currentRules[idx] !== undefined) {
-                currentRules[idx][field] = input.value;
-                renderFilterRules(currentRules); // 先即時渲染
-                saveFilterRules(currentRules);   // 後台存儲
-            }
+        // [修復] 用 input 事件即時追蹤編輯狀態，失焦時也自動保存
+        input.addEventListener('input', function() {
+            _filterDirty = true; // 標記有未保存的變更
+        });
+        input.addEventListener('blur', async function() {
+            if (!_filterDirty) return;
+            const currentRules = _readRulesFromDOM();
+            renderFilterRules(currentRules);
+            await _saveFilterWithFeedback(currentRules);
         });
     });
 
     list.querySelectorAll('.filter-rule-delete').forEach(function(btn) {
         btn.addEventListener('click', async function() {
-            const currentRules = loadFilterRules();
+            const currentRules = _readRulesFromDOM();
             const idx = parseInt(btn.dataset.idx);
             currentRules.splice(idx, 1);
-            renderFilterRules(currentRules); // 先即時渲染
-            saveFilterRules(currentRules);   // 後台存儲
+            _filterDirty = false;
+            renderFilterRules(currentRules);
+            await _saveFilterWithFeedback(currentRules);
         });
     });
 }
 
+// 從當前 DOM 輸入框讀取最新值（不依賴存儲）
+function _readRulesFromDOM() {
+    const list = document.getElementById('filter-rule-list');
+    if (!list) return [];
+    const items = list.querySelectorAll('.filter-rule-item');
+    const result = [];
+    items.forEach(function(item) {
+        const inputs = item.querySelectorAll('.filter-rule-input');
+        result.push({
+            open:  inputs[0] ? inputs[0].value : '',
+            close: inputs[1] ? inputs[1].value : ''
+        });
+    });
+    return result;
+}
+
+// 保存並顯示狀態反饋
+let _filterDirty = false;
+async function _saveFilterWithFeedback(rules) {
+    _filterDirty = false;
+    const statusEl = document.getElementById('filter-save-status');
+    try {
+        await saveFilterRules(rules);
+        if (statusEl) {
+            statusEl.textContent = '✓ 已保存';
+            statusEl.style.color = '#5a8a5a';
+            statusEl.style.opacity = '1';
+            setTimeout(function() { statusEl.style.opacity = '0'; }, 2000);
+        }
+    } catch(e) {
+        if (statusEl) {
+            statusEl.textContent = '✕ 保存失败';
+            statusEl.style.color = '#8a4a4a';
+            statusEl.style.opacity = '1';
+            setTimeout(function() { statusEl.style.opacity = '0'; }, 3000);
+        }
+    }
+}
+
 document.getElementById('filter-add-btn')?.addEventListener('click', function() {
-    const rules = loadFilterRules();
+    const rules = _readRulesFromDOM();
     rules.push({ open: '', close: '' });
+    _filterDirty = false;
     renderFilterRules(rules); // [修復] 先即時渲染，不等待存儲回讀
-    saveFilterRules(rules);   // 後台存儲
+    _saveFilterWithFeedback(rules); // 後台存儲
+});
+
+// [新增] 手動保存按鈕
+document.getElementById('filter-save-btn')?.addEventListener('click', async function() {
+    const rules = _readRulesFromDOM();
+    renderFilterRules(rules);
+    await _saveFilterWithFeedback(rules);
 });
 
 // display-modal 開啟時重新渲染，確保讀到最新值
