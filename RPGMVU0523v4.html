@@ -3622,7 +3622,7 @@ let _anchorRulesCache = null;
 
 async function refreshAnchorRulesCache() {
     try {
-        const raw = await STscript('/xbgetvar key=' + ANCHOR_VAR_KEY);
+        const raw = await triggerSlash('/getvar key=' + ANCHOR_VAR_KEY);
         if (!raw || raw === '' || raw === '0') { _anchorRulesCache = []; return []; }
         const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
         _anchorRulesCache = Array.isArray(parsed) ? parsed : [];
@@ -3637,7 +3637,16 @@ function loadAnchorRules() {
     if (_anchorRulesCache !== null) return _anchorRulesCache;
     try {
         const vars = getAllVariables();
-        let raw = vars?.[ANCHOR_VAR_KEY];
+        let raw;
+        if (vars) {
+            raw = Object.prototype.hasOwnProperty.call(vars, ANCHOR_VAR_KEY)
+                ? vars[ANCHOR_VAR_KEY]
+                : undefined;
+            if (raw === undefined && vars.stat_data &&
+                Object.prototype.hasOwnProperty.call(vars.stat_data, ANCHOR_VAR_KEY)) {
+                raw = vars.stat_data[ANCHOR_VAR_KEY];
+            }
+        }
         if (!raw || raw === '' || raw === '0') return [];
         const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
         return Array.isArray(parsed) ? parsed : [];
@@ -3645,7 +3654,8 @@ function loadAnchorRules() {
 }
 
 async function saveAnchorRules(rules) {
-    await STscript('/xbsetvar key=' + ANCHOR_VAR_KEY + ' ' + JSON.stringify(rules));
+    const json = JSON.stringify(rules);
+    await triggerSlash('/setvar key=' + ANCHOR_VAR_KEY + ' ' + json);
     _anchorRulesCache = rules;
 }
 
