@@ -3617,12 +3617,12 @@ function requestParentResize() {
 // === 文本過濾規則（存入 ST chat 變量） ===
 const FILTER_VAR_KEY = '过滤规则';
 // === 正文定位規則 ===
-const ANCHOR_VAR_KEY = '正文規則';
+const ANCHOR_VAR_KEY = '正文规则';
 let _anchorRulesCache = null;
 
 async function refreshAnchorRulesCache() {
     try {
-        const raw = await STscript('/xbgetvar key=' + ANCHOR_VAR_KEY);
+        const raw = await triggerSlash('/getvar key=' + ANCHOR_VAR_KEY);
         if (!raw || raw === '' || raw === '0') { _anchorRulesCache = []; return []; }
         const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
         _anchorRulesCache = Array.isArray(parsed) ? parsed : [];
@@ -3637,7 +3637,16 @@ function loadAnchorRules() {
     if (_anchorRulesCache !== null) return _anchorRulesCache;
     try {
         const vars = getAllVariables();
-        let raw = vars?.[ANCHOR_VAR_KEY];
+        let raw;
+        if (vars) {
+            raw = Object.prototype.hasOwnProperty.call(vars, ANCHOR_VAR_KEY)
+                ? vars[ANCHOR_VAR_KEY]
+                : undefined;
+            if (raw === undefined && vars.stat_data &&
+                Object.prototype.hasOwnProperty.call(vars.stat_data, ANCHOR_VAR_KEY)) {
+                raw = vars.stat_data[ANCHOR_VAR_KEY];
+            }
+        }
         if (!raw || raw === '' || raw === '0') return [];
         const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
         return Array.isArray(parsed) ? parsed : [];
@@ -3645,7 +3654,8 @@ function loadAnchorRules() {
 }
 
 async function saveAnchorRules(rules) {
-    await STscript('/xbsetvar key=' + ANCHOR_VAR_KEY + ' ' + JSON.stringify(rules));
+    const json = JSON.stringify(rules);
+    await triggerSlash('/setvar key=' + ANCHOR_VAR_KEY + ' ' + json);
     _anchorRulesCache = rules;
 }
 
@@ -3702,7 +3712,11 @@ async function _saveAnchorWithFeedback(rules) {
     const statusEl = document.getElementById('anchor-save-status');
     try {
         await saveAnchorRules(rules);
-		if (typeof updateTemplateVariables === 'function' && state?.rawMessage) {
+
+
+        if (state.rawMessage) {
+            window.__FORMAT_CACHE?.clear();
+            state.rawText = '';
             updateTemplateVariables(state.rawMessage);
         }
         if (statusEl) {
@@ -3873,8 +3887,9 @@ async function _saveFilterWithFeedback(rules) {
     try {
         await saveFilterRules(rules);
 
-        // ★ 新增：直接用當前 iframe 內的 state.rawText 重新過一次 extractContent
-        if (typeof updateTemplateVariables === 'function' && state?.rawMessage) {
+        if (state.rawMessage) {
+            window.__FORMAT_CACHE?.clear();   // 清段落格式快取
+            state.rawText = '';               // 強制 extractContent 重跑
             updateTemplateVariables(state.rawMessage);
         }
 
@@ -3945,6 +3960,7 @@ document.getElementById('filter-save-btn')?.addEventListener('click', async func
             if (m.type === 'attributes' && m.attributeName === 'class') {
                 if (layer.classList.contains('active')) {
                     renderFilterRules();
+                    renderAnchorRules();  // ← 補上
                 }
             }
         }
@@ -6909,7 +6925,24 @@ window.updateTemplateVariables = function(data) {
     }
 
     const rawString = typeof data === 'string' ? data : (data && data.RPG ? String(data.RPG) : "");
-
+    state.rawMessage = rawString;
+    if (_anchorRulesCache === null || _filterRulesCache === null) {
+    const _snap = rawString;
+    Promise.all([
+        _anchorRulesCache === null ? refreshAnchorRulesCache() : Promise.resolve(),
+        _filterRulesCache === null ? refreshFilterRulesCache() : Promise.resolve()
+    ]).then(() => {
+        if (state.rawMessage !== _snap) return; // 訊息已更新，跳過
+        state.rawText = '';                      // 讓 extractContent 重跑
+        const reText = extractContent(_snap);
+        if (reText) {
+            state.rawText = reText;
+            if (streamTimeout) cancelAnimationFrame(streamTimeout);
+            streamTimeout = requestAnimationFrame(refreshUI);
+        }
+    }).catch(() => {});
+    // 不 return，讓後續流程繼續（處理 isGenerating / genResetTimer 等）
+}
     // ✅ isFinished 專用：單獨清洗，只為了準確判斷結尾標籤
     let stringForFinishedCheck = rawString;
     stringForFinishedCheck = stringForFinishedCheck.replace(/^[\s\S]*?<\/thinking>/i, '');
@@ -6974,7 +7007,18 @@ window.RPG_FORCE_REFRESH_FROM_VARIABLES = async function(rawData = '') {
         for (let i = 0; i < 20 && isSyncing; i++) {
             await new Promise(resolve => setTimeout(resolve, 50));
         }
-
+        // [新增] 保底：schedulePostVariableSync 會在 300ms/800ms/1500ms/3000ms 呼叫此函數
+// 若快取此時仍未就緒，await 刷新後強制重新提取文本
+if (_anchorRulesCache === null || _filterRulesCache === null) {
+    await Promise.all([
+        _anchorRulesCache === null ? refreshAnchorRulesCache() : Promise.resolve(),
+        _filterRulesCache === null ? refreshFilterRulesCache() : Promise.resolve()
+    ]);
+    if (state.rawMessage) {
+        state.rawText = '';
+        state.rawText = extractContent(state.rawMessage);
+    }
+}
         if (typeof syncGameState === 'function') {
             await syncGameState();
         }
@@ -7846,7 +7890,10 @@ document.getElementById('display-layer')?.addEventListener('click', (e) => {
                 document.getElementById('worldmap-layer').classList.remove('active');
             };
         }
-        refreshFilterRulesCache().finally(() => {
+        Promise.all([
+    refreshFilterRulesCache(),
+    refreshAnchorRulesCache()
+]).finally(() => {
     syncGameState();
 });
     // [安全重置] 頁面載入後強制解除 generating 鎖定
