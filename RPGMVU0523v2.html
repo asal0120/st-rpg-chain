@@ -3032,7 +3032,7 @@
                         <!-- 文本過濾 -->
             <div class="display-section-label filter-toggle-label" id="filter-rules-toggle" style="margin-top:24px;">
                 <div class="filter-section-header">
-                    <span>自定义文本规则 <span class="filter-count-badge" id="filter-count-badge"></span></span>
+                    <span>过滤规则 <span class="filter-count-badge" id="filter-count-badge"></span></span>
                     <span class="filter-collapse-mark" id="filter-collapse-mark">▼</span>
                 </div>
             </div>
@@ -3052,20 +3052,20 @@
             </div>
 			<div class="display-section-label filter-toggle-label" id="anchor-rules-toggle" style="margin-top:24px;">
     <div class="filter-section-header">
-        <span>正文定位规则 <span class="filter-count-badge" id="anchor-count-badge"></span></span>
+        <span>正文规则 <span class="filter-count-badge" id="anchor-count-badge"></span></span>
         <span class="filter-collapse-mark" id="anchor-collapse-mark">▼</span>
     </div>
 </div>
 
 <div class="filter-collapsible" id="anchor-collapsible">
     <div class="display-host-hint" style="margin-bottom:8px;">
-        若模型将正文包在其他标签内而遗漏 [RPG]，填入该标签让系统自动补回
+        未设定则默认使用[RPG]
     </div>
     <div class="filter-rule-list" id="anchor-rule-list"></div>
     <button class="filter-add-btn" id="anchor-add-btn">＋ 新增</button>
 
     <div class="display-host-hint filter-save-hint">
-        <span>优先级由上至下，匹配第一条即停止</span>
+        <span>先进行过滤规则后，再由上至下匹配第一条</span>
         <span id="anchor-save-status" style="color:#5a8a5a; font-size:10px; opacity:0; transition:opacity 0.4s;"></span>
     </div>
 
@@ -3617,7 +3617,7 @@ function requestParentResize() {
 // === 文本過濾規則（存入 ST chat 變量） ===
 const FILTER_VAR_KEY = '过滤规则';
 // === 正文定位規則 ===
-const ANCHOR_VAR_KEY = '正文定位規則';
+const ANCHOR_VAR_KEY = '正文規則';
 let _anchorRulesCache = null;
 
 async function refreshAnchorRulesCache() {
