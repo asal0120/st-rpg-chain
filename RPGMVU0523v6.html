@@ -3960,6 +3960,7 @@ document.getElementById('filter-save-btn')?.addEventListener('click', async func
             if (m.type === 'attributes' && m.attributeName === 'class') {
                 if (layer.classList.contains('active')) {
                     renderFilterRules();
+                    renderAnchorRules();  // ← 補上
                 }
             }
         }
@@ -7861,7 +7862,10 @@ document.getElementById('display-layer')?.addEventListener('click', (e) => {
                 document.getElementById('worldmap-layer').classList.remove('active');
             };
         }
-        refreshFilterRulesCache().finally(() => {
+        Promise.all([
+    refreshFilterRulesCache(),
+    refreshAnchorRulesCache()
+]).finally(() => {
     syncGameState();
 });
     // [安全重置] 頁面載入後強制解除 generating 鎖定
