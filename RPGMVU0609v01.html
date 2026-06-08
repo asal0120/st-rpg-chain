@@ -1419,28 +1419,133 @@
         transform: translate(-50%, -50%); font-size: 24px; color: #555;
     }
 
-    .status-scaler .cg-modal {
-        display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0,0,0,0.9); z-index: 999;
-        align-items: center; justify-content: center; transform: none; 
+
+/* === CG 大圖預覽：覆蓋整個 RPG 容器，不再限制於 Status / map-area === */
+.rpg-v7-root .cg-modal {
+    display: none;
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.92);
+    z-index: 99999;
+    align-items: center;
+    justify-content: center;
+    transform: none;
+    pointer-events: auto;
+}
+
+.rpg-v7-root .cg-modal.active {
+    display: flex;
+    animation: fadeIn 0.3s;
+}
+
+.rpg-v7-root .cg-modal-content {
+    position: relative;
+    width: calc(100% - 96px);
+    height: calc(100% - 96px);
+    max-width: 1200px;
+    max-height: 96%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.rpg-v7-root .cg-modal-img {
+    display: block;
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 100%;
+    border: 2px solid var(--p-gold, #c8aa6e);
+    box-shadow: 0 0 30px rgba(200, 170, 110, 0.25);
+    object-fit: contain;
+    background: #000;
+}
+
+.rpg-v7-root .modal-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(200, 170, 110, 0.35);
+    color: var(--p-gold, #c8aa6e);
+    font-size: 42px;
+    line-height: 1;
+    cursor: pointer;
+    text-shadow: 0 0 10px #000;
+    transition: transform 0.2s, color 0.2s, border-color 0.2s, background 0.2s;
+    width: 54px;
+    height: 72px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+}
+
+.rpg-v7-root .modal-nav:hover {
+    color: var(--p-gold-bright, #f0e6d2);
+    border-color: var(--p-gold, #c8aa6e);
+    background: rgba(0, 0, 0, 0.55);
+    transform: translateY(-50%) scale(1.08);
+}
+
+.rpg-v7-root .modal-nav.prev {
+    left: -68px;
+}
+
+.rpg-v7-root .modal-nav.next {
+    right: -68px;
+}
+
+.rpg-v7-root .modal-close {
+    position: absolute;
+    top: -48px;
+    right: 0;
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(200, 170, 110, 0.35);
+    color: #aaa;
+    font-size: 28px;
+    line-height: 1;
+    cursor: pointer;
+    width: 42px;
+    height: 42px;
+    z-index: 3;
+}
+
+.rpg-v7-root .modal-close:hover {
+    color: #fff;
+    border-color: var(--p-gold, #c8aa6e);
+}
+
+/* 小寬度時，左右切換按鈕移到圖內側，避免超出 */
+@media (max-width: 700px) {
+    .rpg-v7-root .cg-modal-content {
+        width: calc(100% - 36px);
+        height: calc(100% - 84px);
     }
-    .status-scaler .cg-modal.active { display: flex; animation: fadeIn 0.3s; }
-    .status-scaler .cg-modal-content { position: relative; max-width: 90%; max-height: 90%; display: flex; justify-content: center; }
-    .status-scaler .cg-modal-img { max-width: 100%; max-height: 80vh; border: 2px solid var(--p-gold); box-shadow: 0 0 30px rgba(200, 170, 110, 0.2); object-fit: contain; }
-    
-    .status-scaler .modal-nav {
-        position: absolute; top: 50%; transform: translateY(-50%);
-        background: none; border: none; color: var(--p-gold); font-size: 40px; cursor: pointer;
-        text-shadow: 0 0 10px #000; transition: transform 0.2s;
+
+    .rpg-v7-root .modal-nav.prev {
+        left: 8px;
     }
-    .status-scaler .modal-nav:hover { color: var(--p-gold-bright); transform: translateY(-50%) scale(1.2); }
-    .status-scaler .modal-nav.prev { left: -60px; }
-    .status-scaler .modal-nav.next { right: -60px; }
-    .status-scaler .modal-close {
-        position: absolute; top: -40px; right: 0;
-        background: none; border: none; color: #888; font-size: 30px; cursor: pointer;
+
+    .rpg-v7-root .modal-nav.next {
+        right: 8px;
     }
-    .status-scaler .modal-close:hover { color: #fff; }
+
+    .rpg-v7-root .modal-nav {
+        width: 44px;
+        height: 64px;
+        font-size: 34px;
+        background: rgba(0, 0, 0, 0.5);
+    }
+
+    .rpg-v7-root .modal-close {
+        top: -44px;
+        right: 0;
+    }
+}
+
 
     .status-scaler #player-desc, .status-scaler #member-desc {
         font-family: "Noto Serif SC", "Noto Serif TC", serif; color: #ccc; font-style: italic;
@@ -4048,7 +4153,7 @@ const _userName = (() => {
         },
         { 
             id: "p2", name: "爱娜",
-            race: "人类", birth: "4月13日", interest: "小动物、烹饪、家务", height: "142cm",
+            race: "人类", birth: "4月13日", interest: "小动物、烹饪、家务", height: "144cm",
             desc: "以凡人之身在魔法造诣踏入神域的千年大魔女。 \n性格温婉慈爱，但生起气来有点可怕。", 
             img:     img("https://cdn.imgchest.com/files/ffded04458b1.png", "https://files.catbox.moe/iurzeo.png"),
             imgDiff: img("https://cdn.imgchest.com/files/c06deb7bcf87.png", "https://files.catbox.moe/r8opmo.png"),
@@ -4075,7 +4180,7 @@ const _userName = (() => {
           cgData: [ { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] } ]
         },
         { id: "p4", name: "穗",
-          race: "仙人", birth: "12月16日", interest: "舞蹈、玩耍", height: "141cm",
+          race: "仙人", birth: "12月16日", interest: "舞蹈、玩耍", height: "135cm",
           desc: "未知时代的信仰凝聚而成的仙灵，曾庇佑着土地与作物。 \n努力维持的威严下藏着纯粹的善与童真。", 
           img:     img("https://cdn.imgchest.com/files/299c6a475806.png", "https://files.catbox.moe/dsyvgw.png"),
           imgDiff: img("https://cdn.imgchest.com/files/9dce762303b8.png", "https://files.catbox.moe/3e81yd.png"),
@@ -4085,7 +4190,7 @@ const _userName = (() => {
           cgData: [ { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] } ]
         },
         { id: "p5", name: "芙蕾嘉",
-          race: "精灵", birth: "9月29日", interest: "园艺、踏青", height: "140cm",
+          race: "精灵", birth: "9月29日", interest: "园艺、踏青", height: "141cm",
           desc: "拉比林斯本土的第一代精灵之一，照看了生命之树数百年。 \n柔弱随和，却又意外有着刚毅的一面。", 
           img:     img("https://cdn.imgchest.com/files/44a7eab2e247.png", "https://files.catbox.moe/bw1nro.png"),
           imgDiff: img("https://cdn.imgchest.com/files/0e430d798aaa.png", "https://files.catbox.moe/3zujkf.png"),
@@ -4095,7 +4200,7 @@ const _userName = (() => {
           cgData: [ { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] } ]
         },
         { id: "p6", name: "琳",
-          race: "真祖", birth: "6月14日", interest: "时尚、夜游", height: "142cm",
+          race: "真祖", birth: "6月14日", interest: "时尚、夜游", height: "141cm",
           desc: "星球的宠儿，任性不羁的代名词。 \n生来慧而忠于欲望，但难以招架感情的直球攻势。", 
           img:     img("https://cdn.imgchest.com/files/9cd9c13142a8.png", "https://files.catbox.moe/8neyi0.png"),
           imgDiff: img("https://cdn.imgchest.com/files/4abdf3e590fa.png", "https://files.catbox.moe/xjm5ob.png"),
@@ -4115,7 +4220,7 @@ const _userName = (() => {
           cgData: [ { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] } ]
         },
         { id: "p8", name: "璐法",
-          race: "人类", birth: "9月12日", interest: "恋爱故事、慈善活动", height: "144cm",
+          race: "人类", birth: "9月12日", interest: "恋爱故事、慈善活动", height: "142cm",
           desc: `圣教国的现任圣女，年纪比${_userName}略小。\n散发着柔软治愈的气场，但恋爱中的少女亦有其刚强之处。`, 
           img:     img("https://cdn.imgchest.com/files/65aa8ceb2b4f.png", "https://files.catbox.moe/x0iioz.png"),
           imgDiff: img("https://cdn.imgchest.com/files/54516f85fd90.png", "https://files.catbox.moe/cnh0pd.png"),
@@ -4135,7 +4240,7 @@ const _userName = (() => {
           cgData: [ { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] } ]
         },
         { id: "p10", name: "奈芙蒂",
-          race: "魔族", birth: "11月24日", interest: "家人、探索世界", height: "135cm",
+          race: "魔族", birth: "11月24日", interest: "家人、探索世界", height: "136cm",
           desc: "自拉比林斯权限诞生的强大生命，千年来不断压制着自身。\n天真无邪、外向活泼，难以与「魔王」二字联想在一起的烂漫少女。", 
           img:     img("https://cdn.imgchest.com/files/d0d789082cd8.png", "https://files.catbox.moe/0cqdjy.png"),
           imgDiff: img("https://cdn.imgchest.com/files/28dfa5b42364.png", "https://files.catbox.moe/6jxhrj.png"),
@@ -4148,9 +4253,134 @@ const _userName = (() => {
 
 
     const charNameToId = new Map(fullPartyData.map(c => [c.name, c.id]));
-    const charIdToData = new Map(fullPartyData.map(c => [c.id, c])); // 新增這行：用 ID 直接映射完整資料物件
-    let activePartyData = [];
-    // 注意：這裡使用 getElementById，確保 ID 不重複
+const charIdToData = new Map(fullPartyData.map(c => [c.id, c])); // 新增這行：用 ID 直接映射完整資料物件
+
+// ============================================================
+// === 外部 CG 資料讀取：GitHub / jsDelivr JSON ===
+// ============================================================
+
+const EXTERNAL_CG_DATA_URL = "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/CG/cg-data.json";
+
+
+let externalCGData = {};
+let externalCGDataLoaded = false;
+let externalCGDataLoading = null;
+
+function makeEmptyCGSlots(count = 6) {
+    return Array.from({ length: count }, () => ({
+        unlocked: false,
+        cover: "",
+        images: [],
+        lockedTitle: "特殊CG尚未解锁"
+    }));
+}
+
+async function loadExternalCGDataOnce() {
+    if (externalCGDataLoaded) return externalCGData;
+
+    if (externalCGDataLoading) {
+        return externalCGDataLoading;
+    }
+
+    externalCGDataLoading = fetch(EXTERNAL_CG_DATA_URL, {
+        method: "GET",
+        cache: "no-store"
+    })
+        .then(async (res) => {
+            if (!res.ok) {
+                throw new Error(`HTTP ${res.status}`);
+            }
+
+            const json = await res.json();
+
+            if (!json || typeof json !== "object" || Array.isArray(json)) {
+                throw new Error("CG JSON 格式錯誤：最外層必須是物件");
+            }
+
+            externalCGData = json;
+            externalCGDataLoaded = true;
+
+            console.log("[CG] 外部 CG 資料載入成功", externalCGData);
+            return externalCGData;
+        })
+        .catch((err) => {
+            externalCGData = {};
+            externalCGDataLoaded = true;
+
+            console.warn("[CG] 外部 CG 資料載入失敗，使用內建 cgData 備援", err);
+            return externalCGData;
+        });
+
+    return externalCGDataLoading;
+}
+
+function isCGUnlocked(cg) {
+    // 1. JSON 直接寫 unlocked: true / false 時，優先使用
+    if (typeof cg.unlocked === "boolean") {
+        return cg.unlocked;
+    }
+
+    // 2. 沒寫 unlockVar，就視為未解鎖
+    if (!cg.unlockVar) {
+        return false;
+    }
+
+    // 3. 根據變量判斷
+    const currentValue = getVariable(cg.unlockVar);
+    const targetValue = cg.unlockValue ?? "已解锁";
+
+    return String(currentValue ?? "") === String(targetValue);
+}
+
+function resolveCGData(charData) {
+    if (!charData) return makeEmptyCGSlots();
+
+    const internalList = Array.isArray(charData.cgData)
+        ? charData.cgData
+        : [];
+
+    const externalList = Array.isArray(externalCGData?.[charData.id])
+        ? externalCGData[charData.id]
+        : null;
+
+    // 外部 JSON 存在時，優先使用外部 JSON。
+    // 外部 JSON 不存在時，才使用 fullPartyData 內建 cgData。
+    let sourceList = externalList || internalList;
+
+    // 如果兩邊都沒有資料，才顯示 6 個預設鎖格。
+    if (!Array.isArray(sourceList) || sourceList.length === 0) {
+        sourceList = makeEmptyCGSlots();
+    }
+
+    // 支援 slot 排序，但不限制最大數量。
+    const sortedList = [...sourceList].sort((a, b) => {
+        const slotA = Number(a?.slot);
+        const slotB = Number(b?.slot);
+
+        const hasSlotA = Number.isFinite(slotA);
+        const hasSlotB = Number.isFinite(slotB);
+
+        if (hasSlotA && hasSlotB) return slotA - slotB;
+        if (hasSlotA) return -1;
+        if (hasSlotB) return 1;
+        return 0;
+    });
+
+    return sortedList.map((cg) => {
+        const images = Array.isArray(cg.images)
+            ? cg.images.filter(Boolean)
+            : [];
+
+        return {
+            unlocked: isCGUnlocked(cg),
+            cover: cg.cover || "",
+            images,
+            lockedTitle: cg.lockedTitle || "特殊CG尚未解锁"
+        };
+    });
+}
+
+let activePartyData = [];
     let stTrack = null; 
     const ST_ITEM_WIDTH = 110; 
     let stIsAnimating = false;
@@ -4184,10 +4414,11 @@ const _userName = (() => {
 };
 
     // [修改] 初始化函數 (原本是 init)
-    // [修改] 初始化函數 (原本是 init)
     window.initStatusInterface = async function() {
-        stTrack = document.getElementById('faces-track');
-        if(!stTrack) return;
+    await loadExternalCGDataOnce();
+
+    stTrack = document.getElementById('faces-track');
+    if(!stTrack) return;
 
         // 默认先推入玩家 (p1)
         activePartyData = [fullPartyData[0]]; 
@@ -4692,7 +4923,7 @@ if (
 
                 updateExpColumn(1, data.name, EXP_CAT_1, EXP_ITEMS_1);
                 updateExpColumn(2, data.name, EXP_CAT_2, EXP_ITEMS_2);
-                renderGallery(data.cgData);
+                renderGallery(resolveCGData(data));
             }
         }
     }
@@ -4715,53 +4946,126 @@ if (
 }
 
     function renderGallery(cgData) {
-        const container = document.getElementById('gallery-container');
-        container.innerHTML = "";
-        if (!cgData) {
-            container.innerHTML = "<div style='color:grey; padding:20px;'>暂无 CG 资料</div>";
-            return;
+    const container = document.getElementById('gallery-container');
+    if (!container) return;
+
+    container.innerHTML = "";
+
+    const list = Array.isArray(cgData) && cgData.length > 0
+        ? cgData
+        : makeEmptyCGSlots();
+
+    list.forEach((cg) => {
+        const card = document.createElement('div');
+
+        const hasCover = !!cg.cover;
+        const hasImages = Array.isArray(cg.images) && cg.images.length > 0;
+        const canOpen = cg.unlocked && hasCover && hasImages;
+
+        card.className = `cg-card ${canOpen ? '' : 'locked'}`;
+
+        if (canOpen) {
+            card.innerHTML = `<img src="${cg.cover}" alt="">`;
+            card.title = "";
+            card.onclick = () => openCGModal(cg.images);
+        } else {
+            card.innerHTML = `<div style="width:100%;height:100%;background:#1a1510;"></div>`;
+            card.title = cg.lockedTitle || "特殊CG尚未解锁";
+            card.onclick = () => {
+                alert(cg.lockedTitle || "特殊CG尚未解锁");
+            };
         }
-        cgData.forEach((cg, index) => {
-            const card = document.createElement('div');
-            card.className = `cg-card ${cg.unlocked ? '' : 'locked'}`;
-            if(cg.unlocked) {
-                card.innerHTML = `<img src="${cg.cover}">`;
-                card.onclick = () => openCGModal(cg.images);
-            } else {
-                card.innerHTML = `<div style="width:100%;height:100%;background:#1a1510;"></div>`;
-                
-                card.title = "特殊CG还没做好！"; 
-                
-                card.onclick = () => {
-                    alert("特殊CG还没做好！");
-                };
-            }
-            container.appendChild(card);
-        });
+
+        container.appendChild(card);
+    });
+}
+
+let currentCGList = [];
+let currentCGIndex = 0;
+
+function ensureCGModalOnRoot() {
+    const root = document.querySelector('.rpg-v7-root');
+    if (!root) return null;
+
+    let modal = document.getElementById('cg-modal');
+
+    // 若原本的 cg-modal 還在 status-scaler 裡，直接搬到 rpg-v7-root 底下
+    if (modal && modal.parentElement !== root) {
+        root.appendChild(modal);
     }
 
-    let currentCGList = [];
-    let currentCGIndex = 0;
+    // 若未來你刪掉 HTML 裡原本的 cg-modal，這裡會自動補建
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'cg-modal';
+        modal.className = 'cg-modal';
+        modal.innerHTML = `
+            <div class="cg-modal-content" onclick="event.stopPropagation()">
+                <img src="" id="cg-display" class="cg-modal-img">
+                <button class="modal-nav prev" onclick="changeCG(-1)">❮</button>
+                <button class="modal-nav next" onclick="changeCG(1)">❯</button>
+                <button class="modal-close" onclick="closeCG()">✖</button>
+            </div>
+        `;
+        root.appendChild(modal);
+    }
 
-    window.openCGModal = function(images) {
-        if(!images || images.length === 0) return;
-        currentCGList = images;
+    // 點黑色背景關閉；點圖片本體不關閉
+    modal.onclick = function() {
+        closeCG();
+    };
+
+    return modal;
+}
+
+function updateCGDisplay() {
+    const img = document.getElementById('cg-display');
+    const prevBtn = document.querySelector('#cg-modal .modal-nav.prev');
+    const nextBtn = document.querySelector('#cg-modal .modal-nav.next');
+
+    if (!img || !currentCGList.length) return;
+
+    img.src = currentCGList[currentCGIndex];
+
+    const hasMultiple = currentCGList.length > 1;
+    if (prevBtn) prevBtn.style.display = hasMultiple ? 'flex' : 'none';
+    if (nextBtn) nextBtn.style.display = hasMultiple ? 'flex' : 'none';
+}
+
+window.openCGModal = function(images) {
+    if (!Array.isArray(images) || images.length === 0) return;
+
+    const modal = ensureCGModalOnRoot();
+    if (!modal) return;
+
+    currentCGList = images.filter(Boolean);
+    if (currentCGList.length === 0) return;
+
+    currentCGIndex = 0;
+    updateCGDisplay();
+    modal.classList.add('active');
+};
+
+window.changeCG = function(dir) {
+    if (currentCGList.length <= 1) return;
+
+    currentCGIndex += dir;
+
+    if (currentCGIndex < 0) {
+        currentCGIndex = currentCGList.length - 1;
+    }
+
+    if (currentCGIndex >= currentCGList.length) {
         currentCGIndex = 0;
-        document.getElementById('cg-display').src = currentCGList[0];
-        document.getElementById('cg-modal').classList.add('active');
     }
 
-    window.changeCG = function(dir) {
-        if(currentCGList.length <= 1) return;
-        currentCGIndex += dir;
-        if(currentCGIndex < 0) currentCGIndex = currentCGList.length - 1;
-        if(currentCGIndex >= currentCGList.length) currentCGIndex = 0;
-        document.getElementById('cg-display').src = currentCGList[currentCGIndex];
-    }
+    updateCGDisplay();
+};
 
-    window.closeCG = function() {
-        document.getElementById('cg-modal').classList.remove('active');
-    }
+window.closeCG = function() {
+    const modal = document.getElementById('cg-modal');
+    if (modal) modal.classList.remove('active');
+};
 
     // 按鈕綁定
     let statusButtonsBound = false;
@@ -6926,6 +7230,23 @@ window.updateTemplateVariables = function(data) {
 
     const rawString = typeof data === 'string' ? data : (data && data.RPG ? String(data.RPG) : "");
     state.rawMessage = rawString;
+    if (_anchorRulesCache === null || _filterRulesCache === null) {
+    const _snap = rawString;
+    Promise.all([
+        _anchorRulesCache === null ? refreshAnchorRulesCache() : Promise.resolve(),
+        _filterRulesCache === null ? refreshFilterRulesCache() : Promise.resolve()
+    ]).then(() => {
+        if (state.rawMessage !== _snap) return; // 訊息已更新，跳過
+        state.rawText = '';                      // 讓 extractContent 重跑
+        const reText = extractContent(_snap);
+        if (reText) {
+            state.rawText = reText;
+            if (streamTimeout) cancelAnimationFrame(streamTimeout);
+            streamTimeout = requestAnimationFrame(refreshUI);
+        }
+    }).catch(() => {});
+    // 不 return，讓後續流程繼續（處理 isGenerating / genResetTimer 等）
+}
     // ✅ isFinished 專用：單獨清洗，只為了準確判斷結尾標籤
     let stringForFinishedCheck = rawString;
     stringForFinishedCheck = stringForFinishedCheck.replace(/^[\s\S]*?<\/thinking>/i, '');
@@ -6990,7 +7311,18 @@ window.RPG_FORCE_REFRESH_FROM_VARIABLES = async function(rawData = '') {
         for (let i = 0; i < 20 && isSyncing; i++) {
             await new Promise(resolve => setTimeout(resolve, 50));
         }
-
+        // [新增] 保底：schedulePostVariableSync 會在 300ms/800ms/1500ms/3000ms 呼叫此函數
+// 若快取此時仍未就緒，await 刷新後強制重新提取文本
+if (_anchorRulesCache === null || _filterRulesCache === null) {
+    await Promise.all([
+        _anchorRulesCache === null ? refreshAnchorRulesCache() : Promise.resolve(),
+        _filterRulesCache === null ? refreshFilterRulesCache() : Promise.resolve()
+    ]);
+    if (state.rawMessage) {
+        state.rawText = '';
+        state.rawText = extractContent(state.rawMessage);
+    }
+}
         if (typeof syncGameState === 'function') {
             await syncGameState();
         }
