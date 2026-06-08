@@ -1,0 +1,39 @@
+{
+  "p2": [
+    {
+      "slot": 1,
+      "cover": "https://cdn.jsdelivr.net/gh/你的帳號/你的倉庫@main/cg/aina/cg01_cover.png",
+      "images": [
+        "https://cdn.jsdelivr.net/gh/你的帳號/你的倉庫@main/cg/aina/cg01_01.png",
+        "https://cdn.jsdelivr.net/gh/你的帳號/你的倉庫@main/cg/aina/cg01_02.png"
+      ],
+      "unlocked": false,
+      "unlockVar": "世界.妈妈.爱娜.CG.初次事件",
+      "unlockValue": "已解锁",
+      "lockedTitle": "特殊CG尚未解锁"
+    },
+    {
+      "slot": 2,
+      "cover": "https://cdn.jsdelivr.net/gh/你的帳號/你的倉庫@main/cg/aina/cg02_cover.png",
+      "images": [
+        "https://cdn.jsdelivr.net/gh/你的帳號/你的倉庫@main/cg/aina/cg02_01.png"
+      ],
+      "unlocked": true,
+      "lockedTitle": "特殊CG尚未解锁"
+    }
+  ],
+
+  "p3": [
+    {
+      "slot": 1,
+      "cover": "https://cdn.jsdelivr.net/gh/你的帳號/你的倉庫@main/cg/daphne/cg01_cover.png",
+      "images": [
+        "https://cdn.jsdelivr.net/gh/你的帳號/你的倉庫@main/cg/daphne/cg01_01.png"
+      ],
+      "unlocked": false,
+      "unlockVar": "世界.妈妈.黛芬妮.CG.初次事件",
+      "unlockValue": "已解锁",
+      "lockedTitle": "特殊CG尚未解锁"
+    }
+  ]
+}
