@@ -2,19 +2,122 @@
   "p2": [
     {
       "slot": 1,
-      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/CG/Aina/An01.png",
+      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/aina/Ainacover01.png",
       "images": [
-        "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/CG/Aina/An01.png"
+      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/aina/Aina01.png"
       ],
-      "unlocked": true
+      "unlockVar": "世界.妈妈.爱娜.NSFW.亲密经验.插入",
+      "unlockOperator": ">=",
+      "unlockValue": 1,
+      "unlockHint": "插入经验>=1",
+      "lockedTitle": "特殊CG尚未解锁"
     },
     {
       "slot": 2,
-      "cover": "https://cdn.jsdelivr.net/gh/你的帳號/你的倉庫@main/cg/aina/cg02_cover.png",
+      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/aina/Ainacover02.png",
       "images": [
-        "https://cdn.jsdelivr.net/gh/你的帳號/你的倉庫@main/cg/aina/cg02_01.png"
+      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/aina/Aina02.png"
       ],
-      "unlocked": true,
+      "unlockVar": "世界.妈妈.爱娜.NSFW.亲密经验.插入",
+      "unlockOperator": ">=",
+      "unlockValue": 3,
+      "unlockHint": "插入经验>=3",
+      "lockedTitle": "特殊CG尚未解锁"
+    },
+    {
+      "slot": 3,
+      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/aina/Ainacover03.png",
+      "images": [
+      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/aina/Aina03.png"
+      ],
+      "unlockVar": "世界.妈妈.爱娜.NSFW.侍奉经验.足",
+      "unlockOperator": ">=",
+      "unlockValue": 1,
+      "unlockHint": "足交经验>=1",
+      "lockedTitle": "特殊CG尚未解锁"
+    },
+    {
+      "slot": 4,
+      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/aina/Ainacover04.png",
+      "images": [
+      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/aina/Aina04.png"
+      ],
+      "unlockVar": "世界.妈妈.爱娜.NSFW.侍奉经验.口",
+      "unlockOperator": ">=",
+      "unlockValue": 1,
+      "unlockHint": "口交经验>=1",
+      "lockedTitle": "特殊CG尚未解锁"
+    },
+    {
+      "slot": 5,
+      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/aina/Ainacover05.png",
+      "images": [
+      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/aina/Aina05.png"
+      ],
+      "unlockVar": "世界.妈妈.爱娜.NSFW.侍奉经验.手",
+      "unlockOperator": ">=",
+      "unlockValue": 1,
+      "unlockHint": "手交经验>=1",
+      "lockedTitle": "特殊CG尚未解锁"
+    },
+    {
+      "slot": 6,
+      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/aina/Ainacover06.png",
+      "images": [
+      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/aina/Aina06.png"
+      ],
+      "unlockVar": "世界.妈妈.爱娜.NSFW.侍奉经验.手",
+      "unlockOperator": ">=",
+      "unlockValue": 3,
+      "unlockHint": "手交经验>=3",
+      "lockedTitle": "特殊CG尚未解锁"
+    },
+    {
+      "slot": 7,
+      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/aina/Ainacover07.png",
+      "images": [
+      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/aina/Aina07.png"
+      ],
+      "unlockVar": "世界.妈妈.爱娜.NSFW.亲密经验.插入",
+      "unlockOperator": ">=",
+      "unlockValue": 5,
+      "unlockHint": "插入经验>=5",
+      "lockedTitle": "特殊CG尚未解锁"
+    },
+    {
+      "slot": 8,
+      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/aina/Ainacover08.png",
+      "images": [
+      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/aina/Aina08.png"
+      ],
+      "unlockVar": "世界.妈妈.爱娜.NSFW.亲密经验.插入",
+      "unlockOperator": ">=",
+      "unlockValue": 7,
+      "unlockHint": "插入经验>=7",
+      "lockedTitle": "特殊CG尚未解锁"
+    },
+    {
+      "slot": 9,
+      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/aina/Ainacover09.png",
+      "images": [
+      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/aina/Aina09.png"
+      ],
+      "unlockVar": "世界.妈妈.爱娜.NSFW.亲密经验.插入",
+      "unlockOperator": ">=",
+      "unlockValue": 10,
+      "unlockHint": "插入经验>=10",
+      "lockedTitle": "特殊CG尚未解锁"
+    },
+    {
+      "slot": 10,
+      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/aina/Ainacover10.png",
+      "images": [
+      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/aina/Aina10.png"
+      ],
+      "unlockVar": "世界.妈妈.爱娜.NSFW.亲密经验.插入",
+      "unlockOperator": ">=",
+      "unlockValue": 15,
+      "unlockHint": "插入经验>=15",
       "lockedTitle": "特殊CG尚未解锁"
     }
   ],
@@ -22,13 +125,592 @@
   "p3": [
     {
       "slot": 1,
-      "cover": "https://cdn.jsdelivr.net/gh/你的帳號/你的倉庫@main/cg/daphne/cg01_cover.png",
+      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Del/Delcover01.png",
       "images": [
-        "https://cdn.jsdelivr.net/gh/你的帳號/你的倉庫@main/cg/daphne/cg01_01.png"
+      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Del/Del01.png"
       ],
-      "unlocked": false,
-      "unlockVar": "世界.妈妈.黛芬妮.CG.初次事件",
-      "unlockValue": "已解锁",
+      "unlockVar": "世界.妈妈.黛芬妮.NSFW.侍奉经验.口",
+      "unlockOperator": ">=",
+      "unlockValue": 1,
+      "unlockHint": "口交经验>=1",
+      "lockedTitle": "特殊CG尚未解锁"
+    },
+    {
+      "slot": 2,
+      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Del/Delcover02.png",
+      "images": [
+      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Del/Del02.png"
+      ],
+      "unlockVar": "世界.妈妈.黛芬妮.NSFW.亲密经验.爱抚",
+      "unlockOperator": ">=",
+      "unlockValue": 1,
+      "unlockHint": "爱抚经验>=1",
+      "lockedTitle": "特殊CG尚未解锁"
+    },
+    {
+      "slot": 3,
+      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Del/Delcover03.png",
+      "images": [
+      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Del/Del03.png"
+      ],
+      "unlockVar": "世界.妈妈.黛芬妮.NSFW.亲密经验.插入",
+      "unlockOperator": ">=",
+      "unlockValue": 1,
+      "unlockHint": "插入经验>=1",
+      "lockedTitle": "特殊CG尚未解锁"
+    },
+    {
+      "slot": 4,
+      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Del/Delcover04.png",
+      "images": [
+      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Del/Del04.png"
+      ],
+      "unlockVar": "世界.妈妈.黛芬妮.NSFW.侍奉经验.足",
+      "unlockOperator": ">=",
+      "unlockValue": 1,
+      "unlockHint": "足交经验>=1",
+      "lockedTitle": "特殊CG尚未解锁"
+    },
+    {
+      "slot": 5,
+      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Del/Delcover05.png",
+      "images": [
+      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Del/Del05.png"
+      ],
+      "unlockVar": "世界.妈妈.黛芬妮.NSFW.亲密经验.插入",
+      "unlockOperator": ">=",
+      "unlockValue": 3,
+      "unlockHint": "插入经验>=3",
+      "lockedTitle": "特殊CG尚未解锁"
+    },
+    {
+      "slot": 6,
+      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Del/Delcover06.png",
+      "images": [
+      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Del/Del06.png"
+      ],
+      "unlockVar": "世界.妈妈.黛芬妮.NSFW.亲密经验.插入",
+      "unlockOperator": ">=",
+      "unlockValue": 5,
+      "unlockHint": "插入经验>=5",
+      "lockedTitle": "特殊CG尚未解锁"
+    }
+  ],
+  "p4": [
+    {
+      "slot": 1,
+      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Min/Mincover01.png",
+      "images": [
+      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Min/Min01.png"
+      ],
+      "unlockVar": "世界.妈妈.穗.NSFW.侍奉经验.足",
+      "unlockOperator": ">=",
+      "unlockValue": 1,
+      "unlockHint": "足交经验>=1",
+      "lockedTitle": "特殊CG尚未解锁"
+    },
+    {
+      "slot": 2,
+      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Min/Mincover02.png",
+      "images": [
+      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Min/Min02.png"
+      ],
+      "unlockVar": "世界.妈妈.穗.NSFW.亲密经验.插入",
+      "unlockOperator": ">=",
+      "unlockValue": 1,
+      "unlockHint": "插入经验>=1",
+      "lockedTitle": "特殊CG尚未解锁"
+    },
+    {
+      "slot": 3,
+      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Min/Mincover03.png",
+      "images": [
+      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Min/Min03.png"
+      ],
+      "unlockVar": "世界.妈妈.穗.NSFW.侍奉经验.手",
+      "unlockOperator": ">=",
+      "unlockValue": 1,
+      "unlockHint": "手交经验>=1",
+      "lockedTitle": "特殊CG尚未解锁"
+    },
+    {
+      "slot": 4,
+      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Min/Mincover04.png",
+      "images": [
+      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Min/Min04.png"
+      ],
+      "unlockVar": "世界.妈妈.穗.NSFW.亲密经验.插入",
+      "unlockOperator": ">=",
+      "unlockValue": 3,
+      "unlockHint": "插入经验>=3",
+      "lockedTitle": "特殊CG尚未解锁"
+    },
+    {
+      "slot": 5,
+      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Min/Mincover05.png",
+      "images": [
+      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Min/Min05.png"
+      ],
+      "unlockVar": "世界.妈妈.穗.NSFW.亲密经验.插入",
+      "unlockOperator": ">=",
+      "unlockValue": 5,
+      "unlockHint": "插入经验>=5",
+      "lockedTitle": "特殊CG尚未解锁"
+    },
+    {
+      "slot": 6,
+      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Min/Mincover06.png",
+      "images": [
+      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Min/Min06.png"
+      ],
+      "unlockVar": "世界.妈妈.穗.NSFW.侍奉经验.口",
+      "unlockOperator": ">=",
+      "unlockValue": 1,
+      "unlockHint": "口交经验>=1",
+      "lockedTitle": "特殊CG尚未解锁"
+    }
+  ],
+  "p5": [
+    {
+      "slot": 1,
+      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Rin/Rincover01.png",
+      "images": [
+      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Rin/Rin01.png"
+      ],
+      "unlockVar": "世界.妈妈.琳.NSFW.侍奉经验.口",
+      "unlockOperator": ">=",
+      "unlockValue": 1,
+      "unlockHint": "口交经验>=1",
+      "lockedTitle": "特殊CG尚未解锁"
+    },
+    {
+      "slot": 2,
+      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Rin/Rincover02.png",
+      "images": [
+      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Rin/Rin02.png"
+      ],
+      "unlockVar": "世界.妈妈.琳.NSFW.亲密经验.插入",
+      "unlockOperator": ">=",
+      "unlockValue": 1,
+      "unlockHint": "插入经验>=1",
+      "lockedTitle": "特殊CG尚未解锁"
+    },
+    {
+      "slot": 3,
+      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Rin/Rincover03.png",
+      "images": [
+      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Rin/Rin03.png"
+      ],
+      "unlockVar": "世界.妈妈.琳.NSFW.侍奉经验.足",
+      "unlockOperator": ">=",
+      "unlockValue": 1,
+      "unlockHint": "足交经验>=1",
+      "lockedTitle": "特殊CG尚未解锁"
+    },
+    {
+      "slot": 4,
+      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Rin/Rincover04.png",
+      "images": [
+      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Rin/Rin04.png"
+      ],
+      "unlockVar": "世界.妈妈.琳.NSFW.侍奉经验.手",
+      "unlockOperator": ">=",
+      "unlockValue": 1,
+      "unlockHint": "手交经验>=1",
+      "lockedTitle": "特殊CG尚未解锁"
+    },
+    {
+      "slot": 5,
+      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Rin/Rincover05.png",
+      "images": [
+      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Rin/Rin05.png"
+      ],
+      "unlockVar": "世界.妈妈.琳.NSFW.亲密经验.插入",
+      "unlockOperator": ">=",
+      "unlockValue": 3,
+      "unlockHint": "插入经验>=3",
+      "lockedTitle": "特殊CG尚未解锁"
+    },
+    {
+      "slot": 6,
+      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Rin/Rincover06.png",
+      "images": [
+      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Rin/Rin06.png"
+      ],
+      "unlockVar": "世界.妈妈.琳.NSFW.亲密经验.插入",
+      "unlockOperator": ">=",
+      "unlockValue": 5,
+      "unlockHint": "插入经验>=5",
+      "lockedTitle": "特殊CG尚未解锁"
+    }
+  ],
+  "p6": [
+    {
+      "slot": 1,
+      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Fregga/Freggacover01.png",
+      "images": [
+      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Fregga/Fregga01.png"
+      ],
+      "unlockVar": "世界.妈妈.芙蕾嘉.NSFW.亲密经验.插入",
+      "unlockOperator": ">=",
+      "unlockValue": 1,
+      "unlockHint": "插入经验>=1",
+      "lockedTitle": "特殊CG尚未解锁"
+    },
+    {
+      "slot": 2,
+      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Fregga/Freggacover02.png",
+      "images": [
+      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Fregga/Fregga02.png"
+      ],
+      "unlockVar": "世界.妈妈.芙蕾嘉.NSFW.亲密经验.插入",
+      "unlockOperator": ">=",
+      "unlockValue": 3,
+      "unlockHint": "插入经验>=3",
+      "lockedTitle": "特殊CG尚未解锁"
+    },
+    {
+      "slot": 3,
+      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Fregga/Freggacover03.png",
+      "images": [
+      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Fregga/Fregga03.png"
+      ],
+      "unlockVar": "世界.妈妈.芙蕾嘉.NSFW.侍奉经验.手",
+      "unlockOperator": ">=",
+      "unlockValue": 1,
+      "unlockHint": "手交经验>=1",
+      "lockedTitle": "特殊CG尚未解锁"
+    },
+    {
+      "slot": 4,
+      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Fregga/Freggacover04.png",
+      "images": [
+      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Fregga/Fregga04.png"
+      ],
+      "unlockVar": "世界.妈妈.芙蕾嘉.NSFW.侍奉经验.口",
+      "unlockOperator": ">=",
+      "unlockValue": 1,
+      "unlockHint": "口交经验>=1",
+      "lockedTitle": "特殊CG尚未解锁"
+    },
+    {
+      "slot": 5,
+      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Fregga/Freggacover05.png",
+      "images": [
+      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Fregga/Fregga05.png"
+      ],
+      "unlockVar": "世界.妈妈.芙蕾嘉.NSFW.侍奉经验.乳",
+      "unlockOperator": ">=",
+      "unlockValue": 1,
+      "unlockHint": "乳交经验>=1",
+      "lockedTitle": "特殊CG尚未解锁"
+    },
+    {
+      "slot": 6,
+      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Fregga/Freggacover06.png",
+      "images": [
+      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Fregga/Fregga06.png"
+      ],
+      "unlockVar": "世界.妈妈.芙蕾嘉.NSFW.亲密经验.插入",
+      "unlockOperator": ">=",
+      "unlockValue": 5,
+      "unlockHint": "插入经验>=5",
+      "lockedTitle": "特殊CG尚未解锁"
+    }
+  ],
+  "p7": [
+    {
+      "slot": 1,
+      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Miraruen/Miraruencover01.png",
+      "images": [
+      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Miraruen/Miraruen01.png"
+      ],
+      "unlockVar": "世界.妈妈.米拉露恩.NSFW.亲密经验.插入",
+      "unlockOperator": ">=",
+      "unlockValue": 1,
+      "unlockHint": "插入经验>=1",
+      "lockedTitle": "特殊CG尚未解锁"
+    },
+    {
+      "slot": 2,
+      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Miraruen/Miraruencover02.png",
+      "images": [
+      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Miraruen/Miraruen02.png"
+      ],
+      "unlockVar": "世界.妈妈.米拉露恩.NSFW.侍奉经验.足",
+      "unlockOperator": ">=",
+      "unlockValue": 1,
+      "unlockHint": "足交经验>=1",
+      "lockedTitle": "特殊CG尚未解锁"
+    },
+    {
+      "slot": 3,
+      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Miraruen/Miraruencover03.png",
+      "images": [
+      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Miraruen/Miraruen03.png"
+      ],
+      "unlockVar": "世界.妈妈.米拉露恩.NSFW.亲密经验.插入",
+      "unlockOperator": ">=",
+      "unlockValue": 3,
+      "unlockHint": "插入经验>=3",
+      "lockedTitle": "特殊CG尚未解锁"
+    },
+    {
+      "slot": 4,
+      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Miraruen/Miraruencover04.png",
+      "images": [
+      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Miraruen/Miraruen04.png"
+      ],
+      "unlockVar": "世界.妈妈.米拉露恩.NSFW.亲密经验.爱抚",
+      "unlockOperator": ">=",
+      "unlockValue": 1,
+      "unlockHint": "爱抚经验>=1",
+      "lockedTitle": "特殊CG尚未解锁"
+    },
+    {
+      "slot": 5,
+      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Miraruen/Miraruencover05.png",
+      "images": [
+      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Miraruen/Miraruen05.png"
+      ],
+      "unlockVar": "世界.妈妈.米拉露恩.NSFW.侍奉经验.口",
+      "unlockOperator": ">=",
+      "unlockValue": 1,
+      "unlockHint": "口交经验>=1",
+      "lockedTitle": "特殊CG尚未解锁"
+    },
+    {
+      "slot": 6,
+      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Miraruen/Miraruencover06.png",
+      "images": [
+      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Miraruen/Miraruen06.png"
+      ],
+      "unlockVar": "世界.妈妈.米拉露恩.NSFW.亲密经验.插入",
+      "unlockOperator": ">=",
+      "unlockValue": 5,
+      "unlockHint": "插入经验>=5",
+      "lockedTitle": "特殊CG尚未解锁"
+    }
+  ],
+  "p8": [
+    {
+      "slot": 1,
+      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Lufa/Lufacover01.png",
+      "images": [
+      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Lufa/Lufa01.png"
+      ],
+      "unlockVar": "世界.妈妈.璐法.NSFW.亲密经验.插入",
+      "unlockOperator": ">=",
+      "unlockValue": 1,
+      "unlockHint": "插入经验>=1",
+      "lockedTitle": "特殊CG尚未解锁"
+    },
+    {
+      "slot": 2,
+      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Lufa/Lufacover02.png",
+      "images": [
+      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Lufa/Lufa02.png"
+      ],
+      "unlockVar": "世界.妈妈.璐法.NSFW.侍奉经验.手",
+      "unlockOperator": ">=",
+      "unlockValue": 1,
+      "unlockHint": "手交经验>=1",
+      "lockedTitle": "特殊CG尚未解锁"
+    },
+    {
+      "slot": 3,
+      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Lufa/Lufacover03.png",
+      "images": [
+      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Lufa/Lufa03.png"
+      ],
+      "unlockVar": "世界.妈妈.璐法.NSFW.亲密经验.爱抚",
+      "unlockOperator": ">=",
+      "unlockValue": 1,
+      "unlockHint": "爱抚经验>=1",
+      "lockedTitle": "特殊CG尚未解锁"
+    },
+    {
+      "slot": 4,
+      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Lufa/Lufacover04.png",
+      "images": [
+      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Lufa/Lufa04.png"
+      ],
+      "unlockVar": "世界.妈妈.璐法.NSFW.亲密经验.插入",
+      "unlockOperator": ">=",
+      "unlockValue": 3,
+      "unlockHint": "插入经验>=3",
+      "lockedTitle": "特殊CG尚未解锁"
+    },
+    {
+      "slot": 5,
+      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Lufa/Lufacover05.png",
+      "images": [
+      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Lufa/Lufa05.png"
+      ],
+      "unlockVar": "世界.妈妈.璐法.NSFW.亲密经验.插入",
+      "unlockOperator": ">=",
+      "unlockValue": 5,
+      "unlockHint": "插入经验>=5",
+      "lockedTitle": "特殊CG尚未解锁"
+    },
+    {
+      "slot": 6,
+      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Lufa/Lufacover06.png",
+      "images": [
+      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Lufa/Lufa06.png"
+      ],
+      "unlockVar": "世界.妈妈.璐法.NSFW.侍奉经验.口",
+      "unlockOperator": ">=",
+      "unlockValue": 1,
+      "unlockHint": "口交经验>=1",
+      "lockedTitle": "特殊CG尚未解锁"
+    }
+  ],
+  "p9": [
+    {
+      "slot": 1,
+      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Lydia/Lydiacover01.png",
+      "images": [
+      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Lydia/Lydia01.png"
+      ],
+      "unlockVar": "世界.妈妈.莉迪娅.NSFW.侍奉经验.手",
+      "unlockOperator": ">=",
+      "unlockValue": 1,
+      "unlockHint": "手交经验>=1",
+      "lockedTitle": "特殊CG尚未解锁"
+    },
+    {
+      "slot": 2,
+      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Lydia/Lydiacover02.png",
+      "images": [
+      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Lydia/Lydia02.png"
+      ],
+      "unlockVar": "世界.妈妈.莉迪娅.NSFW.侍奉经验.足",
+      "unlockOperator": ">=",
+      "unlockValue": 1,
+      "unlockHint": "足交经验>=1",
+      "lockedTitle": "特殊CG尚未解锁"
+    },
+    {
+      "slot": 3,
+      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Lydia/Lydiacover03.png",
+      "images": [
+      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Lydia/Lydia03.png"
+      ],
+      "unlockVar": "世界.妈妈.莉迪娅.NSFW.亲密经验.插入",
+      "unlockOperator": ">=",
+      "unlockValue": 1,
+      "unlockHint": "插入经验>=1",
+      "lockedTitle": "特殊CG尚未解锁"
+    },
+    {
+      "slot": 4,
+      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Lydia/Lydiacover04.png",
+      "images": [
+      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Lydia/Lydia04.png"
+      ],
+      "unlockVar": "世界.妈妈.莉迪娅.NSFW.亲密经验.插入",
+      "unlockOperator": ">=",
+      "unlockValue": 3,
+      "unlockHint": "插入经验>=3",
+      "lockedTitle": "特殊CG尚未解锁"
+    },
+    {
+      "slot": 5,
+      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Lydia/Lydiacover05.png",
+      "images": [
+      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Lydia/Lydia05.png"
+      ],
+      "unlockVar": "世界.妈妈.莉迪娅.NSFW.侍奉经验.乳",
+      "unlockOperator": ">=",
+      "unlockValue": 1,
+      "unlockHint": "乳交经验>=1",
+      "lockedTitle": "特殊CG尚未解锁"
+    },
+    {
+      "slot": 6,
+      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Lydia/Lydiacover06.png",
+      "images": [
+      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Lydia/Lydia06.png"
+      ],
+      "unlockVar": "世界.妈妈.莉迪娅.NSFW.亲密经验.插入",
+      "unlockOperator": ">=",
+      "unlockValue": 5,
+      "unlockHint": "插入经验>=5",
+      "lockedTitle": "特殊CG尚未解锁"
+    }
+  ],
+  "p10": [
+    {
+      "slot": 1,
+      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Nephtty/Nephttycover01.png",
+      "images": [
+      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Nephtty/Nephtty01.png"
+      ],
+      "unlockVar": "世界.妈妈.莉迪娅.NSFW.侍奉经验.口",
+      "unlockOperator": ">=",
+      "unlockValue": 1,
+      "unlockHint": "口交经验>=1",
+      "lockedTitle": "特殊CG尚未解锁"
+    },
+    {
+      "slot": 2,
+      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Nephtty/Nephttycover02.png",
+      "images": [
+      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Nephtty/Nephtty02.png"
+      ],
+      "unlockVar": "世界.妈妈.莉迪娅.NSFW.亲密经验.插入",
+      "unlockOperator": ">=",
+      "unlockValue": 1,
+      "unlockHint": "插入经验>=1",
+      "lockedTitle": "特殊CG尚未解锁"
+    },
+    {
+      "slot": 3,
+      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Nephtty/Nephttycover03.png",
+      "images": [
+      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Nephtty/Nephtty03.png"
+      ],
+      "unlockVar": "世界.妈妈.莉迪娅.NSFW.侍奉经验.手",
+      "unlockOperator": ">=",
+      "unlockValue": 1,
+      "unlockHint": "手交经验>=1",
+      "lockedTitle": "特殊CG尚未解锁"
+    },
+    {
+      "slot": 4,
+      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Nephtty/Nephttycover04.png",
+      "images": [
+      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Nephtty/Nephtty04.png"
+      ],
+      "unlockVar": "世界.妈妈.莉迪娅.NSFW.亲密经验.插入",
+      "unlockOperator": ">=",
+      "unlockValue": 3,
+      "unlockHint": "插入经验>=3",
+      "lockedTitle": "特殊CG尚未解锁"
+    },
+    {
+      "slot": 5,
+      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Nephtty/Nephttycover05.png",
+      "images": [
+      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Nephtty/Nephtty05.png"
+      ],
+      "unlockVar": "世界.妈妈.莉迪娅.NSFW.侍奉经验.足",
+      "unlockOperator": ">=",
+      "unlockValue": 1,
+      "unlockHint": "足交经验>=1",
+      "lockedTitle": "特殊CG尚未解锁"
+    },
+    {
+      "slot": 6,
+      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Nephtty/Nephttycover06.png",
+      "images": [
+      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Nephtty/Nephtty06.png"
+      ],
+      "unlockVar": "世界.妈妈.莉迪娅.NSFW.亲密经验.插入",
+      "unlockOperator": ">=",
+      "unlockValue": 5,
+      "unlockHint": "插入经验>=5",
       "lockedTitle": "特殊CG尚未解锁"
     }
   ]
