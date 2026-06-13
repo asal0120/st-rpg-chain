@@ -2,9 +2,9 @@
   "p2": [
     {
       "slot": 1,
-      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/aina/Ainacover01.png",
+      "cover": "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Aina/Ainacover01.png",
       "images": [
-      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/aina/Aina01.png"
+      "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/aina/Aina01.png"
       ],
       "unlockVar": "世界.妈妈.爱娜.NSFW.亲密经验.插入",
       "unlockOperator": ">=",
@@ -14,9 +14,9 @@
     },
     {
       "slot": 2,
-      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/aina/Ainacover02.png",
+      "cover": "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Aina/Ainacover02.png",
       "images": [
-      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/aina/Aina02.png"
+      "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/aina/Aina02.png"
       ],
       "unlockVar": "世界.妈妈.爱娜.NSFW.亲密经验.插入",
       "unlockOperator": ">=",
@@ -26,9 +26,9 @@
     },
     {
       "slot": 3,
-      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/aina/Ainacover03.png",
+      "cover": "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Aina/Ainacover03.png",
       "images": [
-      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/aina/Aina03.png"
+      "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/aina/Aina03.png"
       ],
       "unlockVar": "世界.妈妈.爱娜.NSFW.侍奉经验.足",
       "unlockOperator": ">=",
@@ -38,9 +38,9 @@
     },
     {
       "slot": 4,
-      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/aina/Ainacover04.png",
+      "cover": "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Aina/Ainacover04.png",
       "images": [
-      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/aina/Aina04.png"
+      "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/aina/Aina04.png"
       ],
       "unlockVar": "世界.妈妈.爱娜.NSFW.侍奉经验.口",
       "unlockOperator": ">=",
@@ -50,9 +50,9 @@
     },
     {
       "slot": 5,
-      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/aina/Ainacover05.png",
+      "cover": "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Aina/Ainacover05.png",
       "images": [
-      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/aina/Aina05.png"
+      "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/aina/Aina05.png"
       ],
       "unlockVar": "世界.妈妈.爱娜.NSFW.侍奉经验.手",
       "unlockOperator": ">=",
@@ -62,9 +62,9 @@
     },
     {
       "slot": 6,
-      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/aina/Ainacover06.png",
+      "cover": "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Aina/Ainacover06.png",
       "images": [
-      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/aina/Aina06.png"
+      "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/aina/Aina06.png"
       ],
       "unlockVar": "世界.妈妈.爱娜.NSFW.侍奉经验.手",
       "unlockOperator": ">=",
@@ -74,9 +74,9 @@
     },
     {
       "slot": 7,
-      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/aina/Ainacover07.png",
+      "cover": "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Aina/Ainacover07.png",
       "images": [
-      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/aina/Aina07.png"
+      "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/aina/Aina07.png"
       ],
       "unlockVar": "世界.妈妈.爱娜.NSFW.亲密经验.插入",
       "unlockOperator": ">=",
@@ -86,9 +86,9 @@
     },
     {
       "slot": 8,
-      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/aina/Ainacover08.png",
+      "cover": "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Aina/Ainacover08.png",
       "images": [
-      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/aina/Aina08.png"
+      "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/aina/Aina08.png"
       ],
       "unlockVar": "世界.妈妈.爱娜.NSFW.亲密经验.插入",
       "unlockOperator": ">=",
@@ -98,9 +98,9 @@
     },
     {
       "slot": 9,
-      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/aina/Ainacover09.png",
+      "cover": "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Aina/Ainacover09.png",
       "images": [
-      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/aina/Aina09.png"
+      "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/aina/Aina09.png"
       ],
       "unlockVar": "世界.妈妈.爱娜.NSFW.亲密经验.插入",
       "unlockOperator": ">=",
@@ -110,9 +110,9 @@
     },
     {
       "slot": 10,
-      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/aina/Ainacover10.png",
+      "cover": "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Aina/Ainacover10.png",
       "images": [
-      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/aina/Aina10.png"
+      "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/aina/Aina10.png"
       ],
       "unlockVar": "世界.妈妈.爱娜.NSFW.亲密经验.插入",
       "unlockOperator": ">=",
@@ -125,9 +125,9 @@
   "p3": [
     {
       "slot": 1,
-      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Del/Delcover01.png",
+      "cover": "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Del/Delcover01.png",
       "images": [
-      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Del/Del01.png"
+      "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Del/Del01.png"
       ],
       "unlockVar": "世界.妈妈.黛芬妮.NSFW.侍奉经验.口",
       "unlockOperator": ">=",
@@ -137,9 +137,9 @@
     },
     {
       "slot": 2,
-      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Del/Delcover02.png",
+      "cover": "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Del/Delcover02.png",
       "images": [
-      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Del/Del02.png"
+      "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Del/Del02.png"
       ],
       "unlockVar": "世界.妈妈.黛芬妮.NSFW.亲密经验.爱抚",
       "unlockOperator": ">=",
@@ -149,9 +149,9 @@
     },
     {
       "slot": 3,
-      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Del/Delcover03.png",
+      "cover": "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Del/Delcover03.png",
       "images": [
-      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Del/Del03.png"
+      "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Del/Del03.png"
       ],
       "unlockVar": "世界.妈妈.黛芬妮.NSFW.亲密经验.插入",
       "unlockOperator": ">=",
@@ -161,9 +161,9 @@
     },
     {
       "slot": 4,
-      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Del/Delcover04.png",
+      "cover": "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Del/Delcover04.png",
       "images": [
-      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Del/Del04.png"
+      "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Del/Del04.png"
       ],
       "unlockVar": "世界.妈妈.黛芬妮.NSFW.侍奉经验.足",
       "unlockOperator": ">=",
@@ -173,9 +173,9 @@
     },
     {
       "slot": 5,
-      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Del/Delcover05.png",
+      "cover": "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Del/Delcover05.png",
       "images": [
-      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Del/Del05.png"
+      "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Del/Del05.png"
       ],
       "unlockVar": "世界.妈妈.黛芬妮.NSFW.亲密经验.插入",
       "unlockOperator": ">=",
@@ -185,9 +185,9 @@
     },
     {
       "slot": 6,
-      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Del/Delcover06.png",
+      "cover": "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Del/Delcover06.png",
       "images": [
-      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Del/Del06.png"
+      "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Del/Del06.png"
       ],
       "unlockVar": "世界.妈妈.黛芬妮.NSFW.亲密经验.插入",
       "unlockOperator": ">=",
@@ -199,9 +199,9 @@
   "p4": [
     {
       "slot": 1,
-      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Min/Mincover01.png",
+      "cover": "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Min/Mincover01.png",
       "images": [
-      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Min/Min01.png"
+      "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Min/Min01.png"
       ],
       "unlockVar": "世界.妈妈.穗.NSFW.侍奉经验.足",
       "unlockOperator": ">=",
@@ -211,9 +211,9 @@
     },
     {
       "slot": 2,
-      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Min/Mincover02.png",
+      "cover": "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Min/Mincover02.png",
       "images": [
-      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Min/Min02.png"
+      "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Min/Min02.png"
       ],
       "unlockVar": "世界.妈妈.穗.NSFW.亲密经验.插入",
       "unlockOperator": ">=",
@@ -223,9 +223,9 @@
     },
     {
       "slot": 3,
-      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Min/Mincover03.png",
+      "cover": "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Min/Mincover03.png",
       "images": [
-      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Min/Min03.png"
+      "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Min/Min03.png"
       ],
       "unlockVar": "世界.妈妈.穗.NSFW.侍奉经验.手",
       "unlockOperator": ">=",
@@ -235,9 +235,9 @@
     },
     {
       "slot": 4,
-      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Min/Mincover04.png",
+      "cover": "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Min/Mincover04.png",
       "images": [
-      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Min/Min04.png"
+      "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Min/Min04.png"
       ],
       "unlockVar": "世界.妈妈.穗.NSFW.亲密经验.插入",
       "unlockOperator": ">=",
@@ -247,9 +247,9 @@
     },
     {
       "slot": 5,
-      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Min/Mincover05.png",
+      "cover": "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Min/Mincover05.png",
       "images": [
-      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Min/Min05.png"
+      "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Min/Min05.png"
       ],
       "unlockVar": "世界.妈妈.穗.NSFW.亲密经验.插入",
       "unlockOperator": ">=",
@@ -259,9 +259,9 @@
     },
     {
       "slot": 6,
-      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Min/Mincover06.png",
+      "cover": "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Min/Mincover06.png",
       "images": [
-      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Min/Min06.png"
+      "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Min/Min06.png"
       ],
       "unlockVar": "世界.妈妈.穗.NSFW.侍奉经验.口",
       "unlockOperator": ">=",
@@ -273,9 +273,9 @@
   "p5": [
     {
       "slot": 1,
-      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Fregga/Freggacover01.png",
+      "cover": "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Fregga/Freggacover01.png",
       "images": [
-      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Fregga/Fregga01.png"
+      "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Fregga/Fregga01.png"
       ],
       "unlockVar": "世界.妈妈.芙蕾嘉.NSFW.亲密经验.插入",
       "unlockOperator": ">=",
@@ -285,9 +285,9 @@
     },
     {
       "slot": 2,
-      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Fregga/Freggacover02.png",
+      "cover": "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Fregga/Freggacover02.png",
       "images": [
-      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Fregga/Fregga02.png"
+      "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Fregga/Fregga02.png"
       ],
       "unlockVar": "世界.妈妈.芙蕾嘉.NSFW.亲密经验.插入",
       "unlockOperator": ">=",
@@ -297,9 +297,9 @@
     },
     {
       "slot": 3,
-      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Fregga/Freggacover03.png",
+      "cover": "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Fregga/Freggacover03.png",
       "images": [
-      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Fregga/Fregga03.png"
+      "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Fregga/Fregga03.png"
       ],
       "unlockVar": "世界.妈妈.芙蕾嘉.NSFW.侍奉经验.手",
       "unlockOperator": ">=",
@@ -309,9 +309,9 @@
     },
     {
       "slot": 4,
-      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Fregga/Freggacover04.png",
+      "cover": "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Fregga/Freggacover04.png",
       "images": [
-      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Fregga/Fregga04.png"
+      "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Fregga/Fregga04.png"
       ],
       "unlockVar": "世界.妈妈.芙蕾嘉.NSFW.侍奉经验.口",
       "unlockOperator": ">=",
@@ -321,9 +321,9 @@
     },
     {
       "slot": 5,
-      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Fregga/Freggacover05.png",
+      "cover": "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Fregga/Freggacover05.png",
       "images": [
-      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Fregga/Fregga05.png"
+      "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Fregga/Fregga05.png"
       ],
       "unlockVar": "世界.妈妈.芙蕾嘉.NSFW.侍奉经验.乳",
       "unlockOperator": ">=",
@@ -333,9 +333,9 @@
     },
     {
       "slot": 6,
-      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Fregga/Freggacover06.png",
+      "cover": "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Fregga/Freggacover06.png",
       "images": [
-      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Fregga/Fregga06.png"
+      "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Fregga/Fregga06.png"
       ],
       "unlockVar": "世界.妈妈.芙蕾嘉.NSFW.亲密经验.插入",
       "unlockOperator": ">=",
@@ -347,9 +347,9 @@
   "p6": [
     {
       "slot": 1,
-      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Rin/Rincover01.png",
+      "cover": "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Rin/Rincover01.png",
       "images": [
-      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Rin/Rin01.png"
+      "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Rin/Rin01.png"
       ],
       "unlockVar": "世界.妈妈.琳.NSFW.侍奉经验.口",
       "unlockOperator": ">=",
@@ -359,9 +359,9 @@
     },
     {
       "slot": 2,
-      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Rin/Rincover02.png",
+      "cover": "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Rin/Rincover02.png",
       "images": [
-      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Rin/Rin02.png"
+      "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Rin/Rin02.png"
       ],
       "unlockVar": "世界.妈妈.琳.NSFW.亲密经验.插入",
       "unlockOperator": ">=",
@@ -371,9 +371,9 @@
     },
     {
       "slot": 3,
-      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Rin/Rincover03.png",
+      "cover": "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Rin/Rincover03.png",
       "images": [
-      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Rin/Rin03.png"
+      "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Rin/Rin03.png"
       ],
       "unlockVar": "世界.妈妈.琳.NSFW.侍奉经验.足",
       "unlockOperator": ">=",
@@ -383,9 +383,9 @@
     },
     {
       "slot": 4,
-      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Rin/Rincover04.png",
+      "cover": "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Rin/Rincover04.png",
       "images": [
-      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Rin/Rin04.png"
+      "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Rin/Rin04.png"
       ],
       "unlockVar": "世界.妈妈.琳.NSFW.侍奉经验.手",
       "unlockOperator": ">=",
@@ -395,9 +395,9 @@
     },
     {
       "slot": 5,
-      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Rin/Rincover05.png",
+      "cover": "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Rin/Rincover05.png",
       "images": [
-      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Rin/Rin05.png"
+      "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Rin/Rin05.png"
       ],
       "unlockVar": "世界.妈妈.琳.NSFW.亲密经验.插入",
       "unlockOperator": ">=",
@@ -407,9 +407,9 @@
     },
     {
       "slot": 6,
-      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Rin/Rincover06.png",
+      "cover": "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Rin/Rincover06.png",
       "images": [
-      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Rin/Rin06.png"
+      "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Rin/Rin06.png"
       ],
       "unlockVar": "世界.妈妈.琳.NSFW.亲密经验.插入",
       "unlockOperator": ">=",
@@ -421,9 +421,9 @@
   "p7": [
     {
       "slot": 1,
-      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Miraruen/Miraruencover01.png",
+      "cover": "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Miraruen/Miraruencover01.png",
       "images": [
-      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Miraruen/Miraruen01.png"
+      "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Miraruen/Miraruen01.png"
       ],
       "unlockVar": "世界.妈妈.米拉露恩.NSFW.亲密经验.插入",
       "unlockOperator": ">=",
@@ -433,9 +433,9 @@
     },
     {
       "slot": 2,
-      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Miraruen/Miraruencover02.png",
+      "cover": "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Miraruen/Miraruencover02.png",
       "images": [
-      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Miraruen/Miraruen02.png"
+      "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Miraruen/Miraruen02.png"
       ],
       "unlockVar": "世界.妈妈.米拉露恩.NSFW.侍奉经验.足",
       "unlockOperator": ">=",
@@ -445,9 +445,9 @@
     },
     {
       "slot": 3,
-      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Miraruen/Miraruencover03.png",
+      "cover": "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Miraruen/Miraruencover03.png",
       "images": [
-      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Miraruen/Miraruen03.png"
+      "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Miraruen/Miraruen03.png"
       ],
       "unlockVar": "世界.妈妈.米拉露恩.NSFW.亲密经验.插入",
       "unlockOperator": ">=",
@@ -457,9 +457,9 @@
     },
     {
       "slot": 4,
-      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Miraruen/Miraruencover04.png",
+      "cover": "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Miraruen/Miraruencover04.png",
       "images": [
-      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Miraruen/Miraruen04.png"
+      "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Miraruen/Miraruen04.png"
       ],
       "unlockVar": "世界.妈妈.米拉露恩.NSFW.亲密经验.爱抚",
       "unlockOperator": ">=",
@@ -469,9 +469,9 @@
     },
     {
       "slot": 5,
-      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Miraruen/Miraruencover05.png",
+      "cover": "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Miraruen/Miraruencover05.png",
       "images": [
-      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Miraruen/Miraruen05.png"
+      "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Miraruen/Miraruen05.png"
       ],
       "unlockVar": "世界.妈妈.米拉露恩.NSFW.侍奉经验.口",
       "unlockOperator": ">=",
@@ -481,9 +481,9 @@
     },
     {
       "slot": 6,
-      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Miraruen/Miraruencover06.png",
+      "cover": "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Miraruen/Miraruencover06.png",
       "images": [
-      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Miraruen/Miraruen06.png"
+      "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Miraruen/Miraruen06.png"
       ],
       "unlockVar": "世界.妈妈.米拉露恩.NSFW.亲密经验.插入",
       "unlockOperator": ">=",
@@ -495,9 +495,9 @@
   "p8": [
     {
       "slot": 1,
-      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Lufa/Lufacover01.png",
+      "cover": "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Lufa/Lufacover01.png",
       "images": [
-      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Lufa/Lufa01.png"
+      "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Lufa/Lufa01.png"
       ],
       "unlockVar": "世界.妈妈.璐法.NSFW.亲密经验.插入",
       "unlockOperator": ">=",
@@ -507,9 +507,9 @@
     },
     {
       "slot": 2,
-      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Lufa/Lufacover02.png",
+      "cover": "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Lufa/Lufacover02.png",
       "images": [
-      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Lufa/Lufa02.png"
+      "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Lufa/Lufa02.png"
       ],
       "unlockVar": "世界.妈妈.璐法.NSFW.侍奉经验.手",
       "unlockOperator": ">=",
@@ -519,9 +519,9 @@
     },
     {
       "slot": 3,
-      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Lufa/Lufacover03.png",
+      "cover": "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Lufa/Lufacover03.png",
       "images": [
-      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Lufa/Lufa03.png"
+      "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Lufa/Lufa03.png"
       ],
       "unlockVar": "世界.妈妈.璐法.NSFW.亲密经验.爱抚",
       "unlockOperator": ">=",
@@ -531,9 +531,9 @@
     },
     {
       "slot": 4,
-      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Lufa/Lufacover04.png",
+      "cover": "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Lufa/Lufacover04.png",
       "images": [
-      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Lufa/Lufa04.png"
+      "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Lufa/Lufa04.png"
       ],
       "unlockVar": "世界.妈妈.璐法.NSFW.亲密经验.插入",
       "unlockOperator": ">=",
@@ -543,9 +543,9 @@
     },
     {
       "slot": 5,
-      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Lufa/Lufacover05.png",
+      "cover": "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Lufa/Lufacover05.png",
       "images": [
-      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Lufa/Lufa05.png"
+      "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Lufa/Lufa05.png"
       ],
       "unlockVar": "世界.妈妈.璐法.NSFW.亲密经验.插入",
       "unlockOperator": ">=",
@@ -555,9 +555,9 @@
     },
     {
       "slot": 6,
-      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Lufa/Lufacover06.png",
+      "cover": "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Lufa/Lufacover06.png",
       "images": [
-      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Lufa/Lufa06.png"
+      "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Lufa/Lufa06.png"
       ],
       "unlockVar": "世界.妈妈.璐法.NSFW.侍奉经验.口",
       "unlockOperator": ">=",
@@ -569,9 +569,9 @@
   "p9": [
     {
       "slot": 1,
-      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Lydia/Lydiacover01.png",
+      "cover": "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Lydia/Lydiacover01.png",
       "images": [
-      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Lydia/Lydia01.png"
+      "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Lydia/Lydia01.png"
       ],
       "unlockVar": "世界.妈妈.莉迪娅.NSFW.侍奉经验.手",
       "unlockOperator": ">=",
@@ -581,9 +581,9 @@
     },
     {
       "slot": 2,
-      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Lydia/Lydiacover02.png",
+      "cover": "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Lydia/Lydiacover02.png",
       "images": [
-      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Lydia/Lydia02.png"
+      "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Lydia/Lydia02.png"
       ],
       "unlockVar": "世界.妈妈.莉迪娅.NSFW.侍奉经验.足",
       "unlockOperator": ">=",
@@ -593,9 +593,9 @@
     },
     {
       "slot": 3,
-      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Lydia/Lydiacover03.png",
+      "cover": "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Lydia/Lydiacover03.png",
       "images": [
-      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Lydia/Lydia03.png"
+      "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Lydia/Lydia03.png"
       ],
       "unlockVar": "世界.妈妈.莉迪娅.NSFW.亲密经验.插入",
       "unlockOperator": ">=",
@@ -605,9 +605,9 @@
     },
     {
       "slot": 4,
-      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Lydia/Lydiacover04.png",
+      "cover": "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Lydia/Lydiacover04.png",
       "images": [
-      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Lydia/Lydia04.png"
+      "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Lydia/Lydia04.png"
       ],
       "unlockVar": "世界.妈妈.莉迪娅.NSFW.亲密经验.菊穴",
       "unlockOperator": ">=",
@@ -617,9 +617,9 @@
     },
     {
       "slot": 5,
-      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Lydia/Lydiacover05.png",
+      "cover": "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Lydia/Lydiacover05.png",
       "images": [
-      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Lydia/Lydia05.png"
+      "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Lydia/Lydia05.png"
       ],
       "unlockVar": "世界.妈妈.莉迪娅.NSFW.侍奉经验.乳",
       "unlockOperator": ">=",
@@ -629,9 +629,9 @@
     },
     {
       "slot": 6,
-      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Lydia/Lydiacover06.png",
+      "cover": "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Lydia/Lydiacover06.png",
       "images": [
-      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Lydia/Lydia06.png"
+      "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Lydia/Lydia06.png"
       ],
       "unlockVar": "世界.妈妈.莉迪娅.NSFW.亲密经验.插入",
       "unlockOperator": ">=",
@@ -643,9 +643,9 @@
   "p10": [
     {
       "slot": 1,
-      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Nephtty/Nephttycover01.png",
+      "cover": "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Nephtty/Nephttycover01.png",
       "images": [
-      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Nephtty/Nephtty01.png"
+      "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Nephtty/Nephtty01.png"
       ],
       "unlockVar": "世界.妈妈.奈芙蒂.NSFW.侍奉经验.口",
       "unlockOperator": ">=",
@@ -655,9 +655,9 @@
     },
     {
       "slot": 2,
-      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Nephtty/Nephttycover02.png",
+      "cover": "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Nephtty/Nephttycover02.png",
       "images": [
-      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Nephtty/Nephtty02.png"
+      "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Nephtty/Nephtty02.png"
       ],
       "unlockVar": "世界.妈妈.奈芙蒂.NSFW.亲密经验.插入",
       "unlockOperator": ">=",
@@ -667,9 +667,9 @@
     },
     {
       "slot": 3,
-      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Nephtty/Nephttycover03.png",
+      "cover": "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Nephtty/Nephttycover03.png",
       "images": [
-      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Nephtty/Nephtty03.png"
+      "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Nephtty/Nephtty03.png"
       ],
       "unlockVar": "世界.妈妈.奈芙蒂.NSFW.侍奉经验.手",
       "unlockOperator": ">=",
@@ -679,9 +679,9 @@
     },
     {
       "slot": 4,
-      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Nephtty/Nephttycover04.png",
+      "cover": "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Nephtty/Nephttycover04.png",
       "images": [
-      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Nephtty/Nephtty04.png"
+      "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Nephtty/Nephtty04.png"
       ],
       "unlockVar": "世界.妈妈.奈芙蒂.NSFW.亲密经验.插入",
       "unlockOperator": ">=",
@@ -691,9 +691,9 @@
     },
     {
       "slot": 5,
-      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Nephtty/Nephttycover05.png",
+      "cover": "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Nephtty/Nephttycover05.png",
       "images": [
-      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Nephtty/Nephtty05.png"
+      "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Nephtty/Nephtty05.png"
       ],
       "unlockVar": "世界.妈妈.奈芙蒂.NSFW.侍奉经验.足",
       "unlockOperator": ">=",
@@ -703,9 +703,9 @@
     },
     {
       "slot": 6,
-      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Nephtty/Nephttycover06.png",
+      "cover": "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Nephtty/Nephttycover06.png",
       "images": [
-      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Nephtty/Nephtty06.png"
+      "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Nephtty/Nephtty06.png"
       ],
       "unlockVar": "世界.妈妈.奈芙蒂.NSFW.亲密经验.插入",
       "unlockOperator": ">=",
