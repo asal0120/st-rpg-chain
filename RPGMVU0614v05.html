@@ -1405,10 +1405,71 @@
 
     .status-scaler .gallery-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; padding-top: 10px; }
     .status-scaler .cg-card {
-        aspect-ratio: 3/2; background: #000; border: 1px solid var(--p-gold-dim);
-        position: relative; cursor: pointer; overflow: hidden; transition: all 0.2s;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.5);
-    }
+    aspect-ratio: 3/2;
+    background: #000;
+    border: 1px solid var(--p-gold-dim);
+    position: relative;
+    cursor: pointer;
+    overflow: visible;
+    transition: all 0.2s;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+    z-index: 1;
+}
+
+/* 鎖住 CG 的底色 */
+.status-scaler .cg-card-lock-bg {
+    width: 100%;
+    height: 100%;
+    background: #1a1510;
+    overflow: hidden;
+}
+
+/* 鎖住 CG 的 hover 解鎖條件提示 */
+.status-scaler .cg-unlock-tip {
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 10px);
+    transform: translateX(-50%) translateY(6px);
+    min-width: 160px;
+    max-width: 280px;
+    width: max-content;
+    box-sizing: border-box;
+
+    background: linear-gradient(to bottom, #2a221b, #110e0b);
+    border: 1px solid var(--p-gold-dim);
+    border-bottom: 2px solid var(--p-gold);
+    color: var(--p-gold-bright);
+    padding: 8px 12px;
+    font-size: 14px;
+    line-height: 1.5;
+    text-align: center;
+    white-space: normal;
+
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    z-index: 10;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.75);
+    transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
+}
+
+.status-scaler .cg-card.locked:hover .cg-unlock-tip {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* 保持鎖頭在卡片中央 */
+.status-scaler .cg-card.locked::after {
+    z-index: 2;
+    pointer-events: none;
+}
+
+.status-scaler .cg-card:hover {
+    border-color: var(--p-gold);
+    transform: scale(1.02);
+    z-index: 50;
+}
     .status-scaler .cg-card:hover { border-color: var(--p-gold); transform: scale(1.02); }
     .status-scaler .cg-card img { width: 100%; height: 100%; object-fit: cover; filter: brightness(0.8); }
     .status-scaler .cg-card:hover img { filter: brightness(1); }
@@ -4259,7 +4320,7 @@ const charIdToData = new Map(fullPartyData.map(c => [c.id, c])); // 新增這行
 // === 外部 CG 資料讀取：GitHub / jsDelivr JSON ===
 // ============================================================
 
-const EXTERNAL_CG_DATA_URL = "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/CG/cg-data.json";
+const EXTERNAL_CG_DATA_URL = "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain/CG/cg-data0614.json";
 
 
 let externalCGData = {};
@@ -4314,22 +4375,61 @@ async function loadExternalCGDataOnce() {
     return externalCGDataLoading;
 }
 
+function toCGNumber(value) {
+    if (value === null || value === undefined || value === "") {
+        return null;
+    }
+
+    const num = Number(value);
+    return Number.isFinite(num) ? num : null;
+}
+
+function compareCGUnlockValue(currentValue, targetValue, operator = "==") {
+    const op = String(operator || "==").trim();
+
+    // 數字比較：>, >=, <, <=
+    if (op === ">" || op === ">=" || op === "<" || op === "<=") {
+        const currentNum = toCGNumber(currentValue);
+        const targetNum = toCGNumber(targetValue);
+
+        if (currentNum === null || targetNum === null) {
+            return false;
+        }
+
+        if (op === ">") return currentNum > targetNum;
+        if (op === ">=") return currentNum >= targetNum;
+        if (op === "<") return currentNum < targetNum;
+        if (op === "<=") return currentNum <= targetNum;
+    }
+
+    // 不等於
+    if (op === "!=" || op === "!==") {
+        return String(currentValue ?? "") !== String(targetValue ?? "");
+    }
+
+    // 預設：等於
+    return String(currentValue ?? "") === String(targetValue ?? "");
+}
+
 function isCGUnlocked(cg) {
-    // 1. JSON 直接寫 unlocked: true / false 時，優先使用
+    if (!cg) return false;
+
+    // 1. 有 unlockVar 時，優先根據當前變量判斷
+    if (cg.unlockVar) {
+        const currentValue = getVariable(cg.unlockVar, "");
+        const targetValue = cg.unlockValue ?? "已解锁";
+        const operator = cg.unlockOperator || "==";
+
+        return compareCGUnlockValue(currentValue, targetValue, operator);
+    }
+
+    // 2. 沒有 unlockVar，才使用 unlocked: true / false
     if (typeof cg.unlocked === "boolean") {
         return cg.unlocked;
     }
 
-    // 2. 沒寫 unlockVar，就視為未解鎖
-    if (!cg.unlockVar) {
-        return false;
-    }
-
-    // 3. 根據變量判斷
-    const currentValue = getVariable(cg.unlockVar);
-    const targetValue = cg.unlockValue ?? "已解锁";
-
-    return String(currentValue ?? "") === String(targetValue);
+    // 3. 兩者都沒有，預設未解鎖
+    return false;
 }
 
 function resolveCGData(charData) {
@@ -4367,20 +4467,55 @@ function resolveCGData(charData) {
     });
 
     return sortedList.map((cg) => {
-        const images = Array.isArray(cg.images)
-            ? cg.images.filter(Boolean)
-            : [];
+    const images = Array.isArray(cg.images)
+        ? cg.images.filter(Boolean)
+        : [];
 
-        return {
-            unlocked: isCGUnlocked(cg),
-            cover: cg.cover || "",
-            images,
-            lockedTitle: cg.lockedTitle || "特殊CG尚未解锁"
-        };
-    });
+    return {
+        unlocked: isCGUnlocked(cg),
+        cover: cg.cover || "",
+        images,
+        lockedTitle: cg.lockedTitle || "特殊CG尚未解锁",
+        unlockHint: cg.unlockHint || "",
+        unlockVar: cg.unlockVar || "",
+        unlockValue: cg.unlockValue ?? "已解锁"
+    };
+});
 }
 
-let activePartyData = [];
+    let activePartyData = [];
+    let currentStatusCharacterData = null;
+
+function isMemberExpTabActive() {
+    return document.getElementById('tab-m-exp')?.classList.contains('active');
+}
+
+function isMemberGalleryTabActive() {
+    return document.getElementById('tab-m-gallery')?.classList.contains('active');
+}
+
+async function updateCurrentMemberExp() {
+    const data = currentStatusCharacterData;
+    if (!data || !data.name) return;
+
+    await Promise.all([
+        updateExpColumn(1, data.name, EXP_CAT_1, EXP_ITEMS_1),
+        updateExpColumn(2, data.name, EXP_CAT_2, EXP_ITEMS_2)
+    ]);
+}
+
+async function renderCurrentMemberGallery() {
+    const data = currentStatusCharacterData;
+    const container = document.getElementById('gallery-container');
+
+    if (!data || !container) return;
+
+    container.innerHTML = "<div style='color:grey; padding:20px;'>读取 CG 资料中...</div>";
+
+    await loadExternalCGDataOnce();
+
+    renderGallery(resolveCGData(data));
+}
     let stTrack = null; 
     const ST_ITEM_WIDTH = 110; 
     let stIsAnimating = false;
@@ -4415,8 +4550,6 @@ let activePartyData = [];
 
     // [修改] 初始化函數 (原本是 init)
     window.initStatusInterface = async function() {
-    await loadExternalCGDataOnce();
-
     stTrack = document.getElementById('faces-track');
     if(!stTrack) return;
 
@@ -4747,38 +4880,53 @@ let activePartyData = [];
 
     window.switchPlayerTab = function(tabName) { /* Only 1 tab */ }
 
-    window.switchMemberTab = function(tabName) {
-        const container = document.getElementById('tabs-member');
-        container.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-        const btns = container.querySelectorAll('.tab-btn');
-        if(tabName === 'm-data') btns[0].classList.add('active');
-        if(tabName === 'm-exp') btns[1].classList.add('active');
-        if(tabName === 'm-gallery') btns[2].classList.add('active');
+    window.switchMemberTab = async function(tabName) {
+    const container = document.getElementById('tabs-member');
+    if (!container) return;
 
-        document.querySelectorAll('.tab-page').forEach(p => p.classList.remove('active'));
-        document.getElementById(`tab-${tabName}`).classList.add('active');
+    container.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
 
-        const cards = Array.from(stTrack.children);
-        // 如果只有1個角色，center就是0，否則為1
-        const centerIndex = (cards.length > 1) ? 1 : 0;
-        const centerCard = cards[centerIndex]; 
-        
-        if (!centerCard) return;
-        const id = centerCard.dataset.id;
-        const data = charIdToData.get(id);
-        if(data) {
-            const tachie = document.getElementById('big-tachie');
-            let targetImg = (tabName === 'm-data') ? data.img : data.imgDiff; 
-            if (!tachie.src.includes(targetImg)) {
-                tachie.classList.remove('show');
-                setTimeout(() => {
-                    tachie.src = targetImg;
-                    tachie.onload = () => tachie.classList.add('show');
-                    if(tachie.complete) tachie.classList.add('show');
-                }, 150);
-            }
+    const btns = container.querySelectorAll('.tab-btn');
+    if (tabName === 'm-data') btns[0]?.classList.add('active');
+    if (tabName === 'm-exp') btns[1]?.classList.add('active');
+    if (tabName === 'm-gallery') btns[2]?.classList.add('active');
+
+    document.querySelectorAll('.tab-page').forEach(p => p.classList.remove('active'));
+    document.getElementById(`tab-${tabName}`)?.classList.add('active');
+
+    const cards = Array.from(stTrack?.children || []);
+    const centerIndex = (cards.length > 1) ? 1 : 0;
+    const centerCard = cards[centerIndex]; 
+    
+    if (!centerCard) return;
+
+    const id = centerCard.dataset.id;
+    const data = charIdToData.get(id);
+
+    if (data) {
+        currentStatusCharacterData = data;
+
+        const tachie = document.getElementById('big-tachie');
+        const targetImg = (tabName === 'm-data') ? data.img : data.imgDiff;
+
+        if (tachie && !tachie.src.includes(targetImg)) {
+            tachie.classList.remove('show');
+            setTimeout(() => {
+                tachie.src = targetImg;
+                tachie.onload = () => tachie.classList.add('show');
+                if (tachie.complete) tachie.classList.add('show');
+            }, 150);
         }
     }
+
+    if (tabName === 'm-exp') {
+        await updateCurrentMemberExp();
+    }
+
+    if (tabName === 'm-gallery') {
+        await renderCurrentMemberGallery();
+    }
+};
 
     // === 核心更新逻辑 ===
     async function updateSelectionFromCenter(isDataRefresh = false) {
@@ -4792,9 +4940,10 @@ let activePartyData = [];
         centerCard.classList.add('active');
 
         const id = centerCard.dataset.id;
-        const data = activePartyData.find(p => p.id === id);
-        
-        if (data) {
+const data = activePartyData.find(p => p.id === id);
+
+if (data) {
+    currentStatusCharacterData = data;
     if (els.charName) els.charName.innerText = data.name;
     if (els.dynamicBg) els.dynamicBg.style.backgroundImage = `url('${data.bg}')`;
     
@@ -4921,9 +5070,13 @@ if (
     if (els.mStatus) els.mStatus.innerText = "---";
 }
 
-                updateExpColumn(1, data.name, EXP_CAT_1, EXP_ITEMS_1);
-                updateExpColumn(2, data.name, EXP_CAT_2, EXP_ITEMS_2);
-                renderGallery(resolveCGData(data));
+                if (isMemberExpTabActive()) {
+    await updateCurrentMemberExp();
+}
+
+if (isMemberGalleryTabActive()) {
+    await renderCurrentMemberGallery();
+}
             }
         }
     }
@@ -4943,6 +5096,27 @@ if (
             el.innerText = results[i] || "0";
         }
     }
+}
+
+function escapeHTML(value) {
+    return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+function getCGUnlockHint(cg) {
+    if (cg.unlockHint) {
+        return cg.unlockHint;
+    }
+
+    if (cg.unlockVar) {
+        return `解锁条件：${cg.unlockVar} = ${cg.unlockValue ?? "已解锁"}`;
+    }
+
+    return cg.lockedTitle || "特殊CG尚未解锁";
 }
 
     function renderGallery(cgData) {
@@ -4965,12 +5139,20 @@ if (
         card.className = `cg-card ${canOpen ? '' : 'locked'}`;
 
         if (canOpen) {
-            card.innerHTML = `<img src="${cg.cover}" alt="">`;
+            card.innerHTML = `<img src="${escapeHTML(cg.cover)}" alt="">`;
             card.title = "";
             card.onclick = () => openCGModal(cg.images);
         } else {
-            card.innerHTML = `<div style="width:100%;height:100%;background:#1a1510;"></div>`;
-            card.title = cg.lockedTitle || "特殊CG尚未解锁";
+            const hint = getCGUnlockHint(cg);
+            const safeHint = escapeHTML(hint);
+            const safeTitle = escapeHTML(cg.lockedTitle || "特殊CG尚未解锁");
+
+            card.innerHTML = `
+                <div class="cg-card-lock-bg"></div>
+                <div class="cg-unlock-tip">${safeHint}</div>
+            `;
+
+            card.title = "";
             card.onclick = () => {
                 alert(cg.lockedTitle || "特殊CG尚未解锁");
             };
