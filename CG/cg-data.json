@@ -647,7 +647,7 @@
       "images": [
       "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Nephtty/Nephtty01.png"
       ],
-      "unlockVar": "世界.妈妈.莉迪娅.NSFW.侍奉经验.口",
+      "unlockVar": "世界.妈妈.奈芙蒂.NSFW.侍奉经验.口",
       "unlockOperator": ">=",
       "unlockValue": 1,
       "unlockHint": "口交经验>=1",
@@ -659,7 +659,7 @@
       "images": [
       "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Nephtty/Nephtty02.png"
       ],
-      "unlockVar": "世界.妈妈.莉迪娅.NSFW.亲密经验.插入",
+      "unlockVar": "世界.妈妈.奈芙蒂.NSFW.亲密经验.插入",
       "unlockOperator": ">=",
       "unlockValue": 1,
       "unlockHint": "插入经验>=1",
@@ -671,7 +671,7 @@
       "images": [
       "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Nephtty/Nephtty03.png"
       ],
-      "unlockVar": "世界.妈妈.莉迪娅.NSFW.侍奉经验.手",
+      "unlockVar": "世界.妈妈.奈芙蒂.NSFW.侍奉经验.手",
       "unlockOperator": ">=",
       "unlockValue": 1,
       "unlockHint": "手交经验>=1",
@@ -683,7 +683,7 @@
       "images": [
       "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Nephtty/Nephtty04.png"
       ],
-      "unlockVar": "世界.妈妈.莉迪娅.NSFW.亲密经验.插入",
+      "unlockVar": "世界.妈妈.奈芙蒂.NSFW.亲密经验.插入",
       "unlockOperator": ">=",
       "unlockValue": 3,
       "unlockHint": "插入经验>=3",
@@ -695,7 +695,7 @@
       "images": [
       "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Nephtty/Nephtty05.png"
       ],
-      "unlockVar": "世界.妈妈.莉迪娅.NSFW.侍奉经验.足",
+      "unlockVar": "世界.妈妈.奈芙蒂.NSFW.侍奉经验.足",
       "unlockOperator": ">=",
       "unlockValue": 1,
       "unlockHint": "足交经验>=1",
@@ -707,7 +707,7 @@
       "images": [
       "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Nephtty/Nephtty06.png"
       ],
-      "unlockVar": "世界.妈妈.莉迪娅.NSFW.亲密经验.插入",
+      "unlockVar": "世界.妈妈.奈芙蒂.NSFW.亲密经验.插入",
       "unlockOperator": ">=",
       "unlockValue": 5,
       "unlockHint": "插入经验>=5",
