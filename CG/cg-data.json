@@ -273,80 +273,6 @@
   "p5": [
     {
       "slot": 1,
-      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Rin/Rincover01.png",
-      "images": [
-      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Rin/Rin01.png"
-      ],
-      "unlockVar": "世界.妈妈.琳.NSFW.侍奉经验.口",
-      "unlockOperator": ">=",
-      "unlockValue": 1,
-      "unlockHint": "口交经验>=1",
-      "lockedTitle": "特殊CG尚未解锁"
-    },
-    {
-      "slot": 2,
-      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Rin/Rincover02.png",
-      "images": [
-      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Rin/Rin02.png"
-      ],
-      "unlockVar": "世界.妈妈.琳.NSFW.亲密经验.插入",
-      "unlockOperator": ">=",
-      "unlockValue": 1,
-      "unlockHint": "插入经验>=1",
-      "lockedTitle": "特殊CG尚未解锁"
-    },
-    {
-      "slot": 3,
-      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Rin/Rincover03.png",
-      "images": [
-      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Rin/Rin03.png"
-      ],
-      "unlockVar": "世界.妈妈.琳.NSFW.侍奉经验.足",
-      "unlockOperator": ">=",
-      "unlockValue": 1,
-      "unlockHint": "足交经验>=1",
-      "lockedTitle": "特殊CG尚未解锁"
-    },
-    {
-      "slot": 4,
-      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Rin/Rincover04.png",
-      "images": [
-      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Rin/Rin04.png"
-      ],
-      "unlockVar": "世界.妈妈.琳.NSFW.侍奉经验.手",
-      "unlockOperator": ">=",
-      "unlockValue": 1,
-      "unlockHint": "手交经验>=1",
-      "lockedTitle": "特殊CG尚未解锁"
-    },
-    {
-      "slot": 5,
-      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Rin/Rincover05.png",
-      "images": [
-      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Rin/Rin05.png"
-      ],
-      "unlockVar": "世界.妈妈.琳.NSFW.亲密经验.插入",
-      "unlockOperator": ">=",
-      "unlockValue": 3,
-      "unlockHint": "插入经验>=3",
-      "lockedTitle": "特殊CG尚未解锁"
-    },
-    {
-      "slot": 6,
-      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Rin/Rincover06.png",
-      "images": [
-      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Rin/Rin06.png"
-      ],
-      "unlockVar": "世界.妈妈.琳.NSFW.亲密经验.插入",
-      "unlockOperator": ">=",
-      "unlockValue": 5,
-      "unlockHint": "插入经验>=5",
-      "lockedTitle": "特殊CG尚未解锁"
-    }
-  ],
-  "p6": [
-    {
-      "slot": 1,
       "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Fregga/Freggacover01.png",
       "images": [
       "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Fregga/Fregga01.png"
@@ -412,6 +338,80 @@
       "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Fregga/Fregga06.png"
       ],
       "unlockVar": "世界.妈妈.芙蕾嘉.NSFW.亲密经验.插入",
+      "unlockOperator": ">=",
+      "unlockValue": 5,
+      "unlockHint": "插入经验>=5",
+      "lockedTitle": "特殊CG尚未解锁"
+    }
+  ],
+  "p6": [
+    {
+      "slot": 1,
+      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Rin/Rincover01.png",
+      "images": [
+      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Rin/Rin01.png"
+      ],
+      "unlockVar": "世界.妈妈.琳.NSFW.侍奉经验.口",
+      "unlockOperator": ">=",
+      "unlockValue": 1,
+      "unlockHint": "口交经验>=1",
+      "lockedTitle": "特殊CG尚未解锁"
+    },
+    {
+      "slot": 2,
+      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Rin/Rincover02.png",
+      "images": [
+      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Rin/Rin02.png"
+      ],
+      "unlockVar": "世界.妈妈.琳.NSFW.亲密经验.插入",
+      "unlockOperator": ">=",
+      "unlockValue": 1,
+      "unlockHint": "插入经验>=1",
+      "lockedTitle": "特殊CG尚未解锁"
+    },
+    {
+      "slot": 3,
+      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Rin/Rincover03.png",
+      "images": [
+      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Rin/Rin03.png"
+      ],
+      "unlockVar": "世界.妈妈.琳.NSFW.侍奉经验.足",
+      "unlockOperator": ">=",
+      "unlockValue": 1,
+      "unlockHint": "足交经验>=1",
+      "lockedTitle": "特殊CG尚未解锁"
+    },
+    {
+      "slot": 4,
+      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Rin/Rincover04.png",
+      "images": [
+      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Rin/Rin04.png"
+      ],
+      "unlockVar": "世界.妈妈.琳.NSFW.侍奉经验.手",
+      "unlockOperator": ">=",
+      "unlockValue": 1,
+      "unlockHint": "手交经验>=1",
+      "lockedTitle": "特殊CG尚未解锁"
+    },
+    {
+      "slot": 5,
+      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Rin/Rincover05.png",
+      "images": [
+      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Rin/Rin05.png"
+      ],
+      "unlockVar": "世界.妈妈.琳.NSFW.亲密经验.插入",
+      "unlockOperator": ">=",
+      "unlockValue": 3,
+      "unlockHint": "插入经验>=3",
+      "lockedTitle": "特殊CG尚未解锁"
+    },
+    {
+      "slot": 6,
+      "cover": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Rin/Rincover06.png",
+      "images": [
+      "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/cg/Rin/Rin06.png"
+      ],
+      "unlockVar": "世界.妈妈.琳.NSFW.亲密经验.插入",
       "unlockOperator": ">=",
       "unlockValue": 5,
       "unlockHint": "插入经验>=5",
