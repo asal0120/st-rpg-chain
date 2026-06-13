@@ -4375,20 +4375,60 @@ async function loadExternalCGDataOnce() {
     return externalCGDataLoading;
 }
 
+function toCGNumber(value) {
+    if (value === null || value === undefined || value === "") {
+        return null;
+    }
+
+    const num = Number(value);
+    return Number.isFinite(num) ? num : null;
+}
+
+function compareCGUnlockValue(currentValue, targetValue, operator = "==") {
+    const op = String(operator || "==").trim();
+
+    // 數字比較：>, >=, <, <=
+    if (op === ">" || op === ">=" || op === "<" || op === "<=") {
+        const currentNum = toCGNumber(currentValue);
+        const targetNum = toCGNumber(targetValue);
+
+        if (currentNum === null || targetNum === null) {
+            return false;
+        }
+
+        if (op === ">") return currentNum > targetNum;
+        if (op === ">=") return currentNum >= targetNum;
+        if (op === "<") return currentNum < targetNum;
+        if (op === "<=") return currentNum <= targetNum;
+    }
+
+    // 不等於
+    if (op === "!=" || op === "!==") {
+        return String(currentValue ?? "") !== String(targetValue ?? "");
+    }
+
+    // 預設：等於
+    return String(currentValue ?? "") === String(targetValue ?? "");
+}
+
 function isCGUnlocked(cg) {
     if (!cg) return false;
 
+    // 1. 有 unlockVar 時，優先根據當前變量判斷
     if (cg.unlockVar) {
         const currentValue = getVariable(cg.unlockVar, "");
         const targetValue = cg.unlockValue ?? "已解锁";
+        const operator = cg.unlockOperator || "==";
 
-        return String(currentValue ?? "") === String(targetValue);
+        return compareCGUnlockValue(currentValue, targetValue, operator);
     }
 
+    // 2. 沒有 unlockVar，才使用 unlocked: true / false
     if (typeof cg.unlocked === "boolean") {
         return cg.unlocked;
     }
 
+    // 3. 兩者都沒有，預設未解鎖
     return false;
 }
 
