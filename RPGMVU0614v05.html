@@ -1428,10 +1428,10 @@
 .status-scaler .cg-unlock-tip {
     position: absolute;
     left: 50%;
-    bottom: calc(100% + 10px);
+    bottom: calc(100% + 12px);
     transform: translateX(-50%) translateY(6px);
-    min-width: 160px;
-    max-width: 280px;
+    min-width: 220px;
+    max-width: 360px;
     width: max-content;
     box-sizing: border-box;
 
@@ -1439,16 +1439,16 @@
     border: 1px solid var(--p-gold-dim);
     border-bottom: 2px solid var(--p-gold);
     color: var(--p-gold-bright);
-    padding: 8px 12px;
-    font-size: 14px;
-    line-height: 1.5;
+    padding: 12px 16px;
+    font-size: 36px;
+    line-height: 1.6;
     text-align: center;
     white-space: normal;
 
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
-    z-index: 10;
+    z-index: 20;
     box-shadow: 0 6px 18px rgba(0,0,0,0.75);
     transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
 }
@@ -1485,15 +1485,14 @@
 .rpg-v7-root .cg-modal {
     display: none;
     position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.92);
-    z-index: 99999;
-    align-items: center;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.9);
+    z-index: 999;
+    align-items: flex-start;
     justify-content: center;
+    padding-top: 12px;
+    box-sizing: border-box;
     transform: none;
-    pointer-events: auto;
 }
 
 .rpg-v7-root .cg-modal.active {
@@ -1503,25 +1502,19 @@
 
 .rpg-v7-root .cg-modal-content {
     position: relative;
-    width: calc(100% - 96px);
-    height: calc(100% - 96px);
-    max-width: 1200px;
-    max-height: 96%;
+    max-width: 92%;
+    max-height: calc(100% - 12px);
     display: flex;
-    align-items: center;
     justify-content: center;
+    align-items: flex-start;
 }
 
 .rpg-v7-root .cg-modal-img {
-    display: block;
-    width: auto;
-    height: auto;
     max-width: 100%;
-    max-height: 100%;
-    border: 2px solid var(--p-gold, #c8aa6e);
-    box-shadow: 0 0 30px rgba(200, 170, 110, 0.25);
+    max-height: calc(100vh - 32px);
+    border: 2px solid var(--p-gold);
+    box-shadow: 0 0 30px rgba(200, 170, 110, 0.2);
     object-fit: contain;
-    background: #000;
 }
 
 .rpg-v7-root .modal-nav {
@@ -1560,9 +1553,9 @@
 }
 
 .rpg-v7-root .modal-close {
-    position: absolute;
-    top: -48px;
-    right: 0;
+    position: fixed;
+    top: 8px;
+    right: 8px;
     background: rgba(0, 0, 0, 0.25);
     border: 1px solid rgba(200, 170, 110, 0.35);
     color: #aaa;
@@ -5153,9 +5146,7 @@ function getCGUnlockHint(cg) {
             `;
 
             card.title = "";
-            card.onclick = () => {
-                alert(cg.lockedTitle || "特殊CG尚未解锁");
-            };
+            card.onclick = null;
         }
 
         container.appendChild(card);
