@@ -2435,9 +2435,9 @@
     background: linear-gradient(to bottom, rgba(42, 37, 34, 0.88), rgba(26, 21, 18, 0.92));
     border: 1px solid #8a734b;
     color: #d0c8b6;
-    padding: 8px 14px;
-    border-radius: 4px;
-    font-size: 14px;
+    padding: 12px 22px;
+    border-radius: 6px;
+    font-size: 18px;
     font-family: "Noto Serif SC", "Noto Serif TC", serif;
     cursor: pointer;
     pointer-events: auto;
@@ -2446,7 +2446,7 @@
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 6px;
 }
 
 .home-nav-arrow:hover {
@@ -2462,7 +2462,7 @@
 }
 
 .home-nav-arrow .arrow-icon {
-    font-size: 16px;
+    font-size: 20px;
     line-height: 1;
 }
 
@@ -6325,23 +6325,23 @@ if (typeof window.setLayout === 'function') {
         "厨房饭厅": { right: "客厅" },
         "浴室":     { left: "客厅" },
         "后院":     { down: "客厅" },
-        // 各房間 → 返回走廊/大廳
-        "玩家房间":       { down: "客厅", up: "二楼" },
-        "爱娜的房间":     { down: "客厅", up: "二楼" },
-        "琳的房间":       { down: "客厅", up: "二楼" },
-        "米拉露恩的房间": { down: "客厅", up: "二楼" },
-        "黛芬妮的房间":   { down: "客厅", up: "二楼" },
-        "芙蕾嘉的房间":   { down: "客厅", up: "二楼" },
-        "穗的房间":       { down: "客厅", up: "二楼" },
-        "莉迪娅的房间":   { down: "客厅", up: "二楼" },
-        "璐法的房间":     { down: "客厅", up: "二楼" },
-        "奈芙蒂的房间":   { down: "客厅", up: "二楼" },
-        // 三樓房間
-        "书房":     { down: "客厅", up: "三楼" },
-        "工坊":     { down: "客厅", up: "三楼" },
-        // 地下房間
-        "训练场":   { up: "客厅" },
-        "储物间":   { up: "客厅" },
+        // 二樓房間：↓回客廳、↑往三樓、→換房（重開二樓選單）
+        "玩家房间":       { down: "客厅", up: "三楼", right: "二楼" },
+        "爱娜的房间":     { down: "客厅", up: "三楼", right: "二楼" },
+        "琳的房间":       { down: "客厅", up: "三楼", right: "二楼" },
+        "米拉露恩的房间": { down: "客厅", up: "三楼", right: "二楼" },
+        "黛芬妮的房间":   { down: "客厅", up: "三楼", right: "二楼" },
+        "芙蕾嘉的房间":   { down: "客厅", up: "三楼", right: "二楼" },
+        "穗的房间":       { down: "客厅", up: "三楼", right: "二楼" },
+        "莉迪娅的房间":   { down: "客厅", up: "三楼", right: "二楼" },
+        "璐法的房间":     { down: "客厅", up: "三楼", right: "二楼" },
+        "奈芙蒂的房间":   { down: "客厅", up: "三楼", right: "二楼" },
+        // 三樓房間：↓下樓選擇器（二樓/一樓）、同層互通
+        "书房":     { down: "下楼", right: "工坊" },
+        "工坊":     { down: "下楼", left: "书房" },
+        // 地下房間：↑回客廳、同層互通
+        "训练场":   { up: "客厅", right: "储物间" },
+        "储物间":   { up: "客厅", left: "训练场" },
     };
 
     // --- 虛擬節點：進入時跳出選單的樓層 ---
@@ -7090,11 +7090,31 @@ previewArea.appendChild(dot);
         setVar('世界.家園系統.' + path, value);
     }
 
+    // --- 模糊匹配地點名稱（防止 LLM 亂填）---
+    function normalizeHomeLocation(rawLoc) {
+        if (!rawLoc || rawLoc === '0' || rawLoc === '') return null;
+        // 1. 完全匹配
+        if (HOME_LOCATIONS[rawLoc]) return rawLoc;
+        // 2. 寬鬆子字串匹配所有已知地點（優先於「房」判定，避免書房/廚房被誤判）
+        const locKeys = Object.keys(HOME_LOCATIONS);
+        for (const key of locKeys) {
+            if (rawLoc.includes(key) || key.includes(rawLoc)) return key;
+        }
+        // 3. 包含「房间」或「房間」→ 嘗試匹配角色房間
+        if (rawLoc.includes('房间') || rawLoc.includes('房間')) {
+            for (const heroName of heroineList) {
+                if (rawLoc.includes(heroName)) return heroName + '的房间';
+            }
+            // 不符合任何角色名稱 → 視為玩家房間
+            return '玩家房间';
+        }
+        return null;
+    }
+
     // --- 取得某角色的家園位置 ---
     function getCharHomeLocation(name) {
         const loc = getHomeVar('角色.' + name + '.位置');
-        // "0" 或空字串表示尚未初始化
-        return (loc && loc !== '0' && loc !== '') ? loc : null;
+        return normalizeHomeLocation(loc);
     }
 
     // --- 取得某角色的停留輪數 ---
@@ -7105,13 +7125,14 @@ previewArea.appendChild(dot);
     // --- 取得玩家當前家中位置 ---
     function getPlayerHomeLocation() {
         const loc = getHomeVar('玩家位置');
-        return (loc && loc !== '0' && loc !== '') ? loc : '前庭';
+        return normalizeHomeLocation(loc) || '前庭';
     }
 
     // --- 進入家園時的初始化 ---
     function initHomeSystem() {
         console.log('[Home] 進入家園系統');
         state.isHome = true;
+        state._homeFirstMoveDone = false; // 標記：尚未執行過「首次離開前庭」
 
         // 設定預設位置為前庭
         const currentHomeLoc = getPlayerHomeLocation();
@@ -7171,7 +7192,13 @@ previewArea.appendChild(dot);
             arrow.className = `home-nav-arrow arrow-${dir}`;
 
             const icon = ARROW_ICONS[dir] || '●';
-            const displayName = HOME_MENU_FLOORS[target] ? target : target;
+            // 智慧顯示名稱：同層選單→「换房」，跨層選單→樓層名
+            let displayName = target;
+            const currentFloor = HOME_LOCATIONS[currentLoc]?.floor;
+            const menuInfo = HOME_MENU_FLOORS[target];
+            if (menuInfo) {
+                displayName = (menuInfo.floor === currentFloor) ? '换房' : target;
+            }
             
             // 根據方向決定圖標和文字排列
             if (dir === 'left') {
@@ -7214,15 +7241,22 @@ previewArea.appendChild(dot);
             return;
         }
 
-        // 檢查是否從前庭進入建築（非前庭地點）→ 解除在隊狀態
+        // 「下楼」特殊節點：從三樓向下，讓玩家選擇去二樓還是直達一樓
+        if (target === '下楼') {
+            showStairMenu();
+            return;
+        }
+
+        // 檢查是否為「進入家園後的第一次離開前庭」→ 解除在隊狀態
+        // 僅在首次移動時觸發，之後玩家手動邀請的同行不會被解除
         const prevLoc = getPlayerHomeLocation();
-        if (prevLoc === '前庭' && target !== '前庭') {
+        if (!state._homeFirstMoveDone && prevLoc === '前庭' && target !== '前庭') {
+            state._homeFirstMoveDone = true;
             heroineList.forEach(name => {
-                // 讀取在隊狀態
                 const partyStatus = getVariable('世界.妈妈.' + name + '.在队状态');
                 if (partyStatus === '是' || partyStatus === 'True' || partyStatus === 'true') {
                     setVar('世界.妈妈.' + name + '.在队状态', '否');
-                    console.log(`[Home] ${name} 離開在隊狀態（進入建築）`);
+                    console.log(`[Home] ${name} 離開在隊狀態（首次進入建築）`);
                 }
             });
         }
@@ -7291,6 +7325,49 @@ previewArea.appendChild(dot);
 
             menu.appendChild(option);
         });
+
+        overlay.appendChild(menu);
+        els.mapArea.appendChild(overlay);
+    }
+
+    // --- 下樓選擇器（從三樓向下時使用）---
+    function showStairMenu() {
+        if (!els.mapArea) return;
+        els.mapArea.querySelectorAll('.home-room-menu-overlay').forEach(el => el.remove());
+
+        const overlay = document.createElement('div');
+        overlay.className = 'home-room-menu-overlay';
+        overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+
+        const menu = document.createElement('div');
+        menu.className = 'home-room-menu';
+
+        const title = document.createElement('div');
+        title.className = 'home-room-menu-title';
+        title.textContent = '下楼';
+        menu.appendChild(title);
+
+        // 選項 1：去二樓（開啟房間選單）
+        const opt2F = document.createElement('div');
+        opt2F.className = 'home-room-option';
+        opt2F.innerHTML = '<span class="room-name">二楼 · 个人房间</span>';
+        opt2F.onclick = (e) => {
+            e.stopPropagation();
+            overlay.remove();
+            showRoomMenu('二楼');
+        };
+        menu.appendChild(opt2F);
+
+        // 選項 2：直達一樓（客廳）
+        const opt1F = document.createElement('div');
+        opt1F.className = 'home-room-option';
+        opt1F.innerHTML = '<span class="room-name">一楼 · 客厅</span>';
+        opt1F.onclick = (e) => {
+            e.stopPropagation();
+            overlay.remove();
+            navigateHome('客厅');
+        };
+        menu.appendChild(opt1F);
 
         overlay.appendChild(menu);
         els.mapArea.appendChild(overlay);
@@ -8010,6 +8087,17 @@ state.currentMusicUrl = targetMusicUrl;
         } finally {
             // 解开重入锁
             scheduleBackgroundPreload(region, currentPartyIds);
+            // === 家園系統：模擬角色自由移動（僅在收到新訊息時觸發）===
+            if (state.isHome) {
+                try {
+                    const _msgCount = (typeof getChatMessages === 'function') ? getChatMessages().length : 0;
+                    if (_msgCount > 0 && _msgCount !== state._homeLastMsgCount) {
+                        state._homeLastMsgCount = _msgCount;
+                        simulateHomeMovement();
+                        console.log(`[Home] 新一輪（訊息 #${_msgCount}），已執行角色移動模擬`);
+                    }
+                } catch(e) { console.error('[Home] 移動模擬失敗:', e); }
+            }
             isSyncing = false;
         }
     }
@@ -8135,11 +8223,6 @@ if (_anchorRulesCache === null || _filterRulesCache === null) {
 }
         if (typeof syncGameState === 'function') {
             await syncGameState();
-        }
-
-        // === 家園系統：每次 AI 回覆完成時模擬角色自由移動（一輪）===
-        if (state.isHome) {
-            try { simulateHomeMovement(); } catch(e) { console.error('[Home] 移動模擬失敗:', e); }
         }
 
         if (typeof refreshUI === 'function') {
