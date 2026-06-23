@@ -2397,7 +2397,7 @@
 }
 
 /* ============================================================ */
-/* === 家園系統 (Home System) CSS ===                         */
+/* === 家园系统 (Home System) CSS ===                         */
 /* ============================================================ */
 
 /* --- 當前位置標籤 --- */
@@ -2620,7 +2620,7 @@
     border-radius: 3px;
 }
 
-/* === 家園系統 CSS 結束 === */
+/* === 家园系统 CSS 結束 === */
 
 .map-topbar {
     position: relative; /* 從 absolute 改成 relative */
@@ -3394,7 +3394,7 @@
     <div class="display-opt-btn" id="layout-desktop-btn" onclick="setLayout('desktop')">桌面</div>
     <div class="display-opt-btn" id="layout-mobile-btn" onclick="setLayout('mobile')">手机</div>
 </div>
-            <!-- 家園系統開關 -->
+            <!-- 家园系统開關 -->
 <div class="display-section-label" style="margin-top:20px;">家园系统</div>
 <div class="display-btn-group">
     <div class="display-opt-btn active" id="home-enable-btn" onclick="setHomeSystem(true)">✓ 启用</div>
@@ -6100,7 +6100,7 @@ if (typeof window.setLayout === 'function') {
         region: "",         
         location: "",       
         subLocation: "",
-        isHome: false       // 家園系統：是否處於家園模式
+        isHome: false       // 家园系统：是否處於家園模式
     };
 
 
@@ -6330,7 +6330,7 @@ if (typeof window.setLayout === 'function') {
     const heroineList = ["爱娜", "琳", "米拉露恩", "黛芬妮", "芙蕾嘉", "穗", "莉迪娅", "璐法", "奈芙蒂"];
 
     // ============================================================
-    // === 家園系統 (Home System) 配置 ===
+    // === 家园系统 (Home System) 配置 ===
     // ============================================================
 
     // --- 可外部化的 JSON URL（預留，填入後將覆蓋內建配置）---
@@ -6357,9 +6357,9 @@ if (typeof window.setLayout === 'function') {
         "奈芙蒂的房间":   { floor: 2, bg: img("https://cdn.imgchest.com/files/fd2b98ad6897.png", "https://files.catbox.moe/9uiluq.png"), isRoom: true, owner: "奈芙蒂" },
         // 三樓
         "书房":     { floor: 3, bg: img("https://cdn.imgchest.com/files/f27e128af7dd.png", "https://files.catbox.moe/g4sbn1.png") },
-        "工坊":     { floor: 3, bg: img("https://cdn.imgchest.com/files/c45cf57a4202.png", "https://files.catbox.moe/6phrtw.png") },
+        "工房":     { floor: 3, bg: img("https://cdn.imgchest.com/files/c45cf57a4202.png", "https://files.catbox.moe/6phrtw.png") },
         // 地下
-        "训练场":   { floor: -1, bg: img("https://cdn.imgchest.com/files/09cbc6709bc9.png", "https://files.catbox.moe/r3l3k2.png") },
+        "锻炼场":   { floor: -1, bg: img("https://cdn.imgchest.com/files/09cbc6709bc9.png", "https://files.catbox.moe/r3l3k2.png") },
         "储物间":   { floor: -1, bg: img("https://cdn.imgchest.com/files/0776bbbd24d8.png", "https://files.catbox.moe/8ddcnj.png") },
     };
 
@@ -6384,9 +6384,9 @@ if (typeof window.setLayout === 'function') {
         "奈芙蒂的房间":   { down: "客厅", up: "三楼", right: "二楼" },
         // 三樓房間：↓下樓選擇器（二樓/一樓）、同層互通
         "书房":     { down: "下楼", right: "工坊" },
-        "工坊":     { down: "下楼", left: "书房" },
+        "工房":     { down: "下楼", left: "书房" },
         // 地下房間：↑回客廳、同層互通
-        "训练场":   { up: "客厅", right: "储物间" },
+        "锻炼场":   { up: "客厅", right: "储物间" },
         "储物间":   { up: "客厅", left: "训练场" },
     };
 
@@ -6412,9 +6412,9 @@ if (typeof window.setLayout === 'function') {
     };
 
     // --- 角色自由移動閾值（停留超過此輪數後隨機移動）---
-    const HOME_MOVE_THRESHOLD = 3;
+    const HOME_MOVE_THRESHOLD = 10;
 
-    // === 家園系統配置結束 ===
+    // === 家园系统配置結束 ===
 
     const iconAssets = {
     "塔":   img("https://cdn.imgchest.com/files/6063d7f4cdf9.png", "https://files.catbox.moe/trm1ru.png"),
@@ -7117,12 +7117,12 @@ previewArea.appendChild(dot);
     let isSyncing = false;
 
     // ============================================================
-    // === 家園系統 (Home System) 核心邏輯 ===
+    // === 家园系统 (Home System) 核心邏輯 ===
     // ============================================================
 
     // --- 是否處於家園模式 ---
     function isInHome() {
-        // [新增] 檢查家園系統開關（預設啟用，向後兼容）
+        // [新增] 檢查家园系统開關（預設啟用，向後兼容）
         if (state.homeSystemEnabled === false) return false;
         return state.region === "自由都市"
             && state.location === "伦德"
@@ -7130,12 +7130,12 @@ previewArea.appendChild(dot);
             && state.subLocation.includes("家");
     }
 
-    // --- [新增] 家園系統開關 ---
+    // --- [新增] 家园系统開關 ---
     window.setHomeSystem = function(enabled) {
         const val = enabled ? '1' : '0';
-        setVar('世界.家園系統.啟用', val);
+        setVar('世界.家园系统.啟用', val);
         state.homeSystemEnabled = enabled;
-        console.log('[Home] 家園系統開關:', enabled ? '啟用' : '停用');
+        console.log('[Home] 家园系统開關:', enabled ? '啟用' : '停用');
 
         // 更新按鈕狀態
         document.getElementById('home-enable-btn')?.classList.toggle('active', enabled);
@@ -7152,10 +7152,10 @@ previewArea.appendChild(dot);
 
     // --- 家園變量讀寫輔助 ---
     function getHomeVar(path) {
-        return getVariable('世界.家園系統.' + path);
+        return getVariable('世界.家园系统.' + path);
     }
     function setHomeVar(path, value) {
-        setVar('世界.家園系統.' + path, value);
+        setVar('世界.家园系统.' + path, value);
     }
 
     // --- 模糊匹配地點名稱（防止 LLM 亂填）---
@@ -7212,7 +7212,7 @@ previewArea.appendChild(dot);
 
     // --- 進入家園時的初始化 ---
     function initHomeSystem() {
-        console.log('[Home] 進入家園系統');
+        console.log('[Home] 進入家园系统');
         state.isHome = true;
         state._homeFirstMoveDone = false; // 標記：尚未執行過「首次離開前庭」
 
@@ -7243,7 +7243,7 @@ previewArea.appendChild(dot);
 
     // --- 離開家園時的清理 ---
     function exitHomeSystem() {
-        console.log('[Home] 離開家園系統');
+        console.log('[Home] 離開家园系统');
         state.isHome = false;
         clearHomeUI();
         // 重置地圖背景快取，讓 syncGameState 重新載入正常地圖
@@ -7557,7 +7557,7 @@ previewArea.appendChild(dot);
         });
     }
 
-    // === 家園系統核心邏輯結束 ===
+    // === 家园系统核心邏輯結束 ===
 
 		// === 地點快捷按鈕設定 ===
 // buttonText 三選一: "A文字" | "B文字" | "C文字"
@@ -7784,20 +7784,20 @@ const LOCATION_BUTTONS = [
                     getVariable('世界.玩家状态.惩罚.惩罚中'),
                     getVariable('世界.玩家状态.惩罚.剩余天数')
                 ]),
-                // Group 4: [新增] 家園系統開關
-                getVariable('世界.家園系統.啟用')
+                // Group 4: [新增] 家园系统開關
+                getVariable('世界.家园系统.啟用')
             ];
 
             const [locData, playerData, timeData, punishData, homeEnabledRaw] = await Promise.all(batchPromises);
 	    [region] = locData;
             const [, locationName, subLocation] = locData;
-// [新增] 快取家園系統開關狀態（預設啟用，'0' 為停用）
+// [新增] 快取家园系统開關狀態（預設啟用，'0' 為停用）
 state.homeSystemEnabled = (homeEnabledRaw !== '0' && homeEnabledRaw !== 0);
 state.region = region;
 state.location = locationName;
 state.subLocation = subLocation;
 
-// === 家園系統：進入/離開檢測 ===
+// === 家园系统：進入/離開檢測 ===
 const _wasHome = state.isHome || false;
 const _nowHome = isInHome();
 if (!_wasHome && _nowHome) initHomeSystem();
@@ -8207,7 +8207,7 @@ state.currentMusicUrl = targetMusicUrl;
         } finally {
             // 解开重入锁
             scheduleBackgroundPreload(region, currentPartyIds);
-            // === 家園系統：模擬角色自由移動（僅在收到新訊息時觸發）===
+            // === 家园系统：模擬角色自由移動（僅在收到新訊息時觸發）===
             if (state.isHome) {
                 try {
                     const _msgCount = (typeof getChatMessages === 'function') ? getChatMessages().length : 0;
@@ -9163,7 +9163,7 @@ if (displayMenuBtn) {
             const dot = el.querySelector('.display-host-dot');
             if (dot) dot.style.background = isActive ? '#ffaa00' : '';
         });
-        // [新增] 同步家園系統開關
+        // [新增] 同步家园系统開關
         const homeEnabled = state.homeSystemEnabled !== false;
         document.getElementById('home-enable-btn')?.classList.toggle('active', homeEnabled);
         document.getElementById('home-disable-btn')?.classList.toggle('active', !homeEnabled);
