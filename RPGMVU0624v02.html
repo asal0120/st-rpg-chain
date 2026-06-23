@@ -3964,23 +3964,21 @@ const eventOn = typeof window.eventOn === 'function'
         };
     }
 
-// [修復] 量測真實高度：暫時移除 overflow 限制以取得完整 scrollHeight
+// [修復] 量測真實高度：只依賴 root 元素的實際尺寸
+// 不使用 body/html 的 scrollHeight，因為它們會保留歷史最大值，導致 iframe 只漲不縮
 function _measureTrueHeight() {
     const root = document.querySelector('.rpg-v7-root');
-    const body = document.body;
-    const html = document.documentElement;
     if (!root) return 720;
 
     // 暫時解除 overflow:hidden，讓 scrollHeight 反映完整內容
     const prevOverflow = root.style.overflow;
     root.style.overflow = 'visible';
 
+    // 使用 root 自身的尺寸（而非 body/html 的 scrollHeight）
+    // 這樣當面板收起時，高度能正確縮小
     const height = Math.max(
         root.scrollHeight || 0,
         root.offsetHeight || 0,
-        body?.scrollHeight || 0,
-        body?.offsetHeight || 0,
-        html?.scrollHeight || 0,
         720
     );
 
@@ -5891,6 +5889,7 @@ function updateStateViewer(content) {
     const panel = document.getElementById('state-viewer-panel');
     const body  = document.getElementById('state-viewer-body');
     if (!panel || !body) return;
+    const wasVisible = panel.style.display !== 'none';
     if (content) {
         if (body.textContent !== content) {
             body.textContent = content;
@@ -5898,6 +5897,11 @@ function updateStateViewer(content) {
         panel.style.display = 'block';
     } else {
         panel.style.display = 'none';
+    }
+    // [修復] 面板顯示/隱藏後通知父層重算 iframe 高度
+    const isVisible = panel.style.display !== 'none';
+    if (wasVisible !== isVisible) {
+        requestParentResize();
     }
 }
 
@@ -5907,6 +5911,8 @@ window.toggleStateViewer = function() {
     if (!body) return;
     const isNowOpen = body.classList.toggle('expanded');
     if (arrow) arrow.classList.toggle('open', isNowOpen);
+    // [修復] 展開/收起後通知父層重算 iframe 高度
+    requestParentResize();
 };
 
 
