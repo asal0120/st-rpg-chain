@@ -7151,11 +7151,19 @@ previewArea.appendChild(dot);
     };
 
     // --- 家園變量讀寫輔助 ---
-    function getHomeVar(path) {
-        return getVariable('世界.家园系统.' + path);
+    // 角色家中位置：世界.妈妈.{名}.家中位置
+    function getCharHomeVar(name, key) {
+        return getVariable('世界.妈妈.' + name + '.' + key);
     }
-    function setHomeVar(path, value) {
-        setVar('世界.家园系统.' + path, value);
+    function setCharHomeVar(name, key, value) {
+        setVar('世界.妈妈.' + name + '.' + key, value);
+    }
+    // 玩家家中位置：世界.位置.家中位置
+    function getPlayerHomeVar() {
+        return getVariable('世界.位置.家中位置');
+    }
+    function setPlayerHomeVar(value) {
+        setVar('世界.位置.家中位置', value);
     }
 
     // --- 模糊匹配地點名稱（防止 LLM 亂填）---
@@ -7183,18 +7191,18 @@ previewArea.appendChild(dot);
 
     // --- 取得某角色的家園位置 ---
     function getCharHomeLocation(name) {
-        const loc = getHomeVar('角色.' + name + '.位置');
+        const loc = getCharHomeVar(name, '家中位置');
         return normalizeHomeLocation(loc);
     }
 
     // --- 取得某角色的停留輪數 ---
     function getCharHomeRounds(name) {
-        return parseInt(getHomeVar('角色.' + name + '.停留轮数')) || 0;
+        return parseInt(getCharHomeVar(name, '停留轮数')) || 0;
     }
 
     // --- 取得玩家當前家中位置 ---
     function getPlayerHomeLocation() {
-        const loc = getHomeVar('玩家位置');
+        const loc = getPlayerHomeVar();
         return normalizeHomeLocation(loc) || '前庭';
     }
 
@@ -7219,7 +7227,7 @@ previewArea.appendChild(dot);
         // 設定預設位置為前庭
         const currentHomeLoc = getPlayerHomeLocation();
         if (!HOME_LOCATIONS[currentHomeLoc]) {
-            setHomeVar('玩家位置', '前庭');
+            setPlayerHomeVar('前庭');
         }
 
         // 初始化角色位置（僅已攻略角色）
@@ -7228,13 +7236,13 @@ previewArea.appendChild(dot);
             const charLoc = getCharHomeLocation(name);
             if (isCharInParty(name)) {
                 // 在隊角色 → 跟隨玩家放到前庭
-                setHomeVar('角色.' + name + '.位置', '前庭');
-                setHomeVar('角色.' + name + '.停留轮数', 0);
+                setCharHomeVar(name, '家中位置', '前庭');
+                setCharHomeVar(name, '停留轮数', 0);
             } else if (!charLoc || charLoc === '外出') {
                 // 未初始化位置的已攻略角色 → 放到前庭；外出中的保持原樣
                 if (charLoc !== '外出') {
-                    setHomeVar('角色.' + name + '.位置', '前庭');
-                    setHomeVar('角色.' + name + '.停留轮数', 0);
+                    setCharHomeVar(name, '家中位置', '前庭');
+                    setCharHomeVar(name, '停留轮数', 0);
                 }
             }
             // 已有位置且非在隊 → 保持原位置
@@ -7365,13 +7373,13 @@ previewArea.appendChild(dot);
         // 在隊角色跟隨玩家移動
         heroineList.forEach(name => {
             if (isCharInParty(name) && isCharConquered(name)) {
-                setHomeVar('角色.' + name + '.位置', target);
-                setHomeVar('角色.' + name + '.停留轮数', 0);
+                setCharHomeVar(name, '家中位置', target);
+                setCharHomeVar(name, '停留轮数', 0);
             }
         });
 
         // 更新玩家位置
-        setHomeVar('玩家位置', target);
+        setPlayerHomeVar(target);
         console.log('[Home] 移動到:', target);
 
         // 立即刷新
@@ -7500,13 +7508,13 @@ previewArea.appendChild(dot);
 
             // 和玩家同一地點 → 凍結停留輪數，不移動
             if (charLoc === playerLoc) {
-                setHomeVar('角色.' + name + '.停留轮数', 0);
+                setCharHomeVar(name, '停留轮数', 0);
                 return;
             }
 
             // 增加停留輪數
             const rounds = getCharHomeRounds(name) + 1;
-            setHomeVar('角色.' + name + '.停留轮数', rounds);
+            setCharHomeVar(name, '停留轮数', rounds);
 
             // 未達閾值，不移動
             if (rounds < HOME_MOVE_THRESHOLD) return;
@@ -7551,8 +7559,8 @@ previewArea.appendChild(dot);
             }
 
             // 更新位置與重置輪數
-            setHomeVar('角色.' + name + '.位置', chosen);
-            setHomeVar('角色.' + name + '.停留轮数', 0);
+            setCharHomeVar(name, '家中位置', chosen);
+            setCharHomeVar(name, '停留轮数', 0);
             console.log(`[Home] ${name} 自由移動: ${charLoc} → ${chosen}`);
         });
     }
