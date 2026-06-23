@@ -2435,9 +2435,9 @@
     background: linear-gradient(to bottom, rgba(42, 37, 34, 0.88), rgba(26, 21, 18, 0.92));
     border: 1px solid #8a734b;
     color: #d0c8b6;
-    padding: 8px 14px;
-    border-radius: 4px;
-    font-size: 14px;
+    padding: 12px 22px;
+    border-radius: 6px;
+    font-size: 18px;
     font-family: "Noto Serif SC", "Noto Serif TC", serif;
     cursor: pointer;
     pointer-events: auto;
@@ -2446,7 +2446,7 @@
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 6px;
 }
 
 .home-nav-arrow:hover {
@@ -2462,7 +2462,7 @@
 }
 
 .home-nav-arrow .arrow-icon {
-    font-size: 16px;
+    font-size: 20px;
     line-height: 1;
 }
 
@@ -6325,23 +6325,23 @@ if (typeof window.setLayout === 'function') {
         "厨房饭厅": { right: "客厅" },
         "浴室":     { left: "客厅" },
         "后院":     { down: "客厅" },
-        // 各房間 → 返回走廊/大廳
-        "玩家房间":       { down: "客厅", up: "二楼" },
-        "爱娜的房间":     { down: "客厅", up: "二楼" },
-        "琳的房间":       { down: "客厅", up: "二楼" },
-        "米拉露恩的房间": { down: "客厅", up: "二楼" },
-        "黛芬妮的房间":   { down: "客厅", up: "二楼" },
-        "芙蕾嘉的房间":   { down: "客厅", up: "二楼" },
-        "穗的房间":       { down: "客厅", up: "二楼" },
-        "莉迪娅的房间":   { down: "客厅", up: "二楼" },
-        "璐法的房间":     { down: "客厅", up: "二楼" },
-        "奈芙蒂的房间":   { down: "客厅", up: "二楼" },
-        // 三樓房間
-        "书房":     { down: "客厅", up: "三楼" },
-        "工坊":     { down: "客厅", up: "三楼" },
-        // 地下房間
-        "训练场":   { up: "客厅" },
-        "储物间":   { up: "客厅" },
+        // 二樓房間：↓回客廳、↑往三樓、→換房（重開二樓選單）
+        "玩家房间":       { down: "客厅", up: "三楼", right: "二楼" },
+        "爱娜的房间":     { down: "客厅", up: "三楼", right: "二楼" },
+        "琳的房间":       { down: "客厅", up: "三楼", right: "二楼" },
+        "米拉露恩的房间": { down: "客厅", up: "三楼", right: "二楼" },
+        "黛芬妮的房间":   { down: "客厅", up: "三楼", right: "二楼" },
+        "芙蕾嘉的房间":   { down: "客厅", up: "三楼", right: "二楼" },
+        "穗的房间":       { down: "客厅", up: "三楼", right: "二楼" },
+        "莉迪娅的房间":   { down: "客厅", up: "三楼", right: "二楼" },
+        "璐法的房间":     { down: "客厅", up: "三楼", right: "二楼" },
+        "奈芙蒂的房间":   { down: "客厅", up: "三楼", right: "二楼" },
+        // 三樓房間：↓下樓選擇器（二樓/一樓）、同層互通
+        "书房":     { down: "下楼", right: "工坊" },
+        "工坊":     { down: "下楼", left: "书房" },
+        // 地下房間：↑回客廳、同層互通
+        "训练场":   { up: "客厅", right: "储物间" },
+        "储物间":   { up: "客厅", left: "训练场" },
     };
 
     // --- 虛擬節點：進入時跳出選單的樓層 ---
@@ -7090,11 +7090,33 @@ previewArea.appendChild(dot);
         setVar('世界.家園系統.' + path, value);
     }
 
+    // --- 模糊匹配地點名稱（防止 LLM 亂填）---
+    function normalizeHomeLocation(rawLoc) {
+        if (!rawLoc || rawLoc === '0' || rawLoc === '') return null;
+        // 0. 特殊狀態：外出（由 LLM 設定，非隨機分配）
+        if (rawLoc === '外出' || rawLoc.includes('外出')) return '外出';
+        // 1. 完全匹配
+        if (HOME_LOCATIONS[rawLoc]) return rawLoc;
+        // 2. 寬鬆子字串匹配所有已知地點（優先於「房」判定，避免書房/廚房被誤判）
+        const locKeys = Object.keys(HOME_LOCATIONS);
+        for (const key of locKeys) {
+            if (rawLoc.includes(key) || key.includes(rawLoc)) return key;
+        }
+        // 3. 包含「房间」或「房間」→ 嘗試匹配角色房間
+        if (rawLoc.includes('房间') || rawLoc.includes('房間')) {
+            for (const heroName of heroineList) {
+                if (rawLoc.includes(heroName)) return heroName + '的房间';
+            }
+            // 不符合任何角色名稱 → 視為玩家房間
+            return '玩家房间';
+        }
+        return null;
+    }
+
     // --- 取得某角色的家園位置 ---
     function getCharHomeLocation(name) {
         const loc = getHomeVar('角色.' + name + '.位置');
-        // "0" 或空字串表示尚未初始化
-        return (loc && loc !== '0' && loc !== '') ? loc : null;
+        return normalizeHomeLocation(loc);
     }
 
     // --- 取得某角色的停留輪數 ---
@@ -7105,13 +7127,26 @@ previewArea.appendChild(dot);
     // --- 取得玩家當前家中位置 ---
     function getPlayerHomeLocation() {
         const loc = getHomeVar('玩家位置');
-        return (loc && loc !== '0' && loc !== '') ? loc : '前庭';
+        return normalizeHomeLocation(loc) || '前庭';
+    }
+
+    // --- 輔助：角色是否已攻略（狀態 >= 3）---
+    function isCharConquered(name) {
+        const s = parseInt(getVariable('世界.妈妈.' + name + '.状态')) || 0;
+        return s >= 3;
+    }
+
+    // --- 輔助：角色是否在隊 ---
+    function isCharInParty(name) {
+        const v = getVariable('世界.妈妈.' + name + '.在队状态');
+        return v === '是' || v === 'True' || v === 'true';
     }
 
     // --- 進入家園時的初始化 ---
     function initHomeSystem() {
         console.log('[Home] 進入家園系統');
         state.isHome = true;
+        state._homeFirstMoveDone = false; // 標記：尚未執行過「首次離開前庭」
 
         // 設定預設位置為前庭
         const currentHomeLoc = getPlayerHomeLocation();
@@ -7119,14 +7154,22 @@ previewArea.appendChild(dot);
             setHomeVar('玩家位置', '前庭');
         }
 
-        // 將所有在隊角色的家園位置初始化到前庭（跟隨進入）
+        // 初始化角色位置（僅已攻略角色）
         heroineList.forEach(name => {
+            if (!isCharConquered(name)) return; // 未攻略 → 不參與家園
             const charLoc = getCharHomeLocation(name);
-            // 尚未初始化位置的角色，或剛進入家園的角色 → 放到前庭
-            if (!charLoc) {
+            if (isCharInParty(name)) {
+                // 在隊角色 → 跟隨玩家放到前庭
                 setHomeVar('角色.' + name + '.位置', '前庭');
                 setHomeVar('角色.' + name + '.停留轮数', 0);
+            } else if (!charLoc || charLoc === '外出') {
+                // 未初始化位置的已攻略角色 → 放到前庭；外出中的保持原樣
+                if (charLoc !== '外出') {
+                    setHomeVar('角色.' + name + '.位置', '前庭');
+                    setHomeVar('角色.' + name + '.停留轮数', 0);
+                }
             }
+            // 已有位置且非在隊 → 保持原位置
         });
     }
 
@@ -7171,7 +7214,13 @@ previewArea.appendChild(dot);
             arrow.className = `home-nav-arrow arrow-${dir}`;
 
             const icon = ARROW_ICONS[dir] || '●';
-            const displayName = HOME_MENU_FLOORS[target] ? target : target;
+            // 智慧顯示名稱：同層選單→「换房」，跨層選單→樓層名
+            let displayName = target;
+            const currentFloor = HOME_LOCATIONS[currentLoc]?.floor;
+            const menuInfo = HOME_MENU_FLOORS[target];
+            if (menuInfo) {
+                displayName = (menuInfo.floor === currentFloor) ? '换房' : target;
+            }
             
             // 根據方向決定圖標和文字排列
             if (dir === 'left') {
@@ -7214,18 +7263,32 @@ previewArea.appendChild(dot);
             return;
         }
 
-        // 檢查是否從前庭進入建築（非前庭地點）→ 解除在隊狀態
+        // 「下楼」特殊節點：從三樓向下，讓玩家選擇去二樓還是直達一樓
+        if (target === '下楼') {
+            showStairMenu();
+            return;
+        }
+
+        // 檢查是否為「進入家園後的第一次離開前庭」→ 解除在隊狀態
+        // 僅在首次移動時觸發，之後玩家手動邀請的同行不會被解除
         const prevLoc = getPlayerHomeLocation();
-        if (prevLoc === '前庭' && target !== '前庭') {
+        if (!state._homeFirstMoveDone && prevLoc === '前庭' && target !== '前庭') {
+            state._homeFirstMoveDone = true;
             heroineList.forEach(name => {
-                // 讀取在隊狀態
-                const partyStatus = getVariable('世界.妈妈.' + name + '.在队状态');
-                if (partyStatus === '是' || partyStatus === 'True' || partyStatus === 'true') {
+                if (isCharInParty(name)) {
                     setVar('世界.妈妈.' + name + '.在队状态', '否');
-                    console.log(`[Home] ${name} 離開在隊狀態（進入建築）`);
+                    console.log(`[Home] ${name} 離開在隊狀態（首次進入建築）`);
                 }
             });
         }
+
+        // 在隊角色跟隨玩家移動
+        heroineList.forEach(name => {
+            if (isCharInParty(name) && isCharConquered(name)) {
+                setHomeVar('角色.' + name + '.位置', target);
+                setHomeVar('角色.' + name + '.停留轮数', 0);
+            }
+        });
 
         // 更新玩家位置
         setHomeVar('玩家位置', target);
@@ -7276,8 +7339,12 @@ previewArea.appendChild(dot);
             nameSpan.textContent = roomName;
             option.appendChild(nameSpan);
 
-            // 顯示該房間中的角色
-            const occupants = heroineList.filter(name => getCharHomeLocation(name) === roomName);
+            // 顯示該房間中的角色（僅已攻略且非外出）
+            const occupants = heroineList.filter(name => {
+                if (!isCharConquered(name)) return false;
+                const loc = getCharHomeLocation(name);
+                return loc === roomName && loc !== '外出';
+            });
             const occSpan = document.createElement('span');
             occSpan.className = 'room-occupants' + (occupants.length > 0 ? ' has-people' : '');
             occSpan.textContent = occupants.length > 0 ? occupants.join('、') : '无人';
@@ -7296,17 +7363,63 @@ previewArea.appendChild(dot);
         els.mapArea.appendChild(overlay);
     }
 
+    // --- 下樓選擇器（從三樓向下時使用）---
+    function showStairMenu() {
+        if (!els.mapArea) return;
+        els.mapArea.querySelectorAll('.home-room-menu-overlay').forEach(el => el.remove());
+
+        const overlay = document.createElement('div');
+        overlay.className = 'home-room-menu-overlay';
+        overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+
+        const menu = document.createElement('div');
+        menu.className = 'home-room-menu';
+
+        const title = document.createElement('div');
+        title.className = 'home-room-menu-title';
+        title.textContent = '下楼';
+        menu.appendChild(title);
+
+        // 選項 1：去二樓（開啟房間選單）
+        const opt2F = document.createElement('div');
+        opt2F.className = 'home-room-option';
+        opt2F.innerHTML = '<span class="room-name">二楼 · 个人房间</span>';
+        opt2F.onclick = (e) => {
+            e.stopPropagation();
+            overlay.remove();
+            showRoomMenu('二楼');
+        };
+        menu.appendChild(opt2F);
+
+        // 選項 2：直達一樓（客廳）
+        const opt1F = document.createElement('div');
+        opt1F.className = 'home-room-option';
+        opt1F.innerHTML = '<span class="room-name">一楼 · 客厅</span>';
+        opt1F.onclick = (e) => {
+            e.stopPropagation();
+            overlay.remove();
+            navigateHome('客厅');
+        };
+        menu.appendChild(opt1F);
+
+        overlay.appendChild(menu);
+        els.mapArea.appendChild(overlay);
+    }
+
     // --- 模擬角色自由移動（每輪呼叫一次）---
     function simulateHomeMovement() {
         const playerLoc = getPlayerHomeLocation();
 
         heroineList.forEach(name => {
+            // === 過濾條件 ===
+            if (!isCharConquered(name)) return;      // 未攻略 → 不參與
+            if (isCharInParty(name)) return;          // 在隊中 → 跟隨玩家，不隨機移動
             const charLoc = getCharHomeLocation(name);
-            if (!charLoc) return; // 未初始化
+            if (!charLoc) return;                     // 未初始化
+            if (charLoc === '外出') return;              // 外出中 → 不干涉
 
-            // 跳過在玩家所在位置的角色（不主動離開）
+            // 和玩家同一地點 → 凍結停留輪數，不移動
             if (charLoc === playerLoc) {
-                // 重置停留輪數（因為和玩家在一起）
                 setHomeVar('角色.' + name + '.停留轮数', 0);
                 return;
             }
@@ -7333,12 +7446,11 @@ previewArea.appendChild(dot);
                 // === 特殊條件：他人的房間 ===
                 const locData = HOME_LOCATIONS[loc];
                 if (locData.isRoom && locData.owner && locData.owner !== name) {
-                    // 非主人的房間：只有主人在場時才可能前往（模擬受邀）
                     const ownerLoc = getCharHomeLocation(locData.owner);
                     if (ownerLoc !== loc) {
-                        finalWeight = 0; // 主人不在自己房間 → 禁止進入
+                        finalWeight = 0;
                     } else {
-                        finalWeight = Math.max(1, Math.floor(finalWeight * 0.5)); // 主人在 → 降低但允許
+                        finalWeight = Math.max(1, Math.floor(finalWeight * 0.5));
                     }
                 }
 
@@ -7933,11 +8045,12 @@ heroineList.forEach((id, i) => {
 
             // === 处理队伍成员刷新 ===
             if (state.isHome) {
-                // 家園模式：按地點顯示角色立繪
+                // 家園模式：按地點顯示角色立繪（僅已攻略且非外出）
                 const homeLocation = getPlayerHomeLocation();
                 const homePartyIds = heroineList.filter(name => {
+                    if (!isCharConquered(name)) return false;
                     const charLoc = getCharHomeLocation(name);
-                    return charLoc === homeLocation;
+                    return charLoc === homeLocation && charLoc !== '外出';
                 });
                 const sortedHome = [...homePartyIds].sort();
                 if (JSON.stringify(sortedHome) !== JSON.stringify(state.lastPartyIds)) {
