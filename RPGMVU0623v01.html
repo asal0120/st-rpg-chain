@@ -8010,10 +8010,6 @@ state.currentMusicUrl = targetMusicUrl;
         } finally {
             // 解开重入锁
             scheduleBackgroundPreload(region, currentPartyIds);
-            // === 家園系統：模擬角色自由移動 ===
-            if (state.isHome) {
-                try { simulateHomeMovement(); } catch(e) { console.error('[Home] 移動模擬失敗:', e); }
-            }
             isSyncing = false;
         }
     }
@@ -8139,6 +8135,11 @@ if (_anchorRulesCache === null || _filterRulesCache === null) {
 }
         if (typeof syncGameState === 'function') {
             await syncGameState();
+        }
+
+        // === 家園系統：每次 AI 回覆完成時模擬角色自由移動（一輪）===
+        if (state.isHome) {
+            try { simulateHomeMovement(); } catch(e) { console.error('[Home] 移動模擬失敗:', e); }
         }
 
         if (typeof refreshUI === 'function') {
