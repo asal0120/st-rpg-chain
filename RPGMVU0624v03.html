@@ -2421,6 +2421,11 @@
     pointer-events: none;
     white-space: nowrap;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+    /* [修復] 移除 animation，改由 JS 控制首次出現動畫，避免重複 sync 導致閃爍 */
+}
+
+/* [修復] 僅首次出現時播放動畫（由 JS 添加此 class） */
+.home-location-label.fade-in {
     animation: homeLabelFadeIn 0.4s ease forwards;
 }
 
@@ -2478,12 +2483,14 @@
 }
 
 .home-nav-arrow.arrow-down {
-    bottom: 14px;
+    bottom: 60px; /* [修復] 提高位置，減少與立繪重疊 */
     left: 50%;
     transform: translateX(-50%);
+    opacity: 0.8; /* [修復] 非 hover 時半透明，讓被覆蓋的立繪隱約可見 */
 }
 .home-nav-arrow.arrow-down:hover {
     transform: translateX(-50%) scale(1.05);
+    opacity: 1; /* hover 時恢復完全不透明 */
 }
 
 .home-nav-arrow.arrow-left {
@@ -2627,7 +2634,7 @@
     justify-content: space-between;
     padding: 0 10px;
     box-sizing: border-box;
-    z-index: 170;
+    z-index: 190; /* [修復] 從 170 提升至 190，確保選單在家園箭頭(170)之上 */
 }
 
 /* 頂部橫條存在時，地圖內容往下推（避免被橫條蓋住） */
@@ -3386,6 +3393,12 @@
     <div class="display-opt-btn active" id="layout-auto-btn" onclick="setLayout('auto')">自动</div>
     <div class="display-opt-btn" id="layout-desktop-btn" onclick="setLayout('desktop')">桌面</div>
     <div class="display-opt-btn" id="layout-mobile-btn" onclick="setLayout('mobile')">手机</div>
+</div>
+            <!-- 家園系統開關 -->
+<div class="display-section-label" style="margin-top:20px;">家园系统</div>
+<div class="display-btn-group">
+    <div class="display-opt-btn active" id="home-enable-btn" onclick="setHomeSystem(true)">✓ 启用</div>
+    <div class="display-opt-btn" id="home-disable-btn" onclick="setHomeSystem(false)">✗ 停用</div>
 </div>
             <!-- 圖片來源 -->
             <div class="display-section-label" style="margin-top:20px;">图床</div>
@@ -7109,11 +7122,33 @@ previewArea.appendChild(dot);
 
     // --- 是否處於家園模式 ---
     function isInHome() {
+        // [新增] 檢查家園系統開關（預設啟用，向後兼容）
+        if (state.homeSystemEnabled === false) return false;
         return state.region === "自由都市"
             && state.location === "伦德"
             && state.subLocation
             && state.subLocation.includes("家");
     }
+
+    // --- [新增] 家園系統開關 ---
+    window.setHomeSystem = function(enabled) {
+        const val = enabled ? '1' : '0';
+        setVar('世界.家園系統.啟用', val);
+        state.homeSystemEnabled = enabled;
+        console.log('[Home] 家園系統開關:', enabled ? '啟用' : '停用');
+
+        // 更新按鈕狀態
+        document.getElementById('home-enable-btn')?.classList.toggle('active', enabled);
+        document.getElementById('home-disable-btn')?.classList.toggle('active', !enabled);
+
+        // 如果停用且當前在家園中，立即清除 UI
+        if (!enabled && state.isHome) {
+            exitHomeSystem();
+        }
+
+        // 重新同步（若啟用，會重新進入家園）
+        syncGameState();
+    };
 
     // --- 家園變量讀寫輔助 ---
     function getHomeVar(path) {
@@ -7224,11 +7259,29 @@ previewArea.appendChild(dot);
     // --- 渲染家園 UI（導航箭頭 + 位置標籤）---
     function renderHomeUI() {
         if (!els.mapArea) return;
-        clearHomeUI();
 
         const currentLoc = getPlayerHomeLocation();
         const adj = HOME_ADJACENCY[currentLoc];
         if (!adj) return;
+
+        // [修復] 計算新標籤文字，用於去重判斷
+        const floorInfo = HOME_LOCATIONS[currentLoc];
+        let floorText = '';
+        if (floorInfo) {
+            if (floorInfo.floor === 1) floorText = '一楼';
+            else if (floorInfo.floor === 2) floorText = '二楼';
+            else if (floorInfo.floor === 3) floorText = '三楼';
+            else if (floorInfo.floor === -1) floorText = '地下';
+        }
+        const newLabelText = (floorText ? floorText + ' · ' : '') + currentLoc;
+
+        // [修復] 去重：檢查現有標籤文字是否相同
+        const existingLabel = els.mapArea.querySelector('.home-location-label');
+        const labelUnchanged = existingLabel && existingLabel.textContent === newLabelText;
+
+        // 只清除箭頭和選單遮罩（不清除未變化的標籤）
+        els.mapArea.querySelectorAll('.home-nav-arrow, .home-room-menu-overlay').forEach(el => el.remove());
+        if (!labelUnchanged && existingLabel) existingLabel.remove();
 
         // 箭頭方向 → CSS class + 圖標文字
         const ARROW_ICONS = {
@@ -7273,19 +7326,13 @@ previewArea.appendChild(dot);
             els.mapArea.appendChild(arrow);
         }
 
-        // 渲染當前位置標籤
-        const label = document.createElement('div');
-        label.className = 'home-location-label';
-        const floorInfo = HOME_LOCATIONS[currentLoc];
-        let floorText = '';
-        if (floorInfo) {
-            if (floorInfo.floor === 1) floorText = '一楼';
-            else if (floorInfo.floor === 2) floorText = '二楼';
-            else if (floorInfo.floor === 3) floorText = '三楼';
-            else if (floorInfo.floor === -1) floorText = '地下';
+        // [修復] 僅在標籤不存在或文字已變更時建立新標籤
+        if (!labelUnchanged) {
+            const label = document.createElement('div');
+            label.className = 'home-location-label fade-in'; // 首次/變更時加入動畫
+            label.textContent = newLabelText;
+            els.mapArea.appendChild(label);
         }
-        label.textContent = (floorText ? floorText + ' · ' : '') + currentLoc;
-        els.mapArea.appendChild(label);
     }
 
     // --- 處理導航移動 ---
@@ -7736,12 +7783,16 @@ const LOCATION_BUTTONS = [
                 Promise.all([
                     getVariable('世界.玩家状态.惩罚.惩罚中'),
                     getVariable('世界.玩家状态.惩罚.剩余天数')
-                ])
+                ]),
+                // Group 4: [新增] 家園系統開關
+                getVariable('世界.家園系統.啟用')
             ];
 
-            const [locData, playerData, timeData, punishData] = await Promise.all(batchPromises);
+            const [locData, playerData, timeData, punishData, homeEnabledRaw] = await Promise.all(batchPromises);
 	    [region] = locData;
             const [, locationName, subLocation] = locData;
+// [新增] 快取家園系統開關狀態（預設啟用，'0' 為停用）
+state.homeSystemEnabled = (homeEnabledRaw !== '0' && homeEnabledRaw !== 0);
 state.region = region;
 state.location = locationName;
 state.subLocation = subLocation;
@@ -9112,6 +9163,10 @@ if (displayMenuBtn) {
             const dot = el.querySelector('.display-host-dot');
             if (dot) dot.style.background = isActive ? '#ffaa00' : '';
         });
+        // [新增] 同步家園系統開關
+        const homeEnabled = state.homeSystemEnabled !== false;
+        document.getElementById('home-enable-btn')?.classList.toggle('active', homeEnabled);
+        document.getElementById('home-disable-btn')?.classList.toggle('active', !homeEnabled);
     };
 }
 
