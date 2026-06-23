@@ -31,7 +31,8 @@
         display: flex !important;
         flex-direction: column;
         margin-bottom: 20px;
-        transition: height 0.3s ease;
+        /* [修復] 移除 height transition，避免父層量測到動畫中間值導致 iframe 高度錯誤 */
+        /* transition: height 0.3s ease; */
         overflow: hidden;
         /* [修改] 移除 sans-serif，統一使用簡體優先的古典字體 */
         font-family: "Noto Serif SC", "Noto Serif TC", serif;
@@ -3963,32 +3964,58 @@ const eventOn = typeof window.eventOn === 'function'
         };
     }
 
+// [修復] 量測真實高度：暫時移除 overflow 限制以取得完整 scrollHeight
+function _measureTrueHeight() {
+    const root = document.querySelector('.rpg-v7-root');
+    const body = document.body;
+    const html = document.documentElement;
+    if (!root) return 720;
+
+    // 暫時解除 overflow:hidden，讓 scrollHeight 反映完整內容
+    const prevOverflow = root.style.overflow;
+    root.style.overflow = 'visible';
+
+    const height = Math.max(
+        root.scrollHeight || 0,
+        root.offsetHeight || 0,
+        body?.scrollHeight || 0,
+        body?.offsetHeight || 0,
+        html?.scrollHeight || 0,
+        720
+    );
+
+    root.style.overflow = prevOverflow;
+    return height;
+}
+
+function _doResizeReport() {
+    try {
+        const height = _measureTrueHeight();
+        window.parent?.postMessage({
+            type: 'RPG_MVU_RESIZE',
+            height,
+        }, '*');
+    } catch (e) {
+        console.warn('[RPG] 回報 iframe 高度失敗:', e);
+    }
+}
+
+// [修復] 雙重回報：立即發送一次 + 延遲 350ms 再發送一次，
+// 確保即使有 CSS transition 或非同步渲染，最終高度也能被正確捕獲
+let _resizeReportTimer = null;
 function requestParentResize() {
+    // 立即量測一次
     requestAnimationFrame(() => {
         requestAnimationFrame(() => {
-            try {
-                const root = document.querySelector('.rpg-v7-root');
-                const body = document.body;
-                const html = document.documentElement;
-
-                const height = Math.max(
-                    root?.scrollHeight || 0,
-                    root?.offsetHeight || 0,
-                    body?.scrollHeight || 0,
-                    body?.offsetHeight || 0,
-                    html?.scrollHeight || 0,
-                    720
-                );
-
-                window.parent?.postMessage({
-                    type: 'RPG_MVU_RESIZE',
-                    height,
-                }, '*');
-            } catch (e) {
-                console.warn('[RPG] 回報 iframe 高度失敗:', e);
-            }
+            _doResizeReport();
         });
     });
+    // 延遲再量測一次，捕獲 transition/非同步渲染後的最終高度
+    if (_resizeReportTimer) clearTimeout(_resizeReportTimer);
+    _resizeReportTimer = setTimeout(() => {
+        _resizeReportTimer = null;
+        _doResizeReport();
+    }, 350);
 }
 
 // === 文本過濾規則（存入 ST chat 變量） ===
@@ -7093,6 +7120,8 @@ previewArea.appendChild(dot);
     // --- 模糊匹配地點名稱（防止 LLM 亂填）---
     function normalizeHomeLocation(rawLoc) {
         if (!rawLoc || rawLoc === '0' || rawLoc === '') return null;
+        // 0. 特殊狀態：外出（由 LLM 設定，非隨機分配）
+        if (rawLoc === '外出' || rawLoc.includes('外出')) return '外出';
         // 1. 完全匹配
         if (HOME_LOCATIONS[rawLoc]) return rawLoc;
         // 2. 寬鬆子字串匹配所有已知地點（優先於「房」判定，避免書房/廚房被誤判）
@@ -7128,6 +7157,18 @@ previewArea.appendChild(dot);
         return normalizeHomeLocation(loc) || '前庭';
     }
 
+    // --- 輔助：角色是否已攻略（狀態 >= 3）---
+    function isCharConquered(name) {
+        const s = parseInt(getVariable('世界.妈妈.' + name + '.状态')) || 0;
+        return s >= 3;
+    }
+
+    // --- 輔助：角色是否在隊 ---
+    function isCharInParty(name) {
+        const v = getVariable('世界.妈妈.' + name + '.在队状态');
+        return v === '是' || v === 'True' || v === 'true';
+    }
+
     // --- 進入家園時的初始化 ---
     function initHomeSystem() {
         console.log('[Home] 進入家園系統');
@@ -7140,14 +7181,22 @@ previewArea.appendChild(dot);
             setHomeVar('玩家位置', '前庭');
         }
 
-        // 將所有在隊角色的家園位置初始化到前庭（跟隨進入）
+        // 初始化角色位置（僅已攻略角色）
         heroineList.forEach(name => {
+            if (!isCharConquered(name)) return; // 未攻略 → 不參與家園
             const charLoc = getCharHomeLocation(name);
-            // 尚未初始化位置的角色，或剛進入家園的角色 → 放到前庭
-            if (!charLoc) {
+            if (isCharInParty(name)) {
+                // 在隊角色 → 跟隨玩家放到前庭
                 setHomeVar('角色.' + name + '.位置', '前庭');
                 setHomeVar('角色.' + name + '.停留轮数', 0);
+            } else if (!charLoc || charLoc === '外出') {
+                // 未初始化位置的已攻略角色 → 放到前庭；外出中的保持原樣
+                if (charLoc !== '外出') {
+                    setHomeVar('角色.' + name + '.位置', '前庭');
+                    setHomeVar('角色.' + name + '.停留轮数', 0);
+                }
             }
+            // 已有位置且非在隊 → 保持原位置
         });
     }
 
@@ -7253,13 +7302,20 @@ previewArea.appendChild(dot);
         if (!state._homeFirstMoveDone && prevLoc === '前庭' && target !== '前庭') {
             state._homeFirstMoveDone = true;
             heroineList.forEach(name => {
-                const partyStatus = getVariable('世界.妈妈.' + name + '.在队状态');
-                if (partyStatus === '是' || partyStatus === 'True' || partyStatus === 'true') {
+                if (isCharInParty(name)) {
                     setVar('世界.妈妈.' + name + '.在队状态', '否');
                     console.log(`[Home] ${name} 離開在隊狀態（首次進入建築）`);
                 }
             });
         }
+
+        // 在隊角色跟隨玩家移動
+        heroineList.forEach(name => {
+            if (isCharInParty(name) && isCharConquered(name)) {
+                setHomeVar('角色.' + name + '.位置', target);
+                setHomeVar('角色.' + name + '.停留轮数', 0);
+            }
+        });
 
         // 更新玩家位置
         setHomeVar('玩家位置', target);
@@ -7310,8 +7366,12 @@ previewArea.appendChild(dot);
             nameSpan.textContent = roomName;
             option.appendChild(nameSpan);
 
-            // 顯示該房間中的角色
-            const occupants = heroineList.filter(name => getCharHomeLocation(name) === roomName);
+            // 顯示該房間中的角色（僅已攻略且非外出）
+            const occupants = heroineList.filter(name => {
+                if (!isCharConquered(name)) return false;
+                const loc = getCharHomeLocation(name);
+                return loc === roomName && loc !== '外出';
+            });
             const occSpan = document.createElement('span');
             occSpan.className = 'room-occupants' + (occupants.length > 0 ? ' has-people' : '');
             occSpan.textContent = occupants.length > 0 ? occupants.join('、') : '无人';
@@ -7378,12 +7438,15 @@ previewArea.appendChild(dot);
         const playerLoc = getPlayerHomeLocation();
 
         heroineList.forEach(name => {
+            // === 過濾條件 ===
+            if (!isCharConquered(name)) return;      // 未攻略 → 不參與
+            if (isCharInParty(name)) return;          // 在隊中 → 跟隨玩家，不隨機移動
             const charLoc = getCharHomeLocation(name);
-            if (!charLoc) return; // 未初始化
+            if (!charLoc) return;                     // 未初始化
+            if (charLoc === '外出') return;              // 外出中 → 不干涉
 
-            // 跳過在玩家所在位置的角色（不主動離開）
+            // 和玩家同一地點 → 凍結停留輪數，不移動
             if (charLoc === playerLoc) {
-                // 重置停留輪數（因為和玩家在一起）
                 setHomeVar('角色.' + name + '.停留轮数', 0);
                 return;
             }
@@ -7410,12 +7473,11 @@ previewArea.appendChild(dot);
                 // === 特殊條件：他人的房間 ===
                 const locData = HOME_LOCATIONS[loc];
                 if (locData.isRoom && locData.owner && locData.owner !== name) {
-                    // 非主人的房間：只有主人在場時才可能前往（模擬受邀）
                     const ownerLoc = getCharHomeLocation(locData.owner);
                     if (ownerLoc !== loc) {
-                        finalWeight = 0; // 主人不在自己房間 → 禁止進入
+                        finalWeight = 0;
                     } else {
-                        finalWeight = Math.max(1, Math.floor(finalWeight * 0.5)); // 主人在 → 降低但允許
+                        finalWeight = Math.max(1, Math.floor(finalWeight * 0.5));
                     }
                 }
 
@@ -8010,11 +8072,12 @@ heroineList.forEach((id, i) => {
 
             // === 处理队伍成员刷新 ===
             if (state.isHome) {
-                // 家園模式：按地點顯示角色立繪
+                // 家園模式：按地點顯示角色立繪（僅已攻略且非外出）
                 const homeLocation = getPlayerHomeLocation();
                 const homePartyIds = heroineList.filter(name => {
+                    if (!isCharConquered(name)) return false;
                     const charLoc = getCharHomeLocation(name);
-                    return charLoc === homeLocation;
+                    return charLoc === homeLocation && charLoc !== '外出';
                 });
                 const sortedHome = [...homePartyIds].sort();
                 if (JSON.stringify(sortedHome) !== JSON.stringify(state.lastPartyIds)) {
