@@ -8220,12 +8220,11 @@ state.currentMusicUrl = targetMusicUrl;
             // === 家园系统：模擬角色自由移動（僅在收到新訊息時觸發）===
             if (state.isHome) {
                 try {
-                    const _curMsgId = (typeof getCurrentMessageId === 'function') ? getCurrentMessageId() : null;
-                    const _msgCount = (_curMsgId !== null && _curMsgId !== undefined) ? (_curMsgId + 1) : 0;
-                    if (_msgCount > 0 && _msgCount !== state._homeLastMsgCount) {
-                        state._homeLastMsgCount = _msgCount;
+                    const _msgId = window.RPG_MESSAGE_ID;
+                    if (_msgId != null && _msgId !== state._homeLastMsgId) {
+                        state._homeLastMsgId = _msgId;
                         simulateHomeMovement();
-                        console.log(`[Home] 新一輪（訊息 #${_msgCount}），已執行角色移動模擬`);
+                        console.log(`[Home] 新一輪（訊息 #${_msgId}），已執行角色移動模擬`);
                     }
                 } catch(e) { console.error('[Home] 移動模擬失敗:', e); }
             }
