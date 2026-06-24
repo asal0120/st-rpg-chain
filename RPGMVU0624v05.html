@@ -3747,6 +3747,8 @@
 </div>
 
 
+
+
 <script>
 
 (function() {
@@ -8218,7 +8220,8 @@ state.currentMusicUrl = targetMusicUrl;
             // === 家园系统：模擬角色自由移動（僅在收到新訊息時觸發）===
             if (state.isHome) {
                 try {
-                    const _msgCount = (typeof getChatMessages === 'function') ? getChatMessages().length : 0;
+                    const _curMsgId = (typeof getCurrentMessageId === 'function') ? getCurrentMessageId() : null;
+                    const _msgCount = (_curMsgId !== null && _curMsgId !== undefined) ? (_curMsgId + 1) : 0;
                     if (_msgCount > 0 && _msgCount !== state._homeLastMsgCount) {
                         state._homeLastMsgCount = _msgCount;
                         simulateHomeMovement();
