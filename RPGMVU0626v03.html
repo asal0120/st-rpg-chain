@@ -2483,10 +2483,10 @@
 }
 
 .home-nav-arrow.arrow-down {
-    bottom: 60px; /* [修復] 提高位置，減少與立繪重疊 */
+    bottom: 10px; /* 
     left: 50%;
     transform: translateX(-50%);
-    opacity: 0.8; /* [修復] 非 hover 時半透明，讓被覆蓋的立繪隱約可見 */
+    opacity: 0.6; /* [修復] 非 hover 時半透明，讓被覆蓋的立繪隱約可見 */
 }
 .home-nav-arrow.arrow-down:hover {
     transform: translateX(-50%) scale(1.05);
@@ -4036,13 +4036,15 @@ const FILTER_VAR_KEY = '过滤规则';
 // === 正文定位規則 ===
 const ANCHOR_VAR_KEY = '正文规则';
 let _anchorRulesCache = null;
+let _compiledAnchorRegexes = null;
 
 async function refreshAnchorRulesCache() {
     try {
         const raw = await triggerSlash('/getvar key=' + ANCHOR_VAR_KEY);
-        if (!raw || raw === '' || raw === '0') { _anchorRulesCache = []; return []; }
+        if (!raw || raw === '' || raw === '0') { _anchorRulesCache = []; _compiledAnchorRegexes = null; return []; }
         const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
         _anchorRulesCache = Array.isArray(parsed) ? parsed : [];
+        _compiledAnchorRegexes = null;
         return _anchorRulesCache;
     } catch(e) {
         _anchorRulesCache = _anchorRulesCache ?? [];
@@ -4074,6 +4076,7 @@ async function saveAnchorRules(rules) {
     const json = JSON.stringify(rules);
     await triggerSlash('/setvar key=' + ANCHOR_VAR_KEY + ' ' + json);
     _anchorRulesCache = rules;
+    _compiledAnchorRegexes = null;
 }
 
 let _anchorDirty = false;
@@ -4186,16 +4189,19 @@ document.getElementById('anchor-save-btn')?.addEventListener('click', async func
     setCollapsed(false);
 })();
 let _filterRulesCache = null;
+let _compiledFilterRegexes = null;
 
 async function refreshFilterRulesCache() {
     try {
         const raw = await triggerSlash('/getvar key=' + FILTER_VAR_KEY);
         if (raw === undefined || raw === null || raw === '' || raw === '0') {
             _filterRulesCache = [];
+            _compiledFilterRegexes = null;
             return [];
         }
         const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
         _filterRulesCache = Array.isArray(parsed) ? parsed : [];
+        _compiledFilterRegexes = null;
         return _filterRulesCache;
     } catch (e) {
         _filterRulesCache = _filterRulesCache ?? [];
@@ -4231,6 +4237,7 @@ async function saveFilterRules(rules) {
     await triggerSlash('/setvar key=' + FILTER_VAR_KEY + ' ' + json);
     // 同步更新快取，不再需要手動寫 getAllVariables()
     _filterRulesCache = rules;
+    _compiledFilterRegexes = null;
 }
 
 function _escAttr(str) {
@@ -4745,14 +4752,12 @@ function isMemberGalleryTabActive() {
     return document.getElementById('tab-m-gallery')?.classList.contains('active');
 }
 
-async function updateCurrentMemberExp() {
+function updateCurrentMemberExp() {
     const data = currentStatusCharacterData;
     if (!data || !data.name) return;
 
-    await Promise.all([
-        updateExpColumn(1, data.name, EXP_CAT_1, EXP_ITEMS_1),
-        updateExpColumn(2, data.name, EXP_CAT_2, EXP_ITEMS_2)
-    ]);
+    updateExpColumn(1, data.name, EXP_CAT_1, EXP_ITEMS_1);
+    updateExpColumn(2, data.name, EXP_CAT_2, EXP_ITEMS_2);
 }
 
 async function renderCurrentMemberGallery() {
@@ -5100,8 +5105,8 @@ async function renderCurrentMemberGallery() {
         if (batchInput) batchInput.value = 1;
 
         // 以下等級位階計算完全不動
-        let currentHP = parseInt(getVariable(VAR_HP)) || 0;
-        let currentATK = parseInt(getVariable(VAR_ATK)) || 0;
+        let currentHP = parseInt(window.__RPG_CACHE.hp) || 0;
+        let currentATK = parseInt(window.__RPG_CACHE.atk) || 0;
         const rawScore = (currentHP - 1900) + (currentATK - 750) * 2;
         const calcLv = Math.floor(rawScore / 54) + 70;
         let currentLv = parseInt(getVariable(VAR_LEVEL)) || 0;
@@ -5237,14 +5242,12 @@ if (data) {
         if (els.playerC) els.playerC.innerText = data.dataC;
 
         try {
-    // === [效能優化] 5 個循序請求合併為並行請求 ===
-    const [rank, lv, valHP, valATK, valPoints] = await Promise.all([
-        getVariable(VAR_RANK),
-        getVariable(VAR_LEVEL),
-        getVariable(VAR_HP),
-        getVariable(VAR_ATK),
-        getVariable(VAR_POINTS)
-    ]);
+    // === [效能優化] getVariable 為同步函數，直接呼叫 ===
+    const rank = getVariable(VAR_RANK);
+    const lv = getVariable(VAR_LEVEL);
+    const valHP = getVariable(VAR_HP);
+    const valATK = getVariable(VAR_ATK);
+    const valPoints = getVariable(VAR_POINTS);
 
     if(rank && rank !== "0" && els.playerA) els.playerA.innerText = rank;
     if(lv && lv !== "0" && els.playerC) els.playerC.innerText = lv;
@@ -5275,10 +5278,8 @@ if (data) {
         if (els.memberDesc) els.memberDesc.innerText = data.desc;
         
         try {
-    const [bond, statusVal] = await Promise.all([
-        getVariable(`世界.妈妈.${data.name}.好感度`),
-        getVariable(`世界.妈妈.${data.name}.在队状态`)
-    ]);
+    const bond = getVariable(`世界.妈妈.${data.name}.好感度`);
+    const statusVal = getVariable(`世界.妈妈.${data.name}.在队状态`);
 
     if (els.mBond) els.mBond.innerText = bond || "0";
 
@@ -5332,14 +5333,11 @@ if (isMemberGalleryTabActive()) {
         }
     }
 
-    async function updateExpColumn(colIndex, name, catName, items) {
-    // === 捨棄 for 迴圈內的 await，改為一次性並行請求 ===
-    // 產生所有的 Promise 陣列，並加上 catch 避免單一變量缺失導致整個報錯
-    const promises = items.map(item => 
+    function updateExpColumn(colIndex, name, catName, items) {
+    // === getVariable 為同步函數，直接呼叫 ===
+    const results = items.map(item => 
         (getVariable(`世界.妈妈.${name}.NSFW.${catName}.${item}`) ?? "0")
     );
-    
-    const results = await Promise.all(promises);
 
     for(let i = 0; i < items.length; i++) {
         const el = document.getElementById(`exp-${colIndex}-${i+1}`);
@@ -5681,10 +5679,8 @@ if (!ok) {
     // === 跨列表防呆：若「进行中」某任務已存在於「已完成」或「已失败」，自動從「进行中」移除 ===
     if (currentFilter === '进行中') {
         try {
-            const [completedRaw, failedRaw] = await Promise.all([
-                (getVariable(`世界.任务.${currentCategory}.已完成`) ?? null),
-                (getVariable(`世界.任务.${currentCategory}.已失败`) ?? null)
-            ]);
+            const completedRaw = getVariable(`世界.任务.${currentCategory}.已完成`) ?? null;
+            const failedRaw = getVariable(`世界.任务.${currentCategory}.已失败`) ?? null;
 
             const archivedKeys = new Set();
             for (const raw of [completedRaw, failedRaw]) {
@@ -5950,14 +5946,8 @@ window.toggleStateViewer = function() {
         let rawMoney = "0";
         let result = null;
         
-        try {
-            [rawMoney, result] = await Promise.all([
-                getVariable('世界.储物袋.货币'),
-                getVariable(varName)
-            ]);
-        } catch (e) {
-            console.error("背包並行讀取發生預期外錯誤:", e);
-        }
+        rawMoney = getVariable('世界.储物袋.货币');
+        result = getVariable(varName);
 
         // --- A. 處理金幣 ---
         let moneyVal = parseInt(rawMoney);
@@ -6102,6 +6092,7 @@ if (typeof window.setLayout === 'function') {
         region: "",         
         location: "",       
         subLocation: "",
+        homeSystemEnabled: false,    // 需明確讀取到 '1' 才啟用
         isHome: false       // 家园系统：是否處於家園模式
     };
 
@@ -6117,20 +6108,27 @@ if (typeof window.setLayout === 'function') {
     content = content.replace(/\[metacognition\][\s\S]*?\[\/metacognition\]/gi, '');
     content = content.replace(/<!--[\s\S]*?-->/g, '');
 
-    // Step 2: 清使用者自訂過濾規則
-    const _customRules = loadFilterRules();
-    for (const _rule of _customRules) {
-        const _open = _rule.open ? _rule.open.trim() : '';
-        const _close = _rule.close ? _rule.close.trim() : '';
-        const _eo = _open.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const _ec = _close.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        if (_open && _close) {
-            content = content.replace(new RegExp(_eo + '[\\s\\S]*?' + _ec, 'gi'), '');
-        } else if (_open && !_close) {
-            content = content.replace(new RegExp(_eo + '[\\s\\S]*$', 'gi'), '');
-        } else if (!_open && _close) {
-            content = content.replace(new RegExp('^[\\s\\S]*?' + _ec, 'i'), '');
+    // Step 2: 清使用者自訂過濾規則（使用預編譯快取）
+    if (!_compiledFilterRegexes) {
+        const _customRules = loadFilterRules();
+        _compiledFilterRegexes = [];
+        for (const _rule of _customRules) {
+            const _open = _rule.open ? _rule.open.trim() : '';
+            const _close = _rule.close ? _rule.close.trim() : '';
+            const _eo = _open.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const _ec = _close.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            if (_open && _close) {
+                _compiledFilterRegexes.push(new RegExp(_eo + '[\\s\\S]*?' + _ec, 'gi'));
+            } else if (_open && !_close) {
+                _compiledFilterRegexes.push(new RegExp(_eo + '[\\s\\S]*$', 'gi'));
+            } else if (!_open && _close) {
+                _compiledFilterRegexes.push(new RegExp('^[\\s\\S]*?' + _ec, 'i'));
+            }
         }
+    }
+    for (const _rx of _compiledFilterRegexes) {
+        _rx.lastIndex = 0;
+        content = content.replace(_rx, '');
     }
 
     // Step 3: 清裸露的內建結尾殘餘
@@ -6153,32 +6151,33 @@ if (typeof window.setLayout === 'function') {
     const _anchorRules = loadAnchorRules();
 
     if (_anchorRules.length > 0) {
-        const _validAnchorRules = [];
+        // 建立或使用預編譯 anchor 正則快取
+        if (!_compiledAnchorRegexes) {
+            _compiledAnchorRegexes = [];
+            for (const _aRule of _anchorRules) {
+                const _aOpen  = _aRule.open  ? _aRule.open.trim()  : '';
+                const _aClose = _aRule.close ? _aRule.close.trim() : '';
+                if (!_aOpen || !_aClose) continue;
+                const _eao = _aOpen.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                const _eac = _aClose.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                _compiledAnchorRegexes.push({
+                    complete: new RegExp(_eao + '([\\s\\S]*?)' + _eac, 'i'),
+                    openOnly: new RegExp(_eao + '([\\s\\S]*)$', 'i')
+                });
+            }
+        }
 
         // 第一輪：找完整容器
-        for (const _aRule of _anchorRules) {
-            const _aOpen  = _aRule.open  ? _aRule.open.trim()  : '';
-            const _aClose = _aRule.close ? _aRule.close.trim() : '';
-            if (!_aOpen || !_aClose) continue;
-
-            const _eao = _aOpen.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            const _eac = _aClose.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-
-            _validAnchorRules.push({ open: _aOpen, close: _aClose, eo: _eao, ec: _eac });
-
-            const _completeRegex = new RegExp(_eao + '([\\s\\S]*?)' + _eac, 'i');
-            const _completeMatch = content.match(_completeRegex);
-
+        for (const _ar of _compiledAnchorRegexes) {
+            const _completeMatch = content.match(_ar.complete);
             if (_completeMatch) {
                 return _stripRpgShell(_completeMatch[1]);
             }
         }
 
         // 第二輪：支援流式生成。open 已出現，但 close 尚未出現時，顯示 open 後內容
-        for (const _aRule of _validAnchorRules) {
-            const _openOnlyRegex = new RegExp(_aRule.eo + '([\\s\\S]*)$', 'i');
-            const _openOnlyMatch = content.match(_openOnlyRegex);
-
+        for (const _ar of _compiledAnchorRegexes) {
+            const _openOnlyMatch = content.match(_ar.openOnly);
             if (_openOnlyMatch) {
                 return _stripRpgShell(_openOnlyMatch[1]);
             }
@@ -6338,6 +6337,40 @@ if (typeof window.setLayout === 'function') {
     // --- 可外部化的 JSON URL（預留，填入後將覆蓋內建配置）---
     const HOME_CONFIG_URL = "";
 
+    // === 外部家園配置讀取狀態 ===
+    let externalHomeConfig = {};
+    let externalHomeConfigLoaded = false;
+    let externalHomeConfigLoading = null;
+
+    async function loadHomeConfigOnce() {
+        if (externalHomeConfigLoaded) return externalHomeConfig;
+        if (externalHomeConfigLoading) return externalHomeConfigLoading;
+        if (!HOME_CONFIG_URL) {
+            externalHomeConfigLoaded = true;
+            console.log('[Home] HOME_CONFIG_URL 未設定，使用內置權重');
+            return externalHomeConfig;
+        }
+        externalHomeConfigLoading = fetch(HOME_CONFIG_URL, { method: 'GET', cache: 'no-store' })
+            .then(async (res) => {
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const json = await res.json();
+                if (!json || typeof json !== 'object' || Array.isArray(json)) {
+                    throw new Error('Home config JSON 格式錯誤：最外層必須是物件');
+                }
+                externalHomeConfig = json;
+                externalHomeConfigLoaded = true;
+                console.log('[Home] 外部家園配置載入成功', externalHomeConfig);
+                return externalHomeConfig;
+            })
+            .catch((err) => {
+                externalHomeConfig = {};
+                externalHomeConfigLoaded = true;
+                console.warn('[Home] 外部家園配置載入失敗，使用內置權重', err);
+                return externalHomeConfig;
+            });
+        return externalHomeConfigLoading;
+    }
+
     // --- 所有家中地點 ---
     const HOME_LOCATIONS = {
         // 一樓
@@ -6359,9 +6392,9 @@ if (typeof window.setLayout === 'function') {
         "奈芙蒂的房间":   { floor: 2, bg: img("https://cdn.imgchest.com/files/fd2b98ad6897.png", "https://files.catbox.moe/9uiluq.png"), isRoom: true, owner: "奈芙蒂" },
         // 三樓
         "书房":     { floor: 3, bg: img("https://cdn.imgchest.com/files/f27e128af7dd.png", "https://files.catbox.moe/g4sbn1.png") },
-        "工房":     { floor: 3, bg: img("https://cdn.imgchest.com/files/c45cf57a4202.png", "https://files.catbox.moe/6phrtw.png") },
+        "工坊":     { floor: 3, bg: img("https://cdn.imgchest.com/files/c45cf57a4202.png", "https://files.catbox.moe/6phrtw.png") },
         // 地下
-        "锻炼场":   { floor: -1, bg: img("https://cdn.imgchest.com/files/09cbc6709bc9.png", "https://files.catbox.moe/r3l3k2.png") },
+        "训练场":   { floor: -1, bg: img("https://cdn.imgchest.com/files/09cbc6709bc9.png", "https://files.catbox.moe/r3l3k2.png") },
         "储物间":   { floor: -1, bg: img("https://cdn.imgchest.com/files/0776bbbd24d8.png", "https://files.catbox.moe/8ddcnj.png") },
     };
 
@@ -6386,9 +6419,9 @@ if (typeof window.setLayout === 'function') {
         "奈芙蒂的房间":   { down: "客厅", up: "三楼", right: "二楼" },
         // 三樓房間：↓下樓選擇器（二樓/一樓）、同層互通
         "书房":     { down: "下楼", right: "工坊" },
-        "工房":     { down: "下楼", left: "书房" },
+        "工坊":     { down: "下楼", left: "书房" },
         // 地下房間：↑回客廳、同層互通
-        "锻炼场":   { up: "客厅", right: "储物间" },
+        "训练场":   { up: "客厅", right: "储物间" },
         "储物间":   { up: "客厅", left: "训练场" },
     };
 
@@ -6402,15 +6435,15 @@ if (typeof window.setLayout === 'function') {
     // --- 角色地點偏好權重表 ---
     // 數字越大越可能前往；0 或不列出 = 不會主動前往
     const HOME_CHAR_WEIGHTS = {
-        "爱娜":    { "客厅": 3, "厨房饭厅": 5, "后院": 2, "爱娜的房间": 4, "浴室": 1, "书房": 1, "训练场": 0 },
-        "琳":      { "客厅": 3, "浴室": 3, "琳的房间": 5, "后院": 1, "厨房饭厅": 1, "书房": 1, "训练场": 0 },
-        "米拉露恩": { "客厅": 2, "书房": 5, "米拉露恩的房间": 4, "后院": 2, "厨房饭厅": 1, "浴室": 1, "训练场": 0 },
-        "黛芬妮":  { "客厅": 2, "工坊": 5, "黛芬妮的房间": 4, "书房": 2, "厨房饭厅": 1, "浴室": 1, "训练场": 0 },
-        "芙蕾嘉":  { "客厅": 2, "后院": 5, "芙蕾嘉的房间": 4, "厨房饭厅": 2, "浴室": 1, "书房": 1, "训练场": 0 },
-        "穗":      { "客厅": 3, "后院": 4, "穗的房间": 3, "厨房饭厅": 3, "训练场": 2, "浴室": 1, "书房": 0 },
-        "莉迪娅":  { "客厅": 3, "训练场": 4, "莉迪娅的房间": 4, "后院": 2, "书房": 2, "浴室": 1, "厨房饭厅": 1 },
-        "璐法":    { "客厅": 3, "书房": 3, "璐法的房间": 4, "后院": 2, "厨房饭厅": 2, "浴室": 1, "训练场": 1 },
-        "奈芙蒂":  { "客厅": 4, "后院": 4, "奈芙蒂的房间": 3, "厨房饭厅": 3, "训练场": 3, "浴室": 2, "书房": 1 },
+        "爱娜":    { "客厅": 2.5, "厨房饭厅": 0.8, "后院": 1, "爱娜的房间": 2, "浴室": 0.3, "书房": 1, "训练场": 0 },
+        "琳":      { "客厅": 2.5, "浴室": 0.3, "琳的房间": 2, "后院": 0.4, "厨房饭厅": 0.4, "工坊": 0.7, "训练场": 0.1 },
+        "米拉露恩": { "客厅": 2.5, "米拉露恩的房间": 2,  "厨房饭厅": 0.4, "浴室": 0.3, "书房": 2.5 },
+        "黛芬妮":  { "客厅": 2.5, "工坊": 2.5, "黛芬妮的房间": 2, "书房": 0.7, "厨房饭厅": 0.4, "浴室": 0.3, "训练场": 0 },
+        "芙蕾嘉":  { "客厅": 2.5, "后院": 0.9, "芙蕾嘉的房间": 2, "厨房饭厅": 0.6, "浴室": 0.3, "前庭": 0.6, "训练场": 0 },
+        "穗":      { "客厅": 2.5, "后院": 0.6, "穗的房间": 2, "厨房饭厅": 0.4, "浴室": 0.3, "前庭": 0.9 },
+        "莉迪娅":  { "客厅": 2.5, "训练场": 0.2, "莉迪娅的房间": 2, "后院": 1, "厨房饭厅": 0.4, "浴室": 0.3, "书房": 0.7 },
+        "璐法":    { "客厅": 2.5, "书房": 1, "璐法的房间": 2, "厨房饭厅": 0.6, "后院": 1, "浴室": 0.3, "书房": 0.7 },
+        "奈芙蒂":  { "客厅": 2.5, "后院": 0.6,  "奈芙蒂的房间": 2, "厨房饭厅": 0.5, "浴室": 0.3, "书房": 1, "前庭":0.4 },
     };
 
     // --- 角色自由移動閾值（停留超過此輪數後隨機移動）---
@@ -6998,18 +7031,9 @@ function scheduleBackgroundPreload(currentRegion, currentPartyIds) {
 
     // 一次性讀取所有角色狀態，建立 statusMap
     const statusMap = {};
-    let statusFetchFailed = false;
-    try {
-        const statusResults = await Promise.all(
-            heroineList.map(id => (getVariable(`世界.妈妈.${id}.状态`) ?? '-1'))
-        );
-        heroineList.forEach((id, i) => {
-            statusMap[id] = statusResults[i] || '-1';
-        });
-    } catch(e) {
-        console.warn('[WM] 讀取角色狀態失敗，使用靜態模式', e);
-        statusFetchFailed = true;
-    }
+    heroineList.forEach(id => {
+        statusMap[id] = getVariable(`世界.妈妈.${id}.状态`) || '-1';
+    });
 
 const existingPanel = document.getElementById('wm-mobile-panel');
 const panelParent = existingPanel?.parentElement 
@@ -7226,29 +7250,36 @@ previewArea.appendChild(dot);
         state.isHome = true;
         state._homeFirstMoveDone = false; // 標記：尚未執行過「首次離開前庭」
 
-        // 設定預設位置為前庭
-        const currentHomeLoc = getPlayerHomeLocation();
-        if (!HOME_LOCATIONS[currentHomeLoc]) {
-            setPlayerHomeVar('前庭');
-        }
+        // 批次寫入所有初始化變量（單次 updateVariablesWith）
+        updateVariablesWith(function(variables) {
+            const sd = variables.stat_data || variables;
 
-        // 初始化角色位置（僅已攻略角色）
-        heroineList.forEach(name => {
-            if (!isCharConquered(name)) return; // 未攻略 → 不參與家園
-            const charLoc = getCharHomeLocation(name);
-            if (isCharInParty(name)) {
-                // 在隊角色 → 跟隨玩家放到前庭
-                setCharHomeVar(name, '家中位置', '前庭');
-                setCharHomeVar(name, '停留轮数', 0);
-            } else if (!charLoc || charLoc === '外出') {
-                // 未初始化位置的已攻略角色 → 放到前庭；外出中的保持原樣
-                if (charLoc !== '外出') {
-                    setCharHomeVar(name, '家中位置', '前庭');
-                    setCharHomeVar(name, '停留轮数', 0);
-                }
+            // 設定預設位置為前庭
+            const currentHomeLoc = getPlayerHomeLocation();
+            if (!HOME_LOCATIONS[currentHomeLoc]) {
+                _.set(sd, '世界.位置.家中位置', '前庭');
             }
-            // 已有位置且非在隊 → 保持原位置
-        });
+
+            // 初始化角色位置（僅已攻略角色）
+            heroineList.forEach(name => {
+                if (!isCharConquered(name)) return; // 未攻略 → 不參與家園
+                const charLoc = getCharHomeLocation(name);
+                if (isCharInParty(name)) {
+                    // 在隊角色 → 跟隨玩家放到前庭
+                    _.set(sd, `世界.妈妈.${name}.家中位置`, '前庭');
+                    _.set(sd, `世界.妈妈.${name}.停留轮数`, 0);
+                } else if (!charLoc || charLoc === '外出') {
+                    // 未初始化位置的已攻略角色 → 放到前庭；外出中的保持原樣
+                    if (charLoc !== '外出') {
+                        _.set(sd, `世界.妈妈.${name}.家中位置`, '前庭');
+                        _.set(sd, `世界.妈妈.${name}.停留轮数`, 0);
+                    }
+                }
+                // 已有位置且非在隊 → 保持原位置
+            });
+
+            return variables;
+        }, { type: 'message' });
     }
 
     // --- 離開家園時的清理 ---
@@ -7496,9 +7527,51 @@ previewArea.appendChild(dot);
         els.mapArea.appendChild(overlay);
     }
 
+    // --- 依地點與時段回傳權重倍率 ---
+    function getTimeMultiplier(loc, hour) {
+        switch (loc) {
+            case '厨房饭厅':
+                if (hour >= 7  && hour < 9)  return 3.0; // 早餐
+                if (hour >= 11 && hour < 13) return 4.0; // 午餐
+                if (hour >= 17 && hour < 19) return 3.5; // 晚餐
+                if (hour >= 0  && hour < 5)  return 0.5; // 深夜幾乎不在廚房
+                return 1.0;
+            case '书房':
+            case '工坊':
+                if (hour >= 9  && hour < 17) return 1.5; // 白天工作時段
+                if (hour >= 0  && hour < 6)  return 0.2; // 深夜少用
+                return 1.0;
+            case '训练场':
+                if (hour >= 6  && hour < 9)  return 10.0; // 晨練
+                if (hour >= 9 || hour < 5)  return 0;   // 深夜不訓練
+                return 1.0;
+            case '后院':
+                if (hour >= 9  && hour < 11) return 1.5; // 上午戶外活動
+                if (hour >= 15 && hour < 17) return 1.5; // 下午戶外活動
+                if (hour >= 0  && hour < 6)  return 0.1; // 深夜不在後院
+                return 1.0;
+            case '浴室':
+                if (hour >= 19 && hour < 24) return 6.0; // 睡前入浴
+                return 1.0;
+            default:
+                return 1.0;
+        }
+    }
+
     // --- 模擬角色自由移動（每輪呼叫一次）---
-    function simulateHomeMovement() {
+    async function simulateHomeMovement() {
         const playerLoc = getPlayerHomeLocation();
+
+        // 載入外部家園配置（已載入則直接取快取）
+        const homeConfig = await loadHomeConfigOnce();
+        const externalWeights = homeConfig.charWeights || {};
+
+        // 讀取當前遊戲時間
+        const hourRaw = getVariable('世界.当前.时间.时');
+        const gameHour = isNaN(parseInt(hourRaw)) ? 12 : parseInt(hourRaw);
+
+        // 收集所有需要寫入的變更，最後單次批次寫入
+        const writes = [];
 
         heroineList.forEach(name => {
             // === 過濾條件 ===
@@ -7508,28 +7581,42 @@ previewArea.appendChild(dot);
             if (!charLoc) return;                     // 未初始化
             if (charLoc === '外出') return;              // 外出中 → 不干涉
 
+            // [快照] 讀取上輪位置
+            const lastLoc = getVariable(`世界.妈妈.${name}.上轮位置`) || '';
+
+            // [外部寫入偵測] 當前位置與上輪快照不同 → LLM 劇情更動
+            if (lastLoc && charLoc !== lastLoc) {
+                console.log(`[Home] ${name} 位置外部變動 ${lastLoc} → ${charLoc}，重置停留輪數`);
+                writes.push({ path: `世界.妈妈.${name}.停留轮数`, value: 0 });
+                writes.push({ path: `世界.妈妈.${name}.上轮位置`, value: charLoc });
+                return;
+            }
+
             // 和玩家同一地點 → 凍結停留輪數，不移動
             if (charLoc === playerLoc) {
-                setCharHomeVar(name, '停留轮数', 0);
+                writes.push({ path: `世界.妈妈.${name}.停留轮数`, value: 0 });
+                writes.push({ path: `世界.妈妈.${name}.上轮位置`, value: charLoc });
                 return;
             }
 
             // 增加停留輪數
             const rounds = getCharHomeRounds(name) + 1;
-            setCharHomeVar(name, '停留轮数', rounds);
+            writes.push({ path: `世界.妈妈.${name}.停留轮数`, value: rounds });
 
             // 未達閾值，不移動
-            if (rounds < HOME_MOVE_THRESHOLD) return;
+            if (rounds < HOME_MOVE_THRESHOLD) {
+                writes.push({ path: `世界.妈妈.${name}.上轮位置`, value: charLoc });
+                return;
+            }
 
-            // --- 按權重隨機選擇新位置 ---
-            const weights = HOME_CHAR_WEIGHTS[name] || {};
+            // --- 按權重隨機選擇新位置（外部優先）---
+            const weights = externalWeights[name] ?? HOME_CHAR_WEIGHTS[name] ?? {};
             const candidates = [];
             let totalWeight = 0;
 
             for (const [loc, baseWeight] of Object.entries(weights)) {
-                if (baseWeight <= 0) continue;
-                if (!HOME_LOCATIONS[loc]) continue;
-                if (loc === charLoc) continue; // 排除當前位置
+                // [原] if (baseWeight <= 0 || !HOME_LOCATIONS[loc] || loc === charLoc) continue;              
+		if (baseWeight <= 0 || !HOME_LOCATIONS[loc]) continue;
 
                 let finalWeight = baseWeight;
 
@@ -7544,13 +7631,21 @@ previewArea.appendChild(dot);
                     }
                 }
 
+                // 套用時間倍率（在房間主人歸零後才乘，避免無效運算）
+                if (finalWeight > 0) {
+                    finalWeight = Math.max(1, Math.round(finalWeight * getTimeMultiplier(loc, gameHour)));
+                }
+
                 if (finalWeight > 0) {
                     candidates.push({ loc, weight: finalWeight });
                     totalWeight += finalWeight;
                 }
             }
 
-            if (candidates.length === 0 || totalWeight === 0) return;
+            if (candidates.length === 0 || totalWeight === 0) {
+                writes.push({ path: `世界.妈妈.${name}.上轮位置`, value: charLoc });
+                return;
+            }
 
             // 加權隨機選擇
             let roll = Math.random() * totalWeight;
@@ -7561,10 +7656,20 @@ previewArea.appendChild(dot);
             }
 
             // 更新位置與重置輪數
-            setCharHomeVar(name, '家中位置', chosen);
-            setCharHomeVar(name, '停留轮数', 0);
+            writes.push({ path: `世界.妈妈.${name}.家中位置`, value: chosen });
+            writes.push({ path: `世界.妈妈.${name}.停留轮数`, value: 0 });
+            writes.push({ path: `世界.妈妈.${name}.上轮位置`, value: chosen }); // 快照更新為移動後位置
             console.log(`[Home] ${name} 自由移動: ${charLoc} → ${chosen}`);
         });
+
+        // 單次批次寫入所有變更
+        if (writes.length > 0) {
+            updateVariablesWith(function(variables) {
+                const sd = variables.stat_data || variables;
+                writes.forEach(w => _.set(sd, w.path, w.value));
+                return variables;
+            }, { type: 'message' });
+        }
     }
 
     // === 家园系统核心邏輯結束 ===
@@ -7711,10 +7816,7 @@ const LOCATION_BUTTONS = [
             visibleBtns.push(cfg); // 無條件，直接通過
             continue;
         }
-        // 並行讀取所有條件變量
-        const results = await Promise.all(
-            cfg.conditions.map(c => (getVariable(c.varName) ?? null))
-        );
+        const results = cfg.conditions.map(c => (getVariable(c.varName) ?? null));
         const allMet = cfg.conditions.every((c, i) => {
     if (c.value !== undefined) return results[i] == c.value;   // 符合某值
     if (c.not   !== undefined) return results[i] != c.not;     // 不符合某值
@@ -7765,44 +7867,44 @@ const LOCATION_BUTTONS = [
         try {
             await checkRaidStatus();
             // ============================================================
-            // === 並行數據請求 (Parallel Fetching) ===
+            // === 同步數據讀取 (getVariable 為同步函數) ===
             // ============================================================
             
             const batchPromises = [
                 // Group 0: 位置資訊
-                Promise.all([
+                [
                     getVariable('世界.位置.区域'),
                     getVariable('世界.位置.地点'),
                     getVariable('世界.位置.子地点')
-                ]),
+                ],
                 // Group 1: 玩家數值
-                Promise.all([
+                [
                     getVariable('世界.玩家状态.综合实力.实际等级'),
                     getVariable(VAR_HP),                     
                     getVariable(VAR_ATK),                    
                     getVariable(VAR_POINTS),                 
                     getVariable(VAR_RANK)                    
-                ]),
+                ],
                 // Group 2: 時間日期
-                Promise.all([
+                [
                     getVariable('世界.当前.时间.时'),
                     getVariable('世界.当前.日期.年'),
                     getVariable('世界.当前.日期.月'),
                     getVariable('世界.当前.日期.日') 
-                ]),
-                Promise.all([
+                ],
+                [
                     getVariable('世界.玩家状态.惩罚.惩罚中'),
                     getVariable('世界.玩家状态.惩罚.剩余天数')
-                ]),
+                ],
                 // Group 4: [新增] 家园系统開關
                 getVariable('世界.家园系统.啟用')
             ];
 
-            const [locData, playerData, timeData, punishData, homeEnabledRaw] = await Promise.all(batchPromises);
+            const [locData, playerData, timeData, punishData, homeEnabledRaw] = batchPromises;
 	    [region] = locData;
             const [, locationName, subLocation] = locData;
 // [新增] 快取家园系统開關狀態（預設啟用，'0' 為停用）
-state.homeSystemEnabled = (homeEnabledRaw !== '0' && homeEnabledRaw !== 0);
+state.homeSystemEnabled = (String(homeEnabledRaw) === '1');
 state.region = region;
 state.location = locationName;
 state.subLocation = subLocation;
@@ -7894,14 +7996,12 @@ const [pLevelRaw, valHP, valATK, valPoints, rank] = playerData;
             // ============================================================
             // === [优化 2] 合并所有的角色状态请求 (状态、好感、在队、NSFW) ===
             // ============================================================
-            const charPromises = heroineList.flatMap(id => [
+            const charResults = heroineList.flatMap(id => [
                 (getVariable(`世界.妈妈.${id}.状态`) ?? '-1'),
                 (getVariable(`世界.妈妈.${id}.好感度`) ?? '0'),
                 (getVariable(`世界.妈妈.${id}.在队状态`) ?? '否'),
                 (getVariable(`世界.妈妈.${id}.NSFW状态`) ?? '否')
             ]);
-            
-            const charResults = await Promise.all(charPromises);
             
             let currentRecruitedCount = 0;
             let currentrelationshipCount = 0;
@@ -8223,7 +8323,7 @@ state.currentMusicUrl = targetMusicUrl;
                     const _msgId = window.RPG_MESSAGE_ID;
                     if (_msgId != null && _msgId !== state._homeLastMsgId) {
                         state._homeLastMsgId = _msgId;
-                        simulateHomeMovement();
+                        await simulateHomeMovement();
                         console.log(`[Home] 新一輪（訊息 #${_msgId}），已執行角色移動模擬`);
                     }
                 } catch(e) { console.error('[Home] 移動模擬失敗:', e); }
