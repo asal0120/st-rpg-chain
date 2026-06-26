@@ -2483,10 +2483,10 @@
 }
 
 .home-nav-arrow.arrow-down {
-    bottom: 60px; /* [修復] 提高位置，減少與立繪重疊 */
+    bottom: 10px; /* 
     left: 50%;
     transform: translateX(-50%);
-    opacity: 0.8; /* [修復] 非 hover 時半透明，讓被覆蓋的立繪隱約可見 */
+    opacity: 0.6; /* [修復] 非 hover 時半透明，讓被覆蓋的立繪隱約可見 */
 }
 .home-nav-arrow.arrow-down:hover {
     transform: translateX(-50%) scale(1.05);
@@ -7617,7 +7617,7 @@ previewArea.appendChild(dot);
 
             for (const [loc, baseWeight] of Object.entries(weights)) {
                 // [原] if (baseWeight <= 0 || !HOME_LOCATIONS[loc] || loc === charLoc) continue;              
-				if (baseWeight <= 0 || !HOME_LOCATIONS[loc]) continue;
+		if (baseWeight <= 0 || !HOME_LOCATIONS[loc]) continue;
 
                 let finalWeight = baseWeight;
 
