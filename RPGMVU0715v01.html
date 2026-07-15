@@ -567,6 +567,42 @@
         overflow: visible !important;
     }
 
+    /* === 圖片標記渲染樣式 === */
+    .rpg-img-placeholder {
+        display: block;
+        width: 100%;
+        text-align: center;
+        margin: 10px 0;
+        min-height: 40px;
+    }
+    .rpg-inline-image {
+        max-width: 100%;
+        border-radius: 8px;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+        display: block;
+        margin: 8px auto;
+        opacity: 0;
+        transition: opacity 0.4s ease;
+    }
+    .rpg-inline-image.rpg-img-visible {
+        opacity: 1;
+    }
+    .rpg-img-loading {
+        display: inline-block;
+        color: var(--text-color, #d0c8b6);
+        opacity: 0.5;
+        font-size: 0.85em;
+        padding: 12px 0;
+    }
+    .rpg-img-failed {
+        display: inline-block;
+        color: var(--text-color, #d0c8b6);
+        opacity: 0.45;
+        font-size: 0.8em;
+        font-style: italic;
+        padding: 6px 0;
+    }
+
     .highlight-dialogue {
         color: var(--color-dialogue);
         font-weight: var(--font-weight-dialogue);
@@ -2483,10 +2519,10 @@
 }
 
 .home-nav-arrow.arrow-down {
-    bottom: 60px; /* [修復] 提高位置，減少與立繪重疊 */
+    bottom: 10px; 
     left: 50%;
     transform: translateX(-50%);
-    opacity: 0.8; /* [修復] 非 hover 時半透明，讓被覆蓋的立繪隱約可見 */
+    opacity: 0.6; /* [修復] 非 hover 時半透明，讓被覆蓋的立繪隱約可見 */
 }
 .home-nav-arrow.arrow-down:hover {
     transform: translateX(-50%) scale(1.05);
@@ -6092,6 +6128,7 @@ if (typeof window.setLayout === 'function') {
         region: "",         
         location: "",       
         subLocation: "",
+        homeSystemEnabled: false,    // 需明確讀取到 '1' 才啟用
         isHome: false       // 家园系统：是否處於家園模式
     };
 
@@ -6211,10 +6248,65 @@ if (typeof window.setLayout === 'function') {
     return '';
 };
 
+    // === [新增] 圖片標記攔截 — sentinel 方式保護 HTML 不被高亮 regex 破壞 ===
+    const _IMG_SENTINEL = '__RPGIMG_';
+
+    const processImageMarkers = (text) => {
+        if (!text) return { text, slots: null };
+        const slots = [];
+        let result = text;
+
+        // 1. LittleWhiteBox [image:slotId]
+        if (result.includes('[image:')) {
+            result = result.replace(/\[image:([^\]]+)\]/g, (match, slotId) => {
+                const idx = slots.length;
+                const eid = String(slotId).replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+                slots.push(
+                    '<span class="rpg-img-placeholder" data-img-type="lwb" data-img-id="' + eid + '">' +
+                    '<span class="rpg-img-loading">\u{1F5BC}\uFE0F</span></span>'
+                );
+                return _IMG_SENTINEL + idx + '__';
+            });
+        }
+
+        // 2. LocalDream <img data-ld-hash="..." data-ld-prompt="..." .../>
+        if (result.includes('data-ld-hash')) {
+            result = result.replace(
+                /<img\s[^>]*?data-ld-hash="([^"]*)"[^>]*?data-ld-prompt="([^"]*)"[^>]*?\/?>/gi,
+                (match, hash, prompt) => {
+                    const idx = slots.length;
+                    slots.push(
+                        '<span class="rpg-img-placeholder" data-img-type="ld" data-img-id="' + hash +
+                        '" data-img-prompt="' + prompt + '">' +
+                        '<span class="rpg-img-loading">\u{1F5BC}\uFE0F</span></span>'
+                    );
+                    return _IMG_SENTINEL + idx + '__';
+                }
+            );
+        }
+
+        // 3. st-chatu8 <image>prompt</image>
+        if (/<image>/i.test(result)) {
+            result = result.replace(/<image>([\s\S]*?)<\/image>/gi, (match, p) => {
+                const idx = slots.length;
+                const encoded = encodeURIComponent(p.trim());
+                slots.push(
+                    '<span class="rpg-img-placeholder" data-img-type="chatu8" data-img-prompt="' + encoded + '">' +
+                    '<span class="rpg-img-loading">\u{1F5BC}\uFE0F</span></span>'
+                );
+                return _IMG_SENTINEL + idx + '__';
+            });
+        }
+
+        return { text: result, slots: slots.length > 0 ? slots : null };
+    };
     // === [最終修正版] 文本格式化函數 ===
     const formatText = (text) => {
         if (!text) return "";
-        let res = text;
+
+        // Step 0: 圖片標記攔截 — 用 sentinel 替換，保護 HTML 不被後續 regex 破壞
+        const { text: _processed, slots: _imgSlots } = processImageMarkers(text);
+        let res = _processed;
 
         // =========================================================
         // 順序非常重要！請勿隨意更動
@@ -6242,6 +6334,13 @@ if (typeof window.setLayout === 'function') {
         // 這些符號不會跟 HTML 屬性衝突，放最後很安全
         res = res.replace(/([「“])([\s\S]*?)([」”])/g, '<span class="highlight-dialogue">$1$2$3</span>');
         
+        // Step final: 還原圖片標記 sentinel → 實際 HTML
+        if (_imgSlots) {
+            for (let i = 0; i < _imgSlots.length; i++) {
+                res = res.replace(_IMG_SENTINEL + i + '__', _imgSlots[i]);
+            }
+        }
+
         return res;
     };
 
@@ -6336,6 +6435,40 @@ if (typeof window.setLayout === 'function') {
     // --- 可外部化的 JSON URL（預留，填入後將覆蓋內建配置）---
     const HOME_CONFIG_URL = "";
 
+    // === 外部家園配置讀取狀態 ===
+    let externalHomeConfig = {};
+    let externalHomeConfigLoaded = false;
+    let externalHomeConfigLoading = null;
+
+    async function loadHomeConfigOnce() {
+        if (externalHomeConfigLoaded) return externalHomeConfig;
+        if (externalHomeConfigLoading) return externalHomeConfigLoading;
+        if (!HOME_CONFIG_URL) {
+            externalHomeConfigLoaded = true;
+            console.log('[Home] HOME_CONFIG_URL 未設定，使用內置權重');
+            return externalHomeConfig;
+        }
+        externalHomeConfigLoading = fetch(HOME_CONFIG_URL, { method: 'GET', cache: 'no-store' })
+            .then(async (res) => {
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const json = await res.json();
+                if (!json || typeof json !== 'object' || Array.isArray(json)) {
+                    throw new Error('Home config JSON 格式錯誤：最外層必須是物件');
+                }
+                externalHomeConfig = json;
+                externalHomeConfigLoaded = true;
+                console.log('[Home] 外部家園配置載入成功', externalHomeConfig);
+                return externalHomeConfig;
+            })
+            .catch((err) => {
+                externalHomeConfig = {};
+                externalHomeConfigLoaded = true;
+                console.warn('[Home] 外部家園配置載入失敗，使用內置權重', err);
+                return externalHomeConfig;
+            });
+        return externalHomeConfigLoading;
+    }
+
     // --- 所有家中地點 ---
     const HOME_LOCATIONS = {
         // 一樓
@@ -6357,9 +6490,9 @@ if (typeof window.setLayout === 'function') {
         "奈芙蒂的房间":   { floor: 2, bg: img("https://cdn.imgchest.com/files/fd2b98ad6897.png", "https://files.catbox.moe/9uiluq.png"), isRoom: true, owner: "奈芙蒂" },
         // 三樓
         "书房":     { floor: 3, bg: img("https://cdn.imgchest.com/files/f27e128af7dd.png", "https://files.catbox.moe/g4sbn1.png") },
-        "工房":     { floor: 3, bg: img("https://cdn.imgchest.com/files/c45cf57a4202.png", "https://files.catbox.moe/6phrtw.png") },
+        "工坊":     { floor: 3, bg: img("https://cdn.imgchest.com/files/c45cf57a4202.png", "https://files.catbox.moe/6phrtw.png") },
         // 地下
-        "锻炼场":   { floor: -1, bg: img("https://cdn.imgchest.com/files/09cbc6709bc9.png", "https://files.catbox.moe/r3l3k2.png") },
+        "训练场":   { floor: -1, bg: img("https://cdn.imgchest.com/files/09cbc6709bc9.png", "https://files.catbox.moe/r3l3k2.png") },
         "储物间":   { floor: -1, bg: img("https://cdn.imgchest.com/files/0776bbbd24d8.png", "https://files.catbox.moe/8ddcnj.png") },
     };
 
@@ -6384,9 +6517,9 @@ if (typeof window.setLayout === 'function') {
         "奈芙蒂的房间":   { down: "客厅", up: "三楼", right: "二楼" },
         // 三樓房間：↓下樓選擇器（二樓/一樓）、同層互通
         "书房":     { down: "下楼", right: "工坊" },
-        "工房":     { down: "下楼", left: "书房" },
+        "工坊":     { down: "下楼", left: "书房" },
         // 地下房間：↑回客廳、同層互通
-        "锻炼场":   { up: "客厅", right: "储物间" },
+        "训练场":   { up: "客厅", right: "储物间" },
         "储物间":   { up: "客厅", left: "训练场" },
     };
 
@@ -6400,15 +6533,15 @@ if (typeof window.setLayout === 'function') {
     // --- 角色地點偏好權重表 ---
     // 數字越大越可能前往；0 或不列出 = 不會主動前往
     const HOME_CHAR_WEIGHTS = {
-        "爱娜":    { "客厅": 3, "厨房饭厅": 5, "后院": 2, "爱娜的房间": 4, "浴室": 1, "书房": 1, "训练场": 0 },
-        "琳":      { "客厅": 3, "浴室": 3, "琳的房间": 5, "后院": 1, "厨房饭厅": 1, "书房": 1, "训练场": 0 },
-        "米拉露恩": { "客厅": 2, "书房": 5, "米拉露恩的房间": 4, "后院": 2, "厨房饭厅": 1, "浴室": 1, "训练场": 0 },
-        "黛芬妮":  { "客厅": 2, "工坊": 5, "黛芬妮的房间": 4, "书房": 2, "厨房饭厅": 1, "浴室": 1, "训练场": 0 },
-        "芙蕾嘉":  { "客厅": 2, "后院": 5, "芙蕾嘉的房间": 4, "厨房饭厅": 2, "浴室": 1, "书房": 1, "训练场": 0 },
-        "穗":      { "客厅": 3, "后院": 4, "穗的房间": 3, "厨房饭厅": 3, "训练场": 2, "浴室": 1, "书房": 0 },
-        "莉迪娅":  { "客厅": 3, "训练场": 4, "莉迪娅的房间": 4, "后院": 2, "书房": 2, "浴室": 1, "厨房饭厅": 1 },
-        "璐法":    { "客厅": 3, "书房": 3, "璐法的房间": 4, "后院": 2, "厨房饭厅": 2, "浴室": 1, "训练场": 1 },
-        "奈芙蒂":  { "客厅": 4, "后院": 4, "奈芙蒂的房间": 3, "厨房饭厅": 3, "训练场": 3, "浴室": 2, "书房": 1 },
+        "爱娜":    { "客厅": 2.5, "厨房饭厅": 0.8, "后院": 1, "爱娜的房间": 2, "浴室": 0.3, "书房": 1, "训练场": 0 },
+        "琳":      { "客厅": 2.5, "浴室": 0.3, "琳的房间": 2, "后院": 0.4, "厨房饭厅": 0.4, "工坊": 0.7, "训练场": 0.1 },
+        "米拉露恩": { "客厅": 2.5, "米拉露恩的房间": 2,  "厨房饭厅": 0.4, "浴室": 0.3, "书房": 2.5 },
+        "黛芬妮":  { "客厅": 2.5, "工坊": 2.5, "黛芬妮的房间": 2, "书房": 0.7, "厨房饭厅": 0.4, "浴室": 0.3, "训练场": 0 },
+        "芙蕾嘉":  { "客厅": 2.5, "后院": 0.9, "芙蕾嘉的房间": 2, "厨房饭厅": 0.6, "浴室": 0.3, "前庭": 0.6, "训练场": 0 },
+        "穗":      { "客厅": 2.5, "后院": 0.6, "穗的房间": 2, "厨房饭厅": 0.4, "浴室": 0.3, "前庭": 0.9 },
+        "莉迪娅":  { "客厅": 2.5, "训练场": 0.2, "莉迪娅的房间": 2, "后院": 1, "厨房饭厅": 0.4, "浴室": 0.3, "书房": 0.7 },
+        "璐法":    { "客厅": 2.5, "书房": 1, "璐法的房间": 2, "厨房饭厅": 0.6, "后院": 1, "浴室": 0.3, "书房": 0.7 },
+        "奈芙蒂":  { "客厅": 2.5, "后院": 0.6,  "奈芙蒂的房间": 2, "厨房饭厅": 0.5, "浴室": 0.3, "书房": 1, "前庭":0.4 },
     };
 
     // --- 角色自由移動閾值（停留超過此輪數後隨機移動）---
@@ -6774,7 +6907,60 @@ if (typeof window.setLayout === 'function') {
             els.display.classList.add('show-drop-cap');
         }
 		requestParentResize();
+        hydrateInlineImages();
     };
+
+    // === [新增] 圖片標記 hydration — 異步填充圖片 URL ===
+    async function hydrateInlineImages() {
+        const placeholders = document.querySelectorAll('.rpg-img-placeholder:not(.rpg-img-loaded)');
+        if (!placeholders.length) return;
+
+        for (const ph of placeholders) {
+            const type = ph.dataset.imgType;
+            const id = ph.dataset.imgId || '';
+            const prompt = ph.dataset.imgPrompt || '';
+
+            try {
+                let url = null;
+                if (typeof window.resolveImageUrl === 'function') {
+                    url = await window.resolveImageUrl(type, id, prompt);
+                }
+                if (url) {
+                    const img = document.createElement('img');
+                    img.className = 'rpg-inline-image';
+                    img.alt = prompt ? decodeURIComponent(prompt) : 'Generated Image';
+                    img.onload = () => {
+                        img.classList.add('rpg-img-visible');
+                        ph.classList.add('rpg-img-loaded');
+                        requestParentResize();
+                    };
+                    img.onerror = () => {
+                        const promptText = prompt ? decodeURIComponent(prompt) : id || '?';
+                        ph.innerHTML = '<span class="rpg-img-failed">\u26A0\uFE0F ' +
+                            (promptText.length > 50 ? promptText.slice(0, 50) + '...' : promptText) +
+                            '</span>';
+                        ph.classList.add('rpg-img-loaded');
+                    };
+                    img.src = url;
+                    ph.innerHTML = '';
+                    ph.appendChild(img);
+                } else {
+                    // 無法取得 URL — 顯示 fallback
+                    const promptText = prompt ? decodeURIComponent(prompt) : id || '';
+                    if (promptText) {
+                        ph.innerHTML = '<span class="rpg-img-failed">\uD83D\uDDBC\uFE0F ' +
+                            (promptText.length > 50 ? promptText.slice(0, 50) + '...' : promptText) +
+                            '</span>';
+                    }
+                    ph.classList.add('rpg-img-loaded');
+                }
+            } catch (e) {
+                console.warn('[RPG] Image hydration error:', type, id, e);
+                ph.innerHTML = '<span class="rpg-img-failed">\u26A0\uFE0F 圖片載入失敗</span>';
+                ph.classList.add('rpg-img-loaded');
+            }
+        }
+    }
 
     const updateButtons = () => {
         if (!els.prevBtn || !els.nextBtn) return;
@@ -7492,9 +7678,48 @@ previewArea.appendChild(dot);
         els.mapArea.appendChild(overlay);
     }
 
+    // --- 依地點與時段回傳權重倍率 ---
+    function getTimeMultiplier(loc, hour) {
+        switch (loc) {
+            case '厨房饭厅':
+                if (hour >= 7  && hour < 9)  return 3.0; // 早餐
+                if (hour >= 11 && hour < 13) return 4.0; // 午餐
+                if (hour >= 17 && hour < 19) return 3.5; // 晚餐
+                if (hour >= 0  && hour < 5)  return 0.5; // 深夜幾乎不在廚房
+                return 1.0;
+            case '书房':
+            case '工坊':
+                if (hour >= 9  && hour < 17) return 1.5; // 白天工作時段
+                if (hour >= 0  && hour < 6)  return 0.2; // 深夜少用
+                return 1.0;
+            case '训练场':
+                if (hour >= 6  && hour < 9)  return 10.0; // 晨練
+                if (hour >= 9 || hour < 5)  return 0;   // 深夜不訓練
+                return 1.0;
+            case '后院':
+                if (hour >= 9  && hour < 11) return 1.5; // 上午戶外活動
+                if (hour >= 15 && hour < 17) return 1.5; // 下午戶外活動
+                if (hour >= 0  && hour < 6)  return 0.1; // 深夜不在後院
+                return 1.0;
+            case '浴室':
+                if (hour >= 19 && hour < 24) return 6.0; // 睡前入浴
+                return 1.0;
+            default:
+                return 1.0;
+        }
+    }
+
     // --- 模擬角色自由移動（每輪呼叫一次）---
-    function simulateHomeMovement() {
+    async function simulateHomeMovement() {
         const playerLoc = getPlayerHomeLocation();
+
+        // 載入外部家園配置（已載入則直接取快取）
+        const homeConfig = await loadHomeConfigOnce();
+        const externalWeights = homeConfig.charWeights || {};
+
+        // 讀取當前遊戲時間
+        const hourRaw = getVariable('世界.当前.时间.时');
+        const gameHour = isNaN(parseInt(hourRaw)) ? 12 : parseInt(hourRaw);
 
         // 收集所有需要寫入的變更，最後單次批次寫入
         const writes = [];
@@ -7507,9 +7732,21 @@ previewArea.appendChild(dot);
             if (!charLoc) return;                     // 未初始化
             if (charLoc === '外出') return;              // 外出中 → 不干涉
 
+            // [快照] 讀取上輪位置
+            const lastLoc = getVariable(`世界.妈妈.${name}.上轮位置`) || '';
+
+            // [外部寫入偵測] 當前位置與上輪快照不同 → LLM 劇情更動
+            if (lastLoc && charLoc !== lastLoc) {
+                console.log(`[Home] ${name} 位置外部變動 ${lastLoc} → ${charLoc}，重置停留輪數`);
+                writes.push({ path: `世界.妈妈.${name}.停留轮数`, value: 0 });
+                writes.push({ path: `世界.妈妈.${name}.上轮位置`, value: charLoc });
+                return;
+            }
+
             // 和玩家同一地點 → 凍結停留輪數，不移動
             if (charLoc === playerLoc) {
                 writes.push({ path: `世界.妈妈.${name}.停留轮数`, value: 0 });
+                writes.push({ path: `世界.妈妈.${name}.上轮位置`, value: charLoc });
                 return;
             }
 
@@ -7518,17 +7755,19 @@ previewArea.appendChild(dot);
             writes.push({ path: `世界.妈妈.${name}.停留轮数`, value: rounds });
 
             // 未達閾值，不移動
-            if (rounds < HOME_MOVE_THRESHOLD) return;
+            if (rounds < HOME_MOVE_THRESHOLD) {
+                writes.push({ path: `世界.妈妈.${name}.上轮位置`, value: charLoc });
+                return;
+            }
 
-            // --- 按權重隨機選擇新位置 ---
-            const weights = HOME_CHAR_WEIGHTS[name] || {};
+            // --- 按權重隨機選擇新位置（外部優先）---
+            const weights = externalWeights[name] ?? HOME_CHAR_WEIGHTS[name] ?? {};
             const candidates = [];
             let totalWeight = 0;
 
             for (const [loc, baseWeight] of Object.entries(weights)) {
-                if (baseWeight <= 0) continue;
-                if (!HOME_LOCATIONS[loc]) continue;
-                if (loc === charLoc) continue; // 排除當前位置
+                // [原] if (baseWeight <= 0 || !HOME_LOCATIONS[loc] || loc === charLoc) continue;              
+		if (baseWeight <= 0 || !HOME_LOCATIONS[loc]) continue;
 
                 let finalWeight = baseWeight;
 
@@ -7543,13 +7782,21 @@ previewArea.appendChild(dot);
                     }
                 }
 
+                // 套用時間倍率（在房間主人歸零後才乘，避免無效運算）
+                if (finalWeight > 0) {
+                    finalWeight = Math.max(1, Math.round(finalWeight * getTimeMultiplier(loc, gameHour)));
+                }
+
                 if (finalWeight > 0) {
                     candidates.push({ loc, weight: finalWeight });
                     totalWeight += finalWeight;
                 }
             }
 
-            if (candidates.length === 0 || totalWeight === 0) return;
+            if (candidates.length === 0 || totalWeight === 0) {
+                writes.push({ path: `世界.妈妈.${name}.上轮位置`, value: charLoc });
+                return;
+            }
 
             // 加權隨機選擇
             let roll = Math.random() * totalWeight;
@@ -7559,9 +7806,10 @@ previewArea.appendChild(dot);
                 if (roll <= 0) { chosen = c.loc; break; }
             }
 
-            // 更新位置與重置輪數（最後的 writes 會覆蓋前面的 rounds 寫入）
+            // 更新位置與重置輪數
             writes.push({ path: `世界.妈妈.${name}.家中位置`, value: chosen });
             writes.push({ path: `世界.妈妈.${name}.停留轮数`, value: 0 });
+            writes.push({ path: `世界.妈妈.${name}.上轮位置`, value: chosen }); // 快照更新為移動後位置
             console.log(`[Home] ${name} 自由移動: ${charLoc} → ${chosen}`);
         });
 
@@ -7807,7 +8055,7 @@ const LOCATION_BUTTONS = [
 	    [region] = locData;
             const [, locationName, subLocation] = locData;
 // [新增] 快取家园系统開關狀態（預設啟用，'0' 為停用）
-state.homeSystemEnabled = (homeEnabledRaw !== '0' && homeEnabledRaw !== 0);
+state.homeSystemEnabled = (String(homeEnabledRaw) === '1');
 state.region = region;
 state.location = locationName;
 state.subLocation = subLocation;
@@ -8226,7 +8474,7 @@ state.currentMusicUrl = targetMusicUrl;
                     const _msgId = window.RPG_MESSAGE_ID;
                     if (_msgId != null && _msgId !== state._homeLastMsgId) {
                         state._homeLastMsgId = _msgId;
-                        simulateHomeMovement();
+                        await simulateHomeMovement();
                         console.log(`[Home] 新一輪（訊息 #${_msgId}），已執行角色移動模擬`);
                     }
                 } catch(e) { console.error('[Home] 移動模擬失敗:', e); }
