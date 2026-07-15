@@ -6932,7 +6932,60 @@ if (typeof window.setLayout === 'function') {
         }
 		requestParentResize();
         hydrateInlineImages();
+        installExternalPluginResizeObserver();
     };
+
+    // === [新增] 監視外部插件（chatu8/LWB）動態填充內容後的尺寸變化 ===
+    let _pluginResizeObserver = null;
+    let _pluginMutObs = null;
+
+    function installExternalPluginResizeObserver() {
+        // 若已安裝則只掃描新元素
+        if (_pluginResizeObserver) {
+            _observeExistingPluginElements();
+            return;
+        }
+
+        if (!window.ResizeObserver) return;
+
+        _pluginResizeObserver = new ResizeObserver((entries) => {
+            for (const entry of entries) {
+                // 任一受監視元素尺寸改變且有實際高度 → 通知父層重算
+                if (entry.contentRect.height > 10) {
+                    requestParentResize();
+                    break;
+                }
+            }
+        });
+
+        // MutationObserver：當 chatu8/外部插件新插入 span/container 時，補充觀察
+        const display = document.querySelector('.rpg-v7-root');
+        if (display) {
+            _pluginMutObs = new MutationObserver(() => {
+                _observeExistingPluginElements();
+            });
+            _pluginMutObs.observe(display, { childList: true, subtree: true });
+        }
+
+        _observeExistingPluginElements();
+    }
+
+    function _observeExistingPluginElements() {
+        if (!_pluginResizeObserver) return;
+        const selectors = [
+            '.st-chatu8-image-span',
+            '.st-chatu8-image-container',
+            '.xb-nd-img'
+        ];
+        selectors.forEach(sel => {
+            document.querySelectorAll(sel).forEach(el => {
+                if (!el.dataset.rpgResizeWatched) {
+                    el.dataset.rpgResizeWatched = '1';
+                    _pluginResizeObserver.observe(el);
+                }
+            });
+        });
+    }
 
     // === [新增] 圖片標記 hydration — 異步填充圖片 URL（含延遲重試）===
     let _imgRetryTimer = null;
