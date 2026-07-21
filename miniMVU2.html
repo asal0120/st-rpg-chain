@@ -1176,8 +1176,10 @@ async function execST(cmd) {
         document.getElementById('loading-screen').style.display = 'none';
         document.getElementById('ready-screen').style.display = 'flex';
     };
-	window.confirmReady = function() {
+	window.confirmReady = async function() {
         document.getElementById('ready-screen').style.display = 'none';
+        // 再讀一次變數，避免容器建立過早導致讀取到預設值
+        await loadBattleData();
         // 交給跳轉中樞判定（無技能直接開打，有技能進準備畫面）
         proceedToNextScreen(); 
     };
