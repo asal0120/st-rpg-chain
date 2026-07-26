@@ -3486,10 +3486,10 @@
 
 /* 立繪：靠右、僅在顯示後降為半透明背景（不干擾進場動畫的初始隱藏態） */
 .rpg-v7-root.mobile-layout .status-scaler .tachie-img {
-    right: -4%;
+    right: -44%;
 }
 .rpg-v7-root.mobile-layout .status-scaler .tachie-img.show {
-    opacity: 0.38;
+    opacity: 0.98;
 }
 
 /* 面板加寬後，兩欄比例重新分配：左欄(位阶/等级)收窄，右欄(HP/ATK)加寬 */
@@ -3682,10 +3682,40 @@
     aspect-ratio: 3 / 4;
 }
 
-/* 狀態頁立繪：畫布加高後若仍按 95% 高度會放大近兩倍，
-   改為 60%，維持與原視覺相近的尺寸（仍為半透明背景裝飾） */
+/* --- [新增] 狀態頁：3:4 加高後重排 ---
+   原窄屏方案（3:2 時代）因空間不足：面板佔滿 76% 高、
+   立繪退為 0.38 半透明背景、隊列條疊在面板下緣。
+   加高後改為上下分區，還原桌面版的層次：
+   ① 上半：資料面板（維持 94% 寬與原字級，高度收回 54%）
+   ② 下半右：完整立繪（不透明，約桌面版同尺寸，底部錨定）
+   ③ 下半左：隊友隊列條（移到左下，不再與面板/立繪相疊） */
+.rpg-v7-root.mobile-layout .status-scaler .data-section {
+    height: 54%;
+}
 .rpg-v7-root.mobile-layout .status-scaler .tachie-img {
-    height: 60%;
+    height: 50%;   /* 1440 畫布的 50% = 720，與桌面版立繪實際大小相當 */
+    right: -2%;
+}
+.rpg-v7-root.mobile-layout .status-scaler .tachie-img.show {
+    opacity: 1;    /* 還原完整立繪（覆蓋窄屏 v2 的 0.38 半透明） */
+}
+.rpg-v7-root.mobile-layout .status-scaler .party-strip-container {
+    left: 24px;
+    right: auto;
+    bottom: 20px;
+    width: 600px;   /* 左下專屬區域變大，隊列條加寬 */
+    height: 180px;
+}
+.rpg-v7-root.mobile-layout .status-scaler .strip-bg {
+    top: 24px;
+    height: 128px;
+}
+.rpg-v7-root.mobile-layout .status-scaler .faces-window {
+    width: 470px;   /* 一次可見 3 張多一點，暗示可滑動 */
+}
+.rpg-v7-root.mobile-layout .status-scaler .face-card {
+    width: 140px;
+    height: 140px;
 }
 
 </style>
