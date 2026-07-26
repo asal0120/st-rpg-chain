@@ -3486,10 +3486,10 @@
 
 /* 立繪：靠右、僅在顯示後降為半透明背景（不干擾進場動畫的初始隱藏態） */
 .rpg-v7-root.mobile-layout .status-scaler .tachie-img {
-    right: -44%;
+    right: -4%;
 }
 .rpg-v7-root.mobile-layout .status-scaler .tachie-img.show {
-    opacity: 0.98;
+    opacity: 0.38;
 }
 
 /* 面板加寬後，兩欄比例重新分配：左欄(位阶/等级)收窄，右欄(HP/ATK)加寬 */
@@ -3682,40 +3682,191 @@
     aspect-ratio: 3 / 4;
 }
 
-/* --- [新增] 狀態頁：3:4 加高後重排 ---
-   原窄屏方案（3:2 時代）因空間不足：面板佔滿 76% 高、
+/* --- [新增] 狀態頁：3:4 加高後重排（內容優先） ---
+   原窄屏方案（3:2 時代）因空間不足：面板佔滿 76% 高仍要捲動、
    立繪退為 0.38 半透明背景、隊列條疊在面板下緣。
-   加高後改為上下分區，還原桌面版的層次：
-   ① 上半：資料面板（維持 94% 寬與原字級，高度收回 54%）
-   ② 下半右：完整立繪（不透明，約桌面版同尺寸，底部錨定）
-   ③ 下半左：隊友隊列條（移到左下，不再與面板/立繪相疊） */
+   加高後畫布約 1080x1440，分配原則是「按內容動態分配」：
+   ① 資料面板：高度改為貼合內容（height:auto）——資料多長面板就多高，
+      不再固定百分比而留出黑色空腔；內容超過 850 設計px 上限
+      （約畫布 60%）才在面板內部捲動
+   ② 立繪：右下錨定、48% 高、不透明。面板收多高、立繪就露多少：
+      內容短時全身完整可見，內容長時僅頭部沒入面板後方
+      （與桌面版的層疊慣例一致，面板底色 0.9 不透明不影響閱讀）
+   ③ 隊友隊列條：左下專屬區域，蓋在立繪腳部之上（z 90 > 5） */
 .rpg-v7-root.mobile-layout .status-scaler .data-section {
-    height: 54%;
+    height: auto;      /* 面板貼合內容，不再固定高度 */
+    width: 68%;        /* 窄長比例：以最長名牌列（米拉露恩＋资料/经验/回忆）為基準，留少許餘量防止頁籤換行 */
+}
+.rpg-v7-root.mobile-layout .status-scaler .data-content {
+    height: auto;
+    max-height: 950px; /* 上限收至畫布約 66%，確保面板最長時仍不壓到底部頭像牆 */
+    overflow-y: auto;
+    padding: 34px 38px 40px;
 }
 .rpg-v7-root.mobile-layout .status-scaler .tachie-img {
-    height: 50%;   /* 1440 畫布的 50% = 720，與桌面版立繪實際大小相當 */
-    right: -2%;
+    height: 94%;   /* [使用者實測校準] 立繪立在面板右側空區 */
+    right: -120%;  /* [使用者實測校準] 補償立繪圖檔的透明邊距，可與面板右緣局部重疊 */
 }
 .rpg-v7-root.mobile-layout .status-scaler .tachie-img.show {
-    opacity: 1;    /* 還原完整立繪（覆蓋窄屏 v2 的 0.38 半透明） */
+    opacity: 1;    /* 覆蓋窄屏 v2 的 0.38 半透明 */
 }
+
+/* --- 面板內部：配合窄長比例改為直欄排版 --- */
+/* 隊友資料：兩欄合併為單欄（窄面板下值域不再換行擠壓） */
+.rpg-v7-root.mobile-layout .status-scaler .profile-grid {
+    grid-template-columns: 1fr;
+    column-gap: 0;
+    row-gap: 2px;
+}
+/* 玩家頁：位阶/等级 與 HP/ATK 兩欄改為上下堆疊 */
+.rpg-v7-root.mobile-layout .status-scaler .player-layout {
+    flex-direction: column;
+    gap: 0;
+    margin-bottom: 12px;
+}
+.rpg-v7-root.mobile-layout .status-scaler .player-layout .player-col:first-child {
+    flex: none;
+    max-width: none;
+}
+/* 經驗頁：欄距收窄以適配窄面板 */
+.rpg-v7-root.mobile-layout .status-scaler .exp-container {
+    gap: 36px;
+}
+/* 回忆：3 欄改 2 欄，維持單格大小可辨識 */
+.rpg-v7-root.mobile-layout .status-scaler .gallery-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+}
+/* 字級不動：手機布局以可讀性優先，行寬變短由換行吸收（高度充裕），
+   沿用窄屏 v2 的放大字級（標籤 22 / 數值 30 / 描述 28）。
+   為避免長值在固定行高內被裁切，允許資料列在值換行時自動增高： */
+.rpg-v7-root.mobile-layout .status-scaler .data-row {
+    height: auto;
+    min-height: 48px;
+}
+.rpg-v7-root.mobile-layout .status-scaler .data-row .data-val {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    text-align: right;
+}
+/* 隊友隊列 → 頭像牆（5 欄網格，最多兩排共 10 位）：
+   取代原本的橫向輪播與右下「角色一覽」按鈕，點誰就切換到誰 */
 .rpg-v7-root.mobile-layout .status-scaler .party-strip-container {
     left: 24px;
     right: auto;
     bottom: 20px;
-    width: 600px;   /* 左下專屬區域變大，隊列條加寬 */
-    height: 180px;
+    width: 680px;   /* 5×(120+2px×2邊框) + 4×14 間距 = 676 */
+    height: auto;   /* 隨排數自動增高（往上長，底部錨定） */
+    display: block;
+    padding-left: 0;
 }
-.rpg-v7-root.mobile-layout .status-scaler .strip-bg {
-    top: 24px;
-    height: 128px;
-}
+.rpg-v7-root.mobile-layout .status-scaler .strip-bg { display: none; }
+.rpg-v7-root.mobile-layout .status-scaler .nav-arrow { display: none; }
 .rpg-v7-root.mobile-layout .status-scaler .faces-window {
-    width: 470px;   /* 一次可見 3 張多一點，暗示可滑動 */
+    width: 100%;
+    height: auto;
+    margin: 0;
+    overflow: visible;
+}
+.rpg-v7-root.mobile-layout .status-scaler .faces-track {
+    height: auto;
+    flex-wrap: wrap;
+    gap: 14px;
+    padding-left: 0;
+    transform: none !important; /* 蓋掉輪播的位移；DOM 旋轉不影響網格排列 */
 }
 .rpg-v7-root.mobile-layout .status-scaler .face-card {
-    width: 140px;
+    width: 140px;   /* [使用者實測校準] */
     height: 140px;
+    margin-right: 0;
+}
+/* 桌面仍是輪播：忽略頭像牆的 order 內聯值（視覺順序 = DOM 順序） */
+.rpg-v7-root:not(.mobile-layout) .status-scaler .face-card { order: 0 !important; }
+/* 「角色一覽」按鈕：功能已由頭像牆涵蓋 */
+.rpg-v7-root.mobile-layout .status-grid-btn { display: none; }
+
+/* 经验頁字級補調（原先只有 18/19px，跟上其他頁的手機字級） */
+.rpg-v7-root.mobile-layout .status-scaler .exp-header {
+    font-size: 32px;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+}
+.rpg-v7-root.mobile-layout .status-scaler .exp-item {
+    font-size: 24px;
+    padding: 13px 0;
+}
+.rpg-v7-root.mobile-layout .status-scaler .exp-val {
+    font-size: 28px;
+}
+
+/* 回忆頁：超過 6 格（2 欄×3 排）強制內部滾動，
+   避免像 CG 特別多的角色把面板撐到極高 */
+.rpg-v7-root.mobile-layout .status-scaler .gallery-grid {
+    max-height: 690px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+}
+
+/* --- [新增] 世界地圖：窄屏改直向排版、滿版填充 3:4 面板 ---
+   畫布高度由 updateUIScale 動態設為 designH（約 1440），滿寬縮放。
+   區域選單從左側欄改為頂部 3 欄按鈕網格，預覽圖（保持 3:2，
+   地點座標為百分比定位、不受影響）在剩餘直向空間置中。 */
+.rpg-v7-root.mobile-layout .worldmap-scaler {
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+}
+.rpg-v7-root.mobile-layout .worldmap-scaler .wm-body {
+    flex-direction: column;
+}
+.rpg-v7-root.mobile-layout .worldmap-scaler .wm-sidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid #3a3020;
+}
+.rpg-v7-root.mobile-layout .worldmap-scaler .wm-region-list {
+    flex: none;
+    overflow: visible;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    padding: 14px 18px 18px;
+}
+.rpg-v7-root.mobile-layout .worldmap-scaler .wm-region-btn {
+    border: 1px solid #3a3020;
+    border-left: 5px solid transparent;
+    border-radius: 6px;
+    text-align: center;
+    font-size: 30px;
+    padding: 16px 8px;
+    line-height: 1.3;
+}
+.rpg-v7-root.mobile-layout .worldmap-scaler .wm-region-btn.active {
+    border-color: #ffaa00;
+    border-left-color: #ffaa00;
+}
+.rpg-v7-root.mobile-layout .worldmap-scaler .wm-preview-wrap {
+    flex: 1;
+    align-items: center;   /* 3:2 預覽圖在剩餘直向空間置中 */
+}
+
+/* --- [新增] 顯示設定：窄屏由置中彈窗改為整頁（配合頁籤語意） ---
+   桌面版仍是選單開啟的彈窗，不受影響。 */
+.rpg-v7-root.mobile-layout .display-layer-wrapper {
+    background: none;
+    backdrop-filter: none;
+    align-items: stretch;
+    justify-content: stretch;
+}
+.rpg-v7-root.mobile-layout .display-modal {
+    width: 100%;
+    max-height: none;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+}
+.rpg-v7-root.mobile-layout .display-modal-body {
+    padding: 24px 28px 40px;
 }
 
 </style>
@@ -4846,6 +4997,7 @@ window.setLayout = function(mode) {
     // （桌面 → 移除展開標記；窄屏 → 若已有界面層開啟則視為展開，並高亮對應頁籤）
     if (effective === 'mobile') {
         let tbAct = null;
+        if (document.getElementById('display-layer')?.classList.contains('active'))  tbAct = 'display';
         if (document.getElementById('worldmap-layer')?.classList.contains('active')) tbAct = 'worldmap';
         if (document.getElementById('quest-layer')?.classList.contains('active'))    tbAct = 'quest';
         if (document.getElementById('bag-layer')?.classList.contains('active'))      tbAct = 'bag';
@@ -5495,9 +5647,13 @@ async function renderCurrentMemberGallery() {
         stTrack.innerHTML = "";
         activePartyData.forEach((char) => {
             const card = document.createElement('div');
-            card.className = `face-card`; card.dataset.id = char.id; 
+            card.className = `face-card`; card.dataset.id = char.id;
             card.onclick = () => onCardClick(card);
-            const img = document.createElement('img'); img.src = char.face; 
+            // [新增] 窄屏頭像牆：以角色編號固定「視覺」順序。
+            // 輪播邏輯靠旋轉 DOM 順序運作，但頭像牆的排列由 flex order 鎖定，
+            // 因此兩者互不干擾（桌面版用 CSS order:0 !important 整體忽略此值）。
+            card.style.order = parseInt(String(char.id).replace(/\D/g, ''), 10) || 0;
+            const img = document.createElement('img'); img.src = char.face;
             card.appendChild(img); stTrack.appendChild(card);
         });
     }
@@ -5506,7 +5662,25 @@ async function renderCurrentMemberGallery() {
         if (stIsAnimating || activePartyData.length <= 1) return;
         const cards = Array.from(stTrack.children);
         const index = cards.indexOf(card);
-        
+
+        // [新增] 窄屏頭像牆：點誰就直接跳到誰（沿用 jumpToStatusChar 的 DOM 搬移法，
+        // 把目標卡搬到 index 1；視覺順序由 flex order 鎖定，使用者看不到搬移）
+        const _rootEl = document.querySelector('.rpg-v7-root');
+        if (_rootEl && _rootEl.classList.contains('mobile-layout')) {
+            const centerIndex = (cards.length > 1) ? 1 : 0;
+            if (index === centerIndex) return;
+            stTrack.style.transition = 'none';
+            if (index > 1) {
+                for (let i = 0; i < index - 1; i++) stTrack.appendChild(stTrack.firstElementChild);
+            } else if (index < 1) {
+                for (let i = 0; i < 1 - index; i++) stTrack.insertBefore(stTrack.lastElementChild, stTrack.firstElementChild);
+            }
+            stTrack.style.transform = 'translateX(0)';
+            setTimeout(() => { stTrack.style.transition = ''; }, 50);
+            updateSelectionFromCenter();
+            return;
+        }
+
         // 根據點擊位置決定向左還向右移
         // 假設視窗中有 3-4 個卡片，需要判斷點擊的是左邊還是右邊的
         // 這裡沿用您的邏輯：index 1 是中心
@@ -6024,16 +6198,26 @@ window.closeCG = function() {
     if (els.wmScaler) {
     const WM_WIDTH = 1080;
     const WM_HEIGHT = 720;
-    // 用 0.85 讓 scaler 比容器小 15%，留出置中空間
-    const wmScale = (containerWidth / 1080) * 0.95;
-    const scaledW = WM_WIDTH * wmScale;
-    const scaledH = WM_HEIGHT * wmScale;
-    const offsetX = (containerWidth - scaledW) / 2;
-    const offsetY = (containerHeight - scaledH) / 2;
-    els.wmScaler.style.transformOrigin = 'top left';
-    els.wmScaler.style.transform = `scale(${wmScale})`;
-    els.wmScaler.style.left = offsetX + 'px';
-    els.wmScaler.style.top = offsetY + 'px';
+    if (_tbMobile) {
+        // [新增] 窄屏：世界地圖畫布同步加高並滿版填充面板（內部改直向排版，見 CSS）
+        els.wmScaler.style.height = designH + 'px';
+        els.wmScaler.style.transformOrigin = 'top left';
+        els.wmScaler.style.transform = `scale(${scale})`;
+        els.wmScaler.style.left = '0px';
+        els.wmScaler.style.top = '0px';
+    } else {
+        els.wmScaler.style.height = ''; // 桌面：恢復 CSS 預設 720
+        // 用 0.85 讓 scaler 比容器小 15%，留出置中空間
+        const wmScale = (containerWidth / 1080) * 0.95;
+        const scaledW = WM_WIDTH * wmScale;
+        const scaledH = WM_HEIGHT * wmScale;
+        const offsetX = (containerWidth - scaledW) / 2;
+        const offsetY = (containerHeight - scaledH) / 2;
+        els.wmScaler.style.transformOrigin = 'top left';
+        els.wmScaler.style.transform = `scale(${wmScale})`;
+        els.wmScaler.style.left = offsetX + 'px';
+        els.wmScaler.style.top = offsetY + 'px';
+    }
 }
 }
 
@@ -9883,11 +10067,10 @@ await syncGameState();
             if (typeof requestParentResize === 'function') requestParentResize();
         }
         function tbOpenAction(action) {
-            // 「显示设定」是彈窗型，疊加在當前頁之上，不關閉其他層、也不搶頁籤高亮
-            if (action !== 'display') {
-                tbCloseAllLayers();
-                tbSetActiveTab(action);
-            }
+            // 統一頁籤語意：先關閉所有界面層、高亮目標頁籤（「设定」也是一個普通頁籤，
+            // 窄屏下已由 CSS 從彈窗改為整頁）
+            tbCloseAllLayers();
+            tbSetActiveTab(action);
             // 直接觸發原選單項的既有邏輯（互斥、縮放、初始化都沿用）
             root.querySelector(`.menu-opt[data-action="${action}"]`)?.click();
         }
@@ -9919,8 +10102,7 @@ await syncGameState();
             };
         }
         // 各界面自帶的關閉鈕：窄屏展開狀態下等同收合整個面板
-        // （display-close-btn 除外：設定是彈窗，關閉後回到底下的頁面）
-        ['status-close-btn', 'bag-close-btn', 'quest-close-btn', 'worldmap-close-btn'].forEach(id => {
+        ['status-close-btn', 'bag-close-btn', 'quest-close-btn', 'worldmap-close-btn', 'display-close-btn'].forEach(id => {
             document.getElementById(id)?.addEventListener('click', () => {
                 if (root.classList.contains('mobile-layout') &&
                     root.classList.contains('topbar-sheet-open')) {
