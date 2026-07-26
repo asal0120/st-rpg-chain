@@ -3569,7 +3569,18 @@
     padding: 20px 30px;
     border-bottom-width: 5px;
 }
-
+.rpg-v7-root.mobile-layout .status-scaler .toggle-party-btn {
+    left: calc(100% + 400px);
+    top: 66%;
+    transform: translateY(-50%);
+    margin-left: 0;
+    padding: 5px 16px;
+    font-size: 22px;
+    border-radius: 5px;
+    white-space: nowrap;
+    z-index: 10; /* 高於 tab 列(6)，萬一重疊也不會被蓋住 */
+}
+	
 </style>
 
 <div class="rpg-v7-root paged-mode">
