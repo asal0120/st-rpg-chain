@@ -4498,7 +4498,17 @@ const getPath = (obj, path, fallback) => {
 let _varsSnapshot = null;
 
 function beginVarBatch() {
-    try { _varsSnapshot = getAllVariables(); } catch(e) { _varsSnapshot = null; }
+    try {
+        const snap = getAllVariables();
+        // 守衛：若 stat_data 不存在或為空物件，視為無效快照（重新生成過渡期）
+        const sd = snap?.stat_data;
+        if (sd && typeof sd === 'object' && Object.keys(sd).length > 0) {
+            _varsSnapshot = snap;
+        } else {
+            _varsSnapshot = null;
+            console.warn('[RPG VarBatch] 快照無效（stat_data 為空），退化為逐次讀取');
+        }
+    } catch(e) { _varsSnapshot = null; }
 }
 function endVarBatch() {
     _varsSnapshot = null;
@@ -8742,6 +8752,12 @@ const LOCATION_BUTTONS = [
     async function syncGameState() {
         console.log('[RPG] syncGameState 呼叫, isSyncing:', isSyncing);
         if (isSyncing) return;
+        // [防護] 串流生成期間跳過同步，避免讀到過渡態的空變量
+        // 生成結束時 MESSAGE_RECEIVED 會再觸發一次正式同步
+        if (isGenerating) {
+            console.log('[RPG] 生成中，跳過本次 syncGameState');
+            return;
+        }
         isSyncing = true;
 	let region = '';
                      let currentPartyIds = [];
@@ -9359,6 +9375,8 @@ window.RPG_FORCE_REFRESH_FROM_VARIABLES = async function(rawData = '') {
     try {
         // 外部明確要求刷新時，視為生成已結束
         isGenerating = false;
+        // [防護] 清除可能殘留的無效快照
+        endVarBatch();
 
         const root = document.querySelector('.rpg-v7-root');
         if (root) root.classList.remove('generating');
