@@ -7122,7 +7122,7 @@ if (typeof window.setLayout === 'function') {
     // 虛擬節點 "二楼"/"三楼"/"地下室" 會觸發選單而非直接進入
     const HOME_ADJACENCY = {
         "前庭":     { up: "客厅" },
-        "客厅":     { down: "前庭", left: "厨房饭厅", right: "浴室", up: "二楼", "up-right": "后院", "down-right": "地下室" },
+        "客厅":     { down: "前庭", left: "厨房饭厅", right: "浴室", up: "上楼", "up-right": "后院", "down-right": "地下室" },
         "厨房饭厅": { right: "客厅" },
         "浴室":     { left: "客厅" },
         "后院":     { down: "客厅" },
@@ -8271,6 +8271,12 @@ previewArea.appendChild(dot);
             return;
         }
 
+        // 「上楼」特殊節點：從一樓向上，讓玩家選擇去二樓還是直達三樓
+        if (target === '上楼') {
+            showUpstairMenu();
+            return;
+        }
+
         // 檢查是否為「進入家園後的第一次離開前庭」→ 解除在隊狀態
         // 僅在首次移動時觸發，之後玩家手動邀請的同行不會被解除
         const prevLoc = getPlayerHomeLocation();
@@ -8403,6 +8409,49 @@ previewArea.appendChild(dot);
             navigateHome('客厅');
         };
         menu.appendChild(opt1F);
+
+        overlay.appendChild(menu);
+        els.mapArea.appendChild(overlay);
+    }
+
+    // --- 上楼選單：從一樓選擇去二樓或直達三樓 ---
+    function showUpstairMenu() {
+        if (!els.mapArea) return;
+        els.mapArea.querySelectorAll('.home-room-menu-overlay').forEach(el => el.remove());
+
+        const overlay = document.createElement('div');
+        overlay.className = 'home-room-menu-overlay';
+        overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+
+        const menu = document.createElement('div');
+        menu.className = 'home-room-menu';
+
+        const title = document.createElement('div');
+        title.className = 'home-room-menu-title';
+        title.textContent = '上楼';
+        menu.appendChild(title);
+
+        // 選項 1：去二樓（開啟房間選單）
+        const opt2F = document.createElement('div');
+        opt2F.className = 'home-room-option';
+        opt2F.innerHTML = '<span class="room-name">二楼 · 个人房间</span>';
+        opt2F.onclick = (e) => {
+            e.stopPropagation();
+            overlay.remove();
+            showRoomMenu('二楼');
+        };
+        menu.appendChild(opt2F);
+
+        // 選項 2：直達三樓（開啟三樓選單）
+        const opt3F = document.createElement('div');
+        opt3F.className = 'home-room-option';
+        opt3F.innerHTML = '<span class="room-name">三楼</span>';
+        opt3F.onclick = (e) => {
+            e.stopPropagation();
+            overlay.remove();
+            showRoomMenu('三楼');
+        };
+        menu.appendChild(opt3F);
 
         overlay.appendChild(menu);
         els.mapArea.appendChild(overlay);
