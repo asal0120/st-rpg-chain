@@ -31,7 +31,8 @@
         display: flex !important;
         flex-direction: column;
         margin-bottom: 20px;
-        transition: height 0.3s ease;
+        /* [修復] 移除 height transition，避免父層量測到動畫中間值導致 iframe 高度錯誤 */
+        /* transition: height 0.3s ease; */
         overflow: hidden;
         /* [修改] 移除 sans-serif，統一使用簡體優先的古典字體 */
         font-family: "Noto Serif SC", "Noto Serif TC", serif;
@@ -564,6 +565,108 @@
         height: auto !important;
         max-height: none !important;
         overflow: visible !important;
+    }
+
+    /* === 圖片標記渲染樣式 === */
+    .rpg-img-placeholder {
+        display: block;
+        width: 100%;
+        text-align: center;
+        margin: 10px 0;
+        min-height: 40px;
+    }
+    .rpg-inline-image {
+        max-width: 100%;
+        border-radius: 8px;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+        display: block;
+        margin: 8px auto;
+        opacity: 0;
+        transition: opacity 0.4s ease;
+    }
+    .rpg-inline-image.rpg-img-visible {
+        opacity: 1;
+    }
+    .rpg-img-loading {
+        display: inline-block;
+        color: var(--text-color, #d0c8b6);
+        opacity: 0.5;
+        font-size: 0.85em;
+        padding: 12px 0;
+    }
+    .rpg-img-failed {
+        display: inline-block;
+        color: var(--text-color, #d0c8b6);
+        opacity: 0.45;
+        font-size: 0.8em;
+        font-style: italic;
+        padding: 6px 0;
+    }
+    /* === [柏寶繪適配] 圖片懸浮操作按鈕 === */
+    .rpg-bbi-wrap {
+        position: relative;
+        display: inline-block;
+        width: 100%;
+    }
+    .rpg-bbi-actions {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        display: flex;
+        gap: 4px;
+        opacity: 0;
+        transition: opacity 0.25s ease;
+        z-index: 10;
+    }
+    .rpg-bbi-wrap:hover .rpg-bbi-actions,
+    .rpg-bbi-wrap:focus-within .rpg-bbi-actions {
+        opacity: 1;
+    }
+    .rpg-bbi-btn {
+        background: rgba(0,0,0,0.55);
+        border: 1px solid rgba(255,255,255,0.15);
+        color: rgba(255,255,255,0.85);
+        border-radius: 6px;
+        padding: 4px 8px;
+        font-size: 0.75em;
+        cursor: pointer;
+        backdrop-filter: blur(4px);
+        transition: background 0.2s, color 0.2s;
+        white-space: nowrap;
+    }
+    .rpg-bbi-btn:hover {
+        background: rgba(255,255,255,0.2);
+        color: #fff;
+    }
+    .rpg-bbi-prompt-panel {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: rgba(0,0,0,0.75);
+        color: rgba(255,255,255,0.9);
+        font-size: 0.72em;
+        line-height: 1.5;
+        padding: 8px 10px;
+        border-radius: 0 0 8px 8px;
+        backdrop-filter: blur(6px);
+        max-height: 40%;
+        overflow-y: auto;
+        word-break: break-all;
+        z-index: 10;
+    }
+    .rpg-bbi-prompt-panel button {
+        background: rgba(255,255,255,0.15);
+        border: none;
+        color: rgba(255,255,255,0.8);
+        border-radius: 4px;
+        padding: 2px 8px;
+        font-size: 0.9em;
+        cursor: pointer;
+        margin-top: 4px;
+    }
+    .rpg-bbi-prompt-panel button:hover {
+        background: rgba(255,255,255,0.3);
     }
 
     .highlight-dialogue {
@@ -1405,10 +1508,71 @@
 
     .status-scaler .gallery-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; padding-top: 10px; }
     .status-scaler .cg-card {
-        aspect-ratio: 3/2; background: #000; border: 1px solid var(--p-gold-dim);
-        position: relative; cursor: pointer; overflow: hidden; transition: all 0.2s;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.5);
-    }
+    aspect-ratio: 3/2;
+    background: #000;
+    border: 1px solid var(--p-gold-dim);
+    position: relative;
+    cursor: pointer;
+    overflow: visible;
+    transition: all 0.2s;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+    z-index: 1;
+}
+
+/* 鎖住 CG 的底色 */
+.status-scaler .cg-card-lock-bg {
+    width: 100%;
+    height: 100%;
+    background: #1a1510;
+    overflow: hidden;
+}
+
+/* 鎖住 CG 的 hover 解鎖條件提示 */
+.status-scaler .cg-unlock-tip {
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 12px);
+    transform: translateX(-50%) translateY(6px);
+    min-width: 220px;
+    max-width: 360px;
+    width: max-content;
+    box-sizing: border-box;
+
+    background: linear-gradient(to bottom, #2a221b, #110e0b);
+    border: 1px solid var(--p-gold-dim);
+    border-bottom: 2px solid var(--p-gold);
+    color: var(--p-gold-bright);
+    padding: 12px 16px;
+    font-size: 36px;
+    line-height: 1.6;
+    text-align: center;
+    white-space: normal;
+
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    z-index: 20;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.75);
+    transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
+}
+
+.status-scaler .cg-card.locked:hover .cg-unlock-tip {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* 保持鎖頭在卡片中央 */
+.status-scaler .cg-card.locked::after {
+    z-index: 2;
+    pointer-events: none;
+}
+
+.status-scaler .cg-card:hover {
+    border-color: var(--p-gold);
+    transform: scale(1.02);
+    z-index: 50;
+}
     .status-scaler .cg-card:hover { border-color: var(--p-gold); transform: scale(1.02); }
     .status-scaler .cg-card img { width: 100%; height: 100%; object-fit: cover; filter: brightness(0.8); }
     .status-scaler .cg-card:hover img { filter: brightness(1); }
@@ -1419,28 +1583,126 @@
         transform: translate(-50%, -50%); font-size: 24px; color: #555;
     }
 
-    .status-scaler .cg-modal {
-        display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0,0,0,0.9); z-index: 999;
-        align-items: center; justify-content: center; transform: none; 
+
+/* === CG 大圖預覽：覆蓋整個 RPG 容器，不再限制於 Status / map-area === */
+.rpg-v7-root .cg-modal {
+    display: none;
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.9);
+    z-index: 999;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 12px;
+    box-sizing: border-box;
+    transform: none;
+}
+
+.rpg-v7-root .cg-modal.active {
+    display: flex;
+    animation: fadeIn 0.3s;
+}
+
+.rpg-v7-root .cg-modal-content {
+    position: relative;
+    max-width: 92%;
+    max-height: calc(100% - 12px);
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+.rpg-v7-root .cg-modal-img {
+    max-width: 100%;
+    max-height: calc(100vh - 32px);
+    border: 2px solid var(--p-gold);
+    box-shadow: 0 0 30px rgba(200, 170, 110, 0.2);
+    object-fit: contain;
+}
+
+.rpg-v7-root .modal-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(200, 170, 110, 0.35);
+    color: var(--p-gold, #c8aa6e);
+    font-size: 42px;
+    line-height: 1;
+    cursor: pointer;
+    text-shadow: 0 0 10px #000;
+    transition: transform 0.2s, color 0.2s, border-color 0.2s, background 0.2s;
+    width: 54px;
+    height: 72px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+}
+
+.rpg-v7-root .modal-nav:hover {
+    color: var(--p-gold-bright, #f0e6d2);
+    border-color: var(--p-gold, #c8aa6e);
+    background: rgba(0, 0, 0, 0.55);
+    transform: translateY(-50%) scale(1.08);
+}
+
+.rpg-v7-root .modal-nav.prev {
+    left: -68px;
+}
+
+.rpg-v7-root .modal-nav.next {
+    right: -68px;
+}
+
+.rpg-v7-root .modal-close {
+    position: fixed;
+    top: 8px;
+    right: 8px;
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(200, 170, 110, 0.35);
+    color: #aaa;
+    font-size: 28px;
+    line-height: 1;
+    cursor: pointer;
+    width: 42px;
+    height: 42px;
+    z-index: 3;
+}
+
+.rpg-v7-root .modal-close:hover {
+    color: #fff;
+    border-color: var(--p-gold, #c8aa6e);
+}
+
+/* 小寬度時，左右切換按鈕移到圖內側，避免超出 */
+@media (max-width: 700px) {
+    .rpg-v7-root .cg-modal-content {
+        width: calc(100% - 36px);
+        height: calc(100% - 84px);
     }
-    .status-scaler .cg-modal.active { display: flex; animation: fadeIn 0.3s; }
-    .status-scaler .cg-modal-content { position: relative; max-width: 90%; max-height: 90%; display: flex; justify-content: center; }
-    .status-scaler .cg-modal-img { max-width: 100%; max-height: 80vh; border: 2px solid var(--p-gold); box-shadow: 0 0 30px rgba(200, 170, 110, 0.2); object-fit: contain; }
-    
-    .status-scaler .modal-nav {
-        position: absolute; top: 50%; transform: translateY(-50%);
-        background: none; border: none; color: var(--p-gold); font-size: 40px; cursor: pointer;
-        text-shadow: 0 0 10px #000; transition: transform 0.2s;
+
+    .rpg-v7-root .modal-nav.prev {
+        left: 8px;
     }
-    .status-scaler .modal-nav:hover { color: var(--p-gold-bright); transform: translateY(-50%) scale(1.2); }
-    .status-scaler .modal-nav.prev { left: -60px; }
-    .status-scaler .modal-nav.next { right: -60px; }
-    .status-scaler .modal-close {
-        position: absolute; top: -40px; right: 0;
-        background: none; border: none; color: #888; font-size: 30px; cursor: pointer;
+
+    .rpg-v7-root .modal-nav.next {
+        right: 8px;
     }
-    .status-scaler .modal-close:hover { color: #fff; }
+
+    .rpg-v7-root .modal-nav {
+        width: 44px;
+        height: 64px;
+        font-size: 34px;
+        background: rgba(0, 0, 0, 0.5);
+    }
+
+    .rpg-v7-root .modal-close {
+        top: -44px;
+        right: 0;
+    }
+}
+
 
     .status-scaler #player-desc, .status-scaler #member-desc {
         font-family: "Noto Serif SC", "Noto Serif TC", serif; color: #ccc; font-style: italic;
@@ -2207,13 +2469,13 @@
 }
 .wm-mobile-panel-name {
     color: #ffcc66;
-    font-size: 35px;
+    font-size: 45px;
     font-family: "Noto Serif SC", serif;
     margin-bottom: 4px;
 }
 .wm-mobile-panel-desc {
     color: #b0a080;
-    font-size: 30px;
+    font-size: 40px;
     font-family: "Noto Serif SC", serif;
     line-height: 1.5;
 }
@@ -2236,6 +2498,231 @@
     color: #1a1512;
 }
 
+/* ============================================================ */
+/* === 家园系统 (Home System) CSS ===                         */
+/* ============================================================ */
+
+/* --- 當前位置標籤 --- */
+.home-location-label {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 180;
+    background: linear-gradient(to bottom, rgba(42, 37, 34, 0.95), rgba(26, 21, 18, 0.95));
+    border: 1px solid #8a734b;
+    border-bottom: 2px solid #ffaa00;
+    color: #ffcc66;
+    padding: 6px 20px;
+    border-radius: 4px;
+    font-size: 18px;
+    font-family: "Noto Serif SC", "Noto Serif TC", serif;
+    font-weight: bold;
+    letter-spacing: 2px;
+    text-shadow: 0 0 6px rgba(255, 170, 0, 0.4);
+    pointer-events: none;
+    white-space: nowrap;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+    /* [修復] 移除 animation，改由 JS 控制首次出現動畫，避免重複 sync 導致閃爍 */
+}
+
+/* [修復] 僅首次出現時播放動畫（由 JS 添加此 class） */
+.home-location-label.fade-in {
+    animation: homeLabelFadeIn 0.4s ease forwards;
+}
+
+@keyframes homeLabelFadeIn {
+    from { opacity: 0; transform: translateX(-50%) translateY(-8px); }
+    to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* --- 導航箭頭按鈕 --- */
+.home-nav-arrow {
+    position: absolute;
+    z-index: 170;
+    background: linear-gradient(to bottom, rgba(42, 37, 34, 0.88), rgba(26, 21, 18, 0.92));
+    border: 1px solid #8a734b;
+    color: #d0c8b6;
+    padding: 12px 22px;
+    border-radius: 6px;
+    font-size: 18px;
+    font-family: "Noto Serif SC", "Noto Serif TC", serif;
+    cursor: pointer;
+    pointer-events: auto;
+    transition: all 0.25s ease;
+    white-space: nowrap;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.home-nav-arrow:hover {
+    background: linear-gradient(to bottom, rgba(138, 115, 75, 0.5), rgba(42, 37, 34, 0.95));
+    border-color: #ffaa00;
+    color: #ffcc66;
+    transform: scale(1.05);
+    box-shadow: 0 0 12px rgba(255, 170, 0, 0.3);
+}
+
+.home-nav-arrow:active {
+    transform: scale(0.97);
+}
+
+.home-nav-arrow .arrow-icon {
+    font-size: 20px;
+    line-height: 1;
+}
+
+/* 箭頭定位 */
+.home-nav-arrow.arrow-up {
+    top: 42px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+.home-nav-arrow.arrow-up:hover {
+    transform: translateX(-50%) scale(1.05);
+}
+
+.home-nav-arrow.arrow-down {
+    bottom: 10px; 
+    left: 50%;
+    transform: translateX(-50%);
+    opacity: 0.6; /* [修復] 非 hover 時半透明，讓被覆蓋的立繪隱約可見 */
+}
+.home-nav-arrow.arrow-down:hover {
+    transform: translateX(-50%) scale(1.05);
+    opacity: 1; /* hover 時恢復完全不透明 */
+}
+
+.home-nav-arrow.arrow-left {
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+.home-nav-arrow.arrow-left:hover {
+    transform: translateY(-50%) scale(1.05);
+}
+
+.home-nav-arrow.arrow-right {
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+.home-nav-arrow.arrow-right:hover {
+    transform: translateY(-50%) scale(1.05);
+}
+
+.home-nav-arrow.arrow-up-right {
+    top: 42px;
+    right: 14px;
+}
+
+.home-nav-arrow.arrow-down-right {
+    bottom: 14px;
+    right: 14px;
+}
+
+/* --- 房間選單遮罩 --- */
+.home-room-menu-overlay {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.55);
+    z-index: 250;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: homeOverlayFadeIn 0.2s ease;
+}
+
+@keyframes homeOverlayFadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+/* --- 房間選單面板 --- */
+.home-room-menu {
+    background: linear-gradient(to bottom, #2a2522, #15110f);
+    border: 1px solid #8a734b;
+    border-top: 3px solid #ffaa00;
+    border-radius: 6px;
+    padding: 16px 8px 12px;
+    min-width: 240px;
+    max-width: 340px;
+    max-height: 70%;
+    overflow-y: auto;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.8);
+    animation: homeMenuSlideIn 0.25s ease;
+}
+
+@keyframes homeMenuSlideIn {
+    from { opacity: 0; transform: translateY(12px) scale(0.96); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.home-room-menu-title {
+    text-align: center;
+    color: #ffcc66;
+    font-size: 18px;
+    font-weight: bold;
+    font-family: "Noto Serif SC", "Noto Serif TC", serif;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(138, 115, 75, 0.4);
+    letter-spacing: 2px;
+}
+
+/* --- 房間選項 --- */
+.home-room-option {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    margin: 4px 0;
+    border-radius: 4px;
+    cursor: pointer;
+    color: #d0c8b6;
+    font-size: 15px;
+    font-family: "Noto Serif SC", "Noto Serif TC", serif;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+}
+
+.home-room-option:hover {
+    background: linear-gradient(to right, rgba(138, 115, 75, 0.25), transparent);
+    border-color: rgba(138, 115, 75, 0.4);
+    color: #fff;
+    padding-left: 18px;
+}
+
+.home-room-option .room-name {
+    font-weight: bold;
+}
+
+.home-room-option .room-occupants {
+    font-size: 12px;
+    color: #a09880;
+    max-width: 140px;
+    text-align: right;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.home-room-option .room-occupants.has-people {
+    color: #a8e6cf;
+}
+
+/* 滾動條（與現有風格一致）*/
+.home-room-menu::-webkit-scrollbar { width: 6px; }
+.home-room-menu::-webkit-scrollbar-track { background: transparent; }
+.home-room-menu::-webkit-scrollbar-thumb {
+    background: rgba(138, 115, 75, 0.5);
+    border-radius: 3px;
+}
+
+/* === 家园系统 CSS 結束 === */
 
 .map-topbar {
     position: relative; /* 從 absolute 改成 relative */
@@ -2249,7 +2736,7 @@
     justify-content: space-between;
     padding: 0 10px;
     box-sizing: border-box;
-    z-index: 170;
+    z-index: 190; /* [修復] 從 170 提升至 190，確保選單在家園箭頭(170)之上 */
 }
 
 /* 頂部橫條存在時，地圖內容往下推（避免被橫條蓋住） */
@@ -2763,10 +3250,10 @@
 }
 .rpg-v7-root.mobile-layout .status-scaler .data-row span:first-child,
 .rpg-v7-root.mobile-layout .status-scaler .stat-label {
-    font-size: 22px;
+    font-size: 28px;
 }
 .rpg-v7-root.mobile-layout .status-scaler .data-val {
-    font-size: 30px;
+    font-size: 36px;
     line-height: 1.25;
 }
 .rpg-v7-root.mobile-layout .status-scaler .stat-val-group {
@@ -2774,27 +3261,27 @@
     gap: 8px;
 }
 .rpg-v7-root.mobile-layout .status-scaler .stat-num {
-    font-size: 30px;
+    font-size: 36px;
     min-width: 58px;
     margin-right: 6px;
 }
 .rpg-v7-root.mobile-layout .status-scaler .batch-input {
-    width: 44px;
-    height: 30px;
-    font-size: 24px;
+    width: 50px;
+    height: 36px;
+    font-size: 30px;
 }
 .rpg-v7-root.mobile-layout .status-scaler .btn-plus {
-    width: 32px;
-    height: 32px;
-    font-size: 22px;
+    width: 40px;
+    height: 40px;
+    font-size: 28px;
 }
 .rpg-v7-root.mobile-layout .status-scaler #player-desc,
 .rpg-v7-root.mobile-layout .status-scaler #member-desc {
-    font-size: 28px;
+    font-size: 32px;
     line-height: 1.78;
     margin-top: 12px;
     padding-top: 12px;
-}
+}  
 .rpg-v7-root.mobile-layout .status-scaler .profile-grid {
     grid-template-columns: minmax(0, 1.42fr) minmax(0, 0.78fr);
     column-gap: 34px;
@@ -2815,16 +3302,16 @@
     gap: 54px;
 }
 .rpg-v7-root.mobile-layout .status-scaler .exp-header {
-    font-size: 30px;
+    font-size: 24px;
     margin-bottom: 14px;
     padding-bottom: 8px;
 }
 .rpg-v7-root.mobile-layout .status-scaler .exp-item {
-    font-size: 24px;
+    font-size: 18px;
     padding: 11px 0;
 }
 .rpg-v7-root.mobile-layout .status-scaler .exp-val {
-    font-size: 25px;
+    font-size: 19px;
 }
 .rpg-v7-root.mobile-layout .status-scaler .gallery-grid {
     grid-template-columns: repeat(3, 1fr);
@@ -2835,27 +3322,27 @@
 /* ---- Status 隊列條 ---- */
 .rpg-v7-root.mobile-layout .status-scaler .party-strip-container {
     left: auto;
-    right: 10px;
-    bottom: 34px;
-    width: 340px;
-    height: 110px;
+    right: 290px;
+    bottom: 14px;
+    width: 510px;
+    height: 165px;
     padding-left: 0;
     z-index: 90;
     transform: none;
     transform-origin: center;
 }
 .rpg-v7-root.mobile-layout .status-scaler .strip-bg {
-    top: 16px;
+    top: 26px;
     left: 0;
     width: 100%;
-    height: 82px;
+    height: 110px;
     transform: none;
     background: rgba(0, 0, 0, 0.25);
     border-top: 1px solid rgba(200, 170, 110, 0.25);
     border-bottom: 1px solid rgba(200, 170, 110, 0.25);
 }
 .rpg-v7-root.mobile-layout .status-scaler .faces-window {
-    width: 250px;
+    width: 375px;
     height: 100%;
     margin: 0 8px;
     overflow: hidden;
@@ -2866,16 +3353,16 @@
     padding-left: 0;
 }
 .rpg-v7-root.mobile-layout .status-scaler .nav-arrow {
-    width: 34px;
-    height: 100%;
+    width: 51px;
+    height: 150%;
     transform: none;
 }
 .rpg-v7-root.mobile-layout .status-scaler .nav-arrow:hover {
     transform: scale(1.12);
 }
 .rpg-v7-root.mobile-layout .status-scaler .face-card {
-    width: 82px;
-    height: 82px;
+    width: 123px;
+    height: 123px;
     margin-right: 12px;
     transform: none;
     border-radius: 4px;
@@ -2916,6 +3403,7 @@
     font-size: 60px;
 }
 
+
 /* ---- 世界地图 ---- */
 .rpg-v7-root.mobile-layout .worldmap-scaler .wm-title {
     font-size: 36px;
@@ -2948,11 +3436,515 @@
 .quest-scaler .quest-list::-webkit-scrollbar:horizontal {
     height: 0 !important;
 }
+
+/* ================================================================
+   [新增] 窄屏適配 v2（2026-07）
+   —— 以下全部僅在 .mobile-layout 下生效，桌面版完全不受影響 ——
+   —— 全部為覆蓋規則，集中放在檔案末尾，方便日後整段調整或移除 ——
+   ================================================================ */
+
+/* ----------------------------------------------------------------
+   一、家園系統（方案A：原位縮小＋收邊）
+   原按鈕維持桌面尺寸(padding 12px 22px / 18px字)鋪在縮小後的場景圖上，
+   在手機上會互相重疊並蓋住立繪。此處將按鈕縮成半透明小膠囊，
+   並全部貼齊場景圖四邊，讓出畫面中央。
+   ---------------------------------------------------------------- */
+
+/* 當前位置標籤：縮小、貼頂 */
+.rpg-v7-root.mobile-layout .home-location-label {
+    top: 6px;
+    padding: 3px 12px;
+    font-size: 12px;
+    letter-spacing: 1px;
+    border-bottom-width: 1px;
+    max-width: 60%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* 按鈕通用：小膠囊化 */
+.rpg-v7-root.mobile-layout .home-nav-arrow {
+    padding: 4px 10px;
+    font-size: 12px;
+    gap: 3px;
+    border-radius: 999px;
+    background: rgba(20, 16, 13, 0.78);
+    border-color: rgba(138, 115, 75, 0.75);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+    max-width: 40%;          /* 房名過長時截斷，避免兩顆按鈕相撞 */
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.rpg-v7-root.mobile-layout .home-nav-arrow .arrow-icon {
+    font-size: 11px;
+    color: #ffcc66;          /* 箭頭上色，縮小後仍能一眼識別方向 */
+}
+
+/* 各方位重新收邊（含 hover 態的 transform 一併覆蓋，避免觸控殘留位移） */
+.rpg-v7-root.mobile-layout .home-nav-arrow.arrow-up {
+    top: 30px;               /* 緊貼位置標籤下方 */
+}
+.rpg-v7-root.mobile-layout .home-nav-arrow.arrow-up:hover {
+    transform: translateX(-50%);
+}
+.rpg-v7-root.mobile-layout .home-nav-arrow.arrow-up-right {
+    top: 30px;
+    right: 6px;
+}
+.rpg-v7-root.mobile-layout .home-nav-arrow.arrow-left {
+    left: 6px;
+    top: auto;
+    bottom: 42%;             /* 從垂直置中改為中偏下，避開場景中央主體 */
+    transform: none;
+}
+.rpg-v7-root.mobile-layout .home-nav-arrow.arrow-left:hover {
+    transform: none;
+}
+.rpg-v7-root.mobile-layout .home-nav-arrow.arrow-right {
+    right: 6px;
+    top: auto;
+    bottom: 42%;
+    transform: none;
+}
+.rpg-v7-root.mobile-layout .home-nav-arrow.arrow-right:hover {
+    transform: none;
+}
+.rpg-v7-root.mobile-layout .home-nav-arrow.arrow-down {
+    bottom: 6px;
+    opacity: 0.9;            /* 原本 0.6 為了透出立繪；縮小後不再需要那麼透 */
+}
+.rpg-v7-root.mobile-layout .home-nav-arrow.arrow-down:hover {
+    transform: translateX(-50%);
+}
+.rpg-v7-root.mobile-layout .home-nav-arrow.arrow-down-right {
+    bottom: 6px;
+    right: 6px;
+}
+
+/* ----------------------------------------------------------------
+   二、狀態界面（手機拉直＋面板加寬）
+   斜切(skew)在手機上會裁掉本就緊張的可用寬度；
+   此處在手機取消斜切、面板加寬到 94%，立繪退為半透明背景。
+   桌面版仍保留原斜切風格。
+   ---------------------------------------------------------------- */
+
+/* 資料區：拉直、加寬 */
+.rpg-v7-root.mobile-layout .status-scaler .data-section {
+    top: 2%;
+    left: 3%;
+    width: 94%;
+    height: 76%;
+    transform: none;
+}
+
+/* 名牌：取消原為補償斜切而設的負縮排 */
+.rpg-v7-root.mobile-layout .status-scaler .char-name-box {
+    margin-left: 0;
+}
+
+/* 內容面板：取消反向斜切、底色略加深保可讀性 */
+.rpg-v7-root.mobile-layout .status-scaler .data-content {
+    transform: none;
+    margin-left: 0;
+    background: rgba(22, 18, 14, 0.9);
+    padding: 40px 44px 44px;
+}
+
+/* 立繪：靠右、僅在顯示後降為半透明背景（不干擾進場動畫的初始隱藏態） */
+.rpg-v7-root.mobile-layout .status-scaler .tachie-img {
+    right: -4%;
+}
+.rpg-v7-root.mobile-layout .status-scaler .tachie-img.show {
+    opacity: 0.38;
+}
+
+/* 面板加寬後，兩欄比例重新分配：左欄(位阶/等级)收窄，右欄(HP/ATK)加寬 */
+.rpg-v7-root.mobile-layout .status-scaler .player-layout {
+    gap: 60px;
+}
+.rpg-v7-root.mobile-layout .status-scaler .player-layout .player-col:first-child {
+    flex: 0 0 34%;
+    max-width: 34%;
+}
+
+/* 關閉鈕：面板加寬後右上角空間變小，稍微內收 */
+.rpg-v7-root.mobile-layout .status-scaler .close-btn {
+    top: -12px;
+    right: 14px;
+}
+
+
+/* ----------------------------------------------------------------
+   三、世界地圖（窄屏可讀性與可點性）
+   worldmap-scaler 同樣是 1080 畫布縮放，手機上實際只剩約 0.36 倍，
+   原本只放大了標題與關閉鈕；此處把區域列表、地點圓點、
+   資訊面板與行動按鈕一併放大到可讀、可點的實際尺寸。
+   ---------------------------------------------------------------- */
+
+/* 左側區域列表：加寬、字級與點按高度加大 */
+.rpg-v7-root.mobile-layout .worldmap-scaler .wm-sidebar {
+    width: 250px;
+}
+.rpg-v7-root.mobile-layout .worldmap-scaler .wm-sidebar-label {
+    padding: 16px 20px 12px;
+}
+.rpg-v7-root.mobile-layout .worldmap-scaler .wm-region-btn {
+    font-size: 32px;
+    padding: 18px 20px;
+    border-left-width: 5px;
+}
+
+/* 預覽圖上的地點圓點：原 14px 在縮放後只剩約 5px，放大至可點按 */
+.rpg-v7-root.mobile-layout .worldmap-scaler .map-point {
+    width: 40px;
+    height: 40px;
+    border-width: 4px;
+}
+.rpg-v7-root.mobile-layout .worldmap-scaler .map-point.active {
+    box-shadow: 0 0 24px rgba(255, 170, 0, 0.8);
+}
+
+/* 右下角區域名稱標示 */
+.rpg-v7-root.mobile-layout .worldmap-scaler .wm-preview-label {
+    font-size: 26px;
+    padding: 8px 20px;
+    bottom: 14px;
+    right: 14px;
+}
+
+/* 未選擇區域時的提示 */
+.rpg-v7-root.mobile-layout .worldmap-scaler .wm-placeholder {
+    font-size: 28px;
+}
+
+/* 地點資訊面板（點選地點後彈出）：字級已足夠，收緊左右內距 */
+.rpg-v7-root.mobile-layout .worldmap-scaler .wm-mobile-panel {
+    padding: 28px 36px;
+}
+
+/* 「前往此地」等行動按鈕：原 16px 縮放後僅約 6px，放大 */
+.rpg-v7-root.mobile-layout .worldmap-scaler .location-action-btn {
+    font-size: 30px;
+    padding: 10px 24px;
+    border-radius: 5px;
+}
+
+/* 手機 tab 列（若 JS 啟用）：同步放大 */
+.rpg-v7-root.mobile-layout .worldmap-scaler .wm-tab-btn {
+    font-size: 30px;
+    padding: 20px 30px;
+    border-bottom-width: 5px;
+}
+.rpg-v7-root.mobile-layout .status-scaler .toggle-party-btn {
+    left: calc(100% + 400px);
+    top: 66%;
+    transform: translateY(-50%);
+    margin-left: 0;
+    padding: 5px 16px;
+    font-size: 22px;
+    border-radius: 5px;
+    white-space: nowrap;
+    z-index: 10; /* 高於 tab 列(6)，萬一重疊也不會被蓋住 */
+}
+
+/* ==========================================================
+   [新增] 窄屏頂欄改造：日期條 + 展開面板
+   ----------------------------------------------------------
+   桌面版完全不受影響（三個新元素預設 display:none）。
+   mobile-layout 下：
+   - 隱藏 map-area 內的 hudAssets HUD、左上收縮鈕、右上選單鈕
+   - 頂欄置中顯示日期，點擊展開/收合
+   - 展開後出現功能頁籤列（狀態/背包/任務/地圖/設定），
+     預設打開「狀態」頁；底板蓋住頂欄以下整個區域
+   ========================================================== */
+.topbar-date-strip, .topbar-tabs, .topbar-sheet-backdrop { display: none; }
+
+.rpg-v7-root.mobile-layout .map-topbar {
+    height: auto;
+    min-height: 52px;
+    flex-wrap: wrap;
+    padding: 0;
+}
+.rpg-v7-root.mobile-layout .map-topbar .hud-toggle-btn,
+.rpg-v7-root.mobile-layout .map-topbar .menu-wrap { display: none; }
+.rpg-v7-root.mobile-layout .map-area .hud-wrap { display: none; }
+
+.rpg-v7-root.mobile-layout .topbar-date-strip {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    height: 52px;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    font-family: "Cinzel", "Noto Serif SC", "Noto Serif TC", serif;
+    font-size: 15px;
+    font-weight: bold;
+    letter-spacing: 2px;
+    color: var(--text-color);
+}
+.rpg-v7-root.mobile-layout .topbar-date-strip .tds-chev {
+    font-size: 11px;
+    color: var(--menu-border);
+    transition: transform .35s ease;
+}
+.rpg-v7-root.mobile-layout.topbar-sheet-open .topbar-date-strip .tds-chev {
+    transform: rotate(180deg);
+}
+
+/* 功能頁籤列：僅在窄屏且展開時出現，作為頂欄的第二行 */
+.rpg-v7-root.mobile-layout.topbar-sheet-open .topbar-tabs {
+    display: flex;
+    width: 100%;
+    height: 44px;
+    align-items: stretch;
+    border-top: 1px solid var(--menu-sep);
+    background: var(--menu-bg);
+}
+.topbar-tab {
+    flex: 1 1 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "Cinzel", "Noto Serif SC", "Noto Serif TC", serif;
+    font-size: 13px;
+    letter-spacing: 1px;
+    color: var(--menu-text);
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    border-bottom: 2px solid transparent;
+    transition: color .25s ease, border-color .25s ease, background .25s ease;
+}
+.topbar-tab + .topbar-tab { border-left: 1px solid var(--menu-sep); }
+.topbar-tab.active {
+    color: var(--menu-hover-text);
+    border-bottom-color: var(--menu-border);
+    background: var(--menu-hover-bg);
+}
+
+/* 展開面板底板：蓋住頂欄以下整個組件（map-area + 文本區）。
+   z-index 185：高於立繪(160)/家園箭頭(170)，低於頂欄(190)與各界面層(200/300)，
+   因此頂欄與展開的界面內容仍顯示在其上。點擊底板 = 收合。 */
+.rpg-v7-root.mobile-layout.topbar-sheet-open .topbar-sheet-backdrop {
+    display: block;
+    position: absolute;
+    inset: 0;
+    z-index: 185;
+    background: var(--bg-text-area);
+}
+
+/* --- [新增] 展開面板加高：脫離地圖 3:2 的限制 ---
+   窄屏展開時，map-area（界面層的定位父層）暫時改為 3:4，
+   讓 status / quest / bag 等界面獲得縱向空間；
+   收合後恢復 3:2，地圖顯示不受影響。
+   配套邏輯在 updateUIScale()：窄屏時畫布高度由 720 動態擴至
+   容器高度換算的設計高度（3:4 時約 1440），寬度與縮放比不變，
+   因此文字、按鈕大小不變，只是縱向可用空間變多。 */
+.rpg-v7-root.mobile-layout.topbar-sheet-open .map-area {
+    aspect-ratio: 3 / 4;
+}
+
+/* --- [新增] 狀態頁：3:4 加高後重排（內容優先） ---
+   原窄屏方案（3:2 時代）因空間不足：面板佔滿 76% 高仍要捲動、
+   立繪退為 0.38 半透明背景、隊列條疊在面板下緣。
+   加高後畫布約 1080x1440，分配原則是「按內容動態分配」：
+   ① 資料面板：高度改為貼合內容（height:auto）——資料多長面板就多高，
+      不再固定百分比而留出黑色空腔；內容超過 850 設計px 上限
+      （約畫布 60%）才在面板內部捲動
+   ② 立繪：右下錨定、48% 高、不透明。面板收多高、立繪就露多少：
+      內容短時全身完整可見，內容長時僅頭部沒入面板後方
+      （與桌面版的層疊慣例一致，面板底色 0.9 不透明不影響閱讀）
+   ③ 隊友隊列條：左下專屬區域，蓋在立繪腳部之上（z 90 > 5） */
+.rpg-v7-root.mobile-layout .status-scaler .data-section {
+    height: auto;      /* 面板貼合內容，不再固定高度 */
+    width: 68%;        /* 窄長比例：以最長名牌列（米拉露恩＋资料/经验/回忆）為基準，留少許餘量防止頁籤換行 */
+}
+.rpg-v7-root.mobile-layout .status-scaler .data-content {
+    height: auto;
+    max-height: 950px; /* 上限收至畫布約 66%，確保面板最長時仍不壓到底部頭像牆 */
+    overflow-y: auto;
+    padding: 34px 38px 40px;
+}
+.rpg-v7-root.mobile-layout .status-scaler .tachie-img {
+    height: 94%;   /* [使用者實測校準] 立繪立在面板右側空區 */
+    right: -120%;  /* [使用者實測校準] 補償立繪圖檔的透明邊距，可與面板右緣局部重疊 */
+}
+.rpg-v7-root.mobile-layout .status-scaler .tachie-img.show {
+    opacity: 1;    /* 覆蓋窄屏 v2 的 0.38 半透明 */
+}
+
+/* --- 面板內部：配合窄長比例改為直欄排版 --- */
+/* 隊友資料：兩欄合併為單欄（窄面板下值域不再換行擠壓） */
+.rpg-v7-root.mobile-layout .status-scaler .profile-grid {
+    grid-template-columns: 1fr;
+    column-gap: 0;
+    row-gap: 2px;
+}
+/* 玩家頁：位阶/等级 與 HP/ATK 兩欄改為上下堆疊 */
+.rpg-v7-root.mobile-layout .status-scaler .player-layout {
+    flex-direction: column;
+    gap: 0;
+    margin-bottom: 12px;
+}
+.rpg-v7-root.mobile-layout .status-scaler .player-layout .player-col:first-child {
+    flex: none;
+    max-width: none;
+}
+/* 經驗頁：欄距收窄以適配窄面板 */
+.rpg-v7-root.mobile-layout .status-scaler .exp-container {
+    gap: 36px;
+}
+/* 回忆：3 欄改 2 欄，維持單格大小可辨識 */
+.rpg-v7-root.mobile-layout .status-scaler .gallery-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+}
+/* 字級不動：手機布局以可讀性優先，行寬變短由換行吸收（高度充裕），
+   沿用窄屏 v2 的放大字級（標籤 22 / 數值 30 / 描述 28）。
+   為避免長值在固定行高內被裁切，允許資料列在值換行時自動增高： */
+.rpg-v7-root.mobile-layout .status-scaler .data-row {
+    height: auto;
+    min-height: 48px;
+}
+.rpg-v7-root.mobile-layout .status-scaler .data-row .data-val {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    text-align: right;
+}
+/* 隊友隊列 → 頭像牆（5 欄網格，最多兩排共 10 位）：
+   取代原本的橫向輪播與右下「角色一覽」按鈕，點誰就切換到誰 */
+.rpg-v7-root.mobile-layout .status-scaler .party-strip-container {
+    left: 24px;
+    right: auto;
+    bottom: 20px;
+    width: 790px;   
+    height: auto;   
+    display: block;
+    padding-left: 0;
+}
+.rpg-v7-root.mobile-layout .status-scaler .strip-bg { display: none; }
+.rpg-v7-root.mobile-layout .status-scaler .nav-arrow { display: none; }
+.rpg-v7-root.mobile-layout .status-scaler .faces-window {
+    width: 100%;
+    height: auto;
+    margin: 0;
+    overflow: visible;
+}
+.rpg-v7-root.mobile-layout .status-scaler .faces-track {
+    height: auto;
+    flex-wrap: wrap;
+    gap: 14px;
+    padding-left: 0;
+    transform: none !important; /* 蓋掉輪播的位移；DOM 旋轉不影響網格排列 */
+}
+.rpg-v7-root.mobile-layout .status-scaler .face-card {
+    width: 140px;   /* [使用者實測校準] */
+    height: 140px;
+    margin-right: 0;
+}
+/* 桌面仍是輪播：忽略頭像牆的 order 內聯值（視覺順序 = DOM 順序） */
+.rpg-v7-root:not(.mobile-layout) .status-scaler .face-card { order: 0 !important; }
+/* 「角色一覽」按鈕：功能已由頭像牆涵蓋 */
+.rpg-v7-root.mobile-layout .status-grid-btn { display: none; }
+
+/* 经验頁字級補調（原先只有 18/19px，跟上其他頁的手機字級） */
+.rpg-v7-root.mobile-layout .status-scaler .exp-header {
+    font-size: 36px;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+}
+.rpg-v7-root.mobile-layout .status-scaler .exp-item {
+    font-size: 28px;
+    padding: 13px 0;
+}
+.rpg-v7-root.mobile-layout .status-scaler .exp-val {
+    font-size: 32px;
+}
+
+/* 回忆頁：超過 6 格（2 欄×3 排）強制內部滾動，
+   避免像 CG 特別多的角色把面板撐到極高 */
+.rpg-v7-root.mobile-layout .status-scaler .gallery-grid {
+    max-height: 730px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+}
+
+/* --- [新增] 世界地圖：窄屏改直向排版、滿版填充 3:4 面板 ---
+   畫布高度由 updateUIScale 動態設為 designH（約 1440），滿寬縮放。
+   區域選單從左側欄改為頂部 3 欄按鈕網格，預覽圖（保持 3:2，
+   地點座標為百分比定位、不受影響）在剩餘直向空間置中。 */
+.rpg-v7-root.mobile-layout .worldmap-scaler {
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+}
+.rpg-v7-root.mobile-layout .worldmap-scaler .wm-body {
+    flex-direction: column;
+}
+.rpg-v7-root.mobile-layout .worldmap-scaler .wm-sidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid #3a3020;
+}
+.rpg-v7-root.mobile-layout .worldmap-scaler .wm-region-list {
+    flex: none;
+    overflow: visible;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    padding: 14px 18px 18px;
+}
+.rpg-v7-root.mobile-layout .worldmap-scaler .wm-region-btn {
+    border: 1px solid #3a3020;
+    border-left: 5px solid transparent;
+    border-radius: 6px;
+    text-align: center;
+    font-size: 30px;
+    padding: 16px 8px;
+    line-height: 1.3;
+}
+.rpg-v7-root.mobile-layout .worldmap-scaler .wm-region-btn.active {
+    border-color: #ffaa00;
+    border-left-color: #ffaa00;
+}
+.rpg-v7-root.mobile-layout .worldmap-scaler .wm-preview-wrap {
+    flex: 1;
+    align-items: center;   /* 3:2 預覽圖在剩餘直向空間置中 */
+}
+
+/* --- [新增] 顯示設定：窄屏由置中彈窗改為整頁（配合頁籤語意） ---
+   桌面版仍是選單開啟的彈窗，不受影響。 */
+.rpg-v7-root.mobile-layout .display-layer-wrapper {
+    background: none;
+    backdrop-filter: none;
+    align-items: stretch;
+    justify-content: stretch;
+}
+.rpg-v7-root.mobile-layout .display-modal {
+    width: 100%;
+    max-height: none;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+}
+.rpg-v7-root.mobile-layout .display-modal-body {
+    padding: 24px 28px 40px;
+}
+
 </style>
 
 <div class="rpg-v7-root paged-mode">
 <div class="map-topbar" id="map-topbar">
     <div class="hud-toggle-btn" id="hud-toggle">◀</div>
+    <!-- [新增] 窄屏專用：日期條（點擊展開/收合面板） -->
+    <div class="topbar-date-strip" id="topbar-date-strip">
+        <span class="tds-chev">▼</span>
+        <span class="tds-date" id="topbar-date">读取中...</span>
+    </div>
     <div class="menu-wrap">
         <div class="icon-btn menu-toggle">≡</div>
         <div class="menu-drop">
@@ -2963,7 +3955,17 @@
             <div class="menu-opt" data-action="display">显示设定</div>
         </div>
     </div>
+    <!-- [新增] 窄屏專用：展開後的功能頁籤列（整合原選單功能） -->
+    <div class="topbar-tabs" id="topbar-tabs">
+        <div class="topbar-tab" data-action="status">状态</div>
+        <div class="topbar-tab" data-action="bag">背包</div>
+        <div class="topbar-tab" data-action="quest">任务</div>
+        <div class="topbar-tab" data-action="worldmap">地图</div>
+        <div class="topbar-tab" data-action="display">设定</div>
+    </div>
 </div>
+<!-- [新增] 窄屏專用：展開面板底板（蓋住頂欄以下整個區域，點擊可收合） -->
+<div class="topbar-sheet-backdrop" id="topbar-sheet-backdrop"></div>
     <div class="map-area">
         <div id="day-night-overlay"></div>
         <div class="hud-wrap" id="hud-wrap">
@@ -3008,6 +4010,12 @@
     <div class="display-opt-btn active" id="layout-auto-btn" onclick="setLayout('auto')">自动</div>
     <div class="display-opt-btn" id="layout-desktop-btn" onclick="setLayout('desktop')">桌面</div>
     <div class="display-opt-btn" id="layout-mobile-btn" onclick="setLayout('mobile')">手机</div>
+</div>
+            <!-- 家园系统開關 -->
+<div class="display-section-label" style="margin-top:20px;">家园系统</div>
+<div class="display-btn-group">
+    <div class="display-opt-btn active" id="home-enable-btn" onclick="setHomeSystem(true)">✓ 启用</div>
+    <div class="display-opt-btn" id="home-disable-btn" onclick="setHomeSystem(false)">✗ 停用</div>
 </div>
             <!-- 圖片來源 -->
             <div class="display-section-label" style="margin-top:20px;">图床</div>
@@ -3226,7 +4234,7 @@
                                     </div>
                                 </div>
                                 
-                                <div style="margin-top: 10px; font-size: 12px; color: #888; text-align: center; font-style: italic;">※ 属性影响等级、等级决定位阶</div>
+                                <div style="margin-top: 10px; font-size: 18px; color: #888; text-align: center; font-style: italic;">※ 属性影响等级、等级决定位阶</div>
                                 
                                 <div id="player-desc">Player Desc...</div>
                             </div>
@@ -3354,8 +4362,6 @@
         </div>
     </div>
 </div>
-
-
 <script>
 
 (function() {
@@ -3550,9 +4556,33 @@ const getPath = (obj, path, fallback) => {
     return cur === undefined ? fallback : cur;
 };
 
+// === [效能優化] 變量快照批次機制 ===
+// getAllVariables() 每次呼叫都會完整取出整棵變量樹，成本隨 stat_data 膨脹線性成長。
+// 在密集讀取的區段（如 syncGameState）用 beginVarBatch() 建立單次快照，
+// 批次內所有 getVariable 直接讀快照，結束後 endVarBatch() 釋放。
+// 注意：批次內若有 setVar，同批次再讀會是舊值（現有程式已用 __RPG_CACHE 迴避此情境）。
+let _varsSnapshot = null;
+
+function beginVarBatch() {
+    try {
+        const snap = getAllVariables();
+        // 守衛：若 stat_data 不存在或為空物件，視為無效快照（重新生成過渡期）
+        const sd = snap?.stat_data;
+        if (sd && typeof sd === 'object' && Object.keys(sd).length > 0) {
+            _varsSnapshot = snap;
+        } else {
+            _varsSnapshot = null;
+            console.warn('[RPG VarBatch] 快照無效（stat_data 為空），退化為逐次讀取');
+        }
+    } catch(e) { _varsSnapshot = null; }
+}
+function endVarBatch() {
+    _varsSnapshot = null;
+}
+
 const getVariable = (dotPath, fallback = "0") => {
     try {
-        const vars = getAllVariables();
+        const vars = _varsSnapshot || getAllVariables();
         const val = getPath(vars, 'stat_data.' + dotPath, undefined)
                  ?? getPath(vars, dotPath, undefined);
         if (val !== undefined && val !== null && val !== '') {
@@ -3586,32 +4616,75 @@ const eventOn = typeof window.eventOn === 'function'
         };
     }
 
+// [修復] 量測真實高度：只依賴 root 元素的實際尺寸
+// 不使用 body/html 的 scrollHeight，因為它們會保留歷史最大值，導致 iframe 只漲不縮
+function _measureTrueHeight() {
+    const root = document.querySelector('.rpg-v7-root');
+    if (!root) return 720;
+
+    // 暫時解除 root 與 .text-area 的 overflow:hidden，
+    // 確保圖片等超出 .text-area 的子內容被正確計入 scrollHeight
+    const prevRootOverflow = root.style.overflow;
+    root.style.overflow = 'visible';
+
+    const textArea = root.querySelector('.text-area');
+    const prevAreaOverflow = textArea ? textArea.style.overflow : null;
+    if (textArea) textArea.style.overflow = 'visible';
+
+    // 使用 root 自身的尺寸（而非 body/html 的 scrollHeight）
+    // 這樣當面板收起時，高度能正確縮小
+    const height = Math.max(
+        root.scrollHeight || 0,
+        root.offsetHeight || 0,
+        720
+    );
+
+    root.style.overflow = prevRootOverflow;
+    if (textArea) textArea.style.overflow = prevAreaOverflow;
+    return height;
+}
+
+// [效能優化] _measureTrueHeight 會強制同步重排（改 overflow → 讀 scrollHeight → 改回），
+// 高頻呼叫時形成重排風暴。此處做兩層治理：
+// 1. rAF 合併：同一幀內多次 requestParentResize 只量測一次
+// 2. 高度去重：量測結果與上次回報相差 <= 4px 就不 postMessage
+let _lastReportedHeight = 0;
+
+function _doResizeReport() {
+    try {
+        const height = _measureTrueHeight();
+        if (Math.abs(height - _lastReportedHeight) <= 4) return; // 高度未變，跳過回報
+        _lastReportedHeight = height;
+        window.parent?.postMessage({
+            type: 'RPG_MVU_RESIZE',
+            height,
+        }, '*');
+    } catch (e) {
+        console.warn('[RPG] 回報 iframe 高度失敗:', e);
+    }
+}
+
+// [修復] 雙重回報：立即發送一次 + 延遲 350ms 再發送一次，
+// 確保即使有 CSS transition 或非同步渲染，最終高度也能被正確捕獲
+let _resizeReportTimer = null;
+let _resizeRafPending = false;
 function requestParentResize() {
-    requestAnimationFrame(() => {
+    // 立即量測一次（rAF 合併：已排程中則不重複排）
+    if (!_resizeRafPending) {
+        _resizeRafPending = true;
         requestAnimationFrame(() => {
-            try {
-                const root = document.querySelector('.rpg-v7-root');
-                const body = document.body;
-                const html = document.documentElement;
-
-                const height = Math.max(
-                    root?.scrollHeight || 0,
-                    root?.offsetHeight || 0,
-                    body?.scrollHeight || 0,
-                    body?.offsetHeight || 0,
-                    html?.scrollHeight || 0,
-                    720
-                );
-
-                window.parent?.postMessage({
-                    type: 'RPG_MVU_RESIZE',
-                    height,
-                }, '*');
-            } catch (e) {
-                console.warn('[RPG] 回報 iframe 高度失敗:', e);
-            }
+            requestAnimationFrame(() => {
+                _resizeRafPending = false;
+                _doResizeReport();
+            });
         });
-    });
+    }
+    // 延遲再量測一次，捕獲 transition/非同步渲染後的最終高度
+    if (_resizeReportTimer) clearTimeout(_resizeReportTimer);
+    _resizeReportTimer = setTimeout(() => {
+        _resizeReportTimer = null;
+        _doResizeReport();
+    }, 350);
 }
 
 // === 文本過濾規則（存入 ST chat 變量） ===
@@ -3619,13 +4692,15 @@ const FILTER_VAR_KEY = '过滤规则';
 // === 正文定位規則 ===
 const ANCHOR_VAR_KEY = '正文规则';
 let _anchorRulesCache = null;
+let _compiledAnchorRegexes = null;
 
 async function refreshAnchorRulesCache() {
     try {
         const raw = await triggerSlash('/getvar key=' + ANCHOR_VAR_KEY);
-        if (!raw || raw === '' || raw === '0') { _anchorRulesCache = []; return []; }
+        if (!raw || raw === '' || raw === '0') { _anchorRulesCache = []; _compiledAnchorRegexes = null; return []; }
         const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
         _anchorRulesCache = Array.isArray(parsed) ? parsed : [];
+        _compiledAnchorRegexes = null;
         return _anchorRulesCache;
     } catch(e) {
         _anchorRulesCache = _anchorRulesCache ?? [];
@@ -3636,7 +4711,7 @@ async function refreshAnchorRulesCache() {
 function loadAnchorRules() {
     if (_anchorRulesCache !== null) return _anchorRulesCache;
     try {
-        const vars = getAllVariables();
+        const vars = _varsSnapshot || getAllVariables();
         let raw;
         if (vars) {
             raw = Object.prototype.hasOwnProperty.call(vars, ANCHOR_VAR_KEY)
@@ -3657,6 +4732,7 @@ async function saveAnchorRules(rules) {
     const json = JSON.stringify(rules);
     await triggerSlash('/setvar key=' + ANCHOR_VAR_KEY + ' ' + json);
     _anchorRulesCache = rules;
+    _compiledAnchorRegexes = null;
 }
 
 let _anchorDirty = false;
@@ -3769,16 +4845,19 @@ document.getElementById('anchor-save-btn')?.addEventListener('click', async func
     setCollapsed(false);
 })();
 let _filterRulesCache = null;
+let _compiledFilterRegexes = null;
 
 async function refreshFilterRulesCache() {
     try {
         const raw = await triggerSlash('/getvar key=' + FILTER_VAR_KEY);
         if (raw === undefined || raw === null || raw === '' || raw === '0') {
             _filterRulesCache = [];
+            _compiledFilterRegexes = null;
             return [];
         }
         const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
         _filterRulesCache = Array.isArray(parsed) ? parsed : [];
+        _compiledFilterRegexes = null;
         return _filterRulesCache;
     } catch (e) {
         _filterRulesCache = _filterRulesCache ?? [];
@@ -3791,7 +4870,7 @@ async function refreshFilterRulesCache() {
 function loadFilterRules() {
     if (_filterRulesCache !== null) return _filterRulesCache;
     try {
-        const vars = getAllVariables();
+        const vars = _varsSnapshot || getAllVariables();
         let raw;
         if (vars) {
             raw = Object.prototype.hasOwnProperty.call(vars, FILTER_VAR_KEY)
@@ -3814,6 +4893,7 @@ async function saveFilterRules(rules) {
     await triggerSlash('/setvar key=' + FILTER_VAR_KEY + ' ' + json);
     // 同步更新快取，不再需要手動寫 getAllVariables()
     _filterRulesCache = rules;
+    _compiledFilterRegexes = null;
 }
 
 function _escAttr(str) {
@@ -3989,6 +5069,26 @@ window.setLayout = function(mode) {
 
     root.classList.toggle('mobile-layout', effective === 'mobile');
 
+    // [新增] 窄屏頂欄展開面板：切換布局時同步展開狀態
+    // （桌面 → 移除展開標記；窄屏 → 若已有界面層開啟則視為展開，並高亮對應頁籤）
+    if (effective === 'mobile') {
+        let tbAct = null;
+        if (document.getElementById('display-layer')?.classList.contains('active'))  tbAct = 'display';
+        if (document.getElementById('worldmap-layer')?.classList.contains('active')) tbAct = 'worldmap';
+        if (document.getElementById('quest-layer')?.classList.contains('active'))    tbAct = 'quest';
+        if (document.getElementById('bag-layer')?.classList.contains('active'))      tbAct = 'bag';
+        if (document.getElementById('status-layer')?.classList.contains('active'))   tbAct = 'status';
+        const tbAnyOpen = tbAct !== null ||
+            document.getElementById('display-layer')?.classList.contains('active');
+        root.classList.toggle('topbar-sheet-open', !!tbAnyOpen);
+        document.querySelectorAll('#topbar-tabs .topbar-tab').forEach(b =>
+            b.classList.toggle('active', b.dataset.action === tbAct));
+    } else {
+        root.classList.remove('topbar-sheet-open');
+    }
+    // [新增] 布局切換後立即重算界面畫布高度（避免殘留窄屏的加高內聯樣式）
+    try { if (typeof updateUIScale === 'function') updateUIScale(); } catch (e) {}
+
     document.getElementById('layout-auto-btn')?.classList.toggle('active', mode === 'auto');
     document.getElementById('layout-desktop-btn')?.classList.toggle('active', mode === 'desktop');
     document.getElementById('layout-mobile-btn')?.classList.toggle('active', mode === 'mobile');
@@ -4148,9 +5248,209 @@ const _userName = (() => {
 
 
     const charNameToId = new Map(fullPartyData.map(c => [c.name, c.id]));
-    const charIdToData = new Map(fullPartyData.map(c => [c.id, c])); // 新增這行：用 ID 直接映射完整資料物件
+const charIdToData = new Map(fullPartyData.map(c => [c.id, c])); // 新增這行：用 ID 直接映射完整資料物件
+
+// ============================================================
+// === 外部 CG 資料讀取：GitHub / jsDelivr JSON ===
+// ============================================================
+
+const EXTERNAL_CG_DATA_URL = "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain/CG/cg-data0614.json";
+
+
+let externalCGData = {};
+let externalCGDataLoaded = false;
+let externalCGDataLoading = null;
+
+function makeEmptyCGSlots(count = 6) {
+    return Array.from({ length: count }, () => ({
+        unlocked: false,
+        cover: "",
+        images: [],
+        lockedTitle: "特殊CG尚未解锁"
+    }));
+}
+
+async function loadExternalCGDataOnce() {
+    if (externalCGDataLoaded) return externalCGData;
+
+    if (externalCGDataLoading) {
+        return externalCGDataLoading;
+    }
+
+    externalCGDataLoading = fetch(EXTERNAL_CG_DATA_URL, {
+        method: "GET",
+        cache: "no-store"
+    })
+        .then(async (res) => {
+            if (!res.ok) {
+                throw new Error(`HTTP ${res.status}`);
+            }
+
+            const json = await res.json();
+
+            if (!json || typeof json !== "object" || Array.isArray(json)) {
+                throw new Error("CG JSON 格式錯誤：最外層必須是物件");
+            }
+
+            externalCGData = json;
+            externalCGDataLoaded = true;
+
+            console.log("[CG] 外部 CG 資料載入成功", externalCGData);
+            return externalCGData;
+        })
+        .catch((err) => {
+            externalCGData = {};
+            externalCGDataLoaded = true;
+
+            console.warn("[CG] 外部 CG 資料載入失敗，使用內建 cgData 備援", err);
+            return externalCGData;
+        });
+
+    return externalCGDataLoading;
+}
+
+function toCGNumber(value) {
+    if (value === null || value === undefined || value === "") {
+        return null;
+    }
+
+    const num = Number(value);
+    return Number.isFinite(num) ? num : null;
+}
+
+function compareCGUnlockValue(currentValue, targetValue, operator = "==") {
+    const op = String(operator || "==").trim();
+
+    // 數字比較：>, >=, <, <=
+    if (op === ">" || op === ">=" || op === "<" || op === "<=") {
+        const currentNum = toCGNumber(currentValue);
+        const targetNum = toCGNumber(targetValue);
+
+        if (currentNum === null || targetNum === null) {
+            return false;
+        }
+
+        if (op === ">") return currentNum > targetNum;
+        if (op === ">=") return currentNum >= targetNum;
+        if (op === "<") return currentNum < targetNum;
+        if (op === "<=") return currentNum <= targetNum;
+    }
+
+    // 不等於
+    if (op === "!=" || op === "!==") {
+        return String(currentValue ?? "") !== String(targetValue ?? "");
+    }
+
+    // 預設：等於
+    return String(currentValue ?? "") === String(targetValue ?? "");
+}
+
+function isCGUnlocked(cg) {
+    if (!cg) return false;
+
+    // 1. 有 unlockVar 時，優先根據當前變量判斷
+    if (cg.unlockVar) {
+        const currentValue = getVariable(cg.unlockVar, "");
+        const targetValue = cg.unlockValue ?? "已解锁";
+        const operator = cg.unlockOperator || "==";
+
+        return compareCGUnlockValue(currentValue, targetValue, operator);
+    }
+
+    // 2. 沒有 unlockVar，才使用 unlocked: true / false
+    if (typeof cg.unlocked === "boolean") {
+        return cg.unlocked;
+    }
+
+    // 3. 兩者都沒有，預設未解鎖
+    return false;
+}
+
+function resolveCGData(charData) {
+    if (!charData) return makeEmptyCGSlots();
+
+    const internalList = Array.isArray(charData.cgData)
+        ? charData.cgData
+        : [];
+
+    const externalList = Array.isArray(externalCGData?.[charData.id])
+        ? externalCGData[charData.id]
+        : null;
+
+    // 外部 JSON 存在時，優先使用外部 JSON。
+    // 外部 JSON 不存在時，才使用 fullPartyData 內建 cgData。
+    let sourceList = externalList || internalList;
+
+    // 如果兩邊都沒有資料，才顯示 6 個預設鎖格。
+    if (!Array.isArray(sourceList) || sourceList.length === 0) {
+        sourceList = makeEmptyCGSlots();
+    }
+
+    // 支援 slot 排序，但不限制最大數量。
+    const sortedList = [...sourceList].sort((a, b) => {
+        const slotA = Number(a?.slot);
+        const slotB = Number(b?.slot);
+
+        const hasSlotA = Number.isFinite(slotA);
+        const hasSlotB = Number.isFinite(slotB);
+
+        if (hasSlotA && hasSlotB) return slotA - slotB;
+        if (hasSlotA) return -1;
+        if (hasSlotB) return 1;
+        return 0;
+    });
+
+    return sortedList.map((cg) => {
+    const images = Array.isArray(cg.images)
+        ? cg.images.filter(Boolean)
+        : [];
+
+    return {
+        unlocked: isCGUnlocked(cg),
+        cover: cg.cover || "",
+        images,
+        lockedTitle: cg.lockedTitle || "特殊CG尚未解锁",
+        unlockHint: cg.unlockHint || "",
+        unlockVar: cg.unlockVar || "",
+        unlockValue: cg.unlockValue ?? "已解锁"
+    };
+});
+}
+
     let activePartyData = [];
-    // 注意：這裡使用 getElementById，確保 ID 不重複
+    let currentStatusCharacterData = null;
+
+function isMemberExpTabActive() {
+    return document.getElementById('tab-m-exp')?.classList.contains('active');
+}
+
+function isMemberGalleryTabActive() {
+    return document.getElementById('tab-m-gallery')?.classList.contains('active');
+}
+
+function updateCurrentMemberExp() {
+    const data = currentStatusCharacterData;
+    if (!data || !data.name) return;
+
+    // [效能優化] 兩欄共 10 次變量讀取，共用單次快照
+    beginVarBatch();
+    updateExpColumn(1, data.name, EXP_CAT_1, EXP_ITEMS_1);
+    updateExpColumn(2, data.name, EXP_CAT_2, EXP_ITEMS_2);
+    endVarBatch();
+}
+
+async function renderCurrentMemberGallery() {
+    const data = currentStatusCharacterData;
+    const container = document.getElementById('gallery-container');
+
+    if (!data || !container) return;
+
+    container.innerHTML = "<div style='color:grey; padding:20px;'>读取 CG 资料中...</div>";
+
+    await loadExternalCGDataOnce();
+
+    renderGallery(resolveCGData(data));
+}
     let stTrack = null; 
     const ST_ITEM_WIDTH = 110; 
     let stIsAnimating = false;
@@ -4184,10 +5484,9 @@ const _userName = (() => {
 };
 
     // [修改] 初始化函數 (原本是 init)
-    // [修改] 初始化函數 (原本是 init)
     window.initStatusInterface = async function() {
-        stTrack = document.getElementById('faces-track');
-        if(!stTrack) return;
+    stTrack = document.getElementById('faces-track');
+    if(!stTrack) return;
 
         // 默认先推入玩家 (p1)
         activePartyData = [fullPartyData[0]]; 
@@ -4196,10 +5495,13 @@ const _userName = (() => {
             activePartyData.push(...fullPartyData.slice(1));
         } else {
             // [优化 1] 并行请求所有角色的状态
+            // [效能優化] 用單次快照涵蓋所有角色的讀取
+            beginVarBatch();
             const checks = fullPartyData.slice(1).map(char => {
                 const s = getVariable(`世界.妈妈.${char.name}.状态`);
                 return { char, ok: parseInt(s) >= 3 };
             });
+            endVarBatch();
             const results = checks;
             
             // 过滤出符合条件的角色并推入 activePartyData
@@ -4421,9 +5723,13 @@ const _userName = (() => {
         stTrack.innerHTML = "";
         activePartyData.forEach((char) => {
             const card = document.createElement('div');
-            card.className = `face-card`; card.dataset.id = char.id; 
+            card.className = `face-card`; card.dataset.id = char.id;
             card.onclick = () => onCardClick(card);
-            const img = document.createElement('img'); img.src = char.face; 
+            // [新增] 窄屏頭像牆：以角色編號固定「視覺」順序。
+            // 輪播邏輯靠旋轉 DOM 順序運作，但頭像牆的排列由 flex order 鎖定，
+            // 因此兩者互不干擾（桌面版用 CSS order:0 !important 整體忽略此值）。
+            card.style.order = parseInt(String(char.id).replace(/\D/g, ''), 10) || 0;
+            const img = document.createElement('img'); img.src = char.face;
             card.appendChild(img); stTrack.appendChild(card);
         });
     }
@@ -4432,7 +5738,25 @@ const _userName = (() => {
         if (stIsAnimating || activePartyData.length <= 1) return;
         const cards = Array.from(stTrack.children);
         const index = cards.indexOf(card);
-        
+
+        // [新增] 窄屏頭像牆：點誰就直接跳到誰（沿用 jumpToStatusChar 的 DOM 搬移法，
+        // 把目標卡搬到 index 1；視覺順序由 flex order 鎖定，使用者看不到搬移）
+        const _rootEl = document.querySelector('.rpg-v7-root');
+        if (_rootEl && _rootEl.classList.contains('mobile-layout')) {
+            const centerIndex = (cards.length > 1) ? 1 : 0;
+            if (index === centerIndex) return;
+            stTrack.style.transition = 'none';
+            if (index > 1) {
+                for (let i = 0; i < index - 1; i++) stTrack.appendChild(stTrack.firstElementChild);
+            } else if (index < 1) {
+                for (let i = 0; i < 1 - index; i++) stTrack.insertBefore(stTrack.lastElementChild, stTrack.firstElementChild);
+            }
+            stTrack.style.transform = 'translateX(0)';
+            setTimeout(() => { stTrack.style.transition = ''; }, 50);
+            updateSelectionFromCenter();
+            return;
+        }
+
         // 根據點擊位置決定向左還向右移
         // 假設視窗中有 3-4 個卡片，需要判斷點擊的是左邊還是右邊的
         // 這裡沿用您的邏輯：index 1 是中心
@@ -4485,8 +5809,8 @@ const _userName = (() => {
         if (batchInput) batchInput.value = 1;
 
         // 以下等級位階計算完全不動
-        let currentHP = parseInt(getVariable(VAR_HP)) || 0;
-        let currentATK = parseInt(getVariable(VAR_ATK)) || 0;
+        let currentHP = parseInt(window.__RPG_CACHE.hp) || 0;
+        let currentATK = parseInt(window.__RPG_CACHE.atk) || 0;
         const rawScore = (currentHP - 1900) + (currentATK - 750) * 2;
         const calcLv = Math.floor(rawScore / 54) + 70;
         let currentLv = parseInt(getVariable(VAR_LEVEL)) || 0;
@@ -4516,38 +5840,53 @@ const _userName = (() => {
 
     window.switchPlayerTab = function(tabName) { /* Only 1 tab */ }
 
-    window.switchMemberTab = function(tabName) {
-        const container = document.getElementById('tabs-member');
-        container.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-        const btns = container.querySelectorAll('.tab-btn');
-        if(tabName === 'm-data') btns[0].classList.add('active');
-        if(tabName === 'm-exp') btns[1].classList.add('active');
-        if(tabName === 'm-gallery') btns[2].classList.add('active');
+    window.switchMemberTab = async function(tabName) {
+    const container = document.getElementById('tabs-member');
+    if (!container) return;
 
-        document.querySelectorAll('.tab-page').forEach(p => p.classList.remove('active'));
-        document.getElementById(`tab-${tabName}`).classList.add('active');
+    container.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
 
-        const cards = Array.from(stTrack.children);
-        // 如果只有1個角色，center就是0，否則為1
-        const centerIndex = (cards.length > 1) ? 1 : 0;
-        const centerCard = cards[centerIndex]; 
-        
-        if (!centerCard) return;
-        const id = centerCard.dataset.id;
-        const data = charIdToData.get(id);
-        if(data) {
-            const tachie = document.getElementById('big-tachie');
-            let targetImg = (tabName === 'm-data') ? data.img : data.imgDiff; 
-            if (!tachie.src.includes(targetImg)) {
-                tachie.classList.remove('show');
-                setTimeout(() => {
-                    tachie.src = targetImg;
-                    tachie.onload = () => tachie.classList.add('show');
-                    if(tachie.complete) tachie.classList.add('show');
-                }, 150);
-            }
+    const btns = container.querySelectorAll('.tab-btn');
+    if (tabName === 'm-data') btns[0]?.classList.add('active');
+    if (tabName === 'm-exp') btns[1]?.classList.add('active');
+    if (tabName === 'm-gallery') btns[2]?.classList.add('active');
+
+    document.querySelectorAll('.tab-page').forEach(p => p.classList.remove('active'));
+    document.getElementById(`tab-${tabName}`)?.classList.add('active');
+
+    const cards = Array.from(stTrack?.children || []);
+    const centerIndex = (cards.length > 1) ? 1 : 0;
+    const centerCard = cards[centerIndex]; 
+    
+    if (!centerCard) return;
+
+    const id = centerCard.dataset.id;
+    const data = charIdToData.get(id);
+
+    if (data) {
+        currentStatusCharacterData = data;
+
+        const tachie = document.getElementById('big-tachie');
+        const targetImg = (tabName === 'm-data') ? data.img : data.imgDiff;
+
+        if (tachie && !tachie.src.includes(targetImg)) {
+            tachie.classList.remove('show');
+            setTimeout(() => {
+                tachie.src = targetImg;
+                tachie.onload = () => tachie.classList.add('show');
+                if (tachie.complete) tachie.classList.add('show');
+            }, 150);
         }
     }
+
+    if (tabName === 'm-exp') {
+        await updateCurrentMemberExp();
+    }
+
+    if (tabName === 'm-gallery') {
+        await renderCurrentMemberGallery();
+    }
+};
 
     // === 核心更新逻辑 ===
     async function updateSelectionFromCenter(isDataRefresh = false) {
@@ -4561,9 +5900,10 @@ const _userName = (() => {
         centerCard.classList.add('active');
 
         const id = centerCard.dataset.id;
-        const data = activePartyData.find(p => p.id === id);
-        
-        if (data) {
+const data = activePartyData.find(p => p.id === id);
+
+if (data) {
+    currentStatusCharacterData = data;
     if (els.charName) els.charName.innerText = data.name;
     if (els.dynamicBg) els.dynamicBg.style.backgroundImage = `url('${data.bg}')`;
     
@@ -4606,14 +5946,12 @@ const _userName = (() => {
         if (els.playerC) els.playerC.innerText = data.dataC;
 
         try {
-    // === [效能優化] 5 個循序請求合併為並行請求 ===
-    const [rank, lv, valHP, valATK, valPoints] = await Promise.all([
-        getVariable(VAR_RANK),
-        getVariable(VAR_LEVEL),
-        getVariable(VAR_HP),
-        getVariable(VAR_ATK),
-        getVariable(VAR_POINTS)
-    ]);
+    // === [效能優化] getVariable 為同步函數，直接呼叫 ===
+    const rank = getVariable(VAR_RANK);
+    const lv = getVariable(VAR_LEVEL);
+    const valHP = getVariable(VAR_HP);
+    const valATK = getVariable(VAR_ATK);
+    const valPoints = getVariable(VAR_POINTS);
 
     if(rank && rank !== "0" && els.playerA) els.playerA.innerText = rank;
     if(lv && lv !== "0" && els.playerC) els.playerC.innerText = lv;
@@ -4644,10 +5982,8 @@ const _userName = (() => {
         if (els.memberDesc) els.memberDesc.innerText = data.desc;
         
         try {
-    const [bond, statusVal] = await Promise.all([
-        getVariable(`世界.妈妈.${data.name}.好感度`),
-        getVariable(`世界.妈妈.${data.name}.在队状态`)
-    ]);
+    const bond = getVariable(`世界.妈妈.${data.name}.好感度`);
+    const statusVal = getVariable(`世界.妈妈.${data.name}.在队状态`);
 
     if (els.mBond) els.mBond.innerText = bond || "0";
 
@@ -4690,21 +6026,22 @@ if (
     if (els.mStatus) els.mStatus.innerText = "---";
 }
 
-                updateExpColumn(1, data.name, EXP_CAT_1, EXP_ITEMS_1);
-                updateExpColumn(2, data.name, EXP_CAT_2, EXP_ITEMS_2);
-                renderGallery(data.cgData);
+                if (isMemberExpTabActive()) {
+    await updateCurrentMemberExp();
+}
+
+if (isMemberGalleryTabActive()) {
+    await renderCurrentMemberGallery();
+}
             }
         }
     }
 
-    async function updateExpColumn(colIndex, name, catName, items) {
-    // === 捨棄 for 迴圈內的 await，改為一次性並行請求 ===
-    // 產生所有的 Promise 陣列，並加上 catch 避免單一變量缺失導致整個報錯
-    const promises = items.map(item => 
+    function updateExpColumn(colIndex, name, catName, items) {
+    // === getVariable 為同步函數，直接呼叫 ===
+    const results = items.map(item => 
         (getVariable(`世界.妈妈.${name}.NSFW.${catName}.${item}`) ?? "0")
     );
-    
-    const results = await Promise.all(promises);
 
     for(let i = 0; i < items.length; i++) {
         const el = document.getElementById(`exp-${colIndex}-${i+1}`);
@@ -4714,54 +6051,154 @@ if (
     }
 }
 
+function escapeHTML(value) {
+    return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+function getCGUnlockHint(cg) {
+    if (cg.unlockHint) {
+        return cg.unlockHint;
+    }
+
+    if (cg.unlockVar) {
+        return `解锁条件：${cg.unlockVar} = ${cg.unlockValue ?? "已解锁"}`;
+    }
+
+    return cg.lockedTitle || "特殊CG尚未解锁";
+}
+
     function renderGallery(cgData) {
-        const container = document.getElementById('gallery-container');
-        container.innerHTML = "";
-        if (!cgData) {
-            container.innerHTML = "<div style='color:grey; padding:20px;'>暂无 CG 资料</div>";
-            return;
+    const container = document.getElementById('gallery-container');
+    if (!container) return;
+
+    container.innerHTML = "";
+
+    const list = Array.isArray(cgData) && cgData.length > 0
+        ? cgData
+        : makeEmptyCGSlots();
+
+    list.forEach((cg) => {
+        const card = document.createElement('div');
+
+        const hasCover = !!cg.cover;
+        const hasImages = Array.isArray(cg.images) && cg.images.length > 0;
+        const canOpen = cg.unlocked && hasCover && hasImages;
+
+        card.className = `cg-card ${canOpen ? '' : 'locked'}`;
+
+        if (canOpen) {
+            card.innerHTML = `<img src="${escapeHTML(cg.cover)}" alt="">`;
+            card.title = "";
+            card.onclick = () => openCGModal(cg.images);
+        } else {
+            const hint = getCGUnlockHint(cg);
+            const safeHint = escapeHTML(hint);
+            const safeTitle = escapeHTML(cg.lockedTitle || "特殊CG尚未解锁");
+
+            card.innerHTML = `
+                <div class="cg-card-lock-bg"></div>
+                <div class="cg-unlock-tip">${safeHint}</div>
+            `;
+
+            card.title = "";
+            card.onclick = null;
         }
-        cgData.forEach((cg, index) => {
-            const card = document.createElement('div');
-            card.className = `cg-card ${cg.unlocked ? '' : 'locked'}`;
-            if(cg.unlocked) {
-                card.innerHTML = `<img src="${cg.cover}">`;
-                card.onclick = () => openCGModal(cg.images);
-            } else {
-                card.innerHTML = `<div style="width:100%;height:100%;background:#1a1510;"></div>`;
-                
-                card.title = "特殊CG还没做好！"; 
-                
-                card.onclick = () => {
-                    alert("特殊CG还没做好！");
-                };
-            }
-            container.appendChild(card);
-        });
+
+        container.appendChild(card);
+    });
+}
+
+let currentCGList = [];
+let currentCGIndex = 0;
+
+function ensureCGModalOnRoot() {
+    const root = document.querySelector('.rpg-v7-root');
+    if (!root) return null;
+
+    let modal = document.getElementById('cg-modal');
+
+    // 若原本的 cg-modal 還在 status-scaler 裡，直接搬到 rpg-v7-root 底下
+    if (modal && modal.parentElement !== root) {
+        root.appendChild(modal);
     }
 
-    let currentCGList = [];
-    let currentCGIndex = 0;
+    // 若未來你刪掉 HTML 裡原本的 cg-modal，這裡會自動補建
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'cg-modal';
+        modal.className = 'cg-modal';
+        modal.innerHTML = `
+            <div class="cg-modal-content" onclick="event.stopPropagation()">
+                <img src="" id="cg-display" class="cg-modal-img">
+                <button class="modal-nav prev" onclick="changeCG(-1)">❮</button>
+                <button class="modal-nav next" onclick="changeCG(1)">❯</button>
+                <button class="modal-close" onclick="closeCG()">✖</button>
+            </div>
+        `;
+        root.appendChild(modal);
+    }
 
-    window.openCGModal = function(images) {
-        if(!images || images.length === 0) return;
-        currentCGList = images;
+    // 點黑色背景關閉；點圖片本體不關閉
+    modal.onclick = function() {
+        closeCG();
+    };
+
+    return modal;
+}
+
+function updateCGDisplay() {
+    const img = document.getElementById('cg-display');
+    const prevBtn = document.querySelector('#cg-modal .modal-nav.prev');
+    const nextBtn = document.querySelector('#cg-modal .modal-nav.next');
+
+    if (!img || !currentCGList.length) return;
+
+    img.src = currentCGList[currentCGIndex];
+
+    const hasMultiple = currentCGList.length > 1;
+    if (prevBtn) prevBtn.style.display = hasMultiple ? 'flex' : 'none';
+    if (nextBtn) nextBtn.style.display = hasMultiple ? 'flex' : 'none';
+}
+
+window.openCGModal = function(images) {
+    if (!Array.isArray(images) || images.length === 0) return;
+
+    const modal = ensureCGModalOnRoot();
+    if (!modal) return;
+
+    currentCGList = images.filter(Boolean);
+    if (currentCGList.length === 0) return;
+
+    currentCGIndex = 0;
+    updateCGDisplay();
+    modal.classList.add('active');
+};
+
+window.changeCG = function(dir) {
+    if (currentCGList.length <= 1) return;
+
+    currentCGIndex += dir;
+
+    if (currentCGIndex < 0) {
+        currentCGIndex = currentCGList.length - 1;
+    }
+
+    if (currentCGIndex >= currentCGList.length) {
         currentCGIndex = 0;
-        document.getElementById('cg-display').src = currentCGList[0];
-        document.getElementById('cg-modal').classList.add('active');
     }
 
-    window.changeCG = function(dir) {
-        if(currentCGList.length <= 1) return;
-        currentCGIndex += dir;
-        if(currentCGIndex < 0) currentCGIndex = currentCGList.length - 1;
-        if(currentCGIndex >= currentCGList.length) currentCGIndex = 0;
-        document.getElementById('cg-display').src = currentCGList[currentCGIndex];
-    }
+    updateCGDisplay();
+};
 
-    window.closeCG = function() {
-        document.getElementById('cg-modal').classList.remove('active');
-    }
+window.closeCG = function() {
+    const modal = document.getElementById('cg-modal');
+    if (modal) modal.classList.remove('active');
+};
 
     // 按鈕綁定
     let statusButtonsBound = false;
@@ -4817,6 +6254,18 @@ if (
     const containerHeight = els.mapArea.offsetHeight;
     const scale = containerWidth / 1080;
 
+    // [新增] 窄屏展開面板加高：畫布設計高度隨容器比例動態擴展
+    // 桌面 / 收合時容器為 3:2 → 720；窄屏展開為 3:4 → 約 1440。
+    // 縮放比仍以寬度計算，故內部元素大小不變，只增加縱向空間。
+    const _tbRoot = els.mapArea.closest('.rpg-v7-root');
+    const _tbMobile = _tbRoot && _tbRoot.classList.contains('mobile-layout');
+    const designH = _tbMobile ? Math.max(720, Math.round(containerHeight / scale)) : 720;
+    [els.qScaler, els.bScaler, els.sScaler].forEach(s => {
+        if (!s) return;
+        if (_tbMobile) s.style.height = designH + 'px';
+        else s.style.height = ''; // 桌面：清除內聯覆寫，恢復 CSS 預設 720
+    });
+
     if (els.qScaler) els.qScaler.style.transform = `scale(${scale})`;
     if (els.bScaler) els.bScaler.style.transform = `scale(${scale})`;
     if (els.sScaler) els.sScaler.style.transform = `scale(${scale})`;
@@ -4825,16 +6274,26 @@ if (
     if (els.wmScaler) {
     const WM_WIDTH = 1080;
     const WM_HEIGHT = 720;
-    // 用 0.85 讓 scaler 比容器小 15%，留出置中空間
-    const wmScale = (containerWidth / 1080) * 0.95;
-    const scaledW = WM_WIDTH * wmScale;
-    const scaledH = WM_HEIGHT * wmScale;
-    const offsetX = (containerWidth - scaledW) / 2;
-    const offsetY = (containerHeight - scaledH) / 2;
-    els.wmScaler.style.transformOrigin = 'top left';
-    els.wmScaler.style.transform = `scale(${wmScale})`;
-    els.wmScaler.style.left = offsetX + 'px';
-    els.wmScaler.style.top = offsetY + 'px';
+    if (_tbMobile) {
+        // [新增] 窄屏：世界地圖畫布同步加高並滿版填充面板（內部改直向排版，見 CSS）
+        els.wmScaler.style.height = designH + 'px';
+        els.wmScaler.style.transformOrigin = 'top left';
+        els.wmScaler.style.transform = `scale(${scale})`;
+        els.wmScaler.style.left = '0px';
+        els.wmScaler.style.top = '0px';
+    } else {
+        els.wmScaler.style.height = ''; // 桌面：恢復 CSS 預設 720
+        // 用 0.85 讓 scaler 比容器小 15%，留出置中空間
+        const wmScale = (containerWidth / 1080) * 0.95;
+        const scaledW = WM_WIDTH * wmScale;
+        const scaledH = WM_HEIGHT * wmScale;
+        const offsetX = (containerWidth - scaledW) / 2;
+        const offsetY = (containerHeight - scaledH) / 2;
+        els.wmScaler.style.transformOrigin = 'top left';
+        els.wmScaler.style.transform = `scale(${wmScale})`;
+        els.wmScaler.style.left = offsetX + 'px';
+        els.wmScaler.style.top = offsetY + 'px';
+    }
 }
 }
 
@@ -4946,10 +6405,8 @@ if (!ok) {
     // === 跨列表防呆：若「进行中」某任務已存在於「已完成」或「已失败」，自動從「进行中」移除 ===
     if (currentFilter === '进行中') {
         try {
-            const [completedRaw, failedRaw] = await Promise.all([
-                (getVariable(`世界.任务.${currentCategory}.已完成`) ?? null),
-                (getVariable(`世界.任务.${currentCategory}.已失败`) ?? null)
-            ]);
+            const completedRaw = getVariable(`世界.任务.${currentCategory}.已完成`) ?? null;
+            const failedRaw = getVariable(`世界.任务.${currentCategory}.已失败`) ?? null;
 
             const archivedKeys = new Set();
             for (const raw of [completedRaw, failedRaw]) {
@@ -5169,6 +6626,7 @@ function updateStateViewer(content) {
     const panel = document.getElementById('state-viewer-panel');
     const body  = document.getElementById('state-viewer-body');
     if (!panel || !body) return;
+    const wasVisible = panel.style.display !== 'none';
     if (content) {
         if (body.textContent !== content) {
             body.textContent = content;
@@ -5176,6 +6634,11 @@ function updateStateViewer(content) {
         panel.style.display = 'block';
     } else {
         panel.style.display = 'none';
+    }
+    // [修復] 面板顯示/隱藏後通知父層重算 iframe 高度
+    const isVisible = panel.style.display !== 'none';
+    if (wasVisible !== isVisible) {
+        requestParentResize();
     }
 }
 
@@ -5185,6 +6648,8 @@ window.toggleStateViewer = function() {
     if (!body) return;
     const isNowOpen = body.classList.toggle('expanded');
     if (arrow) arrow.classList.toggle('open', isNowOpen);
+    // [修復] 展開/收起後通知父層重算 iframe 高度
+    requestParentResize();
 };
 
 
@@ -5207,14 +6672,8 @@ window.toggleStateViewer = function() {
         let rawMoney = "0";
         let result = null;
         
-        try {
-            [rawMoney, result] = await Promise.all([
-                getVariable('世界.储物袋.货币'),
-                getVariable(varName)
-            ]);
-        } catch (e) {
-            console.error("背包並行讀取發生預期外錯誤:", e);
-        }
+        rawMoney = getVariable('世界.储物袋.货币');
+        result = getVariable(varName);
 
         // --- A. 處理金幣 ---
         let moneyVal = parseInt(rawMoney);
@@ -5358,7 +6817,9 @@ if (typeof window.setLayout === 'function') {
         currentMusicUrl: "",
         region: "",         
         location: "",       
-        subLocation: ""      
+        subLocation: "",
+        homeSystemEnabled: false,    // 需明確讀取到 '1' 才啟用
+        isHome: false       // 家园系统：是否處於家園模式
     };
 
 
@@ -5373,20 +6834,27 @@ if (typeof window.setLayout === 'function') {
     content = content.replace(/\[metacognition\][\s\S]*?\[\/metacognition\]/gi, '');
     content = content.replace(/<!--[\s\S]*?-->/g, '');
 
-    // Step 2: 清使用者自訂過濾規則
-    const _customRules = loadFilterRules();
-    for (const _rule of _customRules) {
-        const _open = _rule.open ? _rule.open.trim() : '';
-        const _close = _rule.close ? _rule.close.trim() : '';
-        const _eo = _open.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const _ec = _close.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        if (_open && _close) {
-            content = content.replace(new RegExp(_eo + '[\\s\\S]*?' + _ec, 'gi'), '');
-        } else if (_open && !_close) {
-            content = content.replace(new RegExp(_eo + '[\\s\\S]*$', 'gi'), '');
-        } else if (!_open && _close) {
-            content = content.replace(new RegExp('^[\\s\\S]*?' + _ec, 'i'), '');
+    // Step 2: 清使用者自訂過濾規則（使用預編譯快取）
+    if (!_compiledFilterRegexes) {
+        const _customRules = loadFilterRules();
+        _compiledFilterRegexes = [];
+        for (const _rule of _customRules) {
+            const _open = _rule.open ? _rule.open.trim() : '';
+            const _close = _rule.close ? _rule.close.trim() : '';
+            const _eo = _open.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const _ec = _close.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            if (_open && _close) {
+                _compiledFilterRegexes.push(new RegExp(_eo + '[\\s\\S]*?' + _ec, 'gi'));
+            } else if (_open && !_close) {
+                _compiledFilterRegexes.push(new RegExp(_eo + '[\\s\\S]*$', 'gi'));
+            } else if (!_open && _close) {
+                _compiledFilterRegexes.push(new RegExp('^[\\s\\S]*?' + _ec, 'i'));
+            }
         }
+    }
+    for (const _rx of _compiledFilterRegexes) {
+        _rx.lastIndex = 0;
+        content = content.replace(_rx, '');
     }
 
     // Step 3: 清裸露的內建結尾殘餘
@@ -5409,40 +6877,37 @@ if (typeof window.setLayout === 'function') {
     const _anchorRules = loadAnchorRules();
 
     if (_anchorRules.length > 0) {
-        const _validAnchorRules = [];
+        // 建立或使用預編譯 anchor 正則快取
+        if (!_compiledAnchorRegexes) {
+            _compiledAnchorRegexes = [];
+            for (const _aRule of _anchorRules) {
+                const _aOpen  = _aRule.open  ? _aRule.open.trim()  : '';
+                const _aClose = _aRule.close ? _aRule.close.trim() : '';
+                if (!_aOpen || !_aClose) continue;
+                const _eao = _aOpen.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                const _eac = _aClose.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                _compiledAnchorRegexes.push({
+                    complete: new RegExp(_eao + '([\\s\\S]*?)' + _eac, 'i'),
+                    openOnly: new RegExp(_eao + '([\\s\\S]*)$', 'i')
+                });
+            }
+        }
 
         // 第一輪：找完整容器
-        for (const _aRule of _anchorRules) {
-            const _aOpen  = _aRule.open  ? _aRule.open.trim()  : '';
-            const _aClose = _aRule.close ? _aRule.close.trim() : '';
-            if (!_aOpen || !_aClose) continue;
-
-            const _eao = _aOpen.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            const _eac = _aClose.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-
-            _validAnchorRules.push({ open: _aOpen, close: _aClose, eo: _eao, ec: _eac });
-
-            const _completeRegex = new RegExp(_eao + '([\\s\\S]*?)' + _eac, 'i');
-            const _completeMatch = content.match(_completeRegex);
-
+        for (const _ar of _compiledAnchorRegexes) {
+            const _completeMatch = content.match(_ar.complete);
             if (_completeMatch) {
                 return _stripRpgShell(_completeMatch[1]);
             }
         }
 
         // 第二輪：支援流式生成。open 已出現，但 close 尚未出現時，顯示 open 後內容
-        for (const _aRule of _validAnchorRules) {
-            const _openOnlyRegex = new RegExp(_aRule.eo + '([\\s\\S]*)$', 'i');
-            const _openOnlyMatch = content.match(_openOnlyRegex);
-
+        for (const _ar of _compiledAnchorRegexes) {
+            const _openOnlyMatch = content.match(_ar.openOnly);
             if (_openOnlyMatch) {
                 return _stripRpgShell(_openOnlyMatch[1]);
             }
         }
-
-        // 有設定 anchorRules，但目前連任何 open 都還沒出現：
-        // 不渲染原始前置文本，讓 UI 維持「谱写崭新篇章...」
-        return '';
     }
 
     // Step 5: 原始 [RPG]...[/RPG] 提取邏輯
@@ -5469,10 +6934,79 @@ if (typeof window.setLayout === 'function') {
     return '';
 };
 
+    // === [新增] 圖片標記攔截 — sentinel 方式保護 HTML 不被高亮 regex 破壞 ===
+    const _IMG_SENTINEL = '__RPGIMG_';
+
+    const processImageMarkers = (text) => {
+        if (!text) return { text, slots: null };
+        const slots = [];
+        let result = text;
+
+        // 1. LittleWhiteBox [image:slotId]
+        if (result.includes('[image:')) {
+            result = result.replace(/\[image:([^\]]+)\]/g, (match, slotId) => {
+                const idx = slots.length;
+                const eid = String(slotId).replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+                slots.push(
+                    '<span class="rpg-img-placeholder" data-img-type="lwb" data-img-id="' + eid + '">' +
+                    '<span class="rpg-img-loading">\u{1F5BC}\uFE0F</span></span>'
+                );
+                return _IMG_SENTINEL + idx + '__';
+            });
+        }
+
+        // 2. LocalDream <img data-ld-hash="..." data-ld-prompt="..." .../>
+        if (result.includes('data-ld-hash')) {
+            result = result.replace(
+                /<img\s[^>]*?data-ld-hash="([^"]*)"[^>]*?data-ld-prompt="([^"]*)"[^>]*?\/?>/gi,
+                (match, hash, prompt) => {
+                    const idx = slots.length;
+                    slots.push(
+                        '<span class="rpg-img-placeholder" data-img-type="ld" data-img-id="' + hash +
+                        '" data-img-prompt="' + prompt + '">' +
+                        '<span class="rpg-img-loading">\u{1F5BC}\uFE0F</span></span>'
+                    );
+                    return _IMG_SENTINEL + idx + '__';
+                }
+            );
+        }
+
+        // 3. st-chatu8 <image>prompt</image>
+        if (/<image>/i.test(result)) {
+            result = result.replace(/<image>([\s\S]*?)<\/image>/gi, (match, p) => {
+                const idx = slots.length;
+                const encoded = encodeURIComponent(p.trim());
+                slots.push(
+                    '<span class="rpg-img-placeholder" data-img-type="chatu8" data-img-prompt="' + encoded + '">' +
+                    '<span class="rpg-img-loading">\u{1F5BC}\uFE0F</span></span>'
+                );
+                return _IMG_SENTINEL + idx + '__';
+            });
+        }
+
+        // 4. 柏寶繪 <bbi_image>tag...<nl>...</nl><negative>...</negative><size>...</size></bbi_image>
+        if (/<bbi_image>/i.test(result)) {
+            result = result.replace(/<bbi_image>([\s\S]*?)<\/bbi_image>/gi, (match) => {
+                const idx = slots.length;
+                const encoded = encodeURIComponent(match);
+                slots.push(
+                    '<span class="rpg-img-placeholder" data-img-type="bbi" ' +
+                    'data-img-prompt="' + encoded + '">' +
+                    '<span class="rpg-img-loading">\u{1F5BC}\uFE0F</span></span>'
+                );
+                return _IMG_SENTINEL + idx + '__';
+            });
+        }
+
+        return { text: result, slots: slots.length > 0 ? slots : null };
+    };
     // === [最終修正版] 文本格式化函數 ===
     const formatText = (text) => {
         if (!text) return "";
-        let res = text;
+
+        // Step 0: 圖片標記攔截 — 用 sentinel 替換，保護 HTML 不被後續 regex 破壞
+        const { text: _processed, slots: _imgSlots } = processImageMarkers(text);
+        let res = _processed;
 
         // =========================================================
         // 順序非常重要！請勿隨意更動
@@ -5500,11 +7034,20 @@ if (typeof window.setLayout === 'function') {
         // 這些符號不會跟 HTML 屬性衝突，放最後很安全
         res = res.replace(/([「“])([\s\S]*?)([」”])/g, '<span class="highlight-dialogue">$1$2$3</span>');
         
+        // Step final: 還原圖片標記 sentinel → 實際 HTML
+        if (_imgSlots) {
+            for (let i = 0; i < _imgSlots.length; i++) {
+                res = res.replace(_IMG_SENTINEL + i + '__', _imgSlots[i]);
+            }
+        }
+
         return res;
     };
 
     // === [修改] 分頁切割函數 (整合了高亮邏輯) ===
     window.__FORMAT_CACHE = window.__FORMAT_CACHE || new Map();
+    // [效能優化] 分頁結果快取鍵：與 state.rawText 相同時，refreshUI 直接沿用 state.pages
+    let _pagesCacheKey = null;
 
     // === [修改] 分頁切割函數 (導入記憶化快取) ===
     const sliceToPages = (text) => {
@@ -5587,6 +7130,126 @@ if (typeof window.setLayout === 'function') {
 
     const heroineList = ["爱娜", "琳", "米拉露恩", "黛芬妮", "芙蕾嘉", "穗", "莉迪娅", "璐法", "奈芙蒂"];
 
+    // ============================================================
+    // === 家园系统 (Home System) 配置 ===
+    // ============================================================
+
+    // --- 可外部化的 JSON URL（預留，填入後將覆蓋內建配置）---
+    const HOME_CONFIG_URL = "";
+
+    // === 外部家園配置讀取狀態 ===
+    let externalHomeConfig = {};
+    let externalHomeConfigLoaded = false;
+    let externalHomeConfigLoading = null;
+
+    async function loadHomeConfigOnce() {
+        if (externalHomeConfigLoaded) return externalHomeConfig;
+        if (externalHomeConfigLoading) return externalHomeConfigLoading;
+        if (!HOME_CONFIG_URL) {
+            externalHomeConfigLoaded = true;
+            console.log('[Home] HOME_CONFIG_URL 未設定，使用內置權重');
+            return externalHomeConfig;
+        }
+        externalHomeConfigLoading = fetch(HOME_CONFIG_URL, { method: 'GET', cache: 'no-store' })
+            .then(async (res) => {
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const json = await res.json();
+                if (!json || typeof json !== 'object' || Array.isArray(json)) {
+                    throw new Error('Home config JSON 格式錯誤：最外層必須是物件');
+                }
+                externalHomeConfig = json;
+                externalHomeConfigLoaded = true;
+                console.log('[Home] 外部家園配置載入成功', externalHomeConfig);
+                return externalHomeConfig;
+            })
+            .catch((err) => {
+                externalHomeConfig = {};
+                externalHomeConfigLoaded = true;
+                console.warn('[Home] 外部家園配置載入失敗，使用內置權重', err);
+                return externalHomeConfig;
+            });
+        return externalHomeConfigLoading;
+    }
+
+    // --- 所有家中地點 ---
+    const HOME_LOCATIONS = {
+        // 一樓
+        "前庭":     { floor: 1, bg: img("https://cdn.imgchest.com/files/7948fc96eb32.png", "https://files.catbox.moe/pfodmt.png") },
+        "客厅":     { floor: 1, bg: img("https://cdn.imgchest.com/files/b981b868431f.png", "https://files.catbox.moe/r49fu0.png") },
+        "浴室":     { floor: 1, bg: img("https://cdn.imgchest.com/files/191c6765c90c.png", "https://files.catbox.moe/5m7xnj.png") },
+        "后院":     { floor: 1, bg: img("https://cdn.imgchest.com/files/f14b347574ac.png", "https://files.catbox.moe/m5qg3m.png") },
+        "厨房饭厅": { floor: 1, bg: img("https://cdn.imgchest.com/files/8aaece52ea23.png", "https://files.catbox.moe/q8nowg.png") },
+        // 二樓：個人房間
+        "玩家房间":       { floor: 2, bg: img("https://cdn.imgchest.com/files/3231b5f1cbc9.png", "https://files.catbox.moe/469iaz.png"), isRoom: true },
+        "爱娜的房间":     { floor: 2, bg: img("https://cdn.imgchest.com/files/93d8844b69ea.png", "https://files.catbox.moe/w3kanx.png"), isRoom: true, owner: "爱娜" },
+        "琳的房间":       { floor: 2, bg: img("https://cdn.imgchest.com/files/2d6fdb39d45c.png", "https://files.catbox.moe/pchvit.png"), isRoom: true, owner: "琳" },
+        "米拉露恩的房间": { floor: 2, bg: img("https://cdn.imgchest.com/files/99af29c1cf12.png", "https://files.catbox.moe/7ys9aw.png"), isRoom: true, owner: "米拉露恩" },
+        "黛芬妮的房间":   { floor: 2, bg: img("https://cdn.imgchest.com/files/eef15bb4db4e.png", "https://files.catbox.moe/kh115n.png"), isRoom: true, owner: "黛芬妮" },
+        "芙蕾嘉的房间":   { floor: 2, bg: img("https://cdn.imgchest.com/files/46369d601916.png", "https://files.catbox.moe/oqih12.png"), isRoom: true, owner: "芙蕾嘉" },
+        "穗的房间":       { floor: 2, bg: img("https://cdn.imgchest.com/files/741cdf0ee695.png", "https://files.catbox.moe/dsp0c7.png"), isRoom: true, owner: "穗" },
+        "莉迪娅的房间":   { floor: 2, bg: img("https://cdn.imgchest.com/files/e048f240a63c.png", "https://files.catbox.moe/xx5btj.png"), isRoom: true, owner: "莉迪娅" },
+        "璐法的房间":     { floor: 2, bg: img("https://cdn.imgchest.com/files/2e3d707bd09b.png", "https://files.catbox.moe/sxn4hr.png"), isRoom: true, owner: "璐法" },
+        "奈芙蒂的房间":   { floor: 2, bg: img("https://cdn.imgchest.com/files/fd2b98ad6897.png", "https://files.catbox.moe/9uiluq.png"), isRoom: true, owner: "奈芙蒂" },
+        // 三樓
+        "书房":     { floor: 3, bg: img("https://cdn.imgchest.com/files/f27e128af7dd.png", "https://files.catbox.moe/g4sbn1.png") },
+        "工坊":     { floor: 3, bg: img("https://cdn.imgchest.com/files/c45cf57a4202.png", "https://files.catbox.moe/6phrtw.png") },
+        // 地下
+        "训练场":   { floor: -1, bg: img("https://cdn.imgchest.com/files/09cbc6709bc9.png", "https://files.catbox.moe/r3l3k2.png") },
+        "储物间":   { floor: -1, bg: img("https://cdn.imgchest.com/files/0776bbbd24d8.png", "https://files.catbox.moe/8ddcnj.png") },
+    };
+
+    // --- 導航鄰接圖：鍵為方向 CSS class 的後綴，值為目標地點 ---
+    // 虛擬節點 "二楼"/"三楼"/"地下室" 會觸發選單而非直接進入
+    const HOME_ADJACENCY = {
+        "前庭":     { up: "客厅" },
+        "客厅":     { down: "前庭", left: "厨房饭厅", right: "浴室", up: "上楼", "up-right": "后院", "down-right": "地下室" },
+        "厨房饭厅": { right: "客厅" },
+        "浴室":     { left: "客厅" },
+        "后院":     { down: "客厅" },
+        // 二樓房間：↓回客廳、↑往三樓、→換房（重開二樓選單）
+        "玩家房间":       { down: "客厅", up: "三楼", right: "二楼" },
+        "爱娜的房间":     { down: "客厅", up: "三楼", right: "二楼" },
+        "琳的房间":       { down: "客厅", up: "三楼", right: "二楼" },
+        "米拉露恩的房间": { down: "客厅", up: "三楼", right: "二楼" },
+        "黛芬妮的房间":   { down: "客厅", up: "三楼", right: "二楼" },
+        "芙蕾嘉的房间":   { down: "客厅", up: "三楼", right: "二楼" },
+        "穗的房间":       { down: "客厅", up: "三楼", right: "二楼" },
+        "莉迪娅的房间":   { down: "客厅", up: "三楼", right: "二楼" },
+        "璐法的房间":     { down: "客厅", up: "三楼", right: "二楼" },
+        "奈芙蒂的房间":   { down: "客厅", up: "三楼", right: "二楼" },
+        // 三樓房間：↓下樓選擇器（二樓/一樓）、同層互通
+        "书房":     { down: "下楼", right: "工坊" },
+        "工坊":     { down: "下楼", left: "书房" },
+        // 地下房間：↑回客廳、同層互通
+        "训练场":   { up: "客厅", right: "储物间" },
+        "储物间":   { up: "客厅", left: "训练场" },
+    };
+
+    // --- 虛擬節點：進入時跳出選單的樓層 ---
+    const HOME_MENU_FLOORS = {
+        "二楼":   { title: "二楼 · 个人房间", floor: 2 },
+        "三楼":   { title: "三楼", floor: 3 },
+        "地下室": { title: "地下室", floor: -1 },
+    };
+
+    // --- 角色地點偏好權重表 ---
+    // 數字越大越可能前往；0 或不列出 = 不會主動前往
+    const HOME_CHAR_WEIGHTS = {
+        "爱娜":    { "客厅": 2.5, "厨房饭厅": 0.8, "后院": 1, "爱娜的房间": 2, "浴室": 0.3, "书房": 1, "训练场": 0 },
+        "琳":      { "客厅": 2.5, "浴室": 0.3, "琳的房间": 2, "后院": 0.4, "厨房饭厅": 0.4, "工坊": 0.7, "训练场": 0.1 },
+        "米拉露恩": { "客厅": 2.5, "米拉露恩的房间": 2,  "厨房饭厅": 0.4, "浴室": 0.3, "书房": 2.5 },
+        "黛芬妮":  { "客厅": 2.5, "工坊": 2.5, "黛芬妮的房间": 2, "书房": 0.7, "厨房饭厅": 0.4, "浴室": 0.3, "训练场": 0 },
+        "芙蕾嘉":  { "客厅": 2.5, "后院": 0.9, "芙蕾嘉的房间": 2, "厨房饭厅": 0.6, "浴室": 0.3, "前庭": 0.6, "训练场": 0 },
+        "穗":      { "客厅": 2.5, "后院": 0.6, "穗的房间": 2, "厨房饭厅": 0.4, "浴室": 0.3, "前庭": 0.9 },
+        "莉迪娅":  { "客厅": 2.5, "训练场": 0.2, "莉迪娅的房间": 2, "后院": 1, "厨房饭厅": 0.4, "浴室": 0.3, "书房": 0.7 },
+        "璐法":    { "客厅": 2.5, "书房": 1, "璐法的房间": 2, "厨房饭厅": 0.6, "后院": 1, "浴室": 0.3, "书房": 0.7 },
+        "奈芙蒂":  { "客厅": 2.5, "后院": 0.6,  "奈芙蒂的房间": 2, "厨房饭厅": 0.5, "浴室": 0.3, "书房": 1, "前庭":0.4 },
+    };
+
+    // --- 角色自由移動閾值（停留超過此輪數後隨機移動）---
+    const HOME_MOVE_THRESHOLD = 10;
+
+    // === 家园系统配置結束 ===
 
     const iconAssets = {
     "塔":   img("https://cdn.imgchest.com/files/6063d7f4cdf9.png", "https://files.catbox.moe/trm1ru.png"),
@@ -5912,12 +7575,34 @@ if (typeof window.setLayout === 'function') {
         els.prevBtn = document.querySelector('.rpg-v7-root .btn-prev');
         els.nextBtn = document.querySelector('.rpg-v7-root .btn-next');
         if (!els.display) return;
+
+        // [新增] 監視 text-display DOM 變更（外部插件如 chatu8 動態插入圖片時自動觸發 resize）
+        if (!window.__rpgDisplayObserver) {
+            let _extResizeDebounce = null;
+            window.__rpgDisplayObserver = new MutationObserver(() => {
+                if (_extResizeDebounce) clearTimeout(_extResizeDebounce);
+                _extResizeDebounce = setTimeout(() => {
+                    _extResizeDebounce = null;
+                    requestParentResize();
+                }, 200);
+            });
+            window.__rpgDisplayObserver.observe(els.display, {
+                childList: true,
+                subtree: true,
+                attributes: true,
+                attributeFilter: ['src', 'style', 'class']
+            });
+        }
     }
         els.display.classList.remove('show-drop-cap');
 
         if (state.isPaged) {
             // --- 分頁模式 ---
-            state.pages = sliceToPages(state.rawText);
+            // [效能優化] 正文未變（純翻頁）時直接沿用現成分頁，不重跑 sliceToPages
+            if (_pagesCacheKey !== state.rawText) {
+                state.pages = sliceToPages(state.rawText);
+                _pagesCacheKey = state.rawText;
+            }
             if (state.currPage >= Math.max(1, state.pages.length)) {
                 state.currPage = Math.max(0, state.pages.length - 1);
             }
@@ -5946,7 +7631,213 @@ if (typeof window.setLayout === 'function') {
             els.display.classList.add('show-drop-cap');
         }
 		requestParentResize();
+        hydrateInlineImages();
+        installExternalPluginResizeObserver();
     };
+
+    // === [新增] 監視外部插件（chatu8/LWB）動態填充內容後的尺寸變化 ===
+    let _pluginResizeObserver = null;
+    let _pluginMutObs = null;
+
+    const _PLUGIN_WATCH_SELECTOR = '.st-chatu8-image-span, .st-chatu8-image-container, .xb-nd-img';
+
+    function _watchPluginElement(el) {
+        if (!_pluginResizeObserver) return;
+        if (!el.dataset.rpgResizeWatched) {
+            el.dataset.rpgResizeWatched = '1';
+            _pluginResizeObserver.observe(el);
+        }
+    }
+
+    function installExternalPluginResizeObserver() {
+        // 若已安裝則只掃描新元素
+        if (_pluginResizeObserver) {
+            _observeExistingPluginElements();
+            return;
+        }
+
+        if (!window.ResizeObserver) return;
+
+        _pluginResizeObserver = new ResizeObserver((entries) => {
+            for (const entry of entries) {
+                // 任一受監視元素尺寸改變且有實際高度 → 通知父層重算
+                if (entry.contentRect.height > 10) {
+                    requestParentResize();
+                    break;
+                }
+            }
+        });
+
+        // MutationObserver：當 chatu8/外部插件新插入 span/container 時，補充觀察
+        // [效能優化] 只檢查 mutation 新增的節點，不再每次變動就重掃整份文件
+        const display = document.querySelector('.rpg-v7-root');
+        if (display) {
+            _pluginMutObs = new MutationObserver((mutations) => {
+                for (const m of mutations) {
+                    for (const node of m.addedNodes) {
+                        if (node.nodeType !== 1) continue; // 只處理元素節點
+                        if (node.matches && node.matches(_PLUGIN_WATCH_SELECTOR)) {
+                            _watchPluginElement(node);
+                        }
+                        if (node.querySelectorAll) {
+                            node.querySelectorAll(_PLUGIN_WATCH_SELECTOR).forEach(_watchPluginElement);
+                        }
+                    }
+                }
+            });
+            _pluginMutObs.observe(display, { childList: true, subtree: true });
+        }
+
+        _observeExistingPluginElements();
+    }
+
+    function _observeExistingPluginElements() {
+        if (!_pluginResizeObserver) return;
+        document.querySelectorAll(_PLUGIN_WATCH_SELECTOR).forEach(_watchPluginElement);
+    }
+
+    // === [新增] 圖片標記 hydration — 異步填充圖片 URL（含延遲重試）===
+    let _imgRetryTimer = null;
+
+    async function hydrateInlineImages(retryCount) {
+        const isRetry = typeof retryCount === 'number';
+        const attempt = isRetry ? retryCount : 0;
+        const placeholders = document.querySelectorAll('.rpg-img-placeholder:not(.rpg-img-loaded)');
+        if (!placeholders.length) return;
+
+        let hasUnresolved = false;
+
+        for (const ph of placeholders) {
+            const type = ph.dataset.imgType;
+            const id = ph.dataset.imgId || '';
+            const prompt = ph.dataset.imgPrompt || '';
+
+            try {
+                let url = null;
+                if (typeof window.resolveImageUrl === 'function') {
+                    url = await window.resolveImageUrl(type, id, prompt);
+                }
+                if (url) {
+                    const img = document.createElement('img');
+                    img.className = 'rpg-inline-image';
+                    img.alt = prompt ? decodeURIComponent(prompt) : 'Generated Image';
+                    img.onload = () => {
+                        img.classList.add('rpg-img-visible');
+                        ph.classList.add('rpg-img-loaded');
+                        // [效能優化] requestParentResize 內建 350ms 補刀 + 高度去重，
+                        // 加上 ResizeObserver/MutationObserver 兜底，不需多連發定時量測
+                        requestParentResize();
+                        setTimeout(() => requestParentResize(), 600);
+                    };
+                    img.onerror = () => {
+                        ph.classList.remove('rpg-img-loaded');
+                        hasUnresolved = true;
+                    };
+                    img.src = url;
+                    ph.innerHTML = '';
+
+                    // === 柏寶繪：圖片 + 懸浮操作按鈕 ===
+                    if (type === 'bbi' && prompt) {
+                        const rawTag = decodeURIComponent(prompt);
+                        const inner = rawTag.replace(/^<bbi_image[^>]*>/i, '').replace(/<\/bbi_image>$/i, '');
+                        const nl = (inner.match(/<nl>([\s\S]*?)<\/nl>/i) || [])[1] || '';
+                        const neg = (inner.match(/<negative>([\s\S]*?)<\/negative>/i) || [])[1] || '';
+                        const tagOnly = inner
+                            .replace(/<nl>[\s\S]*?<\/nl>/gi, '').replace(/<negative>[\s\S]*?<\/negative>/gi, '')
+                            .replace(/<characters>[\s\S]*?<\/characters>/gi, '').replace(/<size>[\s\S]*?<\/size>/gi, '')
+                            .replace(/<tag>[\s\S]*?<\/tag>/gi, '').trim();
+                        const promptParts = [tagOnly, nl ? 'NL: ' + nl.trim() : '', neg ? 'Neg: ' + neg.trim() : ''].filter(Boolean).join('\n');
+
+                        const wrap = document.createElement('div');
+                        wrap.className = 'rpg-bbi-wrap';
+
+                        const actions = document.createElement('div');
+                        actions.className = 'rpg-bbi-actions';
+
+                        const dlBtn = document.createElement('button');
+                        dlBtn.className = 'rpg-bbi-btn';
+                        dlBtn.textContent = '⬇ 下載';
+                        dlBtn.onclick = (e) => {
+                            e.stopPropagation();
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = url.split('/').pop() || 'bbi-image.png';
+                            a.rel = 'noopener';
+                            document.body.appendChild(a);
+                            a.click();
+                            a.remove();
+                        };
+                        actions.appendChild(dlBtn);
+
+                        let promptPanel = null;
+                        const promptBtn = document.createElement('button');
+                        promptBtn.className = 'rpg-bbi-btn';
+                        promptBtn.textContent = '📋 提示詞';
+                        promptBtn.onclick = (e) => {
+                            e.stopPropagation();
+                            if (promptPanel) {
+                                promptPanel.remove();
+                                promptPanel = null;
+                                return;
+                            }
+                            promptPanel = document.createElement('div');
+                            promptPanel.className = 'rpg-bbi-prompt-panel';
+                            const pre = document.createElement('pre');
+                            pre.style.margin = '0'; pre.style.whiteSpace = 'pre-wrap'; pre.style.fontFamily = 'inherit';
+                            pre.textContent = promptParts;
+                            promptPanel.appendChild(pre);
+                            const copyBtn = document.createElement('button');
+                            copyBtn.textContent = '複製';
+                            copyBtn.onclick = (ev) => {
+                                ev.stopPropagation();
+                                navigator.clipboard.writeText(promptParts).then(() => {
+                                    copyBtn.textContent = '✓ 已複製';
+                                    setTimeout(() => { copyBtn.textContent = '複製'; }, 1500);
+                                });
+                            };
+                            promptPanel.appendChild(copyBtn);
+                            wrap.appendChild(promptPanel);
+                        };
+                        actions.appendChild(promptBtn);
+
+                        wrap.appendChild(img);
+                        wrap.appendChild(actions);
+                        ph.appendChild(wrap);
+                    } else {
+                        ph.appendChild(img);
+                    }
+                    ph.classList.add('rpg-img-loaded');
+                } else {
+                    // 尚未取得 URL — 保持 loading 狀態等待重試
+                    hasUnresolved = true;
+                }
+            } catch (e) {
+                console.warn('[RPG] Image hydration error:', type, id, e);
+                hasUnresolved = true;
+            }
+        }
+
+        // 延遲重試：LWB 的圖片渲染可能在 iframe hydration 之後才完成
+        if (hasUnresolved && attempt < 4) {
+            const delays = [500, 1500, 3000, 6000];
+            if (_imgRetryTimer) clearTimeout(_imgRetryTimer);
+            _imgRetryTimer = setTimeout(() => {
+                _imgRetryTimer = null;
+                hydrateInlineImages(attempt + 1);
+            }, delays[attempt]);
+        } else if (hasUnresolved) {
+            // 最終重試仍失敗 — 顯示 fallback
+            document.querySelectorAll('.rpg-img-placeholder:not(.rpg-img-loaded)').forEach(ph => {
+                const promptText = (ph.dataset.imgPrompt ? decodeURIComponent(ph.dataset.imgPrompt) : ph.dataset.imgId) || '';
+                if (promptText) {
+                    ph.innerHTML = '<span class="rpg-img-failed">\uD83D\uDDBC\uFE0F ' +
+                        (promptText.length > 50 ? promptText.slice(0, 50) + '...' : promptText) +
+                        '</span>';
+                }
+                ph.classList.add('rpg-img-loaded');
+            });
+        }
+    }
 
     const updateButtons = () => {
         if (!els.prevBtn || !els.nextBtn) return;
@@ -6167,19 +8058,13 @@ function scheduleBackgroundPreload(currentRegion, currentPartyIds) {
     }
 
     // 一次性讀取所有角色狀態，建立 statusMap
+    // [效能優化] 用單次快照涵蓋 9 次讀取
+    beginVarBatch();
     const statusMap = {};
-    let statusFetchFailed = false;
-    try {
-        const statusResults = await Promise.all(
-            heroineList.map(id => (getVariable(`世界.妈妈.${id}.状态`) ?? '-1'))
-        );
-        heroineList.forEach((id, i) => {
-            statusMap[id] = statusResults[i] || '-1';
-        });
-    } catch(e) {
-        console.warn('[WM] 讀取角色狀態失敗，使用靜態模式', e);
-        statusFetchFailed = true;
-    }
+    heroineList.forEach(id => {
+        statusMap[id] = getVariable(`世界.妈妈.${id}.状态`) || '-1';
+    });
+    endVarBatch();
 
 const existingPanel = document.getElementById('wm-mobile-panel');
 const panelParent = existingPanel?.parentElement 
@@ -6287,6 +8172,593 @@ previewArea.appendChild(dot);
 }
 
     let isSyncing = false;
+
+    // ============================================================
+    // === 家园系统 (Home System) 核心邏輯 ===
+    // ============================================================
+
+    // --- 是否處於家園模式 ---
+    function isInHome() {
+        // [新增] 檢查家园系统開關（預設啟用，向後兼容）
+        if (state.homeSystemEnabled === false) return false;
+        return state.region === "自由都市"
+            && state.location === "伦德"
+            && state.subLocation
+            && state.subLocation.includes("家");
+    }
+
+    // --- [新增] 家园系统開關 ---
+    window.setHomeSystem = function(enabled) {
+        const val = enabled ? '1' : '0';
+        setVar('世界.家园系统.啟用', val);
+        state.homeSystemEnabled = enabled;
+        console.log('[Home] 家园系统開關:', enabled ? '啟用' : '停用');
+
+        // 更新按鈕狀態
+        document.getElementById('home-enable-btn')?.classList.toggle('active', enabled);
+        document.getElementById('home-disable-btn')?.classList.toggle('active', !enabled);
+
+        // 如果停用且當前在家園中，立即清除 UI
+        if (!enabled && state.isHome) {
+            exitHomeSystem();
+        }
+
+        // 重新同步（若啟用，會重新進入家園）
+        syncGameState();
+    };
+
+    // --- 家園變量讀寫輔助 ---
+    // 角色家中位置：世界.妈妈.{名}.家中位置
+    function getCharHomeVar(name, key) {
+        return getVariable('世界.妈妈.' + name + '.' + key);
+    }
+    function setCharHomeVar(name, key, value) {
+        setVar('世界.妈妈.' + name + '.' + key, value);
+    }
+    // 玩家家中位置：世界.位置.家中位置
+    function getPlayerHomeVar() {
+        return getVariable('世界.位置.家中位置');
+    }
+    function setPlayerHomeVar(value) {
+        setVar('世界.位置.家中位置', value);
+    }
+
+    // --- 模糊匹配地點名稱（防止 LLM 亂填）---
+    function normalizeHomeLocation(rawLoc) {
+        if (!rawLoc || rawLoc === '0' || rawLoc === '') return null;
+        // 0. 特殊狀態：外出（由 LLM 設定，非隨機分配）
+        if (rawLoc === '外出' || rawLoc.includes('外出')) return '外出';
+        // 1. 完全匹配
+        if (HOME_LOCATIONS[rawLoc]) return rawLoc;
+        // 2. 寬鬆子字串匹配所有已知地點（優先於「房」判定，避免書房/廚房被誤判）
+        const locKeys = Object.keys(HOME_LOCATIONS);
+        for (const key of locKeys) {
+            if (rawLoc.includes(key) || key.includes(rawLoc)) return key;
+        }
+        // 3. 包含「房间」或「房間」→ 嘗試匹配角色房間
+        if (rawLoc.includes('房间') || rawLoc.includes('房間')) {
+            for (const heroName of heroineList) {
+                if (rawLoc.includes(heroName)) return heroName + '的房间';
+            }
+            // 不符合任何角色名稱 → 視為玩家房間
+            return '玩家房间';
+        }
+        return null;
+    }
+
+    // --- 取得某角色的家園位置 ---
+    function getCharHomeLocation(name) {
+        const loc = getCharHomeVar(name, '家中位置');
+        return normalizeHomeLocation(loc);
+    }
+
+    // --- 取得某角色的停留輪數 ---
+    function getCharHomeRounds(name) {
+        return parseInt(getCharHomeVar(name, '停留轮数')) || 0;
+    }
+
+    // --- 取得玩家當前家中位置 ---
+    function getPlayerHomeLocation() {
+        const loc = getPlayerHomeVar();
+        return normalizeHomeLocation(loc) || '前庭';
+    }
+
+    // --- 輔助：角色是否已攻略（狀態 >= 3）---
+    function isCharConquered(name) {
+        const s = parseInt(getVariable('世界.妈妈.' + name + '.状态')) || 0;
+        return s >= 3;
+    }
+
+    // --- 輔助：角色是否在隊 ---
+    function isCharInParty(name) {
+        const v = getVariable('世界.妈妈.' + name + '.在队状态');
+        return v === '是' || v === 'True' || v === 'true';
+    }
+
+    // --- 進入家園時的初始化 ---
+    function initHomeSystem() {
+        console.log('[Home] 進入家园系统');
+        state.isHome = true;
+        state._homeFirstMoveDone = false; // 標記：尚未執行過「首次離開前庭」
+
+        // 批次寫入所有初始化變量（單次 updateVariablesWith）
+        updateVariablesWith(function(variables) {
+            const sd = variables.stat_data || variables;
+
+            // 設定預設位置為前庭
+            const currentHomeLoc = getPlayerHomeLocation();
+            if (!HOME_LOCATIONS[currentHomeLoc]) {
+                _.set(sd, '世界.位置.家中位置', '前庭');
+            }
+
+            // 初始化角色位置（僅已攻略角色）
+            heroineList.forEach(name => {
+                if (!isCharConquered(name)) return; // 未攻略 → 不參與家園
+                const charLoc = getCharHomeLocation(name);
+                if (isCharInParty(name)) {
+                    // 在隊角色 → 跟隨玩家放到前庭
+                    _.set(sd, `世界.妈妈.${name}.家中位置`, '前庭');
+                    _.set(sd, `世界.妈妈.${name}.停留轮数`, 0);
+                } else if (!charLoc || charLoc === '外出') {
+                    // 未初始化位置的已攻略角色 → 放到前庭；外出中的保持原樣
+                    if (charLoc !== '外出') {
+                        _.set(sd, `世界.妈妈.${name}.家中位置`, '前庭');
+                        _.set(sd, `世界.妈妈.${name}.停留轮数`, 0);
+                    }
+                }
+                // 已有位置且非在隊 → 保持原位置
+            });
+
+            return variables;
+        }, { type: 'message' });
+    }
+
+    // --- 離開家園時的清理 ---
+    function exitHomeSystem() {
+        console.log('[Home] 離開家园系统');
+        state.isHome = false;
+        clearHomeUI();
+        // 重置地圖背景快取，讓 syncGameState 重新載入正常地圖
+        if (els.mapArea) els.mapArea.dataset.currentMapUrl = '';
+    }
+
+    // --- 清除家園 UI 元素 ---
+    function clearHomeUI() {
+        if (!els.mapArea) return;
+        els.mapArea.querySelectorAll('.home-nav-arrow, .home-location-label, .home-room-menu-overlay').forEach(el => el.remove());
+    }
+
+    // --- 渲染家園 UI（導航箭頭 + 位置標籤）---
+    function renderHomeUI() {
+        if (!els.mapArea) return;
+
+        const currentLoc = getPlayerHomeLocation();
+        const adj = HOME_ADJACENCY[currentLoc];
+        if (!adj) return;
+
+        // [修復] 計算新標籤文字，用於去重判斷
+        const floorInfo = HOME_LOCATIONS[currentLoc];
+        let floorText = '';
+        if (floorInfo) {
+            if (floorInfo.floor === 1) floorText = '一楼';
+            else if (floorInfo.floor === 2) floorText = '二楼';
+            else if (floorInfo.floor === 3) floorText = '三楼';
+            else if (floorInfo.floor === -1) floorText = '地下';
+        }
+        const newLabelText = (floorText ? floorText + ' · ' : '') + currentLoc;
+
+        // [修復] 去重：檢查現有標籤文字是否相同
+        const existingLabel = els.mapArea.querySelector('.home-location-label');
+        const labelUnchanged = existingLabel && existingLabel.textContent === newLabelText;
+
+        // 只清除箭頭和選單遮罩（不清除未變化的標籤）
+        els.mapArea.querySelectorAll('.home-nav-arrow, .home-room-menu-overlay').forEach(el => el.remove());
+        if (!labelUnchanged && existingLabel) existingLabel.remove();
+
+        // 箭頭方向 → CSS class + 圖標文字
+        const ARROW_ICONS = {
+            'up':         '▲',
+            'down':       '▼',
+            'left':       '◀',
+            'right':      '▶',
+            'up-right':   '▲',
+            'down-right': '▼',
+        };
+
+        // 渲染導航箭頭
+        for (const [dir, target] of Object.entries(adj)) {
+            if (!target) continue;
+            const arrow = document.createElement('button');
+            arrow.className = `home-nav-arrow arrow-${dir}`;
+
+            const icon = ARROW_ICONS[dir] || '●';
+            // 智慧顯示名稱：同層選單→「换房」，跨層選單→樓層名
+            let displayName = target;
+            const currentFloor = HOME_LOCATIONS[currentLoc]?.floor;
+            const menuInfo = HOME_MENU_FLOORS[target];
+            if (menuInfo) {
+                displayName = (menuInfo.floor === currentFloor) ? '换房' : target;
+            }
+            
+            // 根據方向決定圖標和文字排列
+            if (dir === 'left') {
+                arrow.innerHTML = `<span class="arrow-icon">${icon}</span> ${displayName}`;
+            } else if (dir === 'right') {
+                arrow.innerHTML = `${displayName} <span class="arrow-icon">${icon}</span>`;
+            } else if (dir.includes('up')) {
+                arrow.innerHTML = `<span class="arrow-icon">${icon}</span> ${displayName}`;
+            } else {
+                arrow.innerHTML = `<span class="arrow-icon">${icon}</span> ${displayName}`;
+            }
+
+            arrow.onclick = (e) => {
+                e.stopPropagation();
+                navigateHome(target);
+            };
+            els.mapArea.appendChild(arrow);
+        }
+
+        // [修復] 僅在標籤不存在或文字已變更時建立新標籤
+        if (!labelUnchanged) {
+            const label = document.createElement('div');
+            label.className = 'home-location-label fade-in'; // 首次/變更時加入動畫
+            label.textContent = newLabelText;
+            els.mapArea.appendChild(label);
+        }
+    }
+
+    // --- 處理導航移動 ---
+    function navigateHome(target) {
+        // 檢查是否為虛擬節點（需要跳出選單）
+        if (HOME_MENU_FLOORS[target]) {
+            showRoomMenu(target);
+            return;
+        }
+
+        // 「下楼」特殊節點：從三樓向下，讓玩家選擇去二樓還是直達一樓
+        if (target === '下楼') {
+            showStairMenu();
+            return;
+        }
+
+        // 「上楼」特殊節點：從一樓向上，讓玩家選擇去二樓還是直達三樓
+        if (target === '上楼') {
+            showUpstairMenu();
+            return;
+        }
+
+        // 檢查是否為「進入家園後的第一次離開前庭」→ 解除在隊狀態
+        // 僅在首次移動時觸發，之後玩家手動邀請的同行不會被解除
+        const prevLoc = getPlayerHomeLocation();
+        if (!state._homeFirstMoveDone && prevLoc === '前庭' && target !== '前庭') {
+            state._homeFirstMoveDone = true;
+            heroineList.forEach(name => {
+                if (isCharInParty(name)) {
+                    setVar('世界.妈妈.' + name + '.在队状态', '否');
+                    console.log(`[Home] ${name} 離開在隊狀態（首次進入建築）`);
+                }
+            });
+        }
+
+        // 在隊角色跟隨玩家移動
+        heroineList.forEach(name => {
+            if (isCharInParty(name) && isCharConquered(name)) {
+                setCharHomeVar(name, '家中位置', target);
+                setCharHomeVar(name, '停留轮数', 0);
+            }
+        });
+
+        // 更新玩家位置
+        setPlayerHomeVar(target);
+        console.log('[Home] 移動到:', target);
+
+        // 立即刷新
+        renderHomeUI();
+        syncGameState();
+    }
+
+    // --- 顯示房間選單 ---
+    function showRoomMenu(virtualNode) {
+        if (!els.mapArea) return;
+
+        // 移除舊選單
+        els.mapArea.querySelectorAll('.home-room-menu-overlay').forEach(el => el.remove());
+
+        const menuInfo = HOME_MENU_FLOORS[virtualNode];
+        if (!menuInfo) return;
+
+        // 取得該樓層的所有房間
+        const rooms = Object.entries(HOME_LOCATIONS).filter(([, data]) => data.floor === menuInfo.floor);
+
+        // 建立遮罩
+        const overlay = document.createElement('div');
+        overlay.className = 'home-room-menu-overlay';
+        overlay.onclick = (e) => {
+            if (e.target === overlay) overlay.remove();
+        };
+
+        // 建立選單面板
+        const menu = document.createElement('div');
+        menu.className = 'home-room-menu';
+
+        const title = document.createElement('div');
+        title.className = 'home-room-menu-title';
+        title.textContent = menuInfo.title;
+        menu.appendChild(title);
+
+        // 渲染每個房間選項
+        rooms.forEach(([roomName, roomData]) => {
+            const option = document.createElement('div');
+            option.className = 'home-room-option';
+
+            // 房間名稱
+            const nameSpan = document.createElement('span');
+            nameSpan.className = 'room-name';
+            nameSpan.textContent = roomName;
+            option.appendChild(nameSpan);
+
+            // 顯示該房間中的角色（僅已攻略且非外出）
+            const occupants = heroineList.filter(name => {
+                if (!isCharConquered(name)) return false;
+                const loc = getCharHomeLocation(name);
+                return loc === roomName && loc !== '外出';
+            });
+            const occSpan = document.createElement('span');
+            occSpan.className = 'room-occupants' + (occupants.length > 0 ? ' has-people' : '');
+            occSpan.textContent = occupants.length > 0 ? occupants.join('、') : '无人';
+            option.appendChild(occSpan);
+
+            option.onclick = (e) => {
+                e.stopPropagation();
+                overlay.remove();
+                navigateHome(roomName);
+            };
+
+            menu.appendChild(option);
+        });
+
+        overlay.appendChild(menu);
+        els.mapArea.appendChild(overlay);
+    }
+
+    // --- 下樓選擇器（從三樓向下時使用）---
+    function showStairMenu() {
+        if (!els.mapArea) return;
+        els.mapArea.querySelectorAll('.home-room-menu-overlay').forEach(el => el.remove());
+
+        const overlay = document.createElement('div');
+        overlay.className = 'home-room-menu-overlay';
+        overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+
+        const menu = document.createElement('div');
+        menu.className = 'home-room-menu';
+
+        const title = document.createElement('div');
+        title.className = 'home-room-menu-title';
+        title.textContent = '下楼';
+        menu.appendChild(title);
+
+        // 選項 1：去二樓（開啟房間選單）
+        const opt2F = document.createElement('div');
+        opt2F.className = 'home-room-option';
+        opt2F.innerHTML = '<span class="room-name">二楼 · 个人房间</span>';
+        opt2F.onclick = (e) => {
+            e.stopPropagation();
+            overlay.remove();
+            showRoomMenu('二楼');
+        };
+        menu.appendChild(opt2F);
+
+        // 選項 2：直達一樓（客廳）
+        const opt1F = document.createElement('div');
+        opt1F.className = 'home-room-option';
+        opt1F.innerHTML = '<span class="room-name">一楼 · 客厅</span>';
+        opt1F.onclick = (e) => {
+            e.stopPropagation();
+            overlay.remove();
+            navigateHome('客厅');
+        };
+        menu.appendChild(opt1F);
+
+        overlay.appendChild(menu);
+        els.mapArea.appendChild(overlay);
+    }
+
+    // --- 上楼選單：從一樓選擇去二樓或直達三樓 ---
+    function showUpstairMenu() {
+        if (!els.mapArea) return;
+        els.mapArea.querySelectorAll('.home-room-menu-overlay').forEach(el => el.remove());
+
+        const overlay = document.createElement('div');
+        overlay.className = 'home-room-menu-overlay';
+        overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+
+        const menu = document.createElement('div');
+        menu.className = 'home-room-menu';
+
+        const title = document.createElement('div');
+        title.className = 'home-room-menu-title';
+        title.textContent = '上楼';
+        menu.appendChild(title);
+
+        // 選項 1：去二樓（開啟房間選單）
+        const opt2F = document.createElement('div');
+        opt2F.className = 'home-room-option';
+        opt2F.innerHTML = '<span class="room-name">二楼 · 个人房间</span>';
+        opt2F.onclick = (e) => {
+            e.stopPropagation();
+            overlay.remove();
+            showRoomMenu('二楼');
+        };
+        menu.appendChild(opt2F);
+
+        // 選項 2：直達三樓（開啟三樓選單）
+        const opt3F = document.createElement('div');
+        opt3F.className = 'home-room-option';
+        opt3F.innerHTML = '<span class="room-name">三楼</span>';
+        opt3F.onclick = (e) => {
+            e.stopPropagation();
+            overlay.remove();
+            showRoomMenu('三楼');
+        };
+        menu.appendChild(opt3F);
+
+        overlay.appendChild(menu);
+        els.mapArea.appendChild(overlay);
+    }
+
+    // --- 依地點與時段回傳權重倍率 ---
+    function getTimeMultiplier(loc, hour) {
+        switch (loc) {
+            case '厨房饭厅':
+                if (hour >= 7  && hour < 9)  return 3.0; // 早餐
+                if (hour >= 11 && hour < 13) return 4.0; // 午餐
+                if (hour >= 17 && hour < 19) return 3.5; // 晚餐
+                if (hour >= 0  && hour < 5)  return 0.5; // 深夜幾乎不在廚房
+                return 1.0;
+            case '书房':
+            case '工坊':
+                if (hour >= 9  && hour < 17) return 1.5; // 白天工作時段
+                if (hour >= 0  && hour < 6)  return 0.2; // 深夜少用
+                return 1.0;
+            case '训练场':
+                if (hour >= 6  && hour < 9)  return 10.0; // 晨練
+                if (hour >= 9 || hour < 5)  return 0;   // 深夜不訓練
+                return 1.0;
+            case '后院':
+                if (hour >= 9  && hour < 11) return 1.5; // 上午戶外活動
+                if (hour >= 15 && hour < 17) return 1.5; // 下午戶外活動
+                if (hour >= 0  && hour < 6)  return 0.1; // 深夜不在後院
+                return 1.0;
+            case '浴室':
+                if (hour >= 19 && hour < 24) return 6.0; // 睡前入浴
+                return 1.0;
+            default:
+                return 1.0;
+        }
+    }
+
+    // --- 模擬角色自由移動（每輪呼叫一次）---
+    async function simulateHomeMovement() {
+        const playerLoc = getPlayerHomeLocation();
+
+        // 載入外部家園配置（已載入則直接取快取）
+        const homeConfig = await loadHomeConfigOnce();
+        const externalWeights = homeConfig.charWeights || {};
+
+        // [效能優化] 本函數對 9 名角色各讀多個變量，用單次快照涵蓋
+        beginVarBatch();
+
+        // 讀取當前遊戲時間
+        const hourRaw = getVariable('世界.当前.时间.时');
+        const gameHour = isNaN(parseInt(hourRaw)) ? 12 : parseInt(hourRaw);
+
+        // 收集所有需要寫入的變更，最後單次批次寫入
+        const writes = [];
+
+        heroineList.forEach(name => {
+            // === 過濾條件 ===
+            if (!isCharConquered(name)) return;      // 未攻略 → 不參與
+            if (isCharInParty(name)) return;          // 在隊中 → 跟隨玩家，不隨機移動
+            const charLoc = getCharHomeLocation(name);
+            if (!charLoc) return;                     // 未初始化
+            if (charLoc === '外出') return;              // 外出中 → 不干涉
+
+            // [快照] 讀取上輪位置
+            const lastLoc = getVariable(`世界.妈妈.${name}.上轮位置`) || '';
+
+            // [外部寫入偵測] 當前位置與上輪快照不同 → LLM 劇情更動
+            if (lastLoc && charLoc !== lastLoc) {
+                console.log(`[Home] ${name} 位置外部變動 ${lastLoc} → ${charLoc}，重置停留輪數`);
+                writes.push({ path: `世界.妈妈.${name}.停留轮数`, value: 0 });
+                writes.push({ path: `世界.妈妈.${name}.上轮位置`, value: charLoc });
+                return;
+            }
+
+            // 和玩家同一地點 → 凍結停留輪數，不移動
+            if (charLoc === playerLoc) {
+                writes.push({ path: `世界.妈妈.${name}.停留轮数`, value: 0 });
+                writes.push({ path: `世界.妈妈.${name}.上轮位置`, value: charLoc });
+                return;
+            }
+
+            // 增加停留輪數
+            const rounds = getCharHomeRounds(name) + 1;
+            writes.push({ path: `世界.妈妈.${name}.停留轮数`, value: rounds });
+
+            // 未達閾值，不移動
+            if (rounds < HOME_MOVE_THRESHOLD) {
+                writes.push({ path: `世界.妈妈.${name}.上轮位置`, value: charLoc });
+                return;
+            }
+
+            // --- 按權重隨機選擇新位置（外部優先）---
+            const weights = externalWeights[name] ?? HOME_CHAR_WEIGHTS[name] ?? {};
+            const candidates = [];
+            let totalWeight = 0;
+
+            for (const [loc, baseWeight] of Object.entries(weights)) {
+                // [原] if (baseWeight <= 0 || !HOME_LOCATIONS[loc] || loc === charLoc) continue;              
+		if (baseWeight <= 0 || !HOME_LOCATIONS[loc]) continue;
+
+                let finalWeight = baseWeight;
+
+                // === 特殊條件：他人的房間 ===
+                const locData = HOME_LOCATIONS[loc];
+                if (locData.isRoom && locData.owner && locData.owner !== name) {
+                    const ownerLoc = getCharHomeLocation(locData.owner);
+                    if (ownerLoc !== loc) {
+                        finalWeight = 0;
+                    } else {
+                        finalWeight = Math.max(1, Math.floor(finalWeight * 0.5));
+                    }
+                }
+
+                // 套用時間倍率（在房間主人歸零後才乘，避免無效運算）
+                if (finalWeight > 0) {
+                    finalWeight = Math.max(1, Math.round(finalWeight * getTimeMultiplier(loc, gameHour)));
+                }
+
+                if (finalWeight > 0) {
+                    candidates.push({ loc, weight: finalWeight });
+                    totalWeight += finalWeight;
+                }
+            }
+
+            if (candidates.length === 0 || totalWeight === 0) {
+                writes.push({ path: `世界.妈妈.${name}.上轮位置`, value: charLoc });
+                return;
+            }
+
+            // 加權隨機選擇
+            let roll = Math.random() * totalWeight;
+            let chosen = candidates[0].loc;
+            for (const c of candidates) {
+                roll -= c.weight;
+                if (roll <= 0) { chosen = c.loc; break; }
+            }
+
+            // 更新位置與重置輪數
+            writes.push({ path: `世界.妈妈.${name}.家中位置`, value: chosen });
+            writes.push({ path: `世界.妈妈.${name}.停留轮数`, value: 0 });
+            writes.push({ path: `世界.妈妈.${name}.上轮位置`, value: chosen }); // 快照更新為移動後位置
+            console.log(`[Home] ${name} 自由移動: ${charLoc} → ${chosen}`);
+        });
+
+        // [效能優化] 讀取階段結束，寫入前釋放快照
+        endVarBatch();
+
+        // 單次批次寫入所有變更
+        if (writes.length > 0) {
+            updateVariablesWith(function(variables) {
+                const sd = variables.stat_data || variables;
+                writes.forEach(w => _.set(sd, w.path, w.value));
+                return variables;
+            }, { type: 'message' });
+        }
+    }
+
+    // === 家园系统核心邏輯結束 ===
 
 		// === 地點快捷按鈕設定 ===
 // buttonText 三選一: "A文字" | "B文字" | "C文字"
@@ -6430,10 +8902,7 @@ const LOCATION_BUTTONS = [
             visibleBtns.push(cfg); // 無條件，直接通過
             continue;
         }
-        // 並行讀取所有條件變量
-        const results = await Promise.all(
-            cfg.conditions.map(c => (getVariable(c.varName) ?? null))
-        );
+        const results = cfg.conditions.map(c => (getVariable(c.varName) ?? null));
         const allMet = cfg.conditions.every((c, i) => {
     if (c.value !== undefined) return results[i] == c.value;   // 符合某值
     if (c.not   !== undefined) return results[i] != c.not;     // 不符合某值
@@ -6478,49 +8947,68 @@ const LOCATION_BUTTONS = [
     async function syncGameState() {
         console.log('[RPG] syncGameState 呼叫, isSyncing:', isSyncing);
         if (isSyncing) return;
+        // [防護] 串流生成期間跳過同步，避免讀到過渡態的空變量
+        // 生成結束時 MESSAGE_RECEIVED 會再觸發一次正式同步
+        if (isGenerating) {
+            console.log('[RPG] 生成中，跳過本次 syncGameState');
+            return;
+        }
         isSyncing = true;
 	let region = '';
                      let currentPartyIds = [];
         try {
+            // === [效能優化] 單次快照涵蓋本輪同步的全部讀取（含 checkRaidStatus）===
+            beginVarBatch();
             await checkRaidStatus();
             // ============================================================
-            // === 並行數據請求 (Parallel Fetching) ===
+            // === 同步數據讀取 (getVariable 為同步函數) ===
             // ============================================================
             
             const batchPromises = [
                 // Group 0: 位置資訊
-                Promise.all([
+                [
                     getVariable('世界.位置.区域'),
                     getVariable('世界.位置.地点'),
                     getVariable('世界.位置.子地点')
-                ]),
+                ],
                 // Group 1: 玩家數值
-                Promise.all([
+                [
                     getVariable('世界.玩家状态.综合实力.实际等级'),
                     getVariable(VAR_HP),                     
                     getVariable(VAR_ATK),                    
                     getVariable(VAR_POINTS),                 
                     getVariable(VAR_RANK)                    
-                ]),
+                ],
                 // Group 2: 時間日期
-                Promise.all([
+                [
                     getVariable('世界.当前.时间.时'),
                     getVariable('世界.当前.日期.年'),
                     getVariable('世界.当前.日期.月'),
                     getVariable('世界.当前.日期.日') 
-                ]),
-                Promise.all([
+                ],
+                [
                     getVariable('世界.玩家状态.惩罚.惩罚中'),
                     getVariable('世界.玩家状态.惩罚.剩余天数')
-                ])
+                ],
+                // Group 4: [新增] 家园系统開關
+                getVariable('世界.家园系统.啟用')
             ];
 
-            const [locData, playerData, timeData, punishData] = await Promise.all(batchPromises);
+            const [locData, playerData, timeData, punishData, homeEnabledRaw] = batchPromises;
 	    [region] = locData;
             const [, locationName, subLocation] = locData;
+// [新增] 快取家园系统開關狀態（預設啟用，'0' 為停用）
+state.homeSystemEnabled = (String(homeEnabledRaw) === '1');
 state.region = region;
 state.location = locationName;
 state.subLocation = subLocation;
+
+// === 家园系统：進入/離開檢測 ===
+const _wasHome = state.isHome || false;
+const _nowHome = isInHome();
+if (!_wasHome && _nowHome) initHomeSystem();
+if (_wasHome && !_nowHome) exitHomeSystem();
+state.isHome = _nowHome;
 
 // === 防呆：修正模型可能誤寫成子地點的獨立迷宮地點 ===
 const STANDALONE_LOCATIONS = [
@@ -6587,6 +9075,8 @@ const [pLevelRaw, valHP, valATK, valPoints, rank] = playerData;
             
             if (els.hudTime) els.hudTime.innerHTML = gameTimeStr;
             if (els.hudLevel) els.hudLevel.innerHTML = pLevel;
+            // [新增] 窄屏頂欄日期條同步
+            if (els.topbarDate) els.topbarDate.textContent = `星历 ${y}年${m}月${d}日`;
 
             try {
                 if(rank) document.getElementById('player-a').innerText = rank;
@@ -6602,14 +9092,12 @@ const [pLevelRaw, valHP, valATK, valPoints, rank] = playerData;
             // ============================================================
             // === [优化 2] 合并所有的角色状态请求 (状态、好感、在队、NSFW) ===
             // ============================================================
-            const charPromises = heroineList.flatMap(id => [
+            const charResults = heroineList.flatMap(id => [
                 (getVariable(`世界.妈妈.${id}.状态`) ?? '-1'),
                 (getVariable(`世界.妈妈.${id}.好感度`) ?? '0'),
                 (getVariable(`世界.妈妈.${id}.在队状态`) ?? '否'),
                 (getVariable(`世界.妈妈.${id}.NSFW状态`) ?? '否')
             ]);
-            
-            const charResults = await Promise.all(charPromises);
             
             let currentRecruitedCount = 0;
             let currentrelationshipCount = 0;
@@ -6672,7 +9160,21 @@ heroineList.forEach((id, i) => {
                 }
             }
 
-            if (region) {
+            // === 家園模式：覆寫背景圖與 UI ===
+            if (state.isHome && els.mapArea) {
+                const homeLocation = getPlayerHomeLocation();
+                const homeBgUrl = HOME_LOCATIONS[homeLocation]?.bg || 'placeholder_frontyard.png';
+                if (els.mapArea.dataset.currentMapUrl !== homeBgUrl) {
+                    els.mapArea.style.backgroundImage = `url('${homeBgUrl}')`;
+                    els.mapArea.dataset.currentMapUrl = homeBgUrl;
+                }
+                // 清除常規地圖元素
+                els.mapArea.querySelectorAll('.map-point, .landmark-img, .location-action-btn-wrap').forEach(n => n.remove());
+                // 渲染家園導航 UI
+                renderHomeUI();
+            }
+
+            if (region && !state.isHome) {
                 const url = mapAssets[region] || mapAssets["自由都市"];
                 if (url && els.mapArea && els.mapArea.dataset.currentMapUrl !== url) {
                     const preloader = new Image();
@@ -6832,12 +9334,27 @@ heroineList.forEach((id, i) => {
             }
 
             // === 处理队伍成员刷新 ===
-            const displayPartyIds = isAnyNsfw ? nsfwIds : currentPartyIds;
-const sortedIdsForKey = [...displayPartyIds].sort(); 
-if (JSON.stringify(sortedIdsForKey) !== JSON.stringify(state.lastPartyIds)) {
-    renderParty(displayPartyIds);
-    state.lastPartyIds = sortedIdsForKey;
-}
+            if (state.isHome) {
+                // 家園模式：按地點顯示角色立繪（僅已攻略且非外出）
+                const homeLocation = getPlayerHomeLocation();
+                const homePartyIds = heroineList.filter(name => {
+                    if (!isCharConquered(name)) return false;
+                    const charLoc = getCharHomeLocation(name);
+                    return charLoc === homeLocation && charLoc !== '外出';
+                });
+                const sortedHome = [...homePartyIds].sort();
+                if (JSON.stringify(sortedHome) !== JSON.stringify(state.lastPartyIds)) {
+                    renderParty(homePartyIds);
+                    state.lastPartyIds = sortedHome;
+                }
+            } else {
+                const displayPartyIds = isAnyNsfw ? nsfwIds : currentPartyIds;
+                const sortedIdsForKey = [...displayPartyIds].sort(); 
+                if (JSON.stringify(sortedIdsForKey) !== JSON.stringify(state.lastPartyIds)) {
+                    renderParty(displayPartyIds);
+                    state.lastPartyIds = sortedIdsForKey;
+                }
+            }
             // === 音乐播放逻辑 ===
             if (window.gameLoopPaused) return;
 
@@ -6894,8 +9411,21 @@ state.currentMusicUrl = targetMusicUrl;
         } catch(e) {
             console.error("同步失敗:", e);
         } finally {
+            // [效能優化] 釋放快照（家園移動模擬會自建新快照，避免跨 await 讀到過期資料）
+            endVarBatch();
             // 解开重入锁
             scheduleBackgroundPreload(region, currentPartyIds);
+            // === 家园系统：模擬角色自由移動（僅在收到新訊息時觸發）===
+            if (state.isHome) {
+                try {
+                    const _msgId = window.RPG_MESSAGE_ID;
+                    if (_msgId != null && _msgId !== state._homeLastMsgId) {
+                        state._homeLastMsgId = _msgId;
+                        await simulateHomeMovement();
+                        console.log(`[Home] 新一輪（訊息 #${_msgId}），已執行角色移動模擬`);
+                    }
+                } catch(e) { console.error('[Home] 移動模擬失敗:', e); }
+            }
             isSyncing = false;
         }
     }
@@ -6907,42 +9437,19 @@ let streamTimeout = null;
 let isGenerating = false;
 let genResetTimer = null;
 
-window.updateTemplateVariables = function(data) {
+// === [效能優化] 串流節流 ===
+// 流式生成時 updateTemplateVariables 每個 chunk 都被呼叫一次，
+// 而全文掃描（extractContent / isFinished）與 innerHTML 重建的成本隨訊息長度成長，
+// 逐 chunk 全量處理會形成 O(N²)。改為 leading + trailing 節流：
+// 首個 chunk 立即處理，之後每 150ms 最多處理一次（永遠處理最新內容），
+// 生成結束由 MESSAGE_RECEIVED / RPG_FORCE_REFRESH_FROM_VARIABLES 保證最終刷新。
+const STREAM_THROTTLE_MS = 150;
+let _streamThrottleTimer = null;
+let _streamPendingRaw = null;
+let _streamLastProcessedRaw = null;
 
-    clearTimeout(window.__safeUnlockTimer);
-    window.__safeUnlockTimer = setTimeout(() => {
-        if (isGenerating) {
-            isGenerating = false;
-            document.querySelector('.rpg-v7-root')?.classList.remove('generating');
-            console.log('[RPG] 安全重置：串流逾時，generating 已強制解除');
-        }
-}, 8000);
-
-    if (!isGenerating) {
-        isGenerating = true;
-        const root = document.querySelector('.rpg-v7-root');
-        if (root) root.classList.add('generating');
-    }
-
-    const rawString = typeof data === 'string' ? data : (data && data.RPG ? String(data.RPG) : "");
-    state.rawMessage = rawString;
-    if (_anchorRulesCache === null || _filterRulesCache === null) {
-    const _snap = rawString;
-    Promise.all([
-        _anchorRulesCache === null ? refreshAnchorRulesCache() : Promise.resolve(),
-        _filterRulesCache === null ? refreshFilterRulesCache() : Promise.resolve()
-    ]).then(() => {
-        if (state.rawMessage !== _snap) return; // 訊息已更新，跳過
-        state.rawText = '';                      // 讓 extractContent 重跑
-        const reText = extractContent(_snap);
-        if (reText) {
-            state.rawText = reText;
-            if (streamTimeout) cancelAnimationFrame(streamTimeout);
-            streamTimeout = requestAnimationFrame(refreshUI);
-        }
-    }).catch(() => {});
-    // 不 return，讓後續流程繼續（處理 isGenerating / genResetTimer 等）
-}
+// 重量級處理本體：正文提取、完成判定、渲染排程
+function _processRawContent(rawString) {
     // ✅ isFinished 專用：單獨清洗，只為了準確判斷結尾標籤
     let stringForFinishedCheck = rawString;
     stringForFinishedCheck = stringForFinishedCheck.replace(/^[\s\S]*?<\/thinking>/i, '');
@@ -6982,6 +9489,78 @@ if (isFinished) {
         setTimeout(() => syncGameState?.(), 500);
     }, 800); // 給事件監聽留足夠的優先時間
 }
+}
+
+// 沖洗器：生成結束（MESSAGE_RECEIVED / 外部強制刷新）時呼叫，
+// 立即處理節流窗口中尚未處理的最終內容，避免最後一段文字延遲出現
+function _flushPendingRaw() {
+    if (_streamThrottleTimer) {
+        clearTimeout(_streamThrottleTimer);
+        _streamThrottleTimer = null;
+    }
+    if (_streamPendingRaw !== null && _streamPendingRaw !== _streamLastProcessedRaw) {
+        _processRawContent(_streamPendingRaw);
+        _streamLastProcessedRaw = _streamPendingRaw;
+    }
+}
+
+// 節流排程器：leading（首次立即）+ trailing（窗口結束時處理最新內容）
+function _scheduleProcessRaw(rawString) {
+    _streamPendingRaw = rawString;
+    if (_streamThrottleTimer) return; // 節流窗口內，等 trailing 統一處理
+
+    _processRawContent(_streamPendingRaw);
+    _streamLastProcessedRaw = _streamPendingRaw;
+
+    _streamThrottleTimer = setTimeout(function _tick() {
+        _streamThrottleTimer = null;
+        if (_streamPendingRaw !== _streamLastProcessedRaw) {
+            _processRawContent(_streamPendingRaw);
+            _streamLastProcessedRaw = _streamPendingRaw;
+            _streamThrottleTimer = setTimeout(_tick, STREAM_THROTTLE_MS);
+        }
+    }, STREAM_THROTTLE_MS);
+}
+
+window.updateTemplateVariables = function(data) {
+
+    clearTimeout(window.__safeUnlockTimer);
+    window.__safeUnlockTimer = setTimeout(() => {
+        if (isGenerating) {
+            isGenerating = false;
+            document.querySelector('.rpg-v7-root')?.classList.remove('generating');
+            console.log('[RPG] 安全重置：串流逾時，generating 已強制解除');
+        }
+}, 8000);
+
+    if (!isGenerating) {
+        isGenerating = true;
+        const root = document.querySelector('.rpg-v7-root');
+        if (root) root.classList.add('generating');
+    }
+
+    const rawString = typeof data === 'string' ? data : (data && data.RPG ? String(data.RPG) : "");
+    state.rawMessage = rawString;
+    if (_anchorRulesCache === null || _filterRulesCache === null) {
+    const _snap = rawString;
+    Promise.all([
+        _anchorRulesCache === null ? refreshAnchorRulesCache() : Promise.resolve(),
+        _filterRulesCache === null ? refreshFilterRulesCache() : Promise.resolve()
+    ]).then(() => {
+        if (state.rawMessage !== _snap) return; // 訊息已更新，跳過
+        state.rawText = '';                      // 讓 extractContent 重跑
+        const reText = extractContent(_snap);
+        if (reText) {
+            state.rawText = reText;
+            if (streamTimeout) cancelAnimationFrame(streamTimeout);
+            streamTimeout = requestAnimationFrame(refreshUI);
+        }
+    }).catch(() => {});
+    // 不 return，讓後續流程繼續（處理 isGenerating / genResetTimer 等）
+}
+
+    // [效能優化] 重量級處理走節流；輕量狀態更新（上方）仍逐 chunk 執行
+    _scheduleProcessRaw(rawString);
 };
 
 // ============================================================
@@ -6991,9 +9570,14 @@ window.RPG_FORCE_REFRESH_FROM_VARIABLES = async function(rawData = '') {
     try {
         // 外部明確要求刷新時，視為生成已結束
         isGenerating = false;
+        // [防護] 清除可能殘留的無效快照
+        endVarBatch();
 
         const root = document.querySelector('.rpg-v7-root');
         if (root) root.classList.remove('generating');
+
+        // [效能優化] 立即處理節流中尚未渲染的最終串流內容
+        _flushPendingRaw();
 
         clearTimeout(genResetTimer);
         clearTimeout(window.__safeUnlockTimer);
@@ -7513,6 +10097,7 @@ function sendMsgViaDOM(message) {
             hudTime: root.querySelector('#hud-time'),
             hudLevel: root.querySelector('#hud-level'),
             hudToggle: root.querySelector('#hud-toggle'),
+            topbarDate: root.querySelector('#topbar-date'), // [新增] 窄屏頂欄日期
             musicBtn: musicBtn, 
 // === [新增] Status 面板常用節點快取 ===
             charName: root.querySelector('#char-name'),
@@ -7661,14 +10246,83 @@ await syncGameState();
             els.hudToggle.onclick = (e) => {
                 e.stopPropagation();
                 els.hudWrap.classList.toggle('minimized');
-                
+
                 if (els.hudWrap.classList.contains('minimized')) {
-                    els.hudToggle.innerText = '▶'; 
+                    els.hudToggle.innerText = '▶';
                 } else {
                     els.hudToggle.innerText = '◀';
                 }
             };
         }
+
+        // ==========================================
+        // === [新增] 窄屏頂欄：日期條 + 展開面板 ===
+        // ==========================================
+        const tbStrip    = document.getElementById('topbar-date-strip');
+        const tbTabs     = document.getElementById('topbar-tabs');
+        const tbBackdrop = document.getElementById('topbar-sheet-backdrop');
+        const TB_LAYERS  = ['status-layer', 'bag-layer', 'quest-layer', 'worldmap-layer', 'display-layer'];
+
+        function tbCloseAllLayers() {
+            TB_LAYERS.forEach(id => document.getElementById(id)?.classList.remove('active'));
+            // 還原被 status/quest/bag 開啟時隱藏的地點按鈕
+            document.querySelectorAll('.location-action-btn-wrap').forEach(el => el.style.display = '');
+        }
+        function tbSetActiveTab(action) {
+            if (!tbTabs) return;
+            tbTabs.querySelectorAll('.topbar-tab').forEach(b =>
+                b.classList.toggle('active', b.dataset.action === action));
+        }
+        function tbCollapse() {
+            root.classList.remove('topbar-sheet-open');
+            tbCloseAllLayers();
+            tbSetActiveTab(null);
+            if (typeof requestParentResize === 'function') requestParentResize();
+        }
+        function tbOpenAction(action) {
+            // 統一頁籤語意：先關閉所有界面層、高亮目標頁籤（「设定」也是一個普通頁籤，
+            // 窄屏下已由 CSS 從彈窗改為整頁）
+            tbCloseAllLayers();
+            tbSetActiveTab(action);
+            // 直接觸發原選單項的既有邏輯（互斥、縮放、初始化都沿用）
+            root.querySelector(`.menu-opt[data-action="${action}"]`)?.click();
+        }
+        function tbExpand(action) {
+            root.classList.add('topbar-sheet-open');
+            tbOpenAction(action || 'status'); // 展開面板預設頁：狀態
+            if (typeof requestParentResize === 'function') requestParentResize();
+        }
+
+        if (tbStrip) {
+            tbStrip.onclick = (e) => {
+                e.stopPropagation();
+                if (root.classList.contains('topbar-sheet-open')) tbCollapse();
+                else tbExpand('status');
+            };
+        }
+        if (tbTabs) {
+            tbTabs.querySelectorAll('.topbar-tab').forEach(btn => {
+                btn.onclick = (e) => {
+                    e.stopPropagation();
+                    tbOpenAction(btn.dataset.action);
+                };
+            });
+        }
+        if (tbBackdrop) {
+            tbBackdrop.onclick = (e) => {
+                e.stopPropagation();
+                tbCollapse();
+            };
+        }
+        // 各界面自帶的關閉鈕：窄屏展開狀態下等同收合整個面板
+        ['status-close-btn', 'bag-close-btn', 'quest-close-btn', 'worldmap-close-btn', 'display-close-btn'].forEach(id => {
+            document.getElementById(id)?.addEventListener('click', () => {
+                if (root.classList.contains('mobile-layout') &&
+                    root.classList.contains('topbar-sheet-open')) {
+                    tbCollapse();
+                }
+            });
+        });
 
         // ==========================================
         // === [新增] Quest 界面事件綁定 ===
@@ -7841,6 +10495,10 @@ if (displayMenuBtn) {
             const dot = el.querySelector('.display-host-dot');
             if (dot) dot.style.background = isActive ? '#ffaa00' : '';
         });
+        // [新增] 同步家园系统開關
+        const homeEnabled = state.homeSystemEnabled !== false;
+        document.getElementById('home-enable-btn')?.classList.toggle('active', homeEnabled);
+        document.getElementById('home-disable-btn')?.classList.toggle('active', !homeEnabled);
     };
 }
 
@@ -7920,6 +10578,8 @@ const firstMsg = Array.isArray(msgs) ? msgs[0] : msgs;
 if (firstMsg && firstMsg.role !== 'assistant') return;
         isGenerating = false;
         clearTimeout(genResetTimer);
+        // [效能優化] 立即處理節流中尚未渲染的最終串流內容
+        _flushPendingRaw();
         const root = document.querySelector('.rpg-v7-root');
         if (root) root.classList.remove('generating');
         updateStateViewer(extractStateContent(state.rawText || ''));
