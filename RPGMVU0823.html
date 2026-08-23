@@ -695,6 +695,11 @@
         margin: 0 0 1.2em 0; 
         text-align: justify; 
     }
+    /* 包含圖片的段落取消首行縮排 */
+    .rpg-v7-root .text-display p:has(.rpg-img-placeholder) {
+        text-indent: 0;
+        text-align: center;
+    }
     
     /* 首字下沉 */
     .rpg-v7-root .text-display.show-drop-cap p:first-child::first-letter {
