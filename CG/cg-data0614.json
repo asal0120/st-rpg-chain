@@ -354,9 +354,9 @@
     },
     {
       "slot": 7,
-      "cover": "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Min/Mincover07.png",
+      "cover": "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Min/Minorucover07.png",
       "images": [
-        "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Min/Min07.png"
+        "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Min/Minoru07.png"
       ],
       "unlockVar": "世界.妈妈.穗.NSFW.侍奉经验.手",
       "unlockOperator": ">=",
@@ -366,9 +366,9 @@
     },
     {
       "slot": 8,
-      "cover": "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Min/Mincover08.png",
+      "cover": "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Min/Minorucover08.png",
       "images": [
-        "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Min/Min08.png"
+        "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Min/Minoru08.png"
       ],
       "unlockVar": "世界.妈妈.穗.NSFW.亲密经验.爱抚",
       "unlockOperator": ">=",
@@ -378,9 +378,9 @@
     },
     {
       "slot": 9,
-      "cover": "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Min/Mincover09.png",
+      "cover": "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Min/Minorucover09.png",
       "images": [
-        "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Min/Min09.png"
+        "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Min/Minoru09.png"
       ],
       "unlockVar": "世界.妈妈.穗.NSFW.亲密经验.菊穴",
       "unlockOperator": ">=",
@@ -390,9 +390,9 @@
     },
     {
       "slot": 10,
-      "cover": "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Min/Mincover10.png",
+      "cover": "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Min/Minorucover10.png",
       "images": [
-        "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Min/Min10.png"
+        "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Min/Minoru10.png"
       ],
       "unlockVar": "世界.妈妈.穗.NSFW.亲密经验.插入",
       "unlockOperator": ">=",
@@ -402,9 +402,9 @@
     },
     {
       "slot": 11,
-      "cover": "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Min/Mincover11.png",
+      "cover": "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Min/Minorucover11.png",
       "images": [
-        "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Min/Min11.png"
+        "https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/CG/Min/Minoru11.png"
       ],
       "unlockVar": "世界.妈妈.穗.NSFW.亲密经验.插入",
       "unlockOperator": ">=",
