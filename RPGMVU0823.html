@@ -4692,6 +4692,16 @@ function requestParentResize() {
     }, 350);
 }
 
+// [新增] 翻頁後通知父層捲動到 .text-area 頂端（解決手機端翻頁後停留在底部的問題）
+function scrollToTextArea() {
+    const textArea = document.querySelector('.text-area');
+    if (!textArea) return;
+    window.parent?.postMessage({
+        type: 'RPG_MVU_SCROLL_TO_TEXT',
+        offsetTop: textArea.offsetTop || 0,
+    }, '*');
+}
+
 // === 文本過濾規則（存入 ST chat 變量） ===
 const FILTER_VAR_KEY = '过滤规则';
 // === 正文定位規則 ===
@@ -10208,6 +10218,7 @@ await syncGameState();
         state.currPage--;
         refreshUI();
         requestParentResize();
+        scrollToTextArea();
     }
 };
 
@@ -10216,6 +10227,7 @@ await syncGameState();
         state.currPage++;
         refreshUI();
         requestParentResize();
+        scrollToTextArea();
     }
 };
         
