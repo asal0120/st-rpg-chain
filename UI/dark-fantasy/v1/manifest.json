@@ -1,0 +1,178 @@
+{
+  "release": "2026-09-16-stock-v1",
+  "source_stock": "876349277",
+  "published": false,
+  "default_arrow": 4,
+  "assets": [
+    {
+      "path": "buttons/secondary.png",
+      "stock_id": 20,
+      "size": [
+        531,
+        136
+      ],
+      "sha256": "ac5295cab32e4c451000306c23b2e5a3851ae659427bd3ee3581834e268f350b",
+      "url": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/buttons/secondary.png"
+    },
+    {
+      "path": "dividers/section-center.png",
+      "stock_id": 10,
+      "size": [
+        216,
+        78
+      ],
+      "sha256": "0967f4776ed8e7636b82ab43865e1baa9fdeab18ba1384bc204cd9103d2c1fbe",
+      "url": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/dividers/section-center.png"
+    },
+    {
+      "path": "frames/avatar.png",
+      "stock_id": 9,
+      "size": [
+        210,
+        211
+      ],
+      "sha256": "c293cf8c70de7feca258649b8f2b8d376d2492a6e0dec426e48160f25e57c6e1",
+      "url": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/frames/avatar.png"
+    },
+    {
+      "path": "buttons/secondary-parts/left.png",
+      "stock_id": 20,
+      "size": [
+        110,
+        136
+      ],
+      "sha256": "a9b82c1e1205401358055da8c66ce02cb14d3ee4b15c383e2489387e04363828",
+      "url": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/buttons/secondary-parts/left.png"
+    },
+    {
+      "path": "buttons/secondary-parts/right.png",
+      "stock_id": 20,
+      "size": [
+        110,
+        136
+      ],
+      "sha256": "c24030799cf44b9d93d0061734a8dd28907814078ed39980b292e3ea2bb24fec",
+      "url": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/buttons/secondary-parts/right.png"
+    },
+    {
+      "path": "buttons/secondary-parts/top.png",
+      "stock_id": 20,
+      "size": [
+        1,
+        32
+      ],
+      "sha256": "aa36617a565f934743d86dca5a53222f3196d7bfaad24fa7b9999a0ec2952d5d",
+      "url": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/buttons/secondary-parts/top.png"
+    },
+    {
+      "path": "buttons/secondary-parts/bottom.png",
+      "stock_id": 20,
+      "size": [
+        1,
+        32
+      ],
+      "sha256": "44ac9611d286beb81ee3249d983c58606461bf9d1f2100270c0539a05a2a456d",
+      "url": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/buttons/secondary-parts/bottom.png"
+    },
+    {
+      "path": "panels/frame-parts/tl.png",
+      "stock_id": 12,
+      "size": [
+        96,
+        96
+      ],
+      "sha256": "753a6f6d2e1b9c9961e25c9c423f59c1659651a7639e4d27f0f3333e323eb0ec",
+      "url": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/panels/frame-parts/tl.png"
+    },
+    {
+      "path": "panels/frame-parts/tr.png",
+      "stock_id": 12,
+      "size": [
+        96,
+        96
+      ],
+      "sha256": "c811937f107281eb0e5802db84d2edac687d80421408414d74442c5475169f84",
+      "url": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/panels/frame-parts/tr.png"
+    },
+    {
+      "path": "panels/frame-parts/bl.png",
+      "stock_id": 12,
+      "size": [
+        96,
+        96
+      ],
+      "sha256": "ce88ec950e71043cfcb170e97eff48c190b9b1a0a84bae189f8644b591344373",
+      "url": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/panels/frame-parts/bl.png"
+    },
+    {
+      "path": "panels/frame-parts/br.png",
+      "stock_id": 12,
+      "size": [
+        96,
+        96
+      ],
+      "sha256": "a4e3e07b037f8e1d87e0afffba04909625d26fb164cf4a2ebe00b8cce9d2c3f6",
+      "url": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/panels/frame-parts/br.png"
+    },
+    {
+      "path": "panels/frame-parts/top.png",
+      "stock_id": 12,
+      "size": [
+        1,
+        32
+      ],
+      "sha256": "3d40fb2ecc4d51726ca0b3de7b0885dde26dab02425e07650642f2a2424bb9e3",
+      "url": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/panels/frame-parts/top.png"
+    },
+    {
+      "path": "panels/frame-parts/bottom.png",
+      "stock_id": 12,
+      "size": [
+        1,
+        32
+      ],
+      "sha256": "281383739cc2e2f1594e63ecef1f58891ddc2e311a4a6a215358328277cf6f72",
+      "url": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/panels/frame-parts/bottom.png"
+    },
+    {
+      "path": "panels/frame-parts/left.png",
+      "stock_id": 12,
+      "size": [
+        32,
+        1
+      ],
+      "sha256": "cb81b234b932f8f946aeb840e4cabfd195b9019ff07887f42a30733ebcadb8f4",
+      "url": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/panels/frame-parts/left.png"
+    },
+    {
+      "path": "panels/frame-parts/right.png",
+      "stock_id": 12,
+      "size": [
+        32,
+        1
+      ],
+      "sha256": "856797c0764957de582e57fa5ba93fcb40c2a3b8a63a0165a7ed0e19226f4b95",
+      "url": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/panels/frame-parts/right.png"
+    },
+    {
+      "path": "icons/arrow-4.png",
+      "stock_id": 4,
+      "size": [
+        238,
+        328
+      ],
+      "sha256": "866868853ad067b5d77f6038a000eb0d536fc5bfb1a3cc2382f3c11a7b400a6f",
+      "url": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/icons/arrow-4.png"
+    },
+    {
+      "path": "icons/arrow-5.png",
+      "stock_id": 5,
+      "size": [
+        249,
+        318
+      ],
+      "sha256": "f8bc65d8ff91ee53a88dad2c2ba0789407ccc60a2f8281200cb7d49d0021a844",
+      "url": "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/icons/arrow-5.png"
+    }
+  ]
+}

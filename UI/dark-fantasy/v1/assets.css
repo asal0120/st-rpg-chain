@@ -1,0 +1,20 @@
+/* Assumed paths only; these derivatives have not been published. */
+.rpg-v7-root.stock-study {
+  --stock-button: url("https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/buttons/secondary.png");
+  --stock-divider: url("https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/dividers/section-center.png");
+  --stock-round: url("https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/frames/avatar.png");
+  --stock-page-left: url("https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/buttons/secondary-parts/left.png");
+  --stock-page-right: url("https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/buttons/secondary-parts/right.png");
+  --stock-page-top: url("https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/buttons/secondary-parts/top.png");
+  --stock-page-bottom: url("https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/buttons/secondary-parts/bottom.png");
+  --stock-panel-tl: url("https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/panels/frame-parts/tl.png");
+  --stock-panel-tr: url("https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/panels/frame-parts/tr.png");
+  --stock-panel-bl: url("https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/panels/frame-parts/bl.png");
+  --stock-panel-br: url("https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/panels/frame-parts/br.png");
+  --stock-panel-top: url("https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/panels/frame-parts/top.png");
+  --stock-panel-bottom: url("https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/panels/frame-parts/bottom.png");
+  --stock-panel-left: url("https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/panels/frame-parts/left.png");
+  --stock-panel-right: url("https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/panels/frame-parts/right.png");
+  --stock-arrow-4: url("https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/icons/arrow-4.png");
+  --stock-arrow-5: url("https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/icons/arrow-5.png");
+}
