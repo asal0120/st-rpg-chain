@@ -4038,9 +4038,144 @@
     padding: 24px 28px 40px;
 }
 
+
+/* MVU paper proposal */
+/* V1's original paths and single inset frame, shared by the paper previews. */
+:is(.paper-kit, .rpg-v7-root) .paper-edges {
+  position: absolute; inset: 0; z-index: 1;
+  color: var(--pk-accent);
+  pointer-events: none; user-select: none;
+  --paper-frame-inset: 11px;
+  --paper-corner-inset: 15px;
+  --paper-corner-size: 30px;
+}
+:is(.paper-kit, .rpg-v7-root) .paper-edges::before {
+  content: ""; position: absolute; inset: var(--paper-frame-inset);
+  border: 1px solid var(--pk-line-soft); pointer-events: none;
+}
+:is(.paper-kit, .rpg-v7-root) .paper-corner {
+  position: absolute;
+  width: var(--paper-corner-size); height: var(--paper-corner-size);
+  opacity: .55; pointer-events: none;
+}
+.paper-edges .paper-corner--tl { top: var(--paper-corner-inset); left: var(--paper-corner-inset); }
+.paper-edges .paper-corner--tr { top: var(--paper-corner-inset); right: var(--paper-corner-inset); transform: scaleX(-1); }
+.paper-edges .paper-corner--bl { bottom: var(--paper-corner-inset); left: var(--paper-corner-inset); transform: scaleY(-1); }
+.paper-edges .paper-corner--br { bottom: var(--paper-corner-inset); right: var(--paper-corner-inset); transform: scale(-1); }
+@container paper-area (max-width: 520px) {
+  :is(.paper-kit, .rpg-v7-root) .paper-edges {
+    --paper-frame-inset: 7px;
+    --paper-corner-inset: 10px;
+    --paper-corner-size: 22px;
+  }
+}
+
+/* MVU paper proposal. All original interface color tokens remain on root. */
+.rpg-v7-root .mvu-paper-space,
+.rpg-v7-root .mvu-paper-stack { display: contents; }
+.rpg-v7-root:not(.mvu-paper) .paper-edges { display: none; }
+.rpg-v7-root.mvu-paper .mvu-paper-space {
+  --pk-accent: #d4af37;
+  --pk-line-soft: rgba(138, 115, 75, .30);
+  --mvu-paper-line: rgba(138, 115, 75, .65);
+  --mvu-paper-back: #191d24;
+  --mvu-paper-shadow: rgba(0, 0, 0, .55);
+  --mvu-paper-binding: rgba(0, 0, 0, .18);
+  --mvu-paper-noise: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23p)'/%3E%3C/svg%3E");
+  display: block; position: relative; z-index: 20; box-sizing: border-box;
+  width: 100%;
+  padding: clamp(16px, 2%, 22px) clamp(12px, 2.4%, 24px) clamp(24px, 3%, 32px);
+  background: #0f1114;
+  container: paper-area / inline-size;
+}
+.rpg-v7-root.mvu-paper.light-mode .mvu-paper-space {
+  --pk-accent: #8b5a2b;
+  --pk-line-soft: rgba(139, 90, 43, .20);
+  --mvu-paper-line: rgba(139, 90, 43, .28);
+  --mvu-paper-back: #ecdfbd;
+  --mvu-paper-shadow: rgba(80, 40, 10, .18);
+  --mvu-paper-binding: rgba(60, 30, 10, .12);
+  --mvu-paper-noise: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23p)'/%3E%3C/svg%3E");
+  background: #e8d9b8;
+}
+.rpg-v7-root.mvu-paper .mvu-paper-stack {
+  --mvu-paper-back-a: rotate(-.55deg) translate(-4px, 4px);
+  --mvu-paper-back-b: rotate(.4deg) translate(4px, 7px);
+  display: block; position: relative; isolation: isolate; margin-inline: auto;
+}
+.rpg-v7-root.mvu-paper[data-paper-width="reading"] .mvu-paper-stack { max-width: 768px; }
+.rpg-v7-root.mvu-paper .mvu-paper-stack::before,
+.rpg-v7-root.mvu-paper .mvu-paper-stack::after {
+  content: ""; position: absolute; inset: 0; z-index: 0; box-sizing: border-box;
+  border: 1px solid var(--pk-line-soft); border-radius: 2px;
+  background: var(--mvu-paper-back); pointer-events: none;
+}
+.rpg-v7-root.mvu-paper .mvu-paper-stack::before { transform: var(--mvu-paper-back-a); }
+.rpg-v7-root.mvu-paper .mvu-paper-stack::after { transform: var(--mvu-paper-back-b); }
+.rpg-v7-root.mvu-paper .text-area {
+  z-index: 1; isolation: isolate;
+  /* Preserve the translucent night gradient's original #fdfdfd backdrop. */
+  background-color: #fdfdfd; background-image: var(--bg-text-area);
+  border: 1px solid var(--mvu-paper-line); border-radius: 2px;
+  box-shadow: var(--box-shadow-inset), 8px 12px 40px var(--mvu-paper-shadow),
+    inset 18px 0 24px -16px var(--mvu-paper-binding);
+}
+.rpg-v7-root.mvu-paper.light-mode .text-area {
+  background-color: #f4e8c8; background-image: none;
+  box-shadow: 8px 12px 40px var(--mvu-paper-shadow),
+    inset 18px 0 24px -16px var(--mvu-paper-binding),
+    inset 0 0 90px rgba(139, 90, 43, .06);
+}
+.rpg-v7-root.mvu-paper .text-area::before {
+  z-index: 0; border-radius: inherit;
+  background-image: var(--mvu-paper-noise);
+  background-size: 100% auto; background-repeat: repeat;
+  mix-blend-mode: soft-light; opacity: var(--texOpacity, .34);
+}
+.rpg-v7-root.mvu-paper.light-mode .text-area::before {
+  mix-blend-mode: normal;
+  /* Stored intensity 30 maps to V2's alpha .13; night intensity stays 1:1. */
+  opacity: calc(var(--texOpacity, .30) * .4333333333);
+}
+.rpg-v7-root.mvu-paper.tex-plain .text-area::before { display: none; }
+.rpg-v7-root.mvu-paper .text-area::after {
+  z-index: 0; border-radius: inherit;
+  /* Original night halos and vignette keep their full-page scale. */
+  background:
+    radial-gradient(ellipse at 15% 10%, var(--grain), transparent 45%),
+    radial-gradient(ellipse at 85% 85%, var(--grain-2), transparent 45%),
+    radial-gradient(ellipse at 50% 50%, transparent 55%, var(--vignette));
+}
+.rpg-v7-root.mvu-paper.light-mode .text-area::after {
+  background:
+    radial-gradient(ellipse at 12% 18%, rgba(139, 90, 43, .07), transparent 42%),
+    radial-gradient(ellipse at 88% 82%, rgba(101, 67, 33, .05), transparent 38%),
+    radial-gradient(ellipse at 70% 8%, rgba(139, 90, 43, .07), transparent 28%);
+}
+.rpg-v7-root.mvu-paper .text-display {
+  padding: 48px 40px;
+  /* Keep MVU's font, ink, dialogue, drop cap and original render node. */
+}
+.rpg-v7-root.mvu-paper[data-paper-edges="off"] .paper-edges { display: none; }
+.rpg-v7-root.mvu-paper[data-paper-binding="off"] .mvu-paper-space { --mvu-paper-binding: transparent; }
+@container paper-area (max-width: 520px) {
+  .rpg-v7-root.mvu-paper .mvu-paper-stack {
+    --mvu-paper-back-a: rotate(-.35deg) translate(-3px, 3px);
+    --mvu-paper-back-b: rotate(.25deg) translate(3px, 6px);
+  }
+  .rpg-v7-root.mvu-paper .text-display { padding: 38px 22px; }
+}
+.rpg-v7-root.mvu-paper .mvu-paper-stack[data-paper-tall="true"] {
+  --mvu-paper-back-a: translate(-3px, 4px);
+  --mvu-paper-back-b: translate(3px, 8px);
+}
+.rpg-v7-root.mvu-paper.light-mode .mvu-paper-stack[data-paper-tall="true"] .text-area::after {
+  background-size: 100% 900px; background-repeat: repeat-y;
+}
+
 </style>
 
-<div class="rpg-v7-root paged-mode">
+<div class="rpg-v7-root paged-mode mvu-paper" data-paper-width="fluid">
 <div class="map-topbar" id="map-topbar">
     <div class="hud-toggle-btn" id="hud-toggle">◀</div>
     <!-- [新增] 窄屏專用：日期條（點擊展開/收合面板） -->
@@ -4451,9 +4586,19 @@
         </div>
     </div>
     </div>
+<div class="mvu-paper-space">
+<div class="mvu-paper-stack">
 <div class="text-area">
+<div class="paper-edges" aria-hidden="true">
+  <svg class="paper-corner paper-corner--tl" viewBox="0 0 60 60" fill="none" focusable="false"><path d="M5 55V19Q5 5 19 5H55" stroke="currentColor" stroke-width="1.4"/><path d="M11 55V25Q11 11 25 11H55" stroke="currentColor" stroke-width="1" opacity=".4"/><circle cx="19" cy="19" r="2.2" fill="currentColor" opacity=".8"/></svg>
+  <svg class="paper-corner paper-corner--tr" viewBox="0 0 60 60" fill="none" focusable="false"><path d="M5 55V19Q5 5 19 5H55" stroke="currentColor" stroke-width="1.4"/><path d="M11 55V25Q11 11 25 11H55" stroke="currentColor" stroke-width="1" opacity=".4"/><circle cx="19" cy="19" r="2.2" fill="currentColor" opacity=".8"/></svg>
+  <svg class="paper-corner paper-corner--br" viewBox="0 0 60 60" fill="none" focusable="false"><path d="M5 55V19Q5 5 19 5H55" stroke="currentColor" stroke-width="1.4"/><path d="M11 55V25Q11 11 25 11H55" stroke="currentColor" stroke-width="1" opacity=".4"/><circle cx="19" cy="19" r="2.2" fill="currentColor" opacity=".8"/></svg>
+  <svg class="paper-corner paper-corner--bl" viewBox="0 0 60 60" fill="none" focusable="false"><path d="M5 55V19Q5 5 19 5H55" stroke="currentColor" stroke-width="1.4"/><path d="M11 55V25Q11 11 25 11H55" stroke="currentColor" stroke-width="1" opacity=".4"/><circle cx="19" cy="19" r="2.2" fill="currentColor" opacity=".8"/></svg>
+</div>
     <div class="text-display">
     <p class="placeholder-text">谱写崭新篇章...</p>
+</div>
+</div>
 </div>
 </div>
 <!-- [新增] State 查看面板 -->
@@ -4746,6 +4891,13 @@ function _measureTrueHeight() {
     root.style.overflow = 'visible';
 
     const textArea = root.querySelector('.text-area');
+    // Paper decoration follows this existing, coalesced measurement.
+    // Only transforms change, so this does not change document height.
+    const paperStack = textArea?.closest('.mvu-paper-stack');
+    if (paperStack) {
+        const tall = String(textArea.offsetHeight > 900);
+        if (paperStack.dataset.paperTall !== tall) paperStack.dataset.paperTall = tall;
+    }
     const prevAreaOverflow = textArea ? textArea.style.overflow : null;
     if (textArea) textArea.style.overflow = 'visible';
 
@@ -4811,7 +4963,7 @@ function scrollToTextArea() {
     if (!textArea) return;
     window.parent?.postMessage({
         type: 'RPG_MVU_SCROLL_TO_TEXT',
-        offsetTop: textArea.offsetTop || 0,
+        offsetTop: Math.max(0, textArea.getBoundingClientRect().top + window.scrollY),
     }, '*');
 }
 
@@ -5238,7 +5390,7 @@ async function loadTexSettings() {
             const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
             if (parsed && typeof parsed === 'object') {
                 if (parsed.mode === 'plain' || parsed.mode === 'local') mode = parsed.mode;
-                if (Number.isFinite(Number(parsed.opacity))) {
+                if (parsed.opacity !== null && parsed.opacity !== '' && Number.isFinite(Number(parsed.opacity))) {
                     opacity = Math.max(0, Math.min(100, Math.round(Number(parsed.opacity))));
                 }
             }
@@ -11059,3 +11211,5 @@ if (typeof tavern_events !== 'undefined') {
     else init();
 })();
 </script>
+
+
