@@ -625,12 +625,13 @@
         width: 100%;
     }
     .rpg-bbi-actions {
-        position: absolute;
-        top: 8px;
-        right: 8px;
+        position: relative;
         display: flex;
-        gap: 4px;
-        opacity: 0;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin: 6px 0;
+        opacity: 1;
         transition: opacity 0.25s ease;
         z-index: 10;
     }
@@ -644,6 +645,7 @@
         color: rgba(255,255,255,0.85);
         border-radius: 6px;
         padding: 4px 8px;
+        min-height: 32px;
         font-size: 0.75em;
         cursor: pointer;
         backdrop-filter: blur(4px);
@@ -654,11 +656,20 @@
         background: rgba(255,255,255,0.2);
         color: #fff;
     }
+    .rpg-bbi-btn:disabled { opacity: 0.5; cursor: default; }
+    .rpg-bbi-btn:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+    .rpg-bbi-btn[hidden], .rpg-bbi-status[hidden] { display: none; }
+    .rpg-bbi-status, .rpg-bbi-empty-text {
+        display: block;
+        color: var(--text-color, #d0c8b6);
+        font-size: 0.78em;
+        line-height: 1.5;
+        padding: 6px 0;
+        overflow-wrap: anywhere;
+    }
+    @media (pointer: coarse) { .rpg-bbi-btn { min-height: 40px; padding: 6px 10px; } }
     .rpg-bbi-prompt-panel {
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
+        position: relative;
         background: rgba(0,0,0,0.75);
         color: rgba(255,255,255,0.9);
         font-size: 0.72em;
@@ -666,7 +677,7 @@
         padding: 8px 10px;
         border-radius: 0 0 8px 8px;
         backdrop-filter: blur(6px);
-        max-height: 40%;
+        max-height: 240px;
         overflow-y: auto;
         word-break: break-all;
         z-index: 10;
@@ -4038,144 +4049,9 @@
     padding: 24px 28px 40px;
 }
 
-
-/* MVU paper proposal */
-/* V1's original paths and single inset frame, shared by the paper previews. */
-:is(.paper-kit, .rpg-v7-root) .paper-edges {
-  position: absolute; inset: 0; z-index: 1;
-  color: var(--pk-accent);
-  pointer-events: none; user-select: none;
-  --paper-frame-inset: 11px;
-  --paper-corner-inset: 15px;
-  --paper-corner-size: 30px;
-}
-:is(.paper-kit, .rpg-v7-root) .paper-edges::before {
-  content: ""; position: absolute; inset: var(--paper-frame-inset);
-  border: 1px solid var(--pk-line-soft); pointer-events: none;
-}
-:is(.paper-kit, .rpg-v7-root) .paper-corner {
-  position: absolute;
-  width: var(--paper-corner-size); height: var(--paper-corner-size);
-  opacity: .55; pointer-events: none;
-}
-.paper-edges .paper-corner--tl { top: var(--paper-corner-inset); left: var(--paper-corner-inset); }
-.paper-edges .paper-corner--tr { top: var(--paper-corner-inset); right: var(--paper-corner-inset); transform: scaleX(-1); }
-.paper-edges .paper-corner--bl { bottom: var(--paper-corner-inset); left: var(--paper-corner-inset); transform: scaleY(-1); }
-.paper-edges .paper-corner--br { bottom: var(--paper-corner-inset); right: var(--paper-corner-inset); transform: scale(-1); }
-@container paper-area (max-width: 520px) {
-  :is(.paper-kit, .rpg-v7-root) .paper-edges {
-    --paper-frame-inset: 7px;
-    --paper-corner-inset: 10px;
-    --paper-corner-size: 22px;
-  }
-}
-
-/* MVU paper proposal. All original interface color tokens remain on root. */
-.rpg-v7-root .mvu-paper-space,
-.rpg-v7-root .mvu-paper-stack { display: contents; }
-.rpg-v7-root:not(.mvu-paper) .paper-edges { display: none; }
-.rpg-v7-root.mvu-paper .mvu-paper-space {
-  --pk-accent: #d4af37;
-  --pk-line-soft: rgba(138, 115, 75, .30);
-  --mvu-paper-line: rgba(138, 115, 75, .65);
-  --mvu-paper-back: #191d24;
-  --mvu-paper-shadow: rgba(0, 0, 0, .55);
-  --mvu-paper-binding: rgba(0, 0, 0, .18);
-  --mvu-paper-noise: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23p)'/%3E%3C/svg%3E");
-  display: block; position: relative; z-index: 20; box-sizing: border-box;
-  width: 100%;
-  padding: clamp(16px, 2%, 22px) clamp(12px, 2.4%, 24px) clamp(24px, 3%, 32px);
-  background: #0f1114;
-  container: paper-area / inline-size;
-}
-.rpg-v7-root.mvu-paper.light-mode .mvu-paper-space {
-  --pk-accent: #8b5a2b;
-  --pk-line-soft: rgba(139, 90, 43, .20);
-  --mvu-paper-line: rgba(139, 90, 43, .28);
-  --mvu-paper-back: #ecdfbd;
-  --mvu-paper-shadow: rgba(80, 40, 10, .18);
-  --mvu-paper-binding: rgba(60, 30, 10, .12);
-  --mvu-paper-noise: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23p)'/%3E%3C/svg%3E");
-  background: #e8d9b8;
-}
-.rpg-v7-root.mvu-paper .mvu-paper-stack {
-  --mvu-paper-back-a: rotate(-.55deg) translate(-4px, 4px);
-  --mvu-paper-back-b: rotate(.4deg) translate(4px, 7px);
-  display: block; position: relative; isolation: isolate; margin-inline: auto;
-}
-.rpg-v7-root.mvu-paper[data-paper-width="reading"] .mvu-paper-stack { max-width: 768px; }
-.rpg-v7-root.mvu-paper .mvu-paper-stack::before,
-.rpg-v7-root.mvu-paper .mvu-paper-stack::after {
-  content: ""; position: absolute; inset: 0; z-index: 0; box-sizing: border-box;
-  border: 1px solid var(--pk-line-soft); border-radius: 2px;
-  background: var(--mvu-paper-back); pointer-events: none;
-}
-.rpg-v7-root.mvu-paper .mvu-paper-stack::before { transform: var(--mvu-paper-back-a); }
-.rpg-v7-root.mvu-paper .mvu-paper-stack::after { transform: var(--mvu-paper-back-b); }
-.rpg-v7-root.mvu-paper .text-area {
-  z-index: 1; isolation: isolate;
-  /* Preserve the translucent night gradient's original #fdfdfd backdrop. */
-  background-color: #fdfdfd; background-image: var(--bg-text-area);
-  border: 1px solid var(--mvu-paper-line); border-radius: 2px;
-  box-shadow: var(--box-shadow-inset), 8px 12px 40px var(--mvu-paper-shadow),
-    inset 18px 0 24px -16px var(--mvu-paper-binding);
-}
-.rpg-v7-root.mvu-paper.light-mode .text-area {
-  background-color: #f4e8c8; background-image: none;
-  box-shadow: 8px 12px 40px var(--mvu-paper-shadow),
-    inset 18px 0 24px -16px var(--mvu-paper-binding),
-    inset 0 0 90px rgba(139, 90, 43, .06);
-}
-.rpg-v7-root.mvu-paper .text-area::before {
-  z-index: 0; border-radius: inherit;
-  background-image: var(--mvu-paper-noise);
-  background-size: 100% auto; background-repeat: repeat;
-  mix-blend-mode: soft-light; opacity: var(--texOpacity, .34);
-}
-.rpg-v7-root.mvu-paper.light-mode .text-area::before {
-  mix-blend-mode: normal;
-  /* Stored intensity 30 maps to V2's alpha .13; night intensity stays 1:1. */
-  opacity: calc(var(--texOpacity, .30) * .4333333333);
-}
-.rpg-v7-root.mvu-paper.tex-plain .text-area::before { display: none; }
-.rpg-v7-root.mvu-paper .text-area::after {
-  z-index: 0; border-radius: inherit;
-  /* Original night halos and vignette keep their full-page scale. */
-  background:
-    radial-gradient(ellipse at 15% 10%, var(--grain), transparent 45%),
-    radial-gradient(ellipse at 85% 85%, var(--grain-2), transparent 45%),
-    radial-gradient(ellipse at 50% 50%, transparent 55%, var(--vignette));
-}
-.rpg-v7-root.mvu-paper.light-mode .text-area::after {
-  background:
-    radial-gradient(ellipse at 12% 18%, rgba(139, 90, 43, .07), transparent 42%),
-    radial-gradient(ellipse at 88% 82%, rgba(101, 67, 33, .05), transparent 38%),
-    radial-gradient(ellipse at 70% 8%, rgba(139, 90, 43, .07), transparent 28%);
-}
-.rpg-v7-root.mvu-paper .text-display {
-  padding: 48px 40px;
-  /* Keep MVU's font, ink, dialogue, drop cap and original render node. */
-}
-.rpg-v7-root.mvu-paper[data-paper-edges="off"] .paper-edges { display: none; }
-.rpg-v7-root.mvu-paper[data-paper-binding="off"] .mvu-paper-space { --mvu-paper-binding: transparent; }
-@container paper-area (max-width: 520px) {
-  .rpg-v7-root.mvu-paper .mvu-paper-stack {
-    --mvu-paper-back-a: rotate(-.35deg) translate(-3px, 3px);
-    --mvu-paper-back-b: rotate(.25deg) translate(3px, 6px);
-  }
-  .rpg-v7-root.mvu-paper .text-display { padding: 38px 22px; }
-}
-.rpg-v7-root.mvu-paper .mvu-paper-stack[data-paper-tall="true"] {
-  --mvu-paper-back-a: translate(-3px, 4px);
-  --mvu-paper-back-b: translate(3px, 8px);
-}
-.rpg-v7-root.mvu-paper.light-mode .mvu-paper-stack[data-paper-tall="true"] .text-area::after {
-  background-size: 100% 900px; background-repeat: repeat-y;
-}
-
 </style>
 
-<div class="rpg-v7-root paged-mode mvu-paper" data-paper-width="fluid">
+<div class="rpg-v7-root paged-mode">
 <div class="map-topbar" id="map-topbar">
     <div class="hud-toggle-btn" id="hud-toggle">◀</div>
     <!-- [新增] 窄屏專用：日期條（點擊展開/收合面板） -->
@@ -4586,19 +4462,9 @@
         </div>
     </div>
     </div>
-<div class="mvu-paper-space">
-<div class="mvu-paper-stack">
 <div class="text-area">
-<div class="paper-edges" aria-hidden="true">
-  <svg class="paper-corner paper-corner--tl" viewBox="0 0 60 60" fill="none" focusable="false"><path d="M5 55V19Q5 5 19 5H55" stroke="currentColor" stroke-width="1.4"/><path d="M11 55V25Q11 11 25 11H55" stroke="currentColor" stroke-width="1" opacity=".4"/><circle cx="19" cy="19" r="2.2" fill="currentColor" opacity=".8"/></svg>
-  <svg class="paper-corner paper-corner--tr" viewBox="0 0 60 60" fill="none" focusable="false"><path d="M5 55V19Q5 5 19 5H55" stroke="currentColor" stroke-width="1.4"/><path d="M11 55V25Q11 11 25 11H55" stroke="currentColor" stroke-width="1" opacity=".4"/><circle cx="19" cy="19" r="2.2" fill="currentColor" opacity=".8"/></svg>
-  <svg class="paper-corner paper-corner--br" viewBox="0 0 60 60" fill="none" focusable="false"><path d="M5 55V19Q5 5 19 5H55" stroke="currentColor" stroke-width="1.4"/><path d="M11 55V25Q11 11 25 11H55" stroke="currentColor" stroke-width="1" opacity=".4"/><circle cx="19" cy="19" r="2.2" fill="currentColor" opacity=".8"/></svg>
-  <svg class="paper-corner paper-corner--bl" viewBox="0 0 60 60" fill="none" focusable="false"><path d="M5 55V19Q5 5 19 5H55" stroke="currentColor" stroke-width="1.4"/><path d="M11 55V25Q11 11 25 11H55" stroke="currentColor" stroke-width="1" opacity=".4"/><circle cx="19" cy="19" r="2.2" fill="currentColor" opacity=".8"/></svg>
-</div>
     <div class="text-display">
     <p class="placeholder-text">谱写崭新篇章...</p>
-</div>
-</div>
 </div>
 </div>
 <!-- [新增] State 查看面板 -->
@@ -4891,13 +4757,6 @@ function _measureTrueHeight() {
     root.style.overflow = 'visible';
 
     const textArea = root.querySelector('.text-area');
-    // Paper decoration follows this existing, coalesced measurement.
-    // Only transforms change, so this does not change document height.
-    const paperStack = textArea?.closest('.mvu-paper-stack');
-    if (paperStack) {
-        const tall = String(textArea.offsetHeight > 900);
-        if (paperStack.dataset.paperTall !== tall) paperStack.dataset.paperTall = tall;
-    }
     const prevAreaOverflow = textArea ? textArea.style.overflow : null;
     if (textArea) textArea.style.overflow = 'visible';
 
@@ -4963,7 +4822,7 @@ function scrollToTextArea() {
     if (!textArea) return;
     window.parent?.postMessage({
         type: 'RPG_MVU_SCROLL_TO_TEXT',
-        offsetTop: Math.max(0, textArea.getBoundingClientRect().top + window.scrollY),
+        offsetTop: textArea.offsetTop || 0,
     }, '*');
 }
 
@@ -5390,7 +5249,7 @@ async function loadTexSettings() {
             const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
             if (parsed && typeof parsed === 'object') {
                 if (parsed.mode === 'plain' || parsed.mode === 'local') mode = parsed.mode;
-                if (parsed.opacity !== null && parsed.opacity !== '' && Number.isFinite(Number(parsed.opacity))) {
+                if (Number.isFinite(Number(parsed.opacity))) {
                     opacity = Math.max(0, Math.min(100, Math.round(Number(parsed.opacity))));
                 }
             }
@@ -7205,7 +7064,11 @@ if (typeof window.setLayout === 'function') {
     const extractContent = (input) => {
     const str = (typeof input === 'object' && input !== null) ? Object.values(input)[0] : String(input);
 
-    let content = str;
+    // 先以全文順序標記 BBI 槽位，再做過濾與分頁。編碼讓多行 tag 不會被拆成段落；
+    // 只改顯示用的字串，message.mes 與 state.rawMessage 保留原文。
+    let bbiSeq = 0;
+    let content = str.replace(/<bbi_image>[\s\S]+?<\/bbi_image>/gi, raw =>
+        '<rpg-bbi-image data-seq="' + bbiSeq++ + '" data-tag="' + encodeURIComponent(raw) + '"></rpg-bbi-image>');
 
     // Step 1: 清完整配對的內建思考標籤
     content = content.replace(/<thinking>[\s\S]*?<\/thinking>/gi, '');
@@ -7363,14 +7226,13 @@ if (typeof window.setLayout === 'function') {
             });
         }
 
-        // 4. 柏寶繪 <bbi_image>tag...<nl>...</nl><negative>...</negative><size>...</size></bbi_image>
-        if (/<bbi_image>/i.test(result)) {
-            result = result.replace(/<bbi_image>([\s\S]*?)<\/bbi_image>/gi, (match) => {
+        // 4. 柏寶繪：使用全文槽位序號，重複提示詞與分頁不會混用圖片。
+        if (result.includes('<rpg-bbi-image ')) {
+            result = result.replace(/<rpg-bbi-image data-seq="(\d+)" data-tag="([^"]*)"><\/rpg-bbi-image>/g, (match, seq, encoded) => {
                 const idx = slots.length;
-                const encoded = encodeURIComponent(match);
                 slots.push(
                     '<span class="rpg-img-placeholder" data-img-type="bbi" ' +
-                    'data-img-prompt="' + encoded + '">' +
+                    'data-img-id="' + seq + '" data-img-prompt="' + encoded + '">' +
                     '<span class="rpg-img-loading">\u{1F5BC}\uFE0F</span></span>'
                 );
                 return _IMG_SENTINEL + idx + '__';
@@ -8119,6 +7981,171 @@ if (typeof window.setLayout === 'function') {
         document.querySelectorAll(_PLUGIN_WATCH_SELECTOR).forEach(_watchPluginElement);
     }
 
+    // 柏寶繪操作由 Vue 的樓層橋接處理；DOM 與進度只屬於目前 iframe。
+    const _bbiCards = new WeakMap();
+    function bbiProgressText(progress) {
+        switch (progress?.phase) {
+            case 'queued': return '等待生成…';
+            case 'generating': return '正在生成…';
+            case 'queued-remote': return '伺服器排隊中' + (Number.isFinite(progress.ahead) ? '，前方 ' + progress.ahead + ' 張' : '') + '…';
+            case 'retrying': return '限流後重試中' + (progress.attempt ? '（' + progress.attempt + '/' + progress.max + '）' : '') + '…';
+            case 'saving': return '正在保存圖片…';
+            default: return '正在生成…';
+        }
+    }
+    function renderBbiCard(ph, next) {
+        if (!ph.isConnected || _rpgLifetime.signal.aborted) return;
+        let card = _bbiCards.get(ph);
+        if (!card) {
+            const wrap = document.createElement('div');
+            wrap.className = 'rpg-bbi-wrap';
+            const picture = document.createElement('div');
+            const empty = document.createElement('span');
+            empty.className = 'rpg-bbi-empty-text';
+            empty.textContent = '圖片尚未生成。';
+            picture.appendChild(empty);
+            const actions = document.createElement('div');
+            actions.className = 'rpg-bbi-actions';
+            const status = document.createElement('span');
+            status.className = 'rpg-bbi-status';
+            status.setAttribute('role', 'status');
+            status.setAttribute('aria-live', 'polite');
+            const button = (label, name) => {
+                const node = document.createElement('button');
+                node.type = 'button'; node.className = 'rpg-bbi-btn rpg-bbi-' + name;
+                node.textContent = label; actions.appendChild(node); return node;
+            };
+            card = { wrap, picture, empty, actions, status, image: null, url: '', requestedUrl: '', pendingImage: null,
+                error: '', imageError: '', restoring: false, state: next, panel: null,
+                download: button('⬇ 下載', 'download'), prompt: button('📋 提示詞', 'prompt'),
+                generate: button('生成圖片', 'generate'), cancel: button('取消', 'cancel'),
+                restore: button('使用原生圖', 'restore') };
+            _bbiCards.set(ph, card);
+            wrap.append(picture, actions, status);
+            ph.replaceChildren(wrap);
+            const args = () => [ph.dataset.imgId || '', ph.dataset.imgPrompt || ''];
+            card.download.onclick = event => {
+                event.stopPropagation();
+                if (!card.url) return;
+                const a = document.createElement('a');
+                a.href = card.url;
+                const mime = card.url.match(/^data:image\/([\w+-]+)[;,]/i)?.[1];
+                const extension = mime === 'jpeg' ? 'jpg' : mime === 'svg+xml' ? 'svg' : mime || 'png';
+                a.download = /^(data|blob):/i.test(card.url) ? 'bbi-image.' + extension : card.url.split('/').pop().split('?')[0] || 'bbi-image.png';
+                a.rel = 'noopener'; document.body.appendChild(a); a.click(); a.remove();
+            };
+            card.prompt.onclick = event => {
+                event.stopPropagation();
+                if (card.panel) { card.panel.remove(); card.panel = null; }
+                else {
+                    const panel = document.createElement('div');
+                    panel.className = 'rpg-bbi-prompt-panel';
+                    const pre = document.createElement('pre');
+                    pre.style.cssText = 'margin:0;white-space:pre-wrap;font-family:inherit';
+                    pre.textContent = card.state.promptText;
+                    const copy = document.createElement('button');
+                    copy.type = 'button'; copy.textContent = '複製';
+                    copy.onclick = async ev => {
+                        ev.stopPropagation();
+                        try {
+                            await navigator.clipboard.writeText(card.state.promptText);
+                            copy.textContent = '✓ 已複製';
+                        } catch { copy.textContent = '請選取上方文字複製'; }
+                    };
+                    panel.append(pre, copy); wrap.appendChild(panel); card.panel = panel;
+                }
+                card.prompt.setAttribute('aria-expanded', String(!!card.panel));
+                requestParentResize();
+            };
+            card.prompt.setAttribute('aria-expanded', 'false');
+            card.generate.onclick = async event => {
+                event.stopPropagation();
+                card.error = '';
+                try {
+                    const work = window.RPG_BBI.generate(...args());
+                    refreshBbiPlaceholder(ph);
+                    await work;
+                } catch (error) {
+                    card.error = error?.code === 'aborted' ? '已取消生成。' : error?.message || '生成失敗，請稍後重試。';
+                } finally { refreshBbiPlaceholder(ph); }
+            };
+            card.cancel.onclick = event => {
+                event.stopPropagation();
+                try { window.RPG_BBI.cancel(...args()); }
+                catch (error) { card.error = error.message; refreshBbiPlaceholder(ph); }
+            };
+            card.restore.onclick = async event => {
+                event.stopPropagation();
+                card.error = ''; card.restoring = true;
+                refreshBbiPlaceholder(ph);
+                try { await window.RPG_BBI.restore(...args()); }
+                catch (error) { card.error = error?.message || '無法保存圖片選擇。'; }
+                finally { card.restoring = false; refreshBbiPlaceholder(ph); }
+            };
+        }
+        card.state = next;
+        const url = next.url || '';
+        if (url !== card.requestedUrl) {
+            card.requestedUrl = url;
+            card.imageError = '';
+            if (card.pendingImage) {
+                card.pendingImage.onload = card.pendingImage.onerror = null;
+                card.pendingImage.removeAttribute('src');
+                card.pendingImage = null;
+            }
+            if (!url) {
+                card.image = null; card.url = ''; card.picture.replaceChildren(card.empty);
+            } else {
+                const img = document.createElement('img');
+                img.className = 'rpg-inline-image';
+                img.alt = next.promptText || '柏寶繪圖片';
+                card.pendingImage = img;
+                img.onload = () => {
+                    if (!ph.isConnected || _rpgLifetime.signal.aborted || card.pendingImage !== img) return;
+                    card.pendingImage = null; card.image = img; card.url = url;
+                    img.classList.add('rpg-img-visible');
+                    card.picture.replaceChildren(img);
+                    renderBbiCard(ph, card.state);
+                    requestParentResize();
+                };
+                img.onerror = () => {
+                    if (!ph.isConnected || _rpgLifetime.signal.aborted || card.pendingImage !== img) return;
+                    card.pendingImage = null;
+                    card.imageError = '圖片載入失敗，請重新載入該樓層或使用原生圖。';
+                    renderBbiCard(ph, card.state);
+                    requestParentResize();
+                };
+                img.src = url;
+            }
+        }
+        card.download.hidden = !card.url;
+        card.generate.hidden = !next.available;
+        card.generate.textContent = next.url ? '重新生成' : '生成圖片';
+        card.generate.disabled = !next.canGenerate || next.busy || card.restoring;
+        card.generate.title = next.reason || '';
+        card.cancel.hidden = !next.busy;
+        card.cancel.disabled = next.canCancel === false;
+        card.restore.hidden = !next.hasOverride || !next.nativeUrl;
+        card.restore.disabled = next.busy || card.restoring;
+        card.status.textContent = card.restoring ? '正在切回原生圖…' : next.busy ? bbiProgressText(next.progress)
+            : card.error || card.imageError || next.warning || (next.available && !next.canGenerate ? next.reason : '');
+        card.status.hidden = !card.status.textContent;
+        card.wrap.setAttribute('aria-busy', String(!!next.busy || card.restoring));
+        ph.classList.add('rpg-img-loaded');
+    }
+    function refreshBbiPlaceholder(ph) {
+        if (!ph.isConnected || _rpgLifetime.signal.aborted || typeof window.RPG_BBI?.getState !== 'function') return false;
+        try { renderBbiCard(ph, window.RPG_BBI.getState(ph.dataset.imgId || '', ph.dataset.imgPrompt || '')); }
+        catch (error) {
+            renderBbiCard(ph, { available: false, canGenerate: false, url: null, promptText: '', warning: error.message });
+        }
+        return true;
+    }
+    window.rpgRefreshBbi = function() {
+        if (_rpgLifetime.signal.aborted) return;
+        document.querySelectorAll('.rpg-img-placeholder[data-img-type="bbi"]').forEach(refreshBbiPlaceholder);
+    };
+
     // === [新增] 圖片標記 hydration — 異步填充圖片 URL（含延遲重試）===
     let _imgRetryTimer = null;
     const _hydratingInlineImages = new WeakSet();
@@ -8140,6 +8167,7 @@ if (typeof window.setLayout === 'function') {
             const prompt = ph.dataset.imgPrompt || '';
 
             try {
+                if (type === 'bbi' && refreshBbiPlaceholder(ph)) continue;
                 let url = null;
                 if (typeof window.resolveImageUrl === 'function') {
                     url = await window.resolveImageUrl(type, id, prompt);
@@ -8147,6 +8175,11 @@ if (typeof window.setLayout === 'function') {
                 if (_rpgLifetime.signal.aborted) return;
                 if (!ph.isConnected) continue;
                 if (url) {
+                    if (type === 'bbi') {
+                        renderBbiCard(ph, { available: false, canGenerate: false, url,
+                            promptText: prompt ? decodeURIComponent(prompt) : '' });
+                        continue;
+                    }
                     const img = document.createElement('img');
                     img.className = 'rpg-inline-image';
                     img.alt = prompt ? decodeURIComponent(prompt) : 'Generated Image';
@@ -8166,76 +8199,7 @@ if (typeof window.setLayout === 'function') {
                     img.src = url;
                     ph.innerHTML = '';
 
-                    // === 柏寶繪：圖片 + 懸浮操作按鈕 ===
-                    if (type === 'bbi' && prompt) {
-                        const rawTag = decodeURIComponent(prompt);
-                        const inner = rawTag.replace(/^<bbi_image[^>]*>/i, '').replace(/<\/bbi_image>$/i, '');
-                        const nl = (inner.match(/<nl>([\s\S]*?)<\/nl>/i) || [])[1] || '';
-                        const neg = (inner.match(/<negative>([\s\S]*?)<\/negative>/i) || [])[1] || '';
-                        const tagOnly = inner
-                            .replace(/<nl>[\s\S]*?<\/nl>/gi, '').replace(/<negative>[\s\S]*?<\/negative>/gi, '')
-                            .replace(/<characters>[\s\S]*?<\/characters>/gi, '').replace(/<size>[\s\S]*?<\/size>/gi, '')
-                            .replace(/<tag>[\s\S]*?<\/tag>/gi, '').trim();
-                        const promptParts = [tagOnly, nl ? 'NL: ' + nl.trim() : '', neg ? 'Neg: ' + neg.trim() : ''].filter(Boolean).join('\n');
-
-                        const wrap = document.createElement('div');
-                        wrap.className = 'rpg-bbi-wrap';
-
-                        const actions = document.createElement('div');
-                        actions.className = 'rpg-bbi-actions';
-
-                        const dlBtn = document.createElement('button');
-                        dlBtn.className = 'rpg-bbi-btn';
-                        dlBtn.textContent = '⬇ 下載';
-                        dlBtn.onclick = (e) => {
-                            e.stopPropagation();
-                            const a = document.createElement('a');
-                            a.href = url;
-                            a.download = url.split('/').pop() || 'bbi-image.png';
-                            a.rel = 'noopener';
-                            document.body.appendChild(a);
-                            a.click();
-                            a.remove();
-                        };
-                        actions.appendChild(dlBtn);
-
-                        let promptPanel = null;
-                        const promptBtn = document.createElement('button');
-                        promptBtn.className = 'rpg-bbi-btn';
-                        promptBtn.textContent = '📋 提示詞';
-                        promptBtn.onclick = (e) => {
-                            e.stopPropagation();
-                            if (promptPanel) {
-                                promptPanel.remove();
-                                promptPanel = null;
-                                return;
-                            }
-                            promptPanel = document.createElement('div');
-                            promptPanel.className = 'rpg-bbi-prompt-panel';
-                            const pre = document.createElement('pre');
-                            pre.style.margin = '0'; pre.style.whiteSpace = 'pre-wrap'; pre.style.fontFamily = 'inherit';
-                            pre.textContent = promptParts;
-                            promptPanel.appendChild(pre);
-                            const copyBtn = document.createElement('button');
-                            copyBtn.textContent = '複製';
-                            copyBtn.onclick = (ev) => {
-                                ev.stopPropagation();
-                                navigator.clipboard.writeText(promptParts).then(() => {
-                                    copyBtn.textContent = '✓ 已複製';
-                                    setTimeout(() => { copyBtn.textContent = '複製'; }, 1500);
-                                });
-                            };
-                            promptPanel.appendChild(copyBtn);
-                            wrap.appendChild(promptPanel);
-                        };
-                        actions.appendChild(promptBtn);
-
-                        wrap.appendChild(img);
-                        wrap.appendChild(actions);
-                        ph.appendChild(wrap);
-                    } else {
-                        ph.appendChild(img);
-                    }
+                    ph.appendChild(img);
                     ph.classList.add('rpg-img-loaded');
                 } else {
                     // 尚未取得 URL — 保持 loading 狀態等待重試
@@ -8263,9 +8227,10 @@ if (typeof window.setLayout === 'function') {
             document.querySelectorAll('.rpg-img-placeholder:not(.rpg-img-loaded)').forEach(ph => {
                 const promptText = (ph.dataset.imgPrompt ? decodeURIComponent(ph.dataset.imgPrompt) : ph.dataset.imgId) || '';
                 if (promptText) {
-                    ph.innerHTML = '<span class="rpg-img-failed">\uD83D\uDDBC\uFE0F ' +
-                        (promptText.length > 50 ? promptText.slice(0, 50) + '...' : promptText) +
-                        '</span>';
+                    const failed = document.createElement('span');
+                    failed.className = 'rpg-img-failed';
+                    failed.textContent = '\uD83D\uDDBC\uFE0F ' + (promptText.length > 50 ? promptText.slice(0, 50) + '...' : promptText);
+                    ph.replaceChildren(failed);
                 }
                 ph.classList.add('rpg-img-loaded');
             });
@@ -11193,6 +11158,7 @@ if (typeof tavern_events !== 'undefined') {
     };
 	
     _rpgLifetime.signal.addEventListener('abort', () => {
+        window.RPG_BBI?.dispose?.();
         window.__rpgDisplayObserver?.disconnect();
         _pluginMutObs?.disconnect();
         _pluginResizeObserver?.disconnect();
