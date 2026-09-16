@@ -640,9 +640,9 @@
         opacity: 1;
     }
     .rpg-bbi-btn {
-        background: rgba(0,0,0,0.55);
-        border: 1px solid rgba(255,255,255,0.15);
-        color: rgba(255,255,255,0.85);
+        background: var(--menu-bg, rgba(0,0,0,0.55));
+        border: 1px solid var(--menu-border, rgba(255,255,255,0.15));
+        color: var(--menu-text, rgba(255,255,255,0.85));
         border-radius: 6px;
         padding: 4px 8px;
         min-height: 32px;
@@ -653,8 +653,8 @@
         white-space: nowrap;
     }
     .rpg-bbi-btn:hover {
-        background: rgba(255,255,255,0.2);
-        color: #fff;
+        background: var(--menu-hover-bg, rgba(255,255,255,0.2));
+        color: var(--menu-text, #fff); border-color: var(--menu-hover-text, #fff);
     }
     .rpg-bbi-btn:disabled { opacity: 0.5; cursor: default; }
     .rpg-bbi-btn:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
@@ -4049,9 +4049,632 @@
     padding: 24px 28px 40px;
 }
 
+
+/* === Official MVU / XBX UI: 2026-09-16-stock-bbi-v2 === */
+/* V1's original paths and single inset frame, shared by the released cards. */
+:is(.paper-kit, .rpg-v7-root) .paper-edges {
+  position: absolute; inset: 0; z-index: 1;
+  color: var(--pk-accent);
+  pointer-events: none; user-select: none;
+  --paper-frame-inset: 11px;
+  --paper-corner-inset: 15px;
+  --paper-corner-size: 30px;
+}
+:is(.paper-kit, .rpg-v7-root) .paper-edges::before {
+  content: ""; position: absolute; inset: var(--paper-frame-inset);
+  border: 1px solid var(--pk-line-soft); pointer-events: none;
+}
+:is(.paper-kit, .rpg-v7-root) .paper-corner {
+  position: absolute;
+  width: var(--paper-corner-size); height: var(--paper-corner-size);
+  opacity: .55; pointer-events: none;
+}
+.paper-edges .paper-corner--tl { top: var(--paper-corner-inset); left: var(--paper-corner-inset); }
+.paper-edges .paper-corner--tr { top: var(--paper-corner-inset); right: var(--paper-corner-inset); transform: scaleX(-1); }
+.paper-edges .paper-corner--bl { bottom: var(--paper-corner-inset); left: var(--paper-corner-inset); transform: scaleY(-1); }
+.paper-edges .paper-corner--br { bottom: var(--paper-corner-inset); right: var(--paper-corner-inset); transform: scale(-1); }
+@container paper-area (max-width: 520px) {
+  :is(.paper-kit, .rpg-v7-root) .paper-edges {
+    --paper-frame-inset: 7px;
+    --paper-corner-inset: 10px;
+    --paper-corner-size: 22px;
+  }
+}
+
+/* MVU / XBX paper. All original interface color tokens remain on root. */
+.rpg-v7-root .mvu-paper-space,
+.rpg-v7-root .mvu-paper-stack { display: contents; }
+.rpg-v7-root:not(.mvu-paper) .paper-edges { display: none; }
+.rpg-v7-root.mvu-paper .mvu-paper-space {
+  --pk-accent: #d4af37;
+  --pk-line-soft: rgba(138, 115, 75, .30);
+  --mvu-paper-line: rgba(138, 115, 75, .65);
+  --mvu-paper-back: #191d24;
+  --mvu-paper-shadow: rgba(0, 0, 0, .55);
+  --mvu-paper-binding: rgba(0, 0, 0, .18);
+  --mvu-paper-noise: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23p)'/%3E%3C/svg%3E");
+  display: block; position: relative; z-index: 20; box-sizing: border-box;
+  width: 100%;
+  padding: clamp(16px, 2%, 22px) clamp(12px, 2.4%, 24px) clamp(24px, 3%, 32px);
+  background: #0f1114;
+  container: paper-area / inline-size;
+}
+.rpg-v7-root.mvu-paper.light-mode .mvu-paper-space {
+  --pk-accent: #8b5a2b;
+  --pk-line-soft: rgba(139, 90, 43, .20);
+  --mvu-paper-line: rgba(139, 90, 43, .28);
+  --mvu-paper-back: #ecdfbd;
+  --mvu-paper-shadow: rgba(80, 40, 10, .18);
+  --mvu-paper-binding: rgba(60, 30, 10, .12);
+  --mvu-paper-noise: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23p)'/%3E%3C/svg%3E");
+  background: #e8d9b8;
+}
+.rpg-v7-root.mvu-paper .mvu-paper-stack {
+  --mvu-paper-back-a: rotate(-.55deg) translate(-4px, 4px);
+  --mvu-paper-back-b: rotate(.4deg) translate(4px, 7px);
+  display: block; position: relative; isolation: isolate; margin-inline: auto;
+}
+.rpg-v7-root.mvu-paper[data-paper-width="reading"] .mvu-paper-stack { max-width: 768px; }
+.rpg-v7-root.mvu-paper .mvu-paper-stack::before,
+.rpg-v7-root.mvu-paper .mvu-paper-stack::after {
+  content: ""; position: absolute; inset: 0; z-index: 0; box-sizing: border-box;
+  border: 1px solid var(--pk-line-soft); border-radius: 2px;
+  background: var(--mvu-paper-back); pointer-events: none;
+}
+.rpg-v7-root.mvu-paper .mvu-paper-stack::before { transform: var(--mvu-paper-back-a); }
+.rpg-v7-root.mvu-paper .mvu-paper-stack::after { transform: var(--mvu-paper-back-b); }
+.rpg-v7-root.mvu-paper .text-area {
+  z-index: 1; isolation: isolate;
+  /* Preserve the translucent night gradient's original #fdfdfd backdrop. */
+  background-color: #fdfdfd; background-image: var(--bg-text-area);
+  border: 1px solid var(--mvu-paper-line); border-radius: 2px;
+  box-shadow: var(--box-shadow-inset), 8px 12px 40px var(--mvu-paper-shadow),
+    inset 18px 0 24px -16px var(--mvu-paper-binding);
+}
+.rpg-v7-root.mvu-paper.light-mode .text-area {
+  background-color: #f4e8c8; background-image: none;
+  box-shadow: 8px 12px 40px var(--mvu-paper-shadow),
+    inset 18px 0 24px -16px var(--mvu-paper-binding),
+    inset 0 0 90px rgba(139, 90, 43, .06);
+}
+.rpg-v7-root.mvu-paper .text-area::before {
+  z-index: 0; border-radius: inherit;
+  background-image: var(--mvu-paper-noise);
+  background-size: 100% auto; background-repeat: repeat;
+  mix-blend-mode: soft-light; opacity: var(--texOpacity, .34);
+}
+.rpg-v7-root.mvu-paper.light-mode .text-area::before {
+  mix-blend-mode: normal;
+  /* Stored intensity 30 maps to V2's alpha .13; night intensity stays 1:1. */
+  opacity: calc(var(--texOpacity, .30) * .4333333333);
+}
+.rpg-v7-root.mvu-paper.tex-plain .text-area::before { display: none; }
+.rpg-v7-root.mvu-paper .text-area::after {
+  z-index: 0; border-radius: inherit;
+  /* Original night halos and vignette keep their full-page scale. */
+  background:
+    radial-gradient(ellipse at 15% 10%, var(--grain), transparent 45%),
+    radial-gradient(ellipse at 85% 85%, var(--grain-2), transparent 45%),
+    radial-gradient(ellipse at 50% 50%, transparent 55%, var(--vignette));
+}
+.rpg-v7-root.mvu-paper.light-mode .text-area::after {
+  background:
+    radial-gradient(ellipse at 12% 18%, rgba(139, 90, 43, .07), transparent 42%),
+    radial-gradient(ellipse at 88% 82%, rgba(101, 67, 33, .05), transparent 38%),
+    radial-gradient(ellipse at 70% 8%, rgba(139, 90, 43, .07), transparent 28%);
+}
+.rpg-v7-root.mvu-paper .text-display {
+  padding: 48px 40px;
+  /* Keep MVU's font, ink, dialogue, drop cap and original render node. */
+}
+.rpg-v7-root.mvu-paper[data-paper-edges="off"] .paper-edges { display: none; }
+.rpg-v7-root.mvu-paper[data-paper-binding="off"] .mvu-paper-space { --mvu-paper-binding: transparent; }
+@container paper-area (max-width: 520px) {
+  .rpg-v7-root.mvu-paper .mvu-paper-stack {
+    --mvu-paper-back-a: rotate(-.35deg) translate(-3px, 3px);
+    --mvu-paper-back-b: rotate(.25deg) translate(3px, 6px);
+  }
+  .rpg-v7-root.mvu-paper .text-display { padding: 38px 22px; }
+}
+.rpg-v7-root.mvu-paper .mvu-paper-stack[data-paper-tall="true"] {
+  --mvu-paper-back-a: translate(-3px, 4px);
+  --mvu-paper-back-b: translate(3px, 8px);
+}
+.rpg-v7-root.mvu-paper.light-mode .mvu-paper-stack[data-paper-tall="true"] .text-area::after {
+  background-size: 100% 900px; background-repeat: repeat-y;
+}
+
+/* Visual proposal only. Never included by the shipping MVU/XBX files. */
+.rpg-v7-root.mvu-paper.interface-harmony-study {
+  --study-panel: #191c22;
+  --study-head: #202329;
+  --study-ink: #ded5c2;
+  --study-muted: #aaa08e;
+  --study-accent: #c7ae7b;
+  --study-line: rgba(174, 148, 98, .43);
+  --study-selected: rgba(174, 148, 98, .16);
+  --study-shadow: rgba(0, 0, 0, .30);
+  --icon-bg: var(--study-head);
+  --menu-bg: var(--study-head);
+  --menu-border: var(--study-line);
+  --menu-text: var(--study-ink);
+  --menu-sep: var(--study-line);
+  --menu-hover-text: var(--study-accent);
+  --menu-hover-bg: var(--study-selected);
+}
+.rpg-v7-root.mvu-paper.interface-harmony-study.light-mode {
+  --study-panel: #efe3c8;
+  --study-head: #e8d9b8;
+  --study-ink: #3b2b1c;
+  --study-muted: #735c43;
+  --study-accent: #805729;
+  --study-line: rgba(139, 103, 57, .38);
+  --study-selected: #dfcaa3;
+  --study-shadow: rgba(80, 48, 18, .13);
+}
+.rpg-v7-root.mvu-paper.interface-harmony-study .map-topbar {
+  background: var(--study-head);
+  border-bottom-color: var(--study-line);
+}
+.rpg-v7-root.mvu-paper.interface-harmony-study.topbar-sheet-open .topbar-sheet-backdrop {
+  background: var(--study-head);
+}
+.rpg-v7-root.mvu-paper.interface-harmony-study .control-panel {
+  background: #15191e;
+  border-top-color: var(--study-line);
+}
+.rpg-v7-root.mvu-paper.interface-harmony-study.light-mode .control-panel {
+  background: #e8d9b8;
+}
+.rpg-v7-root.mvu-paper.interface-harmony-study :is(.nav-btn,.mode-switch) {
+  background: var(--study-panel);
+  color: var(--study-ink);
+  border-color: var(--study-line);
+  box-shadow: 0 1px 2px var(--study-shadow);
+}
+.rpg-v7-root.mvu-paper.interface-harmony-study :is(.nav-btn,.mode-switch):hover {
+  border-color: var(--study-accent);
+  color: var(--study-accent);
+  filter: none;
+}
+.rpg-v7-root.mvu-paper.interface-harmony-study .display-modal {
+  background: var(--study-panel);
+  color: var(--study-ink);
+  border-color: var(--study-line);
+  border-radius: 4px;
+  box-shadow: 0 12px 30px var(--study-shadow);
+}
+.rpg-v7-root.mvu-paper.interface-harmony-study .display-modal .wm-header {
+  background: var(--study-head);
+  border-bottom-color: var(--study-line);
+}
+.rpg-v7-root.mvu-paper.interface-harmony-study .display-modal .wm-title {
+  color: var(--study-accent);
+  text-shadow: none;
+}
+.rpg-v7-root.mvu-paper.interface-harmony-study .display-modal :is(.wm-close-btn,.display-footer-close) {
+  background: var(--study-head);
+  border-color: var(--study-line);
+  color: var(--study-ink);
+}
+.rpg-v7-root.mvu-paper.interface-harmony-study .display-section-label {
+  color: var(--study-muted);
+  font-size: 14px;
+}
+.rpg-v7-root.mvu-paper.interface-harmony-study .display-opt-btn {
+  color: var(--study-ink);
+  border-color: var(--study-line);
+  background: transparent;
+}
+.rpg-v7-root.mvu-paper.interface-harmony-study :is(.display-opt-btn.active,.display-host-item.active) {
+  color: var(--study-accent);
+  border-color: var(--study-accent);
+  background: var(--study-selected);
+}
+.rpg-v7-root.mvu-paper.interface-harmony-study .display-slider-row input[type='range'] {
+  accent-color: var(--study-accent);
+}
+.rpg-v7-root.mvu-paper.interface-harmony-study :is(.display-slider-val,.display-host-name) {
+  color: var(--study-ink);
+}
+.rpg-v7-root.mvu-paper.interface-harmony-study .display-host-item {
+  border-color: var(--study-line);
+}
+.rpg-v7-root.mvu-paper.interface-harmony-study .display-host-item.active {
+  border-color: var(--study-accent);
+}
+.rpg-v7-root.mvu-paper.interface-harmony-study .display-host-dot {
+  border-color: var(--study-accent);
+}
+.rpg-v7-root.mvu-paper.interface-harmony-study .display-host-item.active .display-host-dot {
+  /* Existing card JS writes an inline orange background on this dot. */
+  background: var(--study-accent) !important;
+  border-color: var(--study-accent);
+}
+.rpg-v7-root.mvu-paper.interface-harmony-study :is(.display-host-desc,.display-host-hint,.display-tex-hint) {
+  color: var(--study-muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+.rpg-v7-root.mvu-paper.interface-harmony-study .filter-count-badge {
+  color: var(--study-accent);
+}
+.rpg-v7-root.mvu-paper.interface-harmony-study .display-modal :is(.filter-rule-input,.filter-rule-item,.display-save-rules-btn) {
+  color: var(--study-ink);
+  background: var(--study-head);
+  border-color: var(--study-line);
+}
+
+/* Assumed paths only; these derivatives have not been published. */
+.rpg-v7-root.stock-study {
+  --stock-button: url("https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/buttons/secondary.png");
+  --stock-divider: url("https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/dividers/section-center.png");
+  --stock-round: url("https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/frames/avatar.png");
+  --stock-page-left: url("https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/buttons/secondary-parts/left.png");
+  --stock-page-right: url("https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/buttons/secondary-parts/right.png");
+  --stock-page-top: url("https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/buttons/secondary-parts/top.png");
+  --stock-page-bottom: url("https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/buttons/secondary-parts/bottom.png");
+  --stock-panel-tl: url("https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/panels/frame-parts/tl.png");
+  --stock-panel-tr: url("https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/panels/frame-parts/tr.png");
+  --stock-panel-bl: url("https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/panels/frame-parts/bl.png");
+  --stock-panel-br: url("https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/panels/frame-parts/br.png");
+  --stock-panel-top: url("https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/panels/frame-parts/top.png");
+  --stock-panel-bottom: url("https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/panels/frame-parts/bottom.png");
+  --stock-panel-left: url("https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/panels/frame-parts/left.png");
+  --stock-panel-right: url("https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/panels/frame-parts/right.png");
+  --stock-arrow-4: url("https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/icons/arrow-4.png");
+  --stock-arrow-5: url("https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/icons/arrow-5.png");
+}
+
+/* MVU / XBX stock UI. Load after the paper + interface harmony styles.
+   mvu-stock-assets.js enables a group only after all of its masks decode.
+   Pending/failed groups retain the native controls and baseline CSS. */
+.rpg-v7-root.mvu-paper.stock-study {
+  --stock-ink: var(--study-accent);
+  --stock-corner: 32px;
+  --stock-edge: 10.666667px;
+}
+@supports (mask-image: linear-gradient(#000, #000)) {
+  .rpg-v7-root.mvu-paper.stock-study:where([data-stock-ready~="button"])[data-stock-button="on"] .control-panel,
+  .rpg-v7-root.mvu-paper.stock-study:where([data-stock-ready~="paging"])[data-stock-paging="on"] .control-panel {
+    flex-wrap: wrap;
+    gap: 10px 16px;
+  }
+  .rpg-v7-root.mvu-paper.stock-study:where([data-stock-ready~="button"])[data-stock-button="on"] .mode-switch {
+    position: relative;
+    isolation: isolate;
+    box-sizing: border-box;
+    flex: 0 0 auto;
+    width: 156px;
+    min-height: 44px;
+    padding: 9px 23px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    color: var(--study-ink);
+    line-height: 1.4;
+    white-space: nowrap;
+  }
+  .rpg-v7-root.mvu-paper.stock-study:where([data-stock-ready~="button"])[data-stock-button="on"] .mode-switch::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background: var(--stock-ink);
+    opacity: .8;
+    -webkit-mask: var(--stock-button) center / 156px 39.955px no-repeat;
+    mask: var(--stock-button) center / 156px 39.955px no-repeat;
+  }
+  .rpg-v7-root.mvu-paper.stock-study:where([data-stock-ready~="button"])[data-stock-button="on"] .mode-switch::after {
+    content: "";
+    position: absolute;
+    inset: 8px 13px;
+    z-index: -2;
+    pointer-events: none;
+    background: var(--study-panel);
+    clip-path: polygon(7% 0, 93% 0, 100% 24%, 100% 76%, 93% 100%, 7% 100%, 0 76%, 0 24%);
+  }
+  .rpg-v7-root.mvu-paper.stock-study:where([data-stock-ready~="button"])[data-stock-button="on"] .mode-switch:hover {
+    color: var(--stock-ink);
+    filter: none;
+  }
+  .rpg-v7-root.mvu-paper.stock-study:where([data-stock-ready~="button"])[data-stock-button="on"] .mode-switch:hover::before {
+    opacity: 1;
+  }
+  .rpg-v7-root.mvu-paper.stock-study:where([data-stock-ready~="button"])[data-stock-button="on"] .mode-switch:focus-visible {
+    outline: 2px solid var(--stock-ink);
+    outline-offset: 3px;
+  }
+
+  /* Eight independent alpha slices. Only straight, one-pixel strips stretch.
+     The overlay belongs to the fixed outer modal, never the scrolling body. */
+  .rpg-v7-root.mvu-paper.stock-study:where([data-stock-ready~="frame"])[data-stock-panel="on"] .display-modal {
+    position: relative;
+    box-sizing: border-box;
+    padding: 16px;
+    border-color: transparent;
+    border-radius: 2px;
+  }
+  .rpg-v7-root.mvu-paper.stock-study:where([data-stock-ready~="frame"])[data-stock-panel="on"] .display-modal::after,
+  .rpg-v7-root.mvu-paper.stock-study:where([data-stock-ready~="frame"])[data-stock-menu-list="on"] .menu-drop::after {
+    content: "";
+    position: absolute;
+    inset: var(--stock-frame-inset, 5px);
+    z-index: 5;
+    pointer-events: none;
+    background: var(--stock-ink);
+    opacity: .62;
+    -webkit-mask-image: var(--stock-panel-tl), var(--stock-panel-tr), var(--stock-panel-bl), var(--stock-panel-br), var(--stock-panel-top), var(--stock-panel-bottom), var(--stock-panel-left), var(--stock-panel-right);
+    mask-image: var(--stock-panel-tl), var(--stock-panel-tr), var(--stock-panel-bl), var(--stock-panel-br), var(--stock-panel-top), var(--stock-panel-bottom), var(--stock-panel-left), var(--stock-panel-right);
+    -webkit-mask-position: left top, right top, left bottom, right bottom, center top, center bottom, left center, right center;
+    mask-position: left top, right top, left bottom, right bottom, center top, center bottom, left center, right center;
+    -webkit-mask-size: var(--stock-corner) var(--stock-corner), var(--stock-corner) var(--stock-corner), var(--stock-corner) var(--stock-corner), var(--stock-corner) var(--stock-corner), calc(100% - 2 * var(--stock-corner)) var(--stock-edge), calc(100% - 2 * var(--stock-corner)) var(--stock-edge), var(--stock-edge) calc(100% - 2 * var(--stock-corner)), var(--stock-edge) calc(100% - 2 * var(--stock-corner));
+    mask-size: var(--stock-corner) var(--stock-corner), var(--stock-corner) var(--stock-corner), var(--stock-corner) var(--stock-corner), var(--stock-corner) var(--stock-corner), calc(100% - 2 * var(--stock-corner)) var(--stock-edge), calc(100% - 2 * var(--stock-corner)) var(--stock-edge), var(--stock-edge) calc(100% - 2 * var(--stock-corner)), var(--stock-edge) calc(100% - 2 * var(--stock-corner));
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+  }
+  .rpg-v7-root.mvu-paper.stock-study:where([data-stock-ready~="frame"])[data-stock-panel="on"] .display-modal .wm-header {
+    padding: 8px 11px 12px;
+  }
+  .rpg-v7-root.mvu-paper.stock-study:where([data-stock-ready~="frame"])[data-stock-panel="on"] .display-modal-body {
+    padding: 16px 11px 18px;
+  }
+  .rpg-v7-root.mvu-paper.stock-study.mobile-layout:where([data-stock-ready~="frame"])[data-stock-panel="on"] .display-modal {
+    --stock-corner: 27px;
+    --stock-edge: 9px;
+    box-shadow: none;
+    border-radius: 0;
+  }
+
+  /* Quest and bag retain their own dark palette, including in daytime mode. */
+  .rpg-v7-root.mvu-paper.stock-study:where([data-stock-ready~="divider"])[data-stock-divider="on"] :is(.quest-scaler, .bag-scaler) .header-section {
+    --stock-divider-width: 66.461538px;
+    --stock-divider-height: 24px;
+    --stock-divider-rise: 15.692308px;
+    position: relative;
+    border-bottom-color: transparent;
+  }
+  .rpg-v7-root.mvu-paper.stock-study:where([data-stock-ready~="divider"])[data-stock-divider="on"] :is(.quest-scaler, .bag-scaler) .header-section::before {
+    content: "";
+    position: absolute;
+    inset: auto 0 -1px;
+    height: 1px;
+    pointer-events: none;
+    background: linear-gradient(to right, var(--p-gold-dim) calc(50% - var(--stock-divider-width) / 2), transparent calc(50% - var(--stock-divider-width) / 2), transparent calc(50% + var(--stock-divider-width) / 2), var(--p-gold-dim) calc(50% + var(--stock-divider-width) / 2));
+    opacity: .85;
+  }
+  .rpg-v7-root.mvu-paper.stock-study:where([data-stock-ready~="divider"])[data-stock-divider="on"] :is(.quest-scaler, .bag-scaler) .header-section::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: calc(100% - var(--stock-divider-rise));
+    width: var(--stock-divider-width);
+    height: var(--stock-divider-height);
+    transform: translateX(-50%);
+    pointer-events: none;
+    background: var(--p-gold);
+    opacity: .85;
+    -webkit-mask: var(--stock-divider) center / contain no-repeat;
+    mask: var(--stock-divider) center / contain no-repeat;
+  }
+  .rpg-v7-root.mvu-paper.stock-study.mobile-layout:where([data-stock-ready~="divider"])[data-stock-divider="on"] :is(.quest-scaler, .bag-scaler) .header-section {
+    --stock-divider-width: 104px;
+    --stock-divider-height: 37.555556px;
+    --stock-divider-rise: 24.555556px;
+  }
+}
+
+
+/* Smaller controls: cap slices preserve the ornament at short button widths. */
+@supports (mask-image: linear-gradient(#000, #000)) {
+  .rpg-v7-root.mvu-paper.stock-study:where([data-stock-ready~="paging"])[data-stock-paging="on"] .nav-btn {
+    position: relative;
+    isolation: isolate;
+    box-sizing: border-box;
+    flex: 0 0 auto;
+    width: 76px;
+    min-height: 44px;
+    padding: 9px 14px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    line-height: 1.4;
+    white-space: nowrap;
+  }
+  .rpg-v7-root.mvu-paper.stock-study:where([data-stock-ready~="paging"])[data-stock-paging="on"] .nav-btn::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 38px;
+    transform: translateY(-50%);
+    z-index: -1;
+    pointer-events: none;
+    background: var(--stock-ink);
+    opacity: .8;
+    -webkit-mask-image: var(--stock-page-left), var(--stock-page-right), var(--stock-page-top), var(--stock-page-bottom);
+    mask-image: var(--stock-page-left), var(--stock-page-right), var(--stock-page-top), var(--stock-page-bottom);
+    -webkit-mask-position: left top, right top, center top, center bottom;
+    mask-position: left top, right top, center top, center bottom;
+    -webkit-mask-size: 30.735294px 38px, 30.735294px 38px, calc(100% - 61.470588px) 8.941176px, calc(100% - 61.470588px) 8.941176px;
+    mask-size: 30.735294px 38px, 30.735294px 38px, calc(100% - 61.470588px) 8.941176px, calc(100% - 61.470588px) 8.941176px;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+  }
+  .rpg-v7-root.mvu-paper.stock-study:where([data-stock-ready~="paging"])[data-stock-paging="on"] .nav-btn::after {
+    content: "";
+    position: absolute;
+    inset: 8px 10px;
+    z-index: -2;
+    pointer-events: none;
+    background: var(--study-panel);
+    clip-path: polygon(9% 0, 91% 0, 100% 25%, 100% 75%, 91% 100%, 9% 100%, 0 75%, 0 25%);
+  }
+  .rpg-v7-root.mvu-paper.stock-study:where([data-stock-ready~="paging"])[data-stock-paging="on"] .nav-btn:not(:disabled):hover::before {
+    opacity: 1;
+  }
+  .rpg-v7-root.mvu-paper.stock-study:where([data-stock-ready~="paging"])[data-stock-paging="on"] .nav-btn:focus-visible {
+    outline: 2px solid var(--stock-ink);
+    outline-offset: 2px;
+  }
+
+  .rpg-v7-root.mvu-paper.stock-study:where([data-stock-ready~="round"])[data-stock-menu-trigger="on"] .menu-toggle {
+    isolation: isolate;
+    box-sizing: border-box;
+    width: 44px;
+    height: 44px;
+    border: 0;
+    color: var(--study-ink);
+    background: transparent;
+    box-shadow: none;
+    font-size: 21px;
+  }
+  .rpg-v7-root.mvu-paper.stock-study:where([data-stock-ready~="round"])[data-stock-menu-trigger="on"] .menu-toggle::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background: var(--stock-ink);
+    opacity: .85;
+    -webkit-mask: var(--stock-round) center / contain no-repeat;
+    mask: var(--stock-round) center / contain no-repeat;
+  }
+  .rpg-v7-root.mvu-paper.stock-study:where([data-stock-ready~="round"])[data-stock-menu-trigger="on"] .menu-toggle::after {
+    content: "";
+    position: absolute;
+    inset: 4px;
+    z-index: -2;
+    pointer-events: none;
+    border-radius: 50%;
+    background: var(--study-panel);
+  }
+  .rpg-v7-root.mvu-paper.stock-study:where([data-stock-ready~="round"])[data-stock-menu-trigger="on"] .menu-toggle:hover {
+    color: var(--stock-ink);
+    filter: none;
+    box-shadow: none;
+  }
+  .rpg-v7-root.mvu-paper.stock-study:where([data-stock-ready~="round"])[data-stock-menu-trigger="on"] .menu-toggle:hover::before {
+    opacity: 1;
+  }
+
+  /* One light frame groups the five native labels into a single menu. */
+  .rpg-v7-root.mvu-paper.stock-study:where([data-stock-ready~="frame"])[data-stock-menu-list="on"] .menu-drop {
+    --stock-corner: 20px;
+    --stock-edge: 6.666667px;
+    --stock-frame-inset: 3px;
+    box-sizing: border-box;
+    width: 156px;
+    min-width: 156px;
+    margin-top: 4px;
+    padding: 12px;
+    border: 0;
+    border-radius: 2px;
+    background: var(--study-panel);
+    color: var(--study-ink);
+    box-shadow: 0 8px 20px var(--study-shadow);
+  }
+  .rpg-v7-root.mvu-paper.stock-study:where([data-stock-ready~="frame"])[data-stock-menu-list="on"] .menu-opt {
+    padding: 9px 14px;
+    border-bottom-color: var(--study-line);
+    color: var(--study-ink);
+  }
+  .rpg-v7-root.mvu-paper.stock-study:where([data-stock-ready~="frame"])[data-stock-menu-list="on"] .menu-opt:hover {
+    padding-left: 14px;
+    padding-right: 14px;
+    color: var(--study-accent);
+    background: var(--study-selected);
+  }
+}
+
+/* Native classes drive direction; readiness gates preserve the original glyph
+   until that exact image has decoded. No native click handler is patched. */
+/* Do not animate font-size when the stock image appears or falls back.
+   Keeping this outside the ready gate also makes recovery instantaneous. */
+.rpg-v7-root.mvu-paper.stock-study .hud-toggle-btn {
+  transition: color .3s ease, background-color .3s ease, border-color .3s ease,
+    box-shadow .3s ease, transform .3s ease;
+}
+.rpg-v7-root.stock-study[data-stock-hud-arrow="4"] { --stock-hud-image: var(--stock-arrow-4); }
+.rpg-v7-root.stock-study[data-stock-hud-arrow="5"] { --stock-hud-image: var(--stock-arrow-5); }
+.rpg-v7-root.stock-study[data-stock-topbar-arrow="4"] { --stock-topbar-image: var(--stock-arrow-4); }
+.rpg-v7-root.stock-study[data-stock-topbar-arrow="5"] { --stock-topbar-image: var(--stock-arrow-5); }
+
+@supports (mask-image: linear-gradient(#000, #000)) {
+  /* Both PNGs point upward. The native span rotates 180deg when expanded.
+     Start its image downward, so native expansion turns the image upward. */
+  .rpg-v7-root.mvu-paper.stock-study.mobile-layout:is([data-stock-topbar-arrow="4"]:where([data-stock-ready~="arrow-4"]), [data-stock-topbar-arrow="5"]:where([data-stock-ready~="arrow-5"])) .tds-chev {
+    position: relative;
+    display: block;
+    flex: 0 0 18px;
+    width: 18px;
+    height: 24px;
+    font-size: 0;
+    line-height: 0;
+    color: var(--stock-ink);
+  }
+  .rpg-v7-root.mvu-paper.stock-study.mobile-layout:is([data-stock-topbar-arrow="4"]:where([data-stock-ready~="arrow-4"]), [data-stock-topbar-arrow="5"]:where([data-stock-ready~="arrow-5"])) .tds-chev::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: currentColor;
+    opacity: .9;
+    -webkit-mask: var(--stock-topbar-image) center / contain no-repeat;
+    mask: var(--stock-topbar-image) center / contain no-repeat;
+    transform: rotate(180deg);
+  }
+
+  /* The desktop handler rewrites innerText, which would remove an inserted img.
+     A pseudo-element survives it. :has reads the existing HUD's minimized state.
+     Older engines without :has keep the original desktop glyph. */
+  @supports selector(:has(.hud-wrap.minimized)) {
+    .rpg-v7-root.mvu-paper.stock-study:is([data-stock-hud-arrow="4"]:where([data-stock-ready~="arrow-4"]), [data-stock-hud-arrow="5"]:where([data-stock-ready~="arrow-5"])) .hud-toggle-btn {
+      position: relative;
+      inset: auto;
+      font-size: 0;
+      color: var(--stock-ink);
+      background: var(--study-panel);
+      border-color: var(--study-line);
+    }
+    .rpg-v7-root.mvu-paper.stock-study:is([data-stock-hud-arrow="4"]:where([data-stock-ready~="arrow-4"]), [data-stock-hud-arrow="5"]:where([data-stock-ready~="arrow-5"])) .hud-toggle-btn::before {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 20px;
+      height: 28px;
+      pointer-events: none;
+      background: currentColor;
+      opacity: .9;
+      -webkit-mask: var(--stock-hud-image) center / contain no-repeat;
+      mask: var(--stock-hud-image) center / contain no-repeat;
+      transform: translate(-50%, -50%) rotate(-90deg);
+      transition: transform .3s ease;
+    }
+    .rpg-v7-root.mvu-paper.stock-study:is([data-stock-hud-arrow="4"]:where([data-stock-ready~="arrow-4"]), [data-stock-hud-arrow="5"]:where([data-stock-ready~="arrow-5"])):has(.hud-wrap.minimized) .hud-toggle-btn::before {
+      transform: translate(-50%, -50%) rotate(90deg);
+    }
+    .rpg-v7-root.mvu-paper.stock-study:is([data-stock-hud-arrow="4"]:where([data-stock-ready~="arrow-4"]), [data-stock-hud-arrow="5"]:where([data-stock-ready~="arrow-5"])) .hud-toggle-btn:hover {
+      color: var(--study-panel);
+      background: var(--stock-ink);
+      border-color: var(--stock-ink);
+    }
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rpg-v7-root.stock-study:is([data-stock-hud-arrow="4"]:where([data-stock-ready~="arrow-4"]), [data-stock-hud-arrow="5"]:where([data-stock-ready~="arrow-5"])) .hud-toggle-btn::before,
+  .rpg-v7-root.stock-study:is([data-stock-topbar-arrow="4"]:where([data-stock-ready~="arrow-4"]), [data-stock-topbar-arrow="5"]:where([data-stock-ready~="arrow-5"])) .tds-chev {
+    transition: none;
+  }
+}
 </style>
 
-<div class="rpg-v7-root paged-mode">
+<div class="rpg-v7-root paged-mode mvu-paper interface-harmony-study stock-study" data-paper-width="fluid" data-ui-release="2026-09-16-stock-bbi-v2" data-stock-button="on" data-stock-panel="on" data-stock-divider="on" data-stock-paging="on" data-stock-menu-trigger="on" data-stock-menu-list="on" data-stock-hud-arrow="4" data-stock-topbar-arrow="4">
 <div class="map-topbar" id="map-topbar">
     <div class="hud-toggle-btn" id="hud-toggle">◀</div>
     <!-- [新增] 窄屏專用：日期條（點擊展開/收合面板） -->
@@ -4462,9 +5085,19 @@
         </div>
     </div>
     </div>
+<div class="mvu-paper-space">
+<div class="mvu-paper-stack">
 <div class="text-area">
+<div class="paper-edges" aria-hidden="true">
+  <svg class="paper-corner paper-corner--tl" viewBox="0 0 60 60" fill="none" focusable="false"><path d="M5 55V19Q5 5 19 5H55" stroke="currentColor" stroke-width="1.4"/><path d="M11 55V25Q11 11 25 11H55" stroke="currentColor" stroke-width="1" opacity=".4"/><circle cx="19" cy="19" r="2.2" fill="currentColor" opacity=".8"/></svg>
+  <svg class="paper-corner paper-corner--tr" viewBox="0 0 60 60" fill="none" focusable="false"><path d="M5 55V19Q5 5 19 5H55" stroke="currentColor" stroke-width="1.4"/><path d="M11 55V25Q11 11 25 11H55" stroke="currentColor" stroke-width="1" opacity=".4"/><circle cx="19" cy="19" r="2.2" fill="currentColor" opacity=".8"/></svg>
+  <svg class="paper-corner paper-corner--br" viewBox="0 0 60 60" fill="none" focusable="false"><path d="M5 55V19Q5 5 19 5H55" stroke="currentColor" stroke-width="1.4"/><path d="M11 55V25Q11 11 25 11H55" stroke="currentColor" stroke-width="1" opacity=".4"/><circle cx="19" cy="19" r="2.2" fill="currentColor" opacity=".8"/></svg>
+  <svg class="paper-corner paper-corner--bl" viewBox="0 0 60 60" fill="none" focusable="false"><path d="M5 55V19Q5 5 19 5H55" stroke="currentColor" stroke-width="1.4"/><path d="M11 55V25Q11 11 25 11H55" stroke="currentColor" stroke-width="1" opacity=".4"/><circle cx="19" cy="19" r="2.2" fill="currentColor" opacity=".8"/></svg>
+</div>
     <div class="text-display">
     <p class="placeholder-text">谱写崭新篇章...</p>
+</div>
+</div>
 </div>
 </div>
 <!-- [新增] State 查看面板 -->
@@ -4757,6 +5390,12 @@ function _measureTrueHeight() {
     root.style.overflow = 'visible';
 
     const textArea = root.querySelector('.text-area');
+    // Paper decoration follows the existing coalesced height measurement.
+    const paperStack = textArea?.closest('.mvu-paper-stack');
+    if (paperStack) {
+        const tall = String(textArea.offsetHeight > 900);
+        if (paperStack.dataset.paperTall !== tall) paperStack.dataset.paperTall = tall;
+    }
     const prevAreaOverflow = textArea ? textArea.style.overflow : null;
     if (textArea) textArea.style.overflow = 'visible';
 
@@ -4816,13 +5455,16 @@ function requestParentResize() {
     }, 350);
 }
 
+// Asset readiness can change toolbar height. Reuse the native coalesced reporter.
+document.addEventListener('mvu-stock-assets-change', requestParentResize, { signal: _rpgLifetime.signal });
+
 // [新增] 翻頁後通知父層捲動到 .text-area 頂端（解決手機端翻頁後停留在底部的問題）
 function scrollToTextArea() {
     const textArea = document.querySelector('.text-area');
     if (!textArea) return;
     window.parent?.postMessage({
         type: 'RPG_MVU_SCROLL_TO_TEXT',
-        offsetTop: textArea.offsetTop || 0,
+        offsetTop: Math.max(0, textArea.getBoundingClientRect().top + window.scrollY),
     }, '*');
 }
 
@@ -5249,7 +5891,7 @@ async function loadTexSettings() {
             const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
             if (parsed && typeof parsed === 'object') {
                 if (parsed.mode === 'plain' || parsed.mode === 'local') mode = parsed.mode;
-                if (Number.isFinite(Number(parsed.opacity))) {
+                if (parsed.opacity !== null && parsed.opacity !== '' && Number.isFinite(Number(parsed.opacity))) {
                     opacity = Math.max(0, Math.min(100, Math.round(Number(parsed.opacity))));
                 }
             }
@@ -11175,5 +11817,114 @@ if (typeof tavern_events !== 'undefined') {
 
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init, { signal: _rpgLifetime.signal });
     else init();
+})();
+
+/* === UI stock asset runtime: 2026-09-16-stock-bbi-v2 === */
+/* Stock decoration is optional. Keep native CSS until every slice in a group
+   has decoded. This module does not change card data or native click handlers. */
+(() => {
+  "use strict";
+  const GROUPS = {
+    button: ["button"],
+    paging: ["page-left", "page-right", "page-top", "page-bottom"],
+    frame: ["panel-tl", "panel-tr", "panel-bl", "panel-br", "panel-top", "panel-bottom", "panel-left", "panel-right"],
+    divider: ["divider"],
+    round: ["round"],
+    "arrow-4": ["arrow-4"],
+    "arrow-5": ["arrow-5"]
+  };
+  const properties = Object.freeze([...new Set(Object.values(GROUPS).flat())].map(key => "--stock-" + key));
+  const images = new Map(), pending = new Set();
+  let generation = 0;
+  let groups = Object.fromEntries(Object.keys(GROUPS).map(key => [key, "pending"]));
+  const root = () => document.querySelector(".rpg-v7-root.stock-study");
+  function getState() {
+    const matching = status => Object.keys(groups).filter(key => groups[key] === status);
+    const ready = matching("ready"), failed = matching("fallback"), waiting = matching("pending");
+    return { status: waiting.length ? "loading" : failed.length ? (ready.length ? "partial" : "fallback") : "ready",
+      ready, failed, pending: waiting };
+  }
+  function publish(element) {
+    element.dataset.stockReady = getState().ready.join(" ");
+    document.dispatchEvent(new CustomEvent("mvu-stock-assets-change"));
+  }
+  function imageUrl(value) {
+    // Generated variables contain one absolute URL or one inline PNG each.
+    const match = value.trim().match(/^url\(\s*(?:"([^"]+)"|'([^']+)'|([^'"\s)]+))\s*\)$/);
+    if (!match) return null;
+    try {
+      const url = new URL(match[1] || match[2] || match[3], document.baseURI);
+      return /^(https?:|data:|blob:)$/.test(url.protocol) ? url.href : null;
+    } catch { return null; }
+  }
+  function probe(url) {
+    if (!url) return Promise.resolve(false);
+    if (images.has(url)) return images.get(url).promise;
+    const entry = { image: new Image(), promise: null, cancel: null };
+    entry.promise = new Promise(resolve => {
+      const img = entry.image;
+      let settled = false;
+      const finish = success => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        img.onload = img.onerror = null;
+        pending.delete(entry);
+        if (!success) {
+          if (images.get(url) === entry) images.delete(url);
+          img.removeAttribute("src");
+        }
+        resolve(success);
+      };
+      const timer = setTimeout(() => finish(false), 5000);
+      entry.cancel = () => finish(false);
+      pending.add(entry);
+      // CSS masks require CORS. A normal cross-origin <img> alone is not a
+      // sufficient check, so use the same anonymous mode as the mask request.
+      img.crossOrigin = "anonymous";
+      img.onerror = () => finish(false);
+      img.onload = async () => {
+        try {
+          if (img.decode) await img.decode();
+          finish(img.naturalWidth > 0 && img.naturalHeight > 0);
+        } catch { finish(false); }
+      };
+      img.src = url;
+    });
+    // Keep successfully decoded images alive and share repeated source URLs.
+    // Failed requests are removed so a later explicit refresh can retry.
+    images.set(url, entry);
+    return entry.promise;
+  }
+  async function refresh() {
+    const element = root();
+    if (!element) return getState();
+    const current = ++generation;
+    groups = Object.fromEntries(Object.keys(GROUPS).map(key => [key, "pending"]));
+    publish(element);
+    if (typeof CSS === "undefined" || !CSS.supports("mask-image", "linear-gradient(#000, #000)")) {
+      groups = Object.fromEntries(Object.keys(GROUPS).map(key => [key, "fallback"]));
+      publish(element);
+      return getState();
+    }
+    const style = getComputedStyle(element);
+    const urls = Object.fromEntries(properties.map(key => [key, imageUrl(style.getPropertyValue(key))]));
+    await Promise.all(Object.entries(GROUPS).map(async ([key, parts]) => {
+      const results = await Promise.all(parts.map(part => probe(urls["--stock-" + part])));
+      if (current !== generation || !element.isConnected) return;
+      groups[key] = results.every(Boolean) ? "ready" : "fallback";
+      publish(element);
+    }));
+    return getState();
+  }
+  window.MvuStockAssets = { refresh, getState, properties };
+  addEventListener("pagehide", () => {
+    generation++;
+    for (const entry of [...pending]) entry.cancel();
+  });
+  // A restored page can retry any requests cancelled while it was hidden.
+  addEventListener("pageshow", event => { if (event.persisted) refresh(); });
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", refresh, { once: true });
+  else refresh();
 })();
 </script>
