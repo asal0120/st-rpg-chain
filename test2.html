@@ -5608,7 +5608,7 @@ function collectSTRegexScripts() {
         if (!ctx) return result;
 
         const isEligible = function(s) {
-            return s && !s.disabled && s.markdownOnly === true && !s.promptOnly &&
+            return s && !s.disabled && s.markdownOnly === true &&
                 Array.isArray(s.placement) && s.placement.includes(2);
         };
 
@@ -5618,14 +5618,9 @@ function collectSTRegexScripts() {
             var gs = globalScripts[gi];
             if (isEligible(gs)) result.push(Object.assign({}, gs, { _source: 'global' }));
         }
-        // 2. Scoped (角色)
-        var scopedScripts = ctx.characters?.[ctx.characterId]?.data?.extensions?.regex_scripts;
-        if (Array.isArray(scopedScripts)) {
-            for (var si = 0; si < scopedScripts.length; si++) {
-                var ss = scopedScripts[si];
-                if (isEligible(ss)) result.push(Object.assign({}, ss, { _source: 'scoped' }));
-            }
-        }
+        // 2. Scoped (角色) — 暫時跳過，用戶不需要角色正則
+        // var scopedScripts = ctx.characters?.[ctx.characterId]?.data?.extensions?.regex_scripts;
+        // if (Array.isArray(scopedScripts)) { ... }
         // 3. Preset
         try {
             var presetScripts = ctx.getPresetManager()
