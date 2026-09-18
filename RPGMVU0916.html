@@ -3128,6 +3128,107 @@
     padding-bottom: 2px;
 }
 
+/* === ST 正則腳本勾選面板 === */
+.st-regex-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 4px;
+    max-height: 280px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #3a3020 transparent;
+}
+
+.st-regex-list::-webkit-scrollbar { width: 4px; }
+.st-regex-list::-webkit-scrollbar-track { background: transparent; }
+.st-regex-list::-webkit-scrollbar-thumb {
+    background: #3a3020;
+    border-radius: 4px;
+}
+
+.st-regex-item {
+    border: 1px solid #3a3020;
+    border-radius: 4px;
+    padding: 8px 10px;
+    transition: border-color 0.2s;
+}
+
+.st-regex-item:hover {
+    border-color: #5a4a30;
+}
+
+.st-regex-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 12px;
+    color: #c0b090;
+    line-height: 1.4;
+}
+
+.st-regex-label input[type="checkbox"] {
+    flex-shrink: 0;
+    width: 14px;
+    height: 14px;
+    accent-color: #8a734b;
+    cursor: pointer;
+}
+
+.st-regex-source {
+    flex-shrink: 0;
+    font-size: 10px;
+    color: #8a734b;
+    font-family: monospace;
+}
+
+.st-regex-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.st-regex-preview {
+    font-size: 10px;
+    color: #5a4a30;
+    font-family: monospace;
+    margin-top: 4px;
+    padding-left: 22px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.st-regex-empty {
+    color: #3a3020;
+    font-size: 11px;
+    text-align: center;
+    padding: 12px 0;
+}
+
+.st-regex-refresh-btn {
+    width: 100%;
+    border: 1px dashed #3a3020;
+    background: none;
+    color: #5a4a30;
+    font-family: "Noto Serif SC", serif;
+    font-size: 12px;
+    padding: 7px;
+    border-radius: 4px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+    margin-top: 6px;
+    box-sizing: border-box;
+}
+
+.st-regex-refresh-btn:hover {
+    border-color: #8a734b;
+    color: #9a8a6a;
+}
+
 .display-save-rules-btn {
     background: linear-gradient(to bottom, #2a3a2a, #1a2a1a);
     border: 1px solid #4a8a4b;
@@ -4827,6 +4928,23 @@
         <button class="display-save-rules-btn" id="anchor-save-btn">保存规则</button>
     </div>
 </div>
+
+			<!-- ST 正則腳本 -->
+			<div class="display-section-label filter-toggle-label" id="st-regex-toggle" style="margin-top:24px;">
+				<div class="filter-section-header">
+					<span>正则脚本 <span class="filter-count-badge" id="st-regex-count-badge"></span></span>
+					<span class="filter-collapse-mark" id="st-regex-collapse-mark">▼</span>
+				</div>
+			</div>
+
+			<div class="filter-collapsible" id="st-regex-collapsible">
+				<div class="display-host-hint" style="margin-bottom:8px;">
+					读取 SillyTavern 中启用的正则脚本，勾选后应用于前端正文
+				</div>
+				<div class="st-regex-list" id="st-regex-list"></div>
+				<button class="st-regex-refresh-btn" id="st-regex-refresh-btn">🔄 刷新列表</button>
+			</div>
+
         </div>
     </div>
 </div>
@@ -5475,6 +5593,112 @@ const ANCHOR_VAR_KEY = '正文规则';
 let _anchorRulesCache = null;
 let _compiledAnchorRegexes = null;
 
+// === ST 正則腳本整合 ===
+const ST_REGEX_SELECT_KEY = '正则选择';
+let _stRegexSelectionCache = null;
+let _stRegexAllCache = null;
+let _compiledSTRegexCache = null;
+
+// 從 3 種來源收集符合條件的 ST 正則腳本
+function collectSTRegexScripts() {
+    if (_stRegexAllCache !== null) return _stRegexAllCache;
+    const result = [];
+    try {
+        const ctx = window.RPG_PARENT?.SillyTavern?.getContext();
+        if (!ctx) return result;
+
+        const isEligible = function(s) {
+            return s && !s.disabled && s.markdownOnly === true &&
+                Array.isArray(s.placement) && s.placement.includes(2);
+        };
+
+        // 1. Global
+        var globalScripts = ctx.extensionSettings?.regex ?? [];
+        for (var gi = 0; gi < globalScripts.length; gi++) {
+            var gs = globalScripts[gi];
+            if (isEligible(gs)) result.push(Object.assign({}, gs, { _source: 'global' }));
+        }
+        // 2. Scoped (角色) — 暫時跳過，用戶不需要角色正則
+        // var scopedScripts = ctx.characters?.[ctx.characterId]?.data?.extensions?.regex_scripts;
+        // if (Array.isArray(scopedScripts)) { ... }
+        // 3. Preset
+        try {
+            var presetScripts = ctx.getPresetManager()
+                .readPresetExtensionField('regex')?.regex_scripts;
+            if (Array.isArray(presetScripts)) {
+                for (var pi = 0; pi < presetScripts.length; pi++) {
+                    var ps = presetScripts[pi];
+                    if (isEligible(ps) && !result.some(function(r) { return r.id === ps.id; })) {
+                        result.push(Object.assign({}, ps, { _source: 'preset' }));
+                    }
+                }
+            }
+        } catch(e) {}
+    } catch(e) {
+        console.warn('[RPG] collectSTRegexScripts 失敗:', e);
+    }
+    _stRegexAllCache = result;
+    return result;
+}
+
+// 強制刷新快取
+function refreshSTRegexScripts() {
+    _stRegexAllCache = null;
+    _compiledSTRegexCache = null;
+    return collectSTRegexScripts();
+}
+
+// 讀取用戶勾選的 regex id 列表（同步，從全局變數快取）
+function loadSTRegexSelectionSync() {
+    if (_stRegexSelectionCache !== null) return _stRegexSelectionCache;
+    try {
+        var allVars = getAllVariables({ type: 'global' }) || {};
+        var raw = allVars[ST_REGEX_SELECT_KEY];
+        if (!raw || raw === '' || raw === '0') return [];
+        var parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+        _stRegexSelectionCache = Array.isArray(parsed) ? parsed : [];
+        return _stRegexSelectionCache;
+    } catch(e) { return []; }
+}
+
+// 非同步讀取（首次載入時用）
+async function refreshSTRegexSelection() {
+    try {
+        var raw = await triggerSlash('/getglobalvar key=' + ST_REGEX_SELECT_KEY);
+        if (!raw || raw === '' || raw === '0') { _stRegexSelectionCache = []; return []; }
+        var parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+        _stRegexSelectionCache = Array.isArray(parsed) ? parsed : [];
+        return _stRegexSelectionCache;
+    } catch(e) { _stRegexSelectionCache = _stRegexSelectionCache ?? []; return _stRegexSelectionCache; }
+}
+
+// 保存勾選
+async function saveSTRegexSelection(selectedIds) {
+    var json = JSON.stringify(selectedIds);
+    await triggerSlash('/setglobalvar key=' + ST_REGEX_SELECT_KEY + ' ' + json);
+    _stRegexSelectionCache = selectedIds;
+    _compiledSTRegexCache = null;
+}
+
+// 解析 ST findRegex 格式 "/pattern/flags" → RegExp
+function parseSTFindRegex(str) {
+    if (!str) return null;
+    var m = str.match(/^\/(.+)\/([gimsuy]*)$/s);
+    if (m) { try { return new RegExp(m[1], m[2]); } catch(e) { return null; } }
+    try { return new RegExp(str, 'g'); } catch(e) { return null; }
+}
+
+// 展開 {{random:...}} 巨集
+function expandRandomMacro(str) {
+    if (!str || str.indexOf('{{random:') === -1) return str;
+    return str.replace(/\{\{random:(.*?)\}\}/gi, function(_, options) {
+        var choices = options.split(':').filter(function(s) { return s !== ''; });
+        return choices.length > 0
+            ? choices[Math.floor(Math.random() * choices.length)]
+            : '';
+    });
+}
+
 async function refreshAnchorRulesCache() {
     try {
         const raw = await triggerSlash('/getvar key=' + ANCHOR_VAR_KEY);
@@ -5812,6 +6036,95 @@ document.getElementById('filter-save-btn')?.addEventListener('click', async func
     toggle.setAttribute('role', 'button');
     setFilterCollapsed(false);
 })();
+
+// === ST 正則腳本面板渲染 ===
+var _stRegexSourceLabels = { global: '全局', scoped: '角色', preset: '預設' };
+
+function renderSTRegexPanel() {
+    var list = document.getElementById('st-regex-list');
+    var badge = document.getElementById('st-regex-count-badge');
+    if (!list) return;
+
+    var allScripts = collectSTRegexScripts();
+    var selectedIds = loadSTRegexSelectionSync();
+    var activeCount = 0;
+    for (var i = 0; i < allScripts.length; i++) {
+        if (selectedIds.indexOf(allScripts[i].id) !== -1) activeCount++;
+    }
+
+    if (badge) badge.textContent = allScripts.length
+        ? '· ' + activeCount + '/' + allScripts.length + ' 条' : '';
+    list.innerHTML = '';
+
+    if (allScripts.length === 0) {
+        list.innerHTML = '<div class="st-regex-empty">未检测到符合条件的正则脚本</div>';
+        return;
+    }
+
+    allScripts.forEach(function(script) {
+        var item = document.createElement('div');
+        item.className = 'st-regex-item';
+        var checked = selectedIds.indexOf(script.id) !== -1 ? 'checked' : '';
+        var sourceLabel = _stRegexSourceLabels[script._source] || '未知';
+        var replStr = script.replaceString || '';
+        var preview = replStr
+            ? '→ ' + (replStr.length > 30 ? replStr.substring(0, 30) + '…' : replStr)
+            : '→ (删除)';
+        item.innerHTML =
+            '<label class="st-regex-label">' +
+                '<input type="checkbox" data-id="' + script.id + '" ' + checked + ' />' +
+                '<span class="st-regex-source">[' + sourceLabel + ']</span> ' +
+                '<span class="st-regex-name">' + _escAttr(script.scriptName) + '</span>' +
+            '</label>' +
+            '<div class="st-regex-preview">' + _escAttr(preview) + '</div>';
+        list.appendChild(item);
+    });
+
+    // 勾選事件
+    list.querySelectorAll('input[type="checkbox"]').forEach(function(cb) {
+        cb.addEventListener('change', async function() {
+            var checkedEls = list.querySelectorAll('input:checked');
+            var ids = Array.from(checkedEls).map(function(el) { return el.dataset.id; });
+            await saveSTRegexSelection(ids);
+            // 觸發正文重新渲染
+            window.__FORMAT_CACHE?.clear();
+            _compiledFilterRegexes = null;
+            if (state.rawMessage) {
+                state.rawText = '';
+                updateTemplateVariables(state.rawMessage);
+            }
+            renderSTRegexPanel();
+        });
+    });
+}
+
+// ST 正則面板收縮/展開
+(function() {
+    var toggle = document.getElementById('st-regex-toggle');
+    var panel  = document.getElementById('st-regex-collapsible');
+    var mark   = document.getElementById('st-regex-collapse-mark');
+    if (!toggle || !panel) return;
+    function setCollapsed(c) {
+        panel.classList.toggle('is-collapsed', c);
+        toggle.classList.toggle('is-collapsed', c);
+        if (mark) mark.textContent = c ? '▶' : '▼';
+    }
+    toggle.addEventListener('click', function(e) {
+        e.stopPropagation();
+        setCollapsed(!panel.classList.contains('is-collapsed'));
+    });
+    toggle.setAttribute('tabindex', '0');
+    toggle.setAttribute('role', 'button');
+    setCollapsed(true); // 預設收起
+})();
+
+// 刷新按鈕
+document.getElementById('st-regex-refresh-btn')?.addEventListener('click', function() {
+    refreshSTRegexScripts();
+    refreshSTRegexSelection().then(function() {
+        renderSTRegexPanel();
+    });
+});
 // display-modal 開啟時重新渲染，確保讀到最新值
 (function() {
     const layer = document.getElementById('display-layer');
@@ -5822,6 +6135,10 @@ document.getElementById('filter-save-btn')?.addEventListener('click', async func
                 if (layer.classList.contains('active')) {
                     renderFilterRules();
                     renderAnchorRules();  // ← 補上
+                    refreshSTRegexScripts();
+                    refreshSTRegexSelection().then(function() {
+                        renderSTRegexPanel();
+                    });
                 }
             }
         }
@@ -7739,6 +8056,21 @@ if (typeof window.setLayout === 'function') {
     for (const _rx of _compiledFilterRegexes) {
         _rx.lastIndex = 0;
         content = content.replace(_rx, '');
+    }
+
+    // Step 2.5: 應用用戶勾選的 ST 正則腳本
+    var _stSelectedIds = loadSTRegexSelectionSync();
+    if (_stSelectedIds.length > 0) {
+        var _stAllScripts = collectSTRegexScripts();
+        for (var _sti = 0; _sti < _stAllScripts.length; _sti++) {
+            var _stScript = _stAllScripts[_sti];
+            if (_stSelectedIds.indexOf(_stScript.id) === -1) continue;
+            var _stRx = parseSTFindRegex(_stScript.findRegex);
+            if (!_stRx) continue;
+            var _stReplace = expandRandomMacro(_stScript.replaceString || '');
+            _stRx.lastIndex = 0;
+            content = content.replace(_stRx, _stReplace);
+        }
     }
 
     // Step 3: 清裸露的內建結尾殘餘
