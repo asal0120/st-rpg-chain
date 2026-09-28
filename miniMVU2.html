@@ -831,6 +831,391 @@
     to { opacity: 0; }
 }
     </style>
+<style id="rf-refresh-style">
+/* miniMVU2 視覺更新提案 — 樣式覆寫層
+ * 所有 var(--rf-xxx) 圖片由 refresh-deco.js 用 canvas 即時畫出。
+ * 原則：不動版位座標與點擊區，只改外形、層次與引導。 */
+
+:root {
+    --rf-gold: #d8b46a;
+    --rf-gold-hi: #f3dca0;
+    --rf-gold-lo: #6e5020;
+    --rf-ink: #120c06;
+    --rf-frame: 10px solid transparent;
+}
+
+/* ---------- 共用：9-slice 裝飾框 ---------- */
+.area-top .boss-hp-box,
+.area-right-mid,
+.area-right-top,
+.dashboard-container,
+.area-left,
+.future-sight-container,
+.cp-options,
+.sel-card {
+    border: var(--rf-frame) !important;
+    border-image: var(--rf-frame-dim) 72 fill / 30px / 0 stretch !important;
+    background: none !important;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.55) !important;
+}
+.area-top .boss-hp-box,
+.area-right-mid,
+.cp-options { border-image-source: var(--rf-frame-gold) !important; }
+
+.area-right-mid::before, .area-right-mid::after,
+.area-right-top::before { content: none; }
+
+/* ---------- 場景：光束與暗角，讓視線集中到 BOSS ---------- */
+#game-stage { box-shadow: inset 0 0 160px 40px rgba(0, 0, 0, 0.85); }
+.rf-stage-fx {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    pointer-events: none; z-index: 1; mix-blend-mode: screen;
+}
+.boss-img { filter: drop-shadow(0 0 22px rgba(255, 210, 140, 0.25)) drop-shadow(0 18px 20px rgba(0, 0, 0, 0.8)); }
+
+/* ---------- BOSS 血量 ---------- */
+.boss-hp-box { padding: 10px 18px 12px !important; }
+.boss-title-row { margin-bottom: 7px; letter-spacing: 1px; }
+.boss-name-text { color: var(--rf-gold-hi); text-shadow: 0 0 10px rgba(216, 180, 106, 0.35), 0 2px 2px #000; }
+.hp-text-val { color: #ffb8a8; }
+.hp-track {
+    height: 18px; border-radius: 9px; overflow: hidden; position: relative;
+    background: linear-gradient(#080202, #1c0606);
+    border: 1px solid rgba(243, 220, 160, 0.35);
+    box-shadow: inset 0 2px 6px #000, 0 0 0 3px rgba(0, 0, 0, 0.45);
+}
+.hp-fill {
+    border-radius: 9px; position: relative;
+    background-image:
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0) 45%),
+        repeating-linear-gradient(60deg, transparent 0 7px, rgba(0, 0, 0, 0.12) 7px 12px),
+        linear-gradient(to right, #6a0806, #c21c14 60%, #ff5a3a);
+    box-shadow: 0 0 12px rgba(255, 60, 40, 0.55);
+}
+/* 血條末端的亮點，讓「還剩多少」一眼可見 */
+.hp-fill::after {
+    content: ""; position: absolute; right: 0; top: 0; bottom: 0; width: 6px;
+    background: radial-gradient(ellipse at center, #fff3d0, rgba(255, 180, 120, 0) 70%);
+}
+.inline-orb {
+    width: 18px; height: 18px; border: none; border-radius: 50%;
+    background: var(--rf-gem) center / 100% 100% no-repeat;
+    box-shadow: 0 0 6px rgba(255, 60, 40, 0.5);
+}
+.inline-orb.lost {
+    background: var(--rf-socket) center / 100% 100% no-repeat;
+    opacity: 0.85; transform: none; box-shadow: none;
+}
+.ingame-skip-btn { border-radius: 50%; background: rgba(0, 0, 0, 0.5); }
+
+/* 勝利條件：緞帶 */
+.condition-box {
+    width: auto !important; max-width: 92%;
+    margin-top: 6px !important;
+    border-style: solid !important; border-width: 0 34px !important; border-color: transparent !important;
+    border-image: var(--rf-ribbon) 0 80 fill / 0 34px / 0 stretch !important;
+    background: none !important; box-shadow: none !important;
+    padding: 8px 6px 12px !important;
+    color: #f6e2b8 !important; text-shadow: 0 1px 2px #000;
+}
+.sum-display-box, .special-status-box {
+    padding: 3px 16px; border-radius: 14px;
+    background: rgba(10, 6, 2, 0.7); border: 1px solid rgba(216, 180, 106, 0.4);
+}
+
+/* ---------- 敵方意圖：紅＝要挨打、綠＝BREAK、藍＝完全擋下 ---------- */
+.area-right-top { border-image-source: var(--rf-frame-crimson) !important; }
+.area-right-top.broken { border-image-source: var(--rf-frame-verdant) !important; }
+.area-right-top.rf-safe { border-image-source: var(--rf-frame-azure) !important; }
+.area-right-top::before {
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background: var(--rf-crest) center / 96px no-repeat; opacity: 0.05;
+}
+.intent-label { letter-spacing: 2px; font-size: 0.9rem; }
+.intent-label::before, .intent-label::after { content: " ◆ "; font-size: 0.55rem; opacity: 0.6; vertical-align: middle; }
+.dmg-val { position: relative; text-shadow: 0 0 14px rgba(255, 60, 40, 0.6), 0 3px 0 #300; }
+.area-right-top:not(.broken):not(.rf-safe) .dmg-val { animation: rfThreat 1.6s ease-in-out infinite; }
+.area-right-top.broken .dmg-val { color: #7df08e; text-shadow: 0 0 14px rgba(80, 230, 110, 0.6); }
+.area-right-top.broken .intent-label { color: #b8f0b0; }
+.area-right-top.rf-safe .dmg-val { color: #9ccaff; text-shadow: 0 0 14px rgba(80, 160, 255, 0.6); }
+.area-right-top.rf-safe .intent-label { color: #b8dcff; }
+.def-info {
+    display: inline-block; margin: 0 auto; padding: 2px 12px; border-radius: 12px;
+    background: rgba(0, 0, 0, 0.45); color: #c8b8a0;
+}
+@keyframes rfThreat { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.06); } }
+
+/* ---------- 母愛支援 ---------- */
+.area-right-mid { padding: 12px !important; }
+.skill-title {
+    border-bottom: none; padding-bottom: 10px; color: var(--rf-gold-hi);
+    background: var(--rf-divider) center bottom / 170px 14px no-repeat;
+}
+.skill-btn {
+    border-radius: 10px; border: 1px solid rgba(216, 180, 106, 0.35);
+    background: radial-gradient(ellipse at 50% 30%, #3a2c18, #16100a 70%);
+    box-shadow: inset 0 1px 0 rgba(255, 240, 200, 0.12), inset 0 -10px 18px rgba(0, 0, 0, 0.6), 0 3px 6px rgba(0, 0, 0, 0.5);
+}
+.skill-btn::before {
+    inset: 0; border: none; border-radius: 10px;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0) 55%);
+    z-index: 1;
+}
+.skill-btn .s-img {
+    top: 4px; height: 70%;
+    -webkit-mask: radial-gradient(ellipse at 50% 45%, #000 55%, transparent 72%);
+            mask: radial-gradient(ellipse at 50% 45%, #000 55%, transparent 72%);
+}
+.skill-btn .s-count {
+    padding: 0 8px; border-radius: 8px; margin-top: 2px;
+    background: rgba(216, 180, 106, 0.16); border: 1px solid rgba(216, 180, 106, 0.3);
+}
+.skill-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    border-color: var(--rf-gold);
+    box-shadow: 0 0 12px rgba(216, 180, 106, 0.35), inset 0 -10px 18px rgba(0, 0, 0, 0.5);
+}
+.skill-btn.active {
+    border-color: var(--rf-gold-hi);
+    box-shadow: 0 0 0 2px rgba(243, 220, 160, 0.5), 0 0 18px rgba(243, 200, 110, 0.6);
+    animation: rfBreath 1.2s ease-in-out infinite;
+}
+.skill-btn.targetable-skill { border-color: #7df08e; background: radial-gradient(ellipse at 50% 30%, #1c3a1c, #081208 70%); }
+
+/* ---------- 玩家生命：紋章＋血量環 ---------- */
+.area-right-bot::before, .area-right-bot::after {
+    left: 10px; top: 15px; width: 200px; height: 200px; inset: auto;
+    left: 10px; top: 15px;
+    clip-path: none; outline: none; border: none; box-shadow: none; border-radius: 50%;
+}
+.area-right-bot::before {
+    background: conic-gradient(from 180deg, #52d46a 0 calc(var(--rf-hp, 100) * 1%), rgba(20, 30, 20, 0.9) 0);
+    -webkit-mask: radial-gradient(circle, transparent 79px, #000 80px 92px, transparent 93px);
+            mask: radial-gradient(circle, transparent 79px, #000 80px 92px, transparent 93px);
+    filter: drop-shadow(0 0 6px rgba(80, 220, 110, 0.6));
+}
+.area-right-bot::after {
+    background: var(--rf-medallion) center / 100% 100% no-repeat;
+    filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.7));
+}
+.php-val { margin-top: 6px; }
+.php-lbl { color: var(--rf-gold); letter-spacing: 2px; font-size: 0.75rem; }
+.area-right-bot.rf-low::before {
+    background: conic-gradient(from 180deg, #ff4a3a 0 calc(var(--rf-hp, 100) * 1%), rgba(40, 10, 10, 0.9) 0);
+    filter: drop-shadow(0 0 8px rgba(255, 60, 40, 0.8));
+    animation: rfPulse 0.9s ease-in-out infinite;
+}
+.area-right-bot.rf-low .php-val { color: #ff8a7a; text-shadow: 0 0 20px #600; }
+
+/* ---------- 儀表板 ---------- */
+.dashboard-container { box-shadow: 0 30px 50px rgba(0, 0, 0, 0.85) !important; }
+.dash-left { border-right: none; padding: 8px 14px; }
+.dash-left > div:first-child {
+    font-family: "Cinzel", serif; letter-spacing: 3px; color: var(--rf-gold) !important;
+}
+.track-box {
+    border: none; border-radius: 10px;
+    background: linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.35));
+    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(216, 180, 106, 0.18);
+    gap: 14px; padding: 0 14px;
+}
+.track-box > span { color: #7a6a52; font-style: italic; letter-spacing: 2px; }
+.dash-right { gap: 6px; padding: 6px; }
+.dash-cell {
+    border: none !important; border-radius: 10px;
+    background: rgba(0, 0, 0, 0.35);
+    box-shadow: inset 0 0 0 1px rgba(216, 180, 106, 0.14);
+    overflow: hidden;
+}
+.cell-tag { color: var(--rf-gold); opacity: 0.75; letter-spacing: 1px; }
+.btn-full { border-radius: 10px; }
+.btn-restart { color: #9a8a6a; background: rgba(0, 0, 0, 0.35); border: none !important; font-size: 0.95rem; }
+.btn-end {
+    border: none !important; color: #2a1804 !important; font-size: 1.15rem; letter-spacing: 2px;
+    background: linear-gradient(to bottom, #f3dca0, #c89a4a 55%, #8a6224) !important;
+    box-shadow: inset 0 1px 0 #fff4d0, inset 0 -3px 6px rgba(80, 40, 0, 0.5);
+    text-shadow: 0 1px 0 rgba(255, 240, 200, 0.6);
+}
+.btn-end:hover { filter: brightness(1.12); color: #1a0e00 !important; }
+/* 手上已經沒牌可出 → 結束回合按鈕呼吸發光 */
+.btn-end.rf-suggest { animation: rfCall 1.1s ease-in-out infinite; }
+@keyframes rfCall {
+    0%, 100% { box-shadow: inset 0 1px 0 #fff4d0, 0 0 0 0 rgba(243, 220, 160, 0.7); }
+    50% { box-shadow: inset 0 1px 0 #fff4d0, 0 0 0 6px rgba(243, 220, 160, 0), 0 0 22px rgba(243, 200, 110, 0.9); }
+}
+
+/* 出牌紀錄小牌 + 接續符號 */
+.mini-card {
+    position: relative; width: 30px; height: 44px; border: none !important; border-radius: 4px;
+    padding-bottom: 12px; color: #fff !important; text-shadow: 0 1px 2px #000;
+    background: center / 100% 100% no-repeat;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+}
+.mini-card.red { background-image: var(--rf-mini-red); }
+.mini-card.blue { background-image: var(--rf-mini-blue); }
+.mini-card.green { background-image: var(--rf-mini-green); }
+.mini-card.yellow { background-image: var(--rf-mini-yellow); }
+.mini-card[data-link]::before {
+    position: absolute; left: -12px; top: 50%; transform: translate(-50%, -50%);
+    font-size: 0.65rem; line-height: 1; color: rgba(216, 180, 106, 0.8); text-shadow: none;
+}
+.mini-card[data-link="color"]::before { content: "—"; }
+.mini-card[data-link="num"]::before { content: "＝"; }
+.mini-card[data-link="bonus"]::before { content: "✦"; color: var(--rf-gold-hi); font-size: 0.8rem; text-shadow: 0 0 6px var(--rf-gold); }
+.fs-card-slot { width: 40px; height: 56px; padding-bottom: 14px; font-size: 1.1rem; }
+
+/* ---------- 增益／未來視界 ---------- */
+.area-left, .future-sight-container { padding: 8px 6px !important; }
+.buff-panel-title, .fs-label {
+    border-bottom: none; padding-bottom: 8px; color: var(--rf-gold);
+    background: var(--rf-divider) center bottom / 64px 10px no-repeat;
+}
+.buff-chip {
+    border: none; border-radius: 10px; margin-top: 4px;
+    background: radial-gradient(ellipse at 50% 20%, rgba(216, 180, 106, 0.18), rgba(0, 0, 0, 0.3) 70%);
+    box-shadow: inset 0 0 0 1px rgba(216, 180, 106, 0.25);
+}
+
+/* ---------- 手牌：扇形、可出的牌發亮、不能出的牌沉下去 ---------- */
+.area-hand {
+    gap: 0; padding-bottom: 6px;
+    background: radial-gradient(ellipse 60% 100% at 50% 100%, rgba(40, 24, 8, 0.95), rgba(0, 0, 0, 0) 70%),
+                linear-gradient(to top, rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0));
+}
+.card {
+    width: 90px; height: 124px; margin: 0 -4px;
+    border: none !important; outline: none !important; border-radius: 8px;
+    background: center / 100% 100% no-repeat !important;
+    transform-origin: 50% 130%;
+    transform: translateY(var(--fan-y, 0)) rotate(var(--fan-r, 0deg));
+    transition: transform 0.18s ease-out, filter 0.2s, box-shadow 0.2s;
+    box-shadow: 0 8px 14px rgba(0, 0, 0, 0.7), 0 0 0 0 rgba(243, 220, 160, 0);
+    font-size: 2.6rem;
+}
+.card::before { content: none; }
+.card.red { background-image: var(--rf-card-red) !important; }
+.card.blue { background-image: var(--rf-card-blue) !important; }
+.card.green { background-image: var(--rf-card-green) !important; }
+.card.yellow { background-image: var(--rf-card-yellow) !important; }
+.card:not(.disabled):not(.targetable) {
+    box-shadow: 0 8px 14px rgba(0, 0, 0, 0.7), 0 0 14px rgba(243, 210, 130, 0.45);
+}
+.card:hover {
+    transform: translateY(calc(var(--fan-y, 0px) - 30px)) rotate(0deg) scale(1.1);
+    box-shadow: 0 16px 26px rgba(0, 0, 0, 0.85), 0 0 22px rgba(243, 210, 130, 0.7) !important;
+    z-index: 100;
+}
+.card.disabled {
+    filter: brightness(0.45) saturate(0.35); opacity: 1;
+    transform: translateY(calc(var(--fan-y, 0px) + 14px)) rotate(var(--fan-r, 0deg)) scale(0.92);
+}
+.card.disabled:hover { transform: translateY(calc(var(--fan-y, 0px) + 14px)) rotate(var(--fan-r, 0deg)) scale(0.92); }
+.card.targetable {
+    filter: brightness(1.1);
+    animation: rfTarget 0.9s ease-in-out infinite alternate;
+}
+.card.token::after { top: 22px; right: 7px; }
+@keyframes rfTarget {
+    from { box-shadow: 0 8px 14px rgba(0, 0, 0, 0.7), 0 0 6px rgba(125, 240, 142, 0.5); }
+    to { box-shadow: 0 8px 14px rgba(0, 0, 0, 0.7), 0 0 0 3px rgba(125, 240, 142, 0.8), 0 0 22px rgba(125, 240, 142, 0.8); }
+}
+
+/* ---------- 選色器 ---------- */
+.cp-options { padding: 26px 34px !important; gap: 26px; }
+.cp-btn { filter: brightness(0.85); }
+.cp-btn::after {
+    content: ""; position: absolute; inset: 0;
+    background: center / 38px no-repeat;
+}
+.cp-btn:nth-child(1)::after { background-image: var(--rf-emblem-red); }
+.cp-btn:nth-child(2)::after { background-image: var(--rf-emblem-blue); }
+.cp-btn:nth-child(3)::after { background-image: var(--rf-emblem-green); }
+.cp-btn:nth-child(4)::after { background-image: var(--rf-emblem-yellow); }
+#color-picker h2 { border-bottom: none; padding-bottom: 16px; background: var(--rf-divider) center bottom / 220px 14px no-repeat; }
+
+/* ---------- 開場／選卡／失敗／回合過場 ---------- */
+#ready-screen, #defeat-modal, #selection-screen {
+    background: radial-gradient(ellipse at 50% 45%, rgba(40, 26, 12, 0.92), rgba(4, 2, 1, 0.97) 70%) !important;
+}
+#ready-screen::before, #defeat-modal::before {
+    content: ""; position: absolute; left: 50%; top: 50%;
+    width: 620px; height: 330px; transform: translate(-50%, -50%);
+    border: 10px solid transparent;
+    border-image: var(--rf-frame-gold) 72 fill / 36px / 0 stretch;
+    filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.8));
+    pointer-events: none;
+}
+#defeat-modal::before { border-image-source: var(--rf-frame-crimson); }
+#ready-screen > *, #defeat-modal > * { position: relative; z-index: 1; }
+.ready-title, .defeat-title {
+    padding-bottom: 18px; border-bottom: none !important;
+    background: var(--rf-divider) center bottom / 260px 14px no-repeat;
+}
+.defeat-title { font-size: 3.4rem; margin-bottom: 0; }
+.btn-ready, .btn-start, .d-btn {
+    position: relative; border: none !important; border-radius: 0 !important;
+    clip-path: polygon(14px 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 14px 100%, 0 50%);
+    background: linear-gradient(to bottom, #f3dca0, #c89a4a 55%, #8a6224) !important;
+    color: #2a1804 !important; text-shadow: 0 1px 0 rgba(255, 240, 200, 0.6);
+    padding: 14px 56px; box-shadow: none !important;
+    transition: filter 0.2s, transform 0.2s;
+}
+.btn-ready:hover, .btn-start:hover, .d-btn:hover { filter: brightness(1.15); transform: scale(1.04); letter-spacing: normal; }
+.d-btn { background: linear-gradient(to bottom, #6a5a44, #3a2e20 60%, #241a10) !important; color: #e8dcc4 !important; text-shadow: 0 1px 2px #000; }
+.d-btn.skip { background: linear-gradient(to bottom, #f3dca0, #c89a4a 55%, #8a6224) !important; color: #2a1804 !important; }
+
+.sel-header h1 {
+    color: var(--rf-gold-hi) !important; letter-spacing: 6px;
+    padding-bottom: 16px; background: var(--rf-divider) center bottom / 240px 14px no-repeat;
+}
+.sel-card {
+    overflow: visible; padding: 10px 14px !important; height: 150px !important;
+    transition: transform 0.2s, filter 0.2s;
+}
+.sel-card:hover { transform: translateY(-5px); filter: brightness(1.12); }
+.sel-card.selected {
+    border-image-source: var(--rf-frame-gold) !important;
+    box-shadow: 0 0 24px rgba(243, 200, 110, 0.35), 0 10px 28px rgba(0, 0, 0, 0.55) !important;
+}
+.sel-card.selected::after {
+    content: ""; position: absolute; right: -10px; top: -10px; width: 36px; height: 36px;
+    background: var(--rf-seal) center / 100% no-repeat;
+    filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.7));
+    animation: rfStamp 0.25s ease-out;
+}
+.rf-sel-portrait {
+    position: absolute; right: 6px; bottom: 6px; height: 88px; width: auto;
+    opacity: 0.22; pointer-events: none; filter: sepia(0.4);
+    -webkit-mask: linear-gradient(to left, #000 40%, transparent);
+            mask: linear-gradient(to left, #000 40%, transparent);
+}
+.sel-card.selected .rf-sel-portrait { opacity: 0.45; filter: none; }
+.sel-card > *:not(.rf-sel-portrait) { position: relative; }
+.sel-title { border-bottom: 1px solid rgba(216, 180, 106, 0.25); }
+.rf-sel-count {
+    margin-top: 6px; padding: 4px 18px; border-radius: 14px; letter-spacing: 2px;
+    color: #c8b8a0; background: rgba(0, 0, 0, 0.45); border: 1px solid rgba(216, 180, 106, 0.3);
+}
+.rf-sel-count.rf-full { color: var(--rf-gold-hi); border-color: var(--rf-gold); }
+
+#turn-overlay { background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.9) 70%); }
+#turn-overlay-text {
+    padding: 18px 90px;
+    background:
+        var(--rf-divider) center top / 420px 14px no-repeat,
+        var(--rf-divider) center bottom / 420px 14px no-repeat,
+        linear-gradient(90deg, rgba(0, 0, 0, 0), rgba(30, 18, 8, 0.85) 20% 80%, rgba(0, 0, 0, 0));
+}
+#log-overlay {
+    padding: 6px 30px; border-radius: 30px;
+    background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0) 70%);
+}
+#bgm-toggle-btn { border-radius: 50%; border: 1px solid rgba(216, 180, 106, 0.4); }
+
+@keyframes rfBreath { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.25); } }
+@keyframes rfPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
+@keyframes rfStamp { from { transform: scale(1.8) rotate(-20deg); opacity: 0; } to { transform: scale(1) rotate(0); opacity: 1; } }
+</style>
 </head>
 <body>
     <div id="bgm-toggle-btn" class="sys-btn" onclick="toggleLocalMusic()">🔊</div>
@@ -2289,6 +2674,441 @@ async function handleVictory() {
 
         cancelTargetingMode();
     });
+</script>
+<script id="rf-refresh-deco">
+/* miniMVU2 視覺更新提案 — canvas 素材產生 + 純裝飾觀察器
+ * 只加裝飾節點、class、CSS 變數，不改任何遊戲狀態或流程。
+ * 必須放在遊戲主 <script> 之後（會讀取 SKILLS_DB / SKILL_ICONS）。 */
+(function () {
+    'use strict';
+    const DPR = 2;
+    const ASSETS = {};   // 供預覽頁「素材」分頁讀取
+    const root = document.documentElement;
+
+    function paint(name, w, h, note, draw) {
+        const c = document.createElement('canvas');
+        c.width = w * DPR; c.height = h * DPR;
+        const g = c.getContext('2d', { willReadFrequently: true });
+        g.scale(DPR, DPR);
+        draw(g, w, h);
+        ASSETS[name] = { canvas: c, w, h, note };
+        // 素材畫在 CPU 畫布（willReadFrequently）上，再用 toBlob 背景壓縮，開場只多約 15ms
+        c.toBlob(blob => {
+            root.style.setProperty('--rf-' + name, 'url("' + URL.createObjectURL(blob) + '")');
+        }, 'image/png');
+    }
+
+    function chamfer(g, x, y, w, h, c) {
+        g.beginPath();
+        g.moveTo(x + c, y); g.lineTo(x + w - c, y); g.lineTo(x + w, y + c);
+        g.lineTo(x + w, y + h - c); g.lineTo(x + w - c, y + h); g.lineTo(x + c, y + h);
+        g.lineTo(x, y + h - c); g.lineTo(x, y + c); g.closePath();
+    }
+    function rrect(g, x, y, w, h, r) {
+        g.beginPath();
+        g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r);
+        g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath();
+    }
+    function goldGrad(g, x0, y0, x1, y1, hi, mid, lo) {
+        const gr = g.createLinearGradient(x0, y0, x1, y1);
+        gr.addColorStop(0, hi); gr.addColorStop(0.45, mid); gr.addColorStop(1, lo);
+        return gr;
+    }
+
+    // ---------- 9-slice 面板框（切角 + 角落卷紋） ----------
+    function drawCornerOrnament(g, col, colDim) {
+        g.save();
+        g.strokeStyle = col; g.fillStyle = col; g.lineWidth = 1.2;
+        // 切角上的菱形
+        g.beginPath(); g.moveTo(11, 5); g.lineTo(17, 11); g.lineTo(11, 17); g.lineTo(5, 11); g.closePath(); g.fill();
+        // 沿上邊與左邊的卷紋
+        g.beginPath(); g.moveTo(20, 9); g.quadraticCurveTo(27, 9, 29, 13); g.arc(26.5, 13, 2.5, 0, Math.PI * 1.6); g.stroke();
+        g.beginPath(); g.moveTo(9, 20); g.quadraticCurveTo(9, 27, 13, 29); g.arc(13, 26.5, 2.5, Math.PI / 2, Math.PI * 2.1); g.stroke();
+        g.fillStyle = colDim;
+        g.beginPath(); g.arc(33, 9, 1.2, 0, Math.PI * 2); g.fill();
+        g.beginPath(); g.arc(9, 33, 1.2, 0, Math.PI * 2); g.fill();
+        g.restore();
+    }
+    function frame(name, w, h, o, note) {
+        paint(name, w, h, note, (g) => {
+            chamfer(g, 3, 3, w - 6, h - 6, 14);
+            const fill = g.createLinearGradient(0, 0, 0, h);
+            fill.addColorStop(0, o.fillTop); fill.addColorStop(0.5, o.fillMid); fill.addColorStop(1, o.fillBot);
+            g.fillStyle = fill; g.fill();
+            // 內側暈光
+            g.save(); g.clip();
+            g.lineWidth = 10; g.strokeStyle = o.glow; chamfer(g, 3, 3, w - 6, h - 6, 14); g.stroke();
+            g.restore();
+            // 外框
+            g.lineWidth = 2;
+            g.strokeStyle = goldGrad(g, 0, 0, 0, h, o.rimHi, o.rim, o.rimLo);
+            chamfer(g, 3, 3, w - 6, h - 6, 14); g.stroke();
+            // 內細線
+            g.lineWidth = 1; g.strokeStyle = o.line;
+            chamfer(g, 8.5, 8.5, w - 17, h - 17, 10.5); g.stroke();
+            // 同一個角落花紋鏡射到四角
+            [[1, 1, 0, 0], [-1, 1, w, 0], [1, -1, 0, h], [-1, -1, w, h]].forEach(([sx, sy, tx, ty]) => {
+                g.save(); g.translate(tx, ty); g.scale(sx, sy);
+                drawCornerOrnament(g, o.rimHi, o.rim);
+                g.restore();
+            });
+        });
+    }
+
+    const FRAME_GOLD = { fillTop: '#241a0e', fillMid: '#150f08', fillBot: '#1d150b', glow: 'rgba(216,170,90,0.10)', rimHi: '#f3dca0', rim: '#b48a42', rimLo: '#5e421a', line: 'rgba(216,180,106,0.28)' };
+    const FRAME_DIM = { fillTop: 'rgba(28,20,11,0.93)', fillMid: 'rgba(16,11,6,0.93)', fillBot: 'rgba(24,17,9,0.93)', glow: 'rgba(0,0,0,0.35)', rimHi: '#c9a766', rim: '#80602c', rimLo: '#3e2c12', line: 'rgba(216,180,106,0.16)' };
+    const FRAME_CRIMSON = { fillTop: '#2c0c0a', fillMid: '#180505', fillBot: '#220807', glow: 'rgba(255,70,50,0.12)', rimHi: '#f0b08a', rim: '#a4402c', rimLo: '#4a140c', line: 'rgba(255,140,110,0.22)' };
+    const FRAME_VERDANT = { fillTop: '#0c2410', fillMid: '#061408', fillBot: '#0a1c0c', glow: 'rgba(90,230,120,0.14)', rimHi: '#b8f0b0', rim: '#3e9a4a', rimLo: '#164a1c', line: 'rgba(140,240,150,0.22)' };
+    const FRAME_AZURE = { fillTop: '#0a1a30', fillMid: '#050d1a', fillBot: '#081528', glow: 'rgba(90,170,255,0.14)', rimHi: '#b8dcff', rim: '#3e78b8', rimLo: '#142a4a', line: 'rgba(140,200,255,0.22)' };
+
+    frame('frame-gold', 120, 120, FRAME_GOLD, '通用面板框（9-slice，切片 36px）');
+    frame('frame-dim', 120, 120, FRAME_DIM, '次要面板框：儀表板、增益、選卡');
+    frame('frame-crimson', 120, 120, FRAME_CRIMSON, '敵方意圖框（一般）');
+    frame('frame-verdant', 120, 120, FRAME_VERDANT, '敵方意圖框（BREAK）');
+    frame('frame-azure', 120, 120, FRAME_AZURE, '敵方意圖框（完全格擋）');
+
+    // ---------- 花色徽記：紅=火焰 藍=水滴 綠=葉 黃=太陽（形狀不同，色弱也分得出） ----------
+    const SUITS = {
+        red:    { dark: '#2a0707', mid: '#6e1616', light: '#ffb09c', rim: '#c8553e' },
+        blue:   { dark: '#050d24', mid: '#173a7a', light: '#a8ccff', rim: '#4f7fd0' },
+        green:  { dark: '#051608', mid: '#1c5a2a', light: '#a6ecb2', rim: '#4fa45e' },
+        yellow: { dark: '#1e1402', mid: '#7a5a08', light: '#ffe49a', rim: '#d0a232' }
+    };
+    function emblemPath(g, suit, cx, cy, s) {
+        g.beginPath();
+        if (suit === 'red') {
+            g.moveTo(cx, cy - s * .5);
+            g.quadraticCurveTo(cx + s * .12, cy - s * .22, cx + s * .3, cy - s * .06);
+            g.bezierCurveTo(cx + s * .5, cy + s * .18, cx + s * .32, cy + s * .5, cx, cy + s * .5);
+            g.bezierCurveTo(cx - s * .32, cy + s * .5, cx - s * .5, cy + s * .2, cx - s * .3, cy - s * .08);
+            g.quadraticCurveTo(cx - s * .16, cy + s * .06, cx - s * .12, cy - s * .2);
+            g.quadraticCurveTo(cx - s * .06, cy - s * .36, cx, cy - s * .5);
+        } else if (suit === 'blue') {
+            g.moveTo(cx, cy - s * .5);
+            g.bezierCurveTo(cx + s * .15, cy - s * .22, cx + s * .38, cy - s * .02, cx + s * .38, cy + s * .18);
+            g.arc(cx, cy + s * .18, s * .38, 0, Math.PI);
+            g.bezierCurveTo(cx - s * .38, cy - s * .02, cx - s * .15, cy - s * .22, cx, cy - s * .5);
+        } else if (suit === 'green') {
+            g.moveTo(cx, cy - s * .5);
+            g.quadraticCurveTo(cx + s * .52, cy - s * .08, cx, cy + s * .44);
+            g.quadraticCurveTo(cx - s * .52, cy - s * .08, cx, cy - s * .5);
+        } else {
+            for (let i = 0; i < 16; i++) {
+                const r = i % 2 === 0 ? s * .5 : s * .24;
+                const a = -Math.PI / 2 + i * Math.PI / 8;
+                const x = cx + Math.cos(a) * r, y = cy + Math.sin(a) * r;
+                i === 0 ? g.moveTo(x, y) : g.lineTo(x, y);
+            }
+        }
+        g.closePath();
+    }
+    function emblem(g, suit, cx, cy, s, fill, inner) {
+        emblemPath(g, suit, cx, cy, s);
+        g.fillStyle = fill; g.fill();
+        if (!inner) return;
+        if (suit === 'green') {
+            g.strokeStyle = inner; g.lineWidth = Math.max(0.8, s * .04);
+            g.beginPath(); g.moveTo(cx, cy - s * .35); g.lineTo(cx, cy + s * .5); g.stroke();
+        }
+        if (suit === 'yellow') {
+            g.fillStyle = inner; g.beginPath(); g.arc(cx, cy, s * .12, 0, Math.PI * 2); g.fill();
+        }
+    }
+
+    function suitAssets(suit) {
+        const S = SUITS[suit];
+        paint('card-' + suit, 90, 124, '手牌牌面 ' + suit + '（90×124）', (g, w, h) => {
+            rrect(g, 1, 1, w - 2, h - 2, 8);
+            const bg = g.createRadialGradient(w / 2, h * .45, 4, w / 2, h * .45, h * .7);
+            bg.addColorStop(0, S.mid); bg.addColorStop(1, S.dark);
+            g.fillStyle = bg; g.fill();
+            g.save(); g.clip();
+            g.strokeStyle = 'rgba(255,255,255,0.035)'; g.lineWidth = 1;
+            for (let x = -h; x < w; x += 5) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x + h, h); g.stroke(); }
+            g.globalAlpha = 0.2; emblem(g, suit, w / 2, h / 2, 64, S.light); g.globalAlpha = 1;
+            const hl = g.createLinearGradient(0, 0, 0, h * .35);
+            hl.addColorStop(0, 'rgba(255,255,255,0.14)'); hl.addColorStop(1, 'rgba(255,255,255,0)');
+            g.fillStyle = hl; g.fillRect(0, 0, w, h * .35);
+            g.restore();
+            g.lineWidth = 2; g.strokeStyle = goldGrad(g, 0, 0, w, h, '#f6dfa4', S.rim, '#3a2410');
+            rrect(g, 1, 1, w - 2, h - 2, 8); g.stroke();
+            g.lineWidth = 1; g.strokeStyle = 'rgba(246,223,164,0.45)';
+            rrect(g, 5.5, 5.5, w - 11, h - 11, 5); g.stroke();
+            emblem(g, suit, 14, 16, 11, S.light, S.dark);
+            g.save(); g.translate(w, h); g.rotate(Math.PI); emblem(g, suit, 14, 16, 11, S.light, S.dark); g.restore();
+        });
+        paint('mini-' + suit, 34, 50, '出牌紀錄小牌 ' + suit + '（34×50）', (g, w, h) => {
+            rrect(g, 0.5, 0.5, w - 1, h - 1, 4);
+            const bg = g.createLinearGradient(0, 0, 0, h);
+            bg.addColorStop(0, S.mid); bg.addColorStop(1, S.dark);
+            g.fillStyle = bg; g.fill();
+            g.lineWidth = 1; g.strokeStyle = S.rim; g.stroke();
+            emblem(g, suit, w / 2, h - 11, 11, S.light, S.dark);
+        });
+        paint('emblem-' + suit, 64, 64, '花色徽記 ' + suit, (g, w, h) => {
+            g.shadowColor = 'rgba(0,0,0,0.8)'; g.shadowBlur = 4; g.shadowOffsetY = 2;
+            emblem(g, suit, w / 2, h / 2, 44, S.light, S.dark);
+        });
+    }
+    Object.keys(SUITS).forEach(suitAssets);
+
+    // ---------- 階段寶石 ----------
+    paint('gem', 28, 28, '階段寶石（尚存）', (g) => {
+        g.beginPath(); g.arc(14, 14, 12.5, 0, Math.PI * 2);
+        g.fillStyle = goldGrad(g, 0, 0, 0, 28, '#f6dfa4', '#a8803a', '#4a3212'); g.fill();
+        const r = g.createRadialGradient(11, 10, 1, 14, 14, 10);
+        r.addColorStop(0, '#ffd0c0'); r.addColorStop(0.35, '#e0402a'); r.addColorStop(1, '#500806');
+        g.beginPath(); g.arc(14, 14, 9.5, 0, Math.PI * 2); g.fillStyle = r; g.fill();
+        g.beginPath(); g.ellipse(11, 9.5, 3, 2, -0.5, 0, Math.PI * 2); g.fillStyle = 'rgba(255,255,255,0.7)'; g.fill();
+    });
+    paint('socket', 28, 28, '階段寶石（已擊破的空座）', (g) => {
+        g.beginPath(); g.arc(14, 14, 12.5, 0, Math.PI * 2);
+        g.fillStyle = goldGrad(g, 0, 0, 0, 28, '#8a7446', '#4e3c1c', '#241808'); g.fill();
+        const r = g.createRadialGradient(14, 16, 1, 14, 14, 10);
+        r.addColorStop(0, '#1a1410'); r.addColorStop(1, '#050302');
+        g.beginPath(); g.arc(14, 14, 9.5, 0, Math.PI * 2); g.fillStyle = r; g.fill();
+        g.strokeStyle = 'rgba(0,0,0,0.8)'; g.lineWidth = 1.2;
+        g.beginPath(); g.moveTo(9, 10); g.lineTo(14, 15); g.lineTo(12, 20); g.stroke();
+    });
+
+    // ---------- 勝利條件緞帶（左右 40px 切片，中段拉伸） ----------
+    paint('ribbon', 300, 56, '勝利條件緞帶（左右 40px 切片）', (g, w) => {
+        const tail = (flip) => {
+            g.save();
+            if (flip) { g.translate(w, 0); g.scale(-1, 1); }
+            g.beginPath(); g.moveTo(0, 14); g.lineTo(34, 14); g.lineTo(34, 52); g.lineTo(0, 52); g.lineTo(11, 33); g.closePath();
+            g.fillStyle = '#2a0e08'; g.fill();
+            g.strokeStyle = 'rgba(216,180,106,0.45)'; g.lineWidth = 1; g.stroke();
+            g.beginPath(); g.moveTo(20, 44); g.lineTo(34, 44); g.lineTo(34, 52); g.closePath();
+            g.fillStyle = '#120402'; g.fill();
+            g.restore();
+        };
+        tail(false); tail(true);
+        g.beginPath(); g.rect(20, 5, w - 40, 39);
+        const b = g.createLinearGradient(0, 5, 0, 44);
+        b.addColorStop(0, '#5a2414'); b.addColorStop(0.5, '#3c140c'); b.addColorStop(1, '#260a06');
+        g.fillStyle = b; g.fill();
+        g.strokeStyle = 'rgba(243,220,160,0.7)'; g.lineWidth = 1;
+        g.beginPath(); g.moveTo(20, 9.5); g.lineTo(w - 20, 9.5); g.moveTo(20, 39.5); g.lineTo(w - 20, 39.5); g.stroke();
+        g.strokeStyle = 'rgba(0,0,0,0.6)';
+        g.beginPath(); g.moveTo(20, 5.5); g.lineTo(w - 20, 5.5); g.moveTo(20, 43.5); g.lineTo(w - 20, 43.5); g.stroke();
+    });
+
+    // ---------- 標題分隔飾紋 ----------
+    paint('divider', 200, 14, '標題分隔飾紋', (g, w, h) => {
+        const cy = h / 2;
+        const lg = g.createLinearGradient(0, 0, w, 0);
+        lg.addColorStop(0, 'rgba(216,180,106,0)'); lg.addColorStop(0.5, 'rgba(243,220,160,0.9)'); lg.addColorStop(1, 'rgba(216,180,106,0)');
+        g.strokeStyle = lg; g.lineWidth = 1;
+        g.beginPath(); g.moveTo(4, cy); g.lineTo(w / 2 - 12, cy); g.moveTo(w / 2 + 12, cy); g.lineTo(w - 4, cy); g.stroke();
+        g.fillStyle = '#f3dca0';
+        g.beginPath(); g.moveTo(w / 2, cy - 5); g.lineTo(w / 2 + 6, cy); g.lineTo(w / 2, cy + 5); g.lineTo(w / 2 - 6, cy); g.closePath(); g.fill();
+        g.beginPath(); g.arc(w / 2 - 10, cy, 1.4, 0, Math.PI * 2); g.arc(w / 2 + 10, cy, 1.4, 0, Math.PI * 2); g.fill();
+    });
+
+    // ---------- 敵方意圖浮水印（盾 + 交叉雙劍） ----------
+    paint('crest', 120, 120, '敵方意圖浮水印', (g) => {
+        g.strokeStyle = '#ffffff'; g.fillStyle = '#ffffff'; g.lineWidth = 4; g.lineCap = 'round';
+        g.beginPath(); g.moveTo(60, 14); g.lineTo(96, 26); g.quadraticCurveTo(96, 82, 60, 106); g.quadraticCurveTo(24, 82, 24, 26); g.closePath(); g.stroke();
+        [-1, 1].forEach((d) => {
+            g.save(); g.translate(60, 60); g.rotate(d * Math.PI / 4);
+            g.beginPath(); g.moveTo(0, -44); g.lineTo(0, 30); g.stroke();
+            g.beginPath(); g.moveTo(-10, 22); g.lineTo(10, 22); g.stroke();
+            g.beginPath(); g.arc(0, 36, 4, 0, Math.PI * 2); g.fill();
+            g.restore();
+        });
+    });
+
+    // ---------- 玩家生命紋章（80–92 半徑的環道留空，給 CSS 畫血量環） ----------
+    paint('medallion', 200, 200, '玩家生命紋章（環道留空給血量環）', (g) => {
+        const c = 100;
+        g.beginPath(); g.arc(c, c, 99, 0, Math.PI * 2); g.arc(c, c, 92, 0, Math.PI * 2, true);
+        g.fillStyle = goldGrad(g, 0, 0, 0, 200, '#f6dfa4', '#a8803a', '#3e2a0e'); g.fill('evenodd');
+        g.strokeStyle = 'rgba(40,24,6,0.8)'; g.lineWidth = 1.2;
+        for (let i = 0; i < 40; i++) {
+            const a = i * Math.PI / 20, r2 = i % 5 ? 96 : 98.5;
+            g.beginPath(); g.moveTo(c + Math.cos(a) * 93, c + Math.sin(a) * 93); g.lineTo(c + Math.cos(a) * r2, c + Math.sin(a) * r2); g.stroke();
+        }
+        g.beginPath(); g.arc(c, c, 80, 0, Math.PI * 2); g.arc(c, c, 75, 0, Math.PI * 2, true);
+        g.fillStyle = goldGrad(g, 0, 20, 0, 180, '#d8b46a', '#8a6628', '#3e2a0e'); g.fill('evenodd');
+        const d = g.createRadialGradient(c - 18, c - 22, 6, c, c, 75);
+        d.addColorStop(0, '#1e2a1a'); d.addColorStop(0.7, '#0a100a'); d.addColorStop(1, '#040604');
+        g.beginPath(); g.arc(c, c, 75, 0, Math.PI * 2); g.fillStyle = d; g.fill();
+        g.fillStyle = 'rgba(216,180,106,0.55)';
+        for (let side = -1; side <= 1; side += 2) {
+            for (let i = 0; i < 5; i++) {
+                const a = Math.PI / 2 + side * (0.35 + i * 0.22);
+                g.save(); g.translate(c + Math.cos(a) * 64, c + Math.sin(a) * 64); g.rotate(a + side * 1.2);
+                g.beginPath(); g.ellipse(0, 0, 6, 2.4, 0, 0, Math.PI * 2); g.fill();
+                g.restore();
+            }
+        }
+        g.fillStyle = '#f3dca0';
+        g.beginPath(); g.moveTo(c, 0); g.lineTo(c + 7, 6); g.lineTo(c, 13); g.lineTo(c - 7, 6); g.closePath(); g.fill();
+    });
+
+    // ---------- 選中技能的蠟封 ----------
+    paint('seal', 44, 44, '已選中蠟封', (g) => {
+        g.beginPath();
+        for (let i = 0; i < 24; i++) {
+            const r = i % 2 ? 19 : 21, a = i * Math.PI / 12;
+            i ? g.lineTo(22 + Math.cos(a) * r, 22 + Math.sin(a) * r) : g.moveTo(22 + r, 22);
+        }
+        g.closePath();
+        const r = g.createRadialGradient(17, 15, 2, 22, 22, 21);
+        r.addColorStop(0, '#e05a44'); r.addColorStop(0.6, '#9a1c14'); r.addColorStop(1, '#4a0806');
+        g.fillStyle = r; g.fill();
+        g.beginPath(); g.arc(22, 22, 13, 0, Math.PI * 2); g.strokeStyle = 'rgba(40,0,0,0.6)'; g.lineWidth = 1.5; g.stroke();
+        g.strokeStyle = '#ffe0c8'; g.lineWidth = 3; g.lineCap = 'round'; g.lineJoin = 'round';
+        g.beginPath(); g.moveTo(15, 22); g.lineTo(20, 27); g.lineTo(29, 16); g.stroke();
+    });
+
+    // ---------- 戰鬥場景光效層（光束、地面光暈、塵點） ----------
+    function paintStage(cv) {
+        const W = 1080, H = 720, cx = 480;
+        cv.width = W; cv.height = H;
+        const g = cv.getContext('2d');
+        for (let i = 0; i < 5; i++) {
+            const spread = (i - 2) * 60;
+            const lg = g.createLinearGradient(0, 0, 0, 520);
+            lg.addColorStop(0, 'rgba(255,220,150,0.10)'); lg.addColorStop(1, 'rgba(255,220,150,0)');
+            g.fillStyle = lg;
+            g.beginPath(); g.moveTo(cx + spread * 0.3 - 18, 0); g.lineTo(cx + spread * 0.3 + 18, 0);
+            g.lineTo(cx + spread * 1.6 + 70, 520); g.lineTo(cx + spread * 1.6 - 70, 520); g.closePath(); g.fill();
+        }
+        g.save(); g.translate(cx, 440); g.scale(1, 0.28);
+        const fg = g.createRadialGradient(0, 0, 10, 0, 0, 300);
+        fg.addColorStop(0, 'rgba(255,200,120,0.28)'); fg.addColorStop(1, 'rgba(255,200,120,0)');
+        g.fillStyle = fg; g.beginPath(); g.arc(0, 0, 300, 0, Math.PI * 2); g.fill();
+        g.restore();
+        let seed = 7;
+        const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+        for (let i = 0; i < 70; i++) {
+            const x = cx + (rnd() - 0.5) * 600, y = rnd() * 460, r = rnd() * 1.6 + 0.3;
+            g.fillStyle = 'rgba(255,230,170,' + (0.15 + rnd() * 0.35) + ')';
+            g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill();
+        }
+        ASSETS['stage-fx'] = { canvas: cv, w: W, h: H, note: '戰鬥場景光效層（光束／地面光暈／塵點）' };
+    }
+
+    window.RF_ASSETS = ASSETS;
+
+    // ================== DOM 裝飾（純視覺） ==================
+    function decorateStage() {
+        const stage = document.getElementById('game-stage');
+        if (!stage || stage.querySelector('.rf-stage-fx')) return;
+        const cv = document.createElement('canvas');
+        cv.className = 'rf-stage-fx';
+        paintStage(cv);
+        stage.prepend(cv);
+    }
+
+    // 手牌扇形排列；沒牌可出時提示「結束回合」
+    function decorateHand() {
+        const cards = document.querySelectorAll('#hand-area .card');
+        const n = cards.length;
+        const step = n > 7 ? 3 : 4.5;
+        const curve = n > 7 ? 1.4 : 2.4;
+        cards.forEach((el, i) => {
+            const off = i - (n - 1) / 2;
+            const r = (off * step).toFixed(2) + 'deg', y = (off * off * curve).toFixed(1) + 'px';
+            // 值不變就不寫，避免觸發觀察器無限循環
+            if (el.style.getPropertyValue('--fan-r') !== r) el.style.setProperty('--fan-r', r);
+            if (el.style.getPropertyValue('--fan-y') !== y) el.style.setProperty('--fan-y', y);
+        });
+        const endBtn = document.querySelector('.btn-end');
+        const stage = document.getElementById('game-stage');
+        if (endBtn && stage) {
+            const playable = [...cards].some(c => !c.classList.contains('disabled'));
+            const suggest = stage.style.display === 'block' && (n === 0 || !playable);
+            endBtn.classList.toggle('rf-suggest', suggest);
+        }
+    }
+
+    // 出牌紀錄：標出每張牌和前一張的接續方式（同色／同數字／觸發追加抽牌）
+    function decorateTrack() {
+        const minis = document.querySelectorAll('#played-cards-track .mini-card');
+        const colorOf = el => ['red', 'blue', 'green', 'yellow'].find(c => el.classList.contains(c));
+        minis.forEach((el, i) => {
+            if (i === 0) { if (el.hasAttribute('data-link')) el.removeAttribute('data-link'); return; }
+            const prev = minis[i - 1];
+            const sameColor = colorOf(el) === colorOf(prev);
+            const a = parseInt(el.textContent, 10), b = parseInt(prev.textContent, 10);
+            let link = sameColor ? 'color' : 'num';
+            if ((sameColor && Math.abs(a - b) === 1) || a === b) link = 'bonus';
+            if (el.getAttribute('data-link') !== link) el.setAttribute('data-link', link);
+        });
+    }
+
+    function decorateIntent() {
+        const box = document.getElementById('intent-box');
+        const val = document.getElementById('enemy-intent-val');
+        if (!box || !val) return;
+        const safe = val.textContent.trim() === '0' && !box.classList.contains('broken');
+        if (box.classList.contains('rf-safe') !== safe) box.classList.toggle('rf-safe', safe);
+    }
+
+    function decoratePlayerHp() {
+        const el = document.getElementById('player-hp-text');
+        const wrap = document.querySelector('.area-right-bot');
+        if (!el || !wrap) return;
+        const hp = Math.max(0, Math.min(100, parseInt(el.textContent, 10) || 0));
+        if (wrap.style.getPropertyValue('--rf-hp') !== String(hp)) wrap.style.setProperty('--rf-hp', hp);
+        const low = hp <= 30;
+        if (wrap.classList.contains('rf-low') !== low) wrap.classList.toggle('rf-low', low);
+    }
+
+    function decorateSelection() {
+        const grid = document.getElementById('skill-grid');
+        if (!grid) return;
+        let db = [], icons = {};
+        try { db = SKILLS_DB; icons = SKILL_ICONS; } catch (e) { /* 沒有也不影響 */ }
+        grid.querySelectorAll('.sel-card').forEach(card => {
+            if (card.querySelector('.rf-sel-portrait')) return;
+            const id = parseInt(card.id.replace('sel-skill-', ''), 10);
+            const s = db.find(x => x.id === id);
+            if (!s || !icons[s.owner]) return;
+            const img = document.createElement('img');
+            img.className = 'rf-sel-portrait';
+            img.alt = '';
+            img.src = icons[s.owner];
+            card.prepend(img);
+        });
+        const btn = document.getElementById('btn-start-game');
+        if (!btn) return;
+        let counter = document.querySelector('.rf-sel-count');
+        if (!counter) {
+            counter = document.createElement('div');
+            counter.className = 'rf-sel-count';
+            btn.parentNode.insertBefore(counter, btn);
+        }
+        const n = grid.querySelectorAll('.sel-card.selected').length;
+        const text = '已选 ' + n + ' / 4';
+        if (counter.textContent !== text) counter.textContent = text;
+        if (counter.classList.contains('rf-full') !== (n >= 4)) counter.classList.toggle('rf-full', n >= 4);
+    }
+
+    function refresh() {
+        decorateStage();
+        decorateHand();
+        decorateTrack();
+        decorateIntent();
+        decoratePlayerHp();
+        decorateSelection();
+    }
+
+    let queued = false;
+    const schedule = () => {
+        if (queued) return;
+        queued = true;
+        requestAnimationFrame(() => { queued = false; refresh(); });
+    };
+    new MutationObserver(schedule).observe(document.body, {
+        childList: true, subtree: true, characterData: true,
+        attributes: true, attributeFilter: ['class', 'style']
+    });
+    refresh();
+})();
 </script>
 </body>
 </html>
