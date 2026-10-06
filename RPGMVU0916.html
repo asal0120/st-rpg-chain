@@ -8544,11 +8544,14 @@ if (typeof window.setLayout === 'function') {
         "奈芙蒂的房间":   { floor: 2, bg: img("https://cdn.imgchest.com/files/fd2b98ad6897.png", "https://files.catbox.moe/9uiluq.png"), isRoom: true, owner: "奈芙蒂" },
         // 三樓
         "书房":     { floor: 3, bg: img("https://cdn.imgchest.com/files/f27e128af7dd.png", "https://files.catbox.moe/g4sbn1.png") },
-        "工坊":     { floor: 3, bg: img("https://cdn.imgchest.com/files/c45cf57a4202.png", "https://files.catbox.moe/6phrtw.png") },
+        "工房":     { floor: 3, bg: img("https://cdn.imgchest.com/files/c45cf57a4202.png", "https://files.catbox.moe/6phrtw.png") },
         // 地下
-        "训练场":   { floor: -1, bg: img("https://cdn.imgchest.com/files/09cbc6709bc9.png", "https://files.catbox.moe/r3l3k2.png") },
+        "锻炼场":   { floor: -1, bg: img("https://cdn.imgchest.com/files/09cbc6709bc9.png", "https://files.catbox.moe/r3l3k2.png") },
         "储物间":   { floor: -1, bg: img("https://cdn.imgchest.com/files/0776bbbd24d8.png", "https://files.catbox.moe/8ddcnj.png") },
     };
+
+    // --- 舊地點名稱對照：前端曾用「工坊」「训练场」，MVU 變量結構與世界書用「工房」「锻炼场」---
+    const HOME_LOCATION_ALIASES = { "工坊": "工房", "训练场": "锻炼场" };
 
     // --- 導航鄰接圖：鍵為方向 CSS class 的後綴，值為目標地點 ---
     // 虛擬節點 "二楼"/"三楼"/"地下室" 會觸發選單而非直接進入
@@ -8570,11 +8573,11 @@ if (typeof window.setLayout === 'function') {
         "璐法的房间":     { down: "客厅", up: "三楼", right: "二楼" },
         "奈芙蒂的房间":   { down: "客厅", up: "三楼", right: "二楼" },
         // 三樓房間：↓下樓選擇器（二樓/一樓）、同層互通
-        "书房":     { down: "下楼", right: "工坊" },
-        "工坊":     { down: "下楼", left: "书房" },
+        "书房":     { down: "下楼", right: "工房" },
+        "工房":     { down: "下楼", left: "书房" },
         // 地下房間：↑回客廳、同層互通
-        "训练场":   { up: "客厅", right: "储物间" },
-        "储物间":   { up: "客厅", left: "训练场" },
+        "锻炼场":   { up: "客厅", right: "储物间" },
+        "储物间":   { up: "客厅", left: "锻炼场" },
     };
 
     // --- 虛擬節點：進入時跳出選單的樓層 ---
@@ -8587,13 +8590,13 @@ if (typeof window.setLayout === 'function') {
     // --- 角色地點偏好權重表 ---
     // 數字越大越可能前往；0 或不列出 = 不會主動前往
     const HOME_CHAR_WEIGHTS = {
-        "爱娜":    { "客厅": 2.5, "厨房饭厅": 0.8, "后院": 1, "爱娜的房间": 2, "浴室": 0.3, "书房": 1, "训练场": 0 },
-        "琳":      { "客厅": 2.5, "浴室": 0.3, "琳的房间": 2, "后院": 0.4, "厨房饭厅": 0.4, "工坊": 0.7, "训练场": 0.1 },
+        "爱娜":    { "客厅": 2.5, "厨房饭厅": 0.8, "后院": 1, "爱娜的房间": 2, "浴室": 0.3, "书房": 1, "锻炼场": 0 },
+        "琳":      { "客厅": 2.5, "浴室": 0.3, "琳的房间": 2, "后院": 0.4, "厨房饭厅": 0.4, "工房": 0.7, "锻炼场": 0.1 },
         "米拉露恩": { "客厅": 2.5, "米拉露恩的房间": 2,  "厨房饭厅": 0.4, "浴室": 0.3, "书房": 2.5 },
-        "黛芬妮":  { "客厅": 2.5, "工坊": 2.5, "黛芬妮的房间": 2, "书房": 0.7, "厨房饭厅": 0.4, "浴室": 0.3, "训练场": 0 },
-        "芙蕾嘉":  { "客厅": 2.5, "后院": 0.9, "芙蕾嘉的房间": 2, "厨房饭厅": 0.6, "浴室": 0.3, "前庭": 0.6, "训练场": 0 },
+        "黛芬妮":  { "客厅": 2.5, "工房": 2.5, "黛芬妮的房间": 2, "书房": 0.7, "厨房饭厅": 0.4, "浴室": 0.3, "锻炼场": 0 },
+        "芙蕾嘉":  { "客厅": 2.5, "后院": 0.9, "芙蕾嘉的房间": 2, "厨房饭厅": 0.6, "浴室": 0.3, "前庭": 0.6, "锻炼场": 0 },
         "穗":      { "客厅": 2.5, "后院": 0.6, "穗的房间": 2, "厨房饭厅": 0.4, "浴室": 0.3, "前庭": 0.9 },
-        "莉迪娅":  { "客厅": 2.5, "训练场": 0.2, "莉迪娅的房间": 2, "后院": 1, "厨房饭厅": 0.4, "浴室": 0.3, "书房": 0.7 },
+        "莉迪娅":  { "客厅": 2.5, "锻炼场": 0.2, "莉迪娅的房间": 2, "后院": 1, "厨房饭厅": 0.4, "浴室": 0.3, "书房": 0.7 },
         "璐法":    { "客厅": 2.5, "书房": 1, "璐法的房间": 2, "厨房饭厅": 0.6, "后院": 1, "浴室": 0.3, "书房": 0.7 },
         "奈芙蒂":  { "客厅": 2.5, "后院": 0.6,  "奈芙蒂的房间": 2, "厨房饭厅": 0.5, "浴室": 0.3, "书房": 1, "前庭":0.4 },
     };
@@ -9766,6 +9769,10 @@ previewArea.appendChild(dot);
         if (rawLoc === '外出' || rawLoc.includes('外出')) return '外出';
         // 1. 完全匹配
         if (HOME_LOCATIONS[rawLoc]) return rawLoc;
+        // 1-1. 舊名稱（舊存檔可能還存著「工坊」「训练场」）
+        for (const [oldName, newName] of Object.entries(HOME_LOCATION_ALIASES)) {
+            if (rawLoc.includes(oldName)) return newName;
+        }
         // 2. 寬鬆子字串匹配所有已知地點（優先於「房」判定，避免書房/廚房被誤判）
         const locKeys = Object.keys(HOME_LOCATIONS);
         for (const key of locKeys) {
@@ -10157,11 +10164,11 @@ previewArea.appendChild(dot);
                 if (hour >= 0  && hour < 5)  return 0.5; // 深夜幾乎不在廚房
                 return 1.0;
             case '书房':
-            case '工坊':
+            case '工房':
                 if (hour >= 9  && hour < 17) return 1.5; // 白天工作時段
                 if (hour >= 0  && hour < 6)  return 0.2; // 深夜少用
                 return 1.0;
-            case '训练场':
+            case '锻炼场':
                 if (hour >= 6  && hour < 9)  return 10.0; // 晨練
                 if (hour >= 9 || hour < 5)  return 0;   // 深夜不訓練
                 return 1.0;
