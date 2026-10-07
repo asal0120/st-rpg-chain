@@ -6,7 +6,7 @@
  * 介面說明見 notes.md「像素家園：接入主檔」。 */
 (function () {
   'use strict';
-  const VERSION = '1.0.0';
+  const VERSION = '1.1.0';
   if (window.PixelHome && window.PixelHome.version === VERSION) return;
 
   // 地點 → 房間資料夾
@@ -138,28 +138,40 @@
   function loadSprites() {
     const base = PixelHome.base;
     return once('sprites:' + base, async () => {
-      const meta = await fetchJson(base + 'sprites.json');
       const imgs = {};
-      await Promise.all(HEROES.flatMap(h => [h.key, h.sit]).map(async key => {
+      // sprites.json 和角色圖同時下載
+      const [meta] = await Promise.all([fetchJson(base + 'sprites.json'), ...HEROES.flatMap(h => [h.key, h.sit]).map(async key => {
         try {
           const img = await loadImg(`${base}sprites/${key}.png`);
           imgs[key] = { img, mask: alphaMask(img) };
         } catch (e) { /* 沒有這張圖 */ }
-      }));
+      })]);
       return { facing: meta.facing || {}, imgs };
     });
   }
 
-  function loadRoom(id) {
+  // 房間資料（只有 room.json）：拿到後就可以開始下載場景圖
+  function loadRoomData(id) {
     const dir = PixelHome.base + id + '/';
-    return once('room:' + dir, async () => {
-      const data = await fetchJson(dir + 'room.json');
-      const exits = await Promise.all((data.exits || []).map(async e => {
-        const img = await loadImg(dir + 'exits/' + e.mask);
+    return once('roomdata:' + dir, async () => ({ id, dir, data: await fetchJson(dir + 'room.json') }));
+  }
+
+  // 房間資料＋出口遮罩（點擊判定用）
+  function loadRoom(id) {
+    return once('room:' + PixelHome.base + id, async () => {
+      const room = await loadRoomData(id);
+      const exits = await Promise.all((room.data.exits || []).map(async e => {
+        const img = await loadImg(room.dir + 'exits/' + e.mask);
         return { ...e, src: img.src, mask: alphaMask(img) };
       }));
-      return { id, dir, data, exits };
+      return { ...room, exits };
     });
+  }
+
+  // 條件家具的旗標：已攻略角色的 key 中，房間有差分的那些
+  function flagsFor(room, joinedNames) {
+    const joined = new Set((joinedNames || []).map(n => HERO_BY_NAME.get(n)?.key).filter(Boolean));
+    return new Set((room.data.variants || []).filter(v => joined.has(v)));
   }
 
   // 場景圖：開啟的旗標中第一個（旗標的組合沒有另外渲染）
@@ -257,6 +269,7 @@
       this.stage.className = 'ph-stage ph-crisp';
       this.sceneEl = document.createElement('img');
       this.sceneEl.className = 'ph-scene'; this.sceneEl.alt = '';
+      this.sceneEl.crossOrigin = 'anonymous';   // 畫面上的圖片和 loadImg 用同一個模式，才會共用已下載的檔案
       this.stage.appendChild(this.sceneEl);
       this.tint = document.createElement('div');
       this.tint.className = 'ph-tint';
@@ -275,8 +288,7 @@
     }
 
     async update(room, sprites, ctx, token) {
-      const joined = new Set((ctx.joined || []).map(n => HERO_BY_NAME.get(n)?.key).filter(Boolean));
-      const flags = new Set((room.data.variants || []).filter(v => joined.has(v)));
+      const flags = flagsFor(room, ctx.joined);
       const present = (ctx.present || []).map(n => HERO_BY_NAME.get(n)).filter(Boolean);
       const t = period(ctx.hour);
       const scene = sceneFor(room, t, flags);
@@ -311,7 +323,7 @@
       this.exits.forEach(e => e.el.remove());
       this.exits = room.exits.map(e => {
         const el = document.createElement('img');
-        el.className = 'ph-exit'; el.alt = ''; el.src = e.src;
+        el.className = 'ph-exit'; el.alt = ''; el.crossOrigin = 'anonymous'; el.src = e.src;
         place(el, e.x, e.y, e.w, e.h);
         this.stage.appendChild(el);
         return { ...e, el };
@@ -375,7 +387,7 @@
           el.append(sh);
         }
         const sp = document.createElement('img');
-        sp.src = data.img.src; sp.className = 'ph-spr'; sp.alt = hero.name;
+        sp.crossOrigin = 'anonymous'; sp.src = data.img.src; sp.className = 'ph-spr'; sp.alt = hero.name;
         sp.style.position = 'absolute';
         if (flip) sp.style.scale = '-1 1';   // 獨立的 scale 屬性：不會和晃動動畫的 transform 互相覆蓋
         sp.style.setProperty('--dur', (1.0 + Math.random() * 0.6).toFixed(2) + 's');
@@ -689,7 +701,11 @@
     const token = ++sc.token;
     // 被較新的呼叫取代時等它的結果；場景已清除時回傳 false
     const latest = () => (sc.destroyed || sc.current === p ? false : sc.current);
-    const p = Promise.all([loadRoom(id), loadSprites()])
+    // 拿到 room.json 就開始下載場景圖，和出口遮罩、角色圖同時進行
+    const sceneEarly = loadRoomData(id)
+      .then(room => loadImg(sceneFor(room, period(ctx.hour), flagsFor(room, ctx.joined)).url))
+      .catch(() => {});   // 失敗時由 update() 回報
+    const p = Promise.all([loadRoom(id), loadSprites(), sceneEarly])
       .then(([room, sprites]) => token === sc.token && sc.update(room, sprites, ctx, token))
       .then(() => (token === sc.token ? true : latest()))
       .catch(err => {
@@ -702,18 +718,23 @@
     return p;
   }
 
-  // 背景預載：房間資料、角色圖、目前時段的場景圖
-  function preload(location, hour) {
+  // 背景預載：房間資料、出口遮罩、角色圖、目前時段的場景圖、坐位的前景遮罩。
+  // 下載後存在瀏覽器快取，之後每則訊息的 iframe 都能直接使用。joined = 已攻略角色名（決定條件家具的版本）
+  function preload(location, hour, joined) {
     const id = ROOMS[location];
     if (!id) return Promise.resolve(false);
     return Promise.all([loadRoom(id), loadSprites()])
-      .then(([room]) => loadImg(sceneFor(room, period(hour), new Set()).url))
+      .then(([room]) => Promise.all([
+        loadImg(sceneFor(room, period(hour), flagsFor(room, joined)).url),
+        ...(room.data.seats || []).filter(s => s.mask).map(s => loadImg(room.dir + 'masks/' + s.mask.file)),
+      ]))
       .then(() => true, () => false);
   }
 
   const PixelHome = window.PixelHome = {
     version: VERSION,
     base: 'https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/pixel-home/v1/',
+    locations: Object.keys(ROOMS),   // 有像素場景的地點
     has, render, clear, preload,
   };
 })();
