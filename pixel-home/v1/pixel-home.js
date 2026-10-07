@@ -90,10 +90,6 @@
 .ph-root .ph-menu button { display: block; width: 100%; text-align: left; background: none; border: 0; color: #ebe3d6;
   padding: 5px 8px; font-size: 13px; cursor: pointer; font-family: inherit; }
 .ph-root .ph-menu button:hover { background: rgba(255, 204, 102, .14); }
-.ph-root .ph-zoom { position: absolute; right: 6px; bottom: 6px; z-index: 950; display: flex; flex-direction: column; gap: 3px; }
-.ph-root .ph-zoom button { width: 26px; height: 26px; padding: 0; font-size: 16px; line-height: 1; cursor: pointer;
-  background: rgba(20, 16, 13, .8); border: 1px solid #5a4a3a; color: #f3e6cc; font-family: inherit; }
-.ph-root .ph-zoom button:hover { border-color: #ffcc66; color: #ffcc66; }
 `;
   function ensureStyle() {
     if (document.getElementById('ph-style')) return;
@@ -264,16 +260,7 @@
       this.stage.appendChild(this.sceneEl);
       this.tint = document.createElement('div');
       this.tint.className = 'ph-tint';
-      const zoom = document.createElement('div');
-      zoom.className = 'ph-zoom';
-      for (const [label, dir, title] of [['+', 1, '拉近'], ['−', -1, '拉遠']]) {
-        const b = document.createElement('button');
-        b.type = 'button'; b.textContent = label; b.title = title;
-        b.addEventListener('pointerdown', e => e.stopPropagation());
-        b.addEventListener('click', e => { e.stopPropagation(); this.zoomStep(dir); });
-        zoom.appendChild(b);
-      }
-      this.root.append(this.stage, this.tint, zoom);
+      this.root.append(this.stage, this.tint);
       mapArea.appendChild(this.root);
       this.bindEvents();
       this.ro = new ResizeObserver(() => this.onResize());
@@ -665,9 +652,8 @@
       root.addEventListener('pointerup', end);
       root.addEventListener('pointercancel', end);
       root.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse' && !drag) this.setHover(null); });
-      // 滾輪：只有按住 Ctrl 時縮放，一般滾動留給聊天頁面
+      // 滾輪：滑鼠在場景上時直接縮放（這時聊天頁面不會跟著捲動）
       root.addEventListener('wheel', e => {
-        if (!e.ctrlKey) return;
         e.preventDefault();
         const r = root.getBoundingClientRect();
         this.zoomStep(e.deltaY < 0 ? 1 : -1, e.clientX - r.left, e.clientY - r.top);
