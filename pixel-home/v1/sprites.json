@@ -1,0 +1,22 @@
+{
+ "facing": {
+  "aina": "R",
+  "aina_sit": "R",
+  "daphne": "L",
+  "daphne_sit": "L",
+  "sui": "R",
+  "sui_sit": "R",
+  "lin": "R",
+  "lin_sit": "R",
+  "freya": "L",
+  "freya_sit": "L",
+  "miralune": "L",
+  "miralune_sit": "L",
+  "lufa": "L",
+  "lufa_sit": "L",
+  "lydia": "R",
+  "lydia_sit": "R",
+  "nefti": "R",
+  "nefti_sit": "R"
+ }
+}
