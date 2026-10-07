@@ -13,11 +13,15 @@
  * 介面說明見 notes.md「像素家園：接入主檔」。 */
 (function () {
   'use strict';
-  const VERSION = '1.2.0';
+  const VERSION = '1.3.0';
   if (window.PixelHome && window.PixelHome.version === VERSION) return;
 
   // 地點 → 房間資料夾
-  const ROOMS = { '客厅': 'living', '浴室': 'bath', '厨房饭厅': 'kitchen', '交谊厅': 'lounge' };
+  const ROOMS = {
+    '客厅': 'living', '浴室': 'bath', '厨房饭厅': 'kitchen', '交谊厅': 'lounge',
+    '玩家房间': 'player', '爱娜的房间': 'aina', '琳的房间': 'lin', '米拉露恩的房间': 'miralune', '黛芬妮的房间': 'daphne',
+    '芙蕾嘉的房间': 'freya', '穗的房间': 'sui', '莉迪娅的房间': 'lydia', '璐法的房间': 'lufa', '奈芙蒂的房间': 'nefti',
+  };
   // 樓梯：同一座樓梯的上樓與下樓出口（渲染腳本的 exit、exitDown）合併成一個點擊範圍，點擊後顯示選單。
   // options 的 target 可以是主檔的選單節點（例如 地下室），由主檔展開成該樓層的房間
   const STAIRS = {
@@ -39,6 +43,8 @@
   const OWN_SEAT_CHANCE = 0.5;
   // 坐或站：每位能坐的角色依權重抽選，坐 = SEAT_WEIGHT × 空坐位數，站 = 空站位數
   const SEAT_WEIGHT = 3;
+  // 雙指縮放：倍率離裝置像素的整數倍在這個距離以內時吸附到整數倍（見 snapScale）
+  const SNAP_NEAR = 0.15;
   // 可以自由選擇朝向時，有偏好的角色朝偏好方向的機率
   const PREFER_WEIGHT = 0.7;
   // 預設鏡頭：角色在畫面上約 110 CSS px 高；最近時約 280 CSS px
@@ -100,6 +106,14 @@
   line-height: 1.5; background: rgba(20, 16, 13, .88); border: 1px solid #5a4a3a; color: #fff3d0; white-space: nowrap;
   pointer-events: none; }
 .ph-root .ph-tag.ph-tag-exit { color: #ffcc66; }
+/* 名牌：出口外側（場景外的空白處）常駐的房間名稱，點名牌等於點門 */
+.ph-root .ph-sign { position: absolute; z-index: 940; padding: 2px 8px; font-size: 12px; letter-spacing: 1px; white-space: nowrap;
+  background: rgba(20, 16, 13, .82); border: 1px solid #8a734b; border-radius: 3px; color: #f3e6cc; pointer-events: none; }
+.ph-root .ph-sign.ph-on { border-color: #ffcc66; color: #fff3d0; }
+.ph-root .ph-sign[data-align="bottom"] { transform: translate(-50%, -100%); }
+.ph-root .ph-sign[data-align="top"] { transform: translate(-50%, 0); }
+.ph-root .ph-sign[data-align="left"] { transform: translate(-100%, -50%); }
+.ph-root .ph-sign[data-align="right"] { transform: translate(0, -50%); }
 .ph-root .ph-menu { position: absolute; z-index: 970; min-width: 112px; background: rgba(24, 19, 15, .96);
   border: 1px solid #8a734b; box-shadow: 0 2px 8px rgba(0, 0, 0, .5); padding: 4px; cursor: default; }
 .ph-root .ph-menu .ph-mt { font-size: 12px; color: #ffcc66; padding: 2px 6px 4px; border-bottom: 1px solid #5a4a3a;
@@ -258,6 +272,15 @@
   }
 
   // 把角色分配到位置（數量相同）：先處理有角色權重的位置，再處理只能朝一邊的位置
+  // 顯示人數上限（房間資料的 maxActors，個人房用）：超過時房間主人（owner）一定顯示，其他人依種子抽選。
+  // 沒顯示的角色仍然在這個地點，只是不畫出來
+  function capActors(heroes, R, rng) {
+    if (!R.maxActors || heroes.length <= R.maxActors) return heroes;
+    const rest = heroes.filter(h => h.key !== R.owner);
+    for (let k = rest.length - 1; k > 0; k--) { const j = Math.floor(rng() * (k + 1)); [rest[k], rest[j]] = [rest[j], rest[k]]; }
+    return heroes.filter(h => h.key === R.owner).concat(rest).slice(0, R.maxActors);
+  }
+
   function assign(heroes, slots, rng) {
     const left = heroes.slice(), out = [];
     const order = slots.map((_, i) => i).sort((a, b) =>
@@ -322,6 +345,7 @@
       if (token !== this.token) return;
       const roomChanged = this.room !== room;
       if (roomChanged) this.setRoom(room);
+      this.applyLocked(ctx.locked);
       if (this.sceneEl.getAttribute('src') !== scene.url) {
         this.sceneEl.src = scene.url;
         this.stage.style.setProperty('--scene', `url("${scene.url}")`);   // 前景遮罩用同一張場景圖
@@ -346,7 +370,7 @@
       this.stage.style.setProperty('--scene-w', w);
       this.stage.style.setProperty('--scene-h', h);
       this.closeMenu(); this.setHover(null); this.armed = null;
-      this.exits.forEach(e => e.parts.forEach(p => p.el.remove()));
+      this.exits.forEach(e => { e.parts.forEach(p => p.el.remove()); if (e.signEl) e.signEl.remove(); });
       // 每個出口 = 一個或多個遮罩（parts）；樓梯的上下樓出口合併成一個
       const stair = STAIRS[room.id];
       const groups = [];
@@ -361,7 +385,14 @@
           if (!g) groups.push(g = { name: '楼梯', stair: true, options: stair.options, parts: [] });
           g.parts.push(part);
         } else {
-          groups.push({ name: e.name, parts: [part] });
+          const g = { name: e.name, parts: [part] };
+          if (e.sign) {
+            g.sign = e.sign;
+            g.signEl = document.createElement('div');
+            g.signEl.className = 'ph-sign'; g.signEl.textContent = e.sign.text; g.signEl.dataset.align = e.sign.align;
+            this.root.appendChild(g.signEl);
+          }
+          groups.push(g);
         }
       }
       for (const g of groups) {   // 外框範圍（標籤與選單的位置）
@@ -369,6 +400,18 @@
         g.w = Math.max(...g.parts.map(p => p.x + p.w)) - g.x; g.h = Math.max(...g.parts.map(p => p.y + p.h)) - g.y;
       }
       this.exits = groups;
+    }
+
+    // ctx.locked：不能進入的地點（例如未加入角色的房間）。這些出口不能點、不顯示名牌、滑鼠移上去不亮
+    applyLocked(locked) {
+      const set = new Set(locked || []);
+      for (const e of this.exits) {
+        e.locked = !e.stair && set.has(e.name);
+        if (e.signEl) e.signEl.hidden = e.locked;
+      }
+      const cur = this.hover && this.hover.type === 'exit' ? this.hover.e : null;
+      if (cur && cur.locked) { this.armed = null; this.setHover(null); }
+      if (this.armed && this.armed.locked) this.armed = null;
     }
 
     buildActors(sprites, present, flags, seed) {
@@ -381,7 +424,7 @@
       const spots = R.spots.map(s => ({ pos: [s.x, s.y], faces: s.faces || ['L', 'R'], weights: s.weights || null }));
       const seats = (R.seats || []).map(s => ({ ...s, pos: [s.x, s.y], faces: s.faces || ['L', 'R'] }));
       const rng = mulberry32(seed);
-      const heroes = present.filter(h => imgs[h.key]);
+      const heroes = capActors(present.filter(h => imgs[h.key]), R, rng);
       const placed = [];
       const seatIdx = seats.map((_, i) => i).filter(i => !seats[i].when || flags.has(seats[i].when));
       for (const i of seatIdx.filter(i => seats[i].only)) {   // 專屬坐位：主人在場時不一定坐上去
@@ -469,9 +512,14 @@
     mapSize() { const r = this.root.getBoundingClientRect(); return [r.width, r.height]; }
     fitScale() { const [w, h] = this.mapSize(); return Math.min(w / this.imgW, h / this.imgH) || 1; }
     scaleRange() { const a = this.fitScale(); return [a, Math.max(a * 1.01, MAX_CHAR_PX / this.actorH)]; }
-    snapScale(s) {
+    // 對齊裝置像素的整數倍（像素最清楚）。小於 1 倍時不對齊（縮小顯示整個房間）。
+    // loose = true（雙指縮放）：只在接近整數倍時吸附，其他倍率照原值。
+    // 全部四捨五入的話，倍率小時兩個整數倍差很多（1→2 倍），雙指縮放會先卡住、再突然放大一倍
+    snapScale(s, loose) {
       const dpr = window.devicePixelRatio || 1, d = s * dpr;
-      return d < 1 ? s : Math.round(d) / dpr;   // 小於 1 倍時不對齊（縮小顯示整個房間）
+      if (d < 1) return s;
+      const n = Math.round(d);
+      return !loose || Math.abs(d - n) <= SNAP_NEAR ? n / dpr : s;
     }
     clampView() {
       const [mw, mh] = this.mapSize(), v = this.view;
@@ -491,6 +539,11 @@
       st.height = this.imgH * v.scale + 'px';
       st.setProperty('--px', v.scale + 'px');
       this.stage.classList.toggle('ph-crisp', v.scale * (window.devicePixelRatio || 1) >= 1);
+      for (const e of this.exits) {
+        if (!e.signEl) continue;
+        const [x, y] = this.toMap(e.sign.x, e.sign.y);
+        e.signEl.style.left = x + 'px'; e.signEl.style.top = y + 'px';
+      }
       if (this.sel) this.positionMenu();
       if (this.tagFor) this.showTag(this.tagFor);
     }
@@ -511,9 +564,9 @@
       this.applyView();
     }
     // 以畫框內 (cx, cy) 為中心縮放
-    zoomTo(s, cx, cy) {
+    zoomTo(s, cx, cy, loose) {
       const [a, b] = this.scaleRange();
-      s = this.snapScale(Math.max(a, Math.min(b, s)));
+      s = this.snapScale(Math.max(a, Math.min(b, s)), loose);
       if (cx == null) { const [mw, mh] = this.mapSize(); cx = mw / 2; cy = mh / 2; }
       const v = this.view;
       const ax = (cx - v.ox) / v.scale, ay = (cy - v.oy) / v.scale;
@@ -537,7 +590,7 @@
       if (this.lastSize) {   // 保持畫框中心看到的位置不變
         const ax = (this.lastSize[0] / 2 - v.ox) / v.scale, ay = (this.lastSize[1] / 2 - v.oy) / v.scale;
         const [a, b] = this.scaleRange();
-        v.scale = this.snapScale(Math.max(a, Math.min(b, v.scale)));
+        v.scale = this.snapScale(Math.max(a, Math.min(b, v.scale)), true);
         v.ox = mw / 2 - ax * v.scale; v.oy = mh / 2 - ay * v.scale;
       }
       this.lastSize = [mw, mh];
@@ -551,6 +604,11 @@
     }
     toMap(x, y) { return [this.view.ox + x * this.view.scale, this.view.oy + y * this.view.scale]; }
     hitTest(clientX, clientY) {
+      for (const e of this.exits) {
+        if (!e.signEl || e.locked) continue;
+        const r = e.signEl.getBoundingClientRect();
+        if (clientX >= r.left && clientX <= r.right && clientY >= r.top && clientY <= r.bottom) return { type: 'exit', e };
+      }
       const [ix, iy] = this.toArt(clientX, clientY);
       for (const a of this.actors) {
         let lx = Math.floor(ix - a.left);
@@ -560,6 +618,7 @@
         if (!a.mask || a.mask[ly * a.w + lx]) return { type: 'actor', a };
       }
       for (const e of this.exits) {
+        if (e.locked) continue;
         for (const p of e.parts) {
           const lx = Math.floor(ix - p.x), ly = Math.floor(iy - p.y);
           if (lx < 0 || ly < 0 || lx >= p.w || ly >= p.h) continue;
@@ -594,12 +653,12 @@
       if (same || (!hit && !cur)) return;
       if (cur) {
         if (cur.type === 'actor') cur.a.el.classList.remove('ph-hover');
-        else cur.e.parts.forEach(p => p.el.classList.remove('ph-on'));
+        else { cur.e.parts.forEach(p => p.el.classList.remove('ph-on')); cur.e.signEl?.classList.remove('ph-on'); }
       }
       this.hover = hit;
       if (hit) {
         if (hit.type === 'actor') hit.a.el.classList.add('ph-hover');
-        else hit.e.parts.forEach(p => p.el.classList.add('ph-on'));
+        else { hit.e.parts.forEach(p => p.el.classList.add('ph-on')); hit.e.signEl?.classList.add('ph-on'); }
       }
       this.showTag(hit);
     }
@@ -722,7 +781,7 @@
         if (pointers.has(e.pointerId)) pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
         if (pinch && pointers.size >= 2) {
           const [p, q] = [...pointers.values()];
-          this.zoomTo(pinch.scale * Math.hypot(p.x - q.x, p.y - q.y) / pinch.dist, pinch.cx, pinch.cy);
+          this.zoomTo(pinch.scale * Math.hypot(p.x - q.x, p.y - q.y) / pinch.dist, pinch.cx, pinch.cy, true);
           return;
         }
         if (drag && pointers.size === 1) {
