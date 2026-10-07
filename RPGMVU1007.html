@@ -2593,6 +2593,86 @@
 .rpg-v7-root .map-area.pixel-home-active .home-nav-arrow,
 .rpg-v7-root .map-area.pixel-home-active .party-wrap { display: none !important; }
 
+/* --- 像素家園：角色立繪面板（右側立繪，左邊選單）---
+   立繪原圖是 1500×1000 的畫布（和 map-area 同為 3:2），角色在中間約 31%–64% 的寬度。
+   圖片高度和 map-area 相同、往右移 25%，角色就落在 map-area 的 56%–89%。
+   面板和立繪都不擋點擊（透明的部分仍然可以點到場景），只有選單與角色身體的範圍（.home-char-hit）會擋住。 */
+.home-char-panel {
+    position: absolute;
+    inset: 0;
+    z-index: 150;
+    pointer-events: none;
+    background: linear-gradient(to right, transparent 45%, rgba(10, 8, 6, 0.55));
+    animation: homeCharPanelIn 0.25s ease;
+}
+@keyframes homeCharPanelIn {
+    from { opacity: 0; transform: translateX(24px); }
+    to   { opacity: 1; transform: none; }
+}
+.rpg-v7-root .home-char-portrait {
+    position: absolute;
+    bottom: 0;
+    right: -25%;
+    height: 100%;
+    width: auto;
+    max-width: none;
+    pointer-events: none;
+    filter: drop-shadow(0 0 10px rgba(0, 0, 0, 0.6));
+}
+.home-char-hit {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 57%;
+    right: 12%;
+    pointer-events: auto;
+}
+.home-char-menu {
+    position: absolute;
+    top: 50%;
+    right: 45%;
+    transform: translateY(-50%);
+    pointer-events: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 132px;
+    padding: 12px 10px;
+    background: linear-gradient(to bottom, #2a2522, #15110f);
+    border: 1px solid #8a734b;
+    border-top: 3px solid #ffaa00;
+    border-radius: 6px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
+}
+.home-char-name {
+    text-align: center;
+    color: #ffcc66;
+    font-size: 18px;
+    font-weight: bold;
+    font-family: "Noto Serif SC", "Noto Serif TC", serif;
+    letter-spacing: 2px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid rgba(138, 115, 75, 0.4);
+}
+.home-char-btn {
+    padding: 10px 14px;
+    border: 1px solid rgba(138, 115, 75, 0.5);
+    border-radius: 4px;
+    background: rgba(138, 115, 75, 0.12);
+    color: #d0c8b6;
+    font-size: 15px;
+    font-family: "Noto Serif SC", "Noto Serif TC", serif;
+    cursor: pointer;
+}
+.home-char-btn:hover {
+    background: rgba(138, 115, 75, 0.3);
+    border-color: #ffaa00;
+    color: #fff;
+}
+.rpg-v7-root.mobile-layout .home-char-menu { min-width: 104px; padding: 8px; gap: 6px; }
+.rpg-v7-root.mobile-layout .home-char-name { font-size: 15px; }
+.rpg-v7-root.mobile-layout .home-char-btn { padding: 8px 10px; font-size: 14px; }
+
 /* --- 當前位置標籤 --- */
 .home-location-label {
     position: absolute;
@@ -4413,23 +4493,23 @@
 
 /* Assumed paths only; these derivatives have not been published. */
 .rpg-v7-root.stock-study {
-  --stock-button: url("https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/buttons/secondary.png");
-  --stock-divider: url("https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/dividers/section-center.png");
-  --stock-round: url("https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/frames/avatar.png");
-  --stock-page-left: url("https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/buttons/secondary-parts/left.png");
-  --stock-page-right: url("https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/buttons/secondary-parts/right.png");
-  --stock-page-top: url("https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/buttons/secondary-parts/top.png");
-  --stock-page-bottom: url("https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/buttons/secondary-parts/bottom.png");
-  --stock-panel-tl: url("https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/panels/frame-parts/tl.png");
-  --stock-panel-tr: url("https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/panels/frame-parts/tr.png");
-  --stock-panel-bl: url("https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/panels/frame-parts/bl.png");
-  --stock-panel-br: url("https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/panels/frame-parts/br.png");
-  --stock-panel-top: url("https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/panels/frame-parts/top.png");
-  --stock-panel-bottom: url("https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/panels/frame-parts/bottom.png");
-  --stock-panel-left: url("https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/panels/frame-parts/left.png");
-  --stock-panel-right: url("https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/panels/frame-parts/right.png");
-  --stock-arrow-4: url("https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/icons/arrow-4.png");
-  --stock-arrow-5: url("https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/icons/arrow-5.png");
+  --stock-button: url("https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/buttons/secondary.webp");
+  --stock-divider: url("https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/dividers/section-center.webp");
+  --stock-round: url("https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/frames/avatar.webp");
+  --stock-page-left: url("https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/buttons/secondary-parts/left.webp");
+  --stock-page-right: url("https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/buttons/secondary-parts/right.webp");
+  --stock-page-top: url("https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/buttons/secondary-parts/top.webp");
+  --stock-page-bottom: url("https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/buttons/secondary-parts/bottom.webp");
+  --stock-panel-tl: url("https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/panels/frame-parts/tl.webp");
+  --stock-panel-tr: url("https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/panels/frame-parts/tr.webp");
+  --stock-panel-bl: url("https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/panels/frame-parts/bl.webp");
+  --stock-panel-br: url("https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/panels/frame-parts/br.webp");
+  --stock-panel-top: url("https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/panels/frame-parts/top.webp");
+  --stock-panel-bottom: url("https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/panels/frame-parts/bottom.webp");
+  --stock-panel-left: url("https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/panels/frame-parts/left.webp");
+  --stock-panel-right: url("https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/panels/frame-parts/right.webp");
+  --stock-arrow-4: url("https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/icons/arrow-4.webp");
+  --stock-arrow-5: url("https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/dark-fantasy/v1/icons/arrow-5.webp");
 }
 
 /* MVU / XBX stock UI. Load after the paper + interface harmony styles.
@@ -6602,7 +6682,8 @@ const charIdToData = new Map(fullPartyData.map(c => [c.id, c])); // 新增這行
 // === 外部 CG 資料讀取：GitHub / jsDelivr JSON ===
 // ============================================================
 
-const EXTERNAL_CG_DATA_URL = "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain/CG/cg-data0614.json";
+// CG 圖片改用 WebP（cg-data1007.json）；舊版主檔仍使用 cg-data0614.json 與 PNG，所以 repo 中兩種都保留
+const EXTERNAL_CG_DATA_URL = "https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain/CG/cg-data1007.json";
 
 
 let externalCGData = {};
@@ -9926,11 +10007,72 @@ previewArea.appendChild(dot);
 
     const PIXEL_HOME_HOST = {
         navigate: target => navigateHome(target),
-        openStatus: name => {
-            const charId = charNameToId.get(name);
-            if (charId) openMiniModal(charId);
-        },
+        chooseExit: spec => showPixelStairMenu(spec),
+        showCharacter: name => (name ? showHomeCharPanel(name) : closeHomeCharPanel(false)),
     };
+
+    // 樓梯選單：沿用舊版房間選單的彈窗；選單節點（例如 地下室）展開成該樓層的房間
+    function showPixelStairMenu({ title, options }) {
+        const entries = [];
+        for (const { dir, target } of options) {
+            const arrow = dir === 'up' ? '▲ ' : '▼ ';
+            const floor = HOME_MENU_FLOORS[target];
+            const rooms = floor
+                ? Object.entries(HOME_LOCATIONS).filter(([, d]) => d.floor === floor.floor && !d.hub).map(([n]) => n)
+                : [target];
+            rooms.forEach(room => entries.push({ room, label: arrow + room }));
+        }
+        openHomeRoomMenu(title, entries);
+    }
+
+    // 立繪面板「互动」按鈕送出的訊息（送出後觸發 AI 回覆）。
+    // 【佔位】正式內容要配合 lorebook 決定，之後只改這裡。
+    const HOME_INTERACT_MESSAGE = name => `【家园互动】${name}`;
+
+    // 角色立繪面板：點像素場景中的角色時，map-area 右側顯示立繪，左邊是選單。
+    // 只有選單和角色身體的範圍擋住點擊，所以面板開著時仍然可以點左側露出的角色或空地。
+    function showHomeCharPanel(name) {
+        closeHomeCharPanel(false);
+        const charId = charNameToId.get(name);
+        const data = charId && charIdToData.get(charId);
+        if (!data || !els.mapArea) return;
+        const panel = document.createElement('div');
+        panel.className = 'home-char-panel';
+        const menu = document.createElement('div');
+        menu.className = 'home-char-menu';
+        const title = document.createElement('div');
+        title.className = 'home-char-name';
+        title.textContent = name;
+        menu.appendChild(title);
+        const actions = [
+            ['互动', () => { closeHomeCharPanel(true); sendMsgViaDOM(HOME_INTERACT_MESSAGE(name)); }],
+            ['查看状态', () => { closeHomeCharPanel(true); openMiniModal(charId); }],
+            ['关闭', () => closeHomeCharPanel(true)],
+        ];
+        for (const [label, fn] of actions) {
+            const b = document.createElement('button');
+            b.type = 'button';
+            b.className = 'home-char-btn';
+            b.textContent = label;
+            b.onclick = (e) => { e.stopPropagation(); fn(); };
+            menu.appendChild(b);
+        }
+        const portrait = document.createElement('img');
+        portrait.className = 'home-char-portrait';
+        portrait.alt = name;
+        portrait.src = data.img;
+        const hit = document.createElement('div');   // 擋住角色身體範圍的點擊（點立繪不會點到後面的場景）
+        hit.className = 'home-char-hit';
+        panel.append(portrait, hit, menu);
+        els.mapArea.appendChild(panel);
+    }
+
+    // fromPanel = 面板自己關閉（按鈕），要通知場景取消角色的選取外框
+    function closeHomeCharPanel(fromPanel) {
+        if (!els.mapArea) return;
+        els.mapArea.querySelectorAll('.home-char-panel').forEach(el => el.remove());
+        if (fromPanel && window.PixelHome) window.PixelHome.deselect(els.mapArea);
+    }
 
     // 顯示像素場景；沒有場景、載入失敗或開關停用時，照舊顯示背景圖、方向按鈕與隊伍立繪
     async function renderPixelHome() {
@@ -9949,7 +10091,9 @@ previewArea.appendChild(dot);
         } else if (window.PixelHome) {
             window.PixelHome.clear(els.mapArea);
         }
-        if (seq === pixelHomeSeq) els.mapArea.classList.toggle('pixel-home-active', ok);
+        if (seq !== pixelHomeSeq) return;
+        els.mapArea.classList.toggle('pixel-home-active', ok);
+        if (!ok) closeHomeCharPanel(false);
     }
 
     function clearPixelHome() {
@@ -9957,6 +10101,7 @@ previewArea.appendChild(dot);
         if (!els.mapArea) return;
         if (window.PixelHome) window.PixelHome.clear(els.mapArea);
         els.mapArea.classList.remove('pixel-home-active');
+        closeHomeCharPanel(false);
     }
 
     function syncPixelHomeButtons() {
@@ -9974,7 +10119,37 @@ previewArea.appendChild(dot);
         } catch (e) { /* 酒館 API 不可用時只在記憶體內生效 */ }
         syncPixelHomeButtons();
         if (state.isHome) renderPixelHome();
+        schedulePixelHomePreload();
     };
+
+    // 背景預載像素家園：只針對啟用「家园像素场景」的玩家，不在家園時也預載。
+    // 和主檔的立繪預載佇列分開（在家時佇列裡有同房間角色的立繪，排在後面會等很久），
+    // 但同樣先讓目前畫面載入、閒置時才下載；目前所在的房間優先。
+    // 素材存在瀏覽器快取，之後每則訊息的 iframe 都能直接使用，所以每次開啟酒館頁面只預載一次。
+    function schedulePixelHomePreload() {
+        if (!state.pixelHomeEnabled || state.homeSystemEnabled === false || _rpgLifetime.signal.aborted) return;
+        if (topWindow.__PIXEL_HOME_PRELOAD) return;
+        topWindow.__PIXEL_HOME_PRELOAD = true;
+        let done = false;
+        Promise.resolve()
+            .then(async () => {
+                if (!await waitForBackgroundPreload(4000) || !await loadPixelHome()) return;
+                const here = state.isHome ? getPlayerHomeLocation() : null;
+                const hour = parseInt(getVariable('世界.当前.时间.时'));
+                const joined = heroineList.filter(isCharConquered);
+                const order = [here, ...window.PixelHome.locations.filter(l => l !== here)];
+                for (const loc of order) {
+                    if (!loc || !window.PixelHome.has(loc)) continue;
+                    if (!await waitForBackgroundPreload(150)) return;
+                    await window.PixelHome.preload(loc, hour, joined);
+                }
+                done = true;
+            })
+            .catch(e => console.warn('[Home] 像素場景預載失敗', e))
+            .finally(() => {
+                if (!done) topWindow.__PIXEL_HOME_PRELOAD = false;   // 中斷時（例如 iframe 被換掉）讓下一個 iframe 重來
+            });
+    }
 
     // 啟動時讀取保存值（讀不到時維持停用）
     (async () => {
@@ -9984,6 +10159,7 @@ previewArea.appendChild(dot);
         } catch (e) { state.pixelHomeEnabled = false; }
         syncPixelHomeButtons();
         if (state.pixelHomeEnabled && state.isHome) renderPixelHome();
+        schedulePixelHomePreload();
     })();
 
     // --- 渲染家園 UI（導航箭頭 + 位置標籤）---
@@ -10126,6 +10302,14 @@ previewArea.appendChild(dot);
 
         // 取得該樓層的所有房間（不含交誼廳等 hub）
         const rooms = Object.entries(HOME_LOCATIONS).filter(([, data]) => data.floor === menuInfo.floor && !data.hub);
+        openHomeRoomMenu(menuInfo.title, rooms.map(([roomName]) => ({ room: roomName, label: roomName })));
+    }
+
+    // --- 房間選單彈窗（樓層選單與像素家園的樓梯選單共用）---
+    // entries = [{ room: 地點名, label: 顯示文字 }]；每個選項顯示該房間中的角色
+    function openHomeRoomMenu(menuTitle, entries) {
+        if (!els.mapArea) return;
+        els.mapArea.querySelectorAll('.home-room-menu-overlay').forEach(el => el.remove());
 
         // 建立遮罩
         const overlay = document.createElement('div');
@@ -10140,18 +10324,18 @@ previewArea.appendChild(dot);
 
         const title = document.createElement('div');
         title.className = 'home-room-menu-title';
-        title.textContent = menuInfo.title;
+        title.textContent = menuTitle;
         menu.appendChild(title);
 
         // 渲染每個房間選項
-        rooms.forEach(([roomName, roomData]) => {
+        entries.forEach(({ room: roomName, label }) => {
             const option = document.createElement('div');
             option.className = 'home-room-option';
 
             // 房間名稱
             const nameSpan = document.createElement('span');
             nameSpan.className = 'room-name';
-            nameSpan.textContent = roomName;
+            nameSpan.textContent = label;
             option.appendChild(nameSpan);
 
             // 顯示該房間中的角色（僅已攻略且非外出）
@@ -10985,6 +11169,7 @@ state.currentMusicUrl = targetMusicUrl;
             endVarBatch();
             // 解开重入锁
             scheduleBackgroundPreload(state.lastPartyIds);
+            schedulePixelHomePreload();
             // === 家园系统：模擬角色自由移動（僅在收到新訊息時觸發）===
             if (state.isHome) {
                 try {
