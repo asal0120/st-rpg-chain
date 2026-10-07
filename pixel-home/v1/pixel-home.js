@@ -1,18 +1,32 @@
 /* 家園像素場景：在主檔的 map-area 裡顯示房間場景與角色。
  * 本檔不讀寫變數。主檔的轉接程式先讀好資料，再呼叫 PixelHome.render(mapArea, ctx, host)：
  *   ctx  = { location, hour, present: [角色名], joined: [已攻略角色名], seed }
- *   host = { navigate(target), openStatus(name), talk(name) }（talk 可省略）
+ *   host = {
+ *     navigate(target),                        點門：前往該地點
+ *     chooseExit({ title, options }),          點樓梯：主檔顯示選單；options = [{ dir: 'up' | 'down', target }]
+ *     showCharacter(name | null),              點角色：主檔顯示立繪與選單；null = 取消選取
+ *   }
+ *   主檔的立繪面板自己關閉時，呼叫 PixelHome.deselect(mapArea) 取消角色的選取外框。
+ *   沒有提供 chooseExit / showCharacter 時，改用場景內的小選單（host.openStatus、host.talk）。
+ * 操作：滑鼠移到門上會顯示目的地，點一下就前往；觸控沒有滑鼠移入，所以第一下只顯示目的地，同一個門再點一下才前往。
  * 素材（房間資料、場景圖、遮罩、角色圖）放在 PixelHome.base 底下，由 publish.py 產生。
  * 介面說明見 notes.md「像素家園：接入主檔」。 */
 (function () {
   'use strict';
-  const VERSION = '1.1.0';
+  const VERSION = '1.2.0';
   if (window.PixelHome && window.PixelHome.version === VERSION) return;
 
   // 地點 → 房間資料夾
   const ROOMS = { '客厅': 'living', '浴室': 'bath', '厨房饭厅': 'kitchen', '交谊厅': 'lounge' };
-  // 一個出口通往多個地點時，點擊後顯示選單
-  const MULTI_EXITS = { '三楼': ['书房', '工房'] };
+  // 樓梯：同一座樓梯的上樓與下樓出口（渲染腳本的 exit、exitDown）合併成一個點擊範圍，點擊後顯示選單。
+  // options 的 target 可以是主檔的選單節點（例如 地下室），由主檔展開成該樓層的房間
+  const STAIRS = {
+    living: { exits: ['交谊厅', '地下室'], options: [{ dir: 'up', target: '交谊厅' }, { dir: 'down', target: '地下室' }] },
+    lounge: { exits: ['三楼', '客厅'],
+              options: [{ dir: 'up', target: '书房' }, { dir: 'up', target: '工房' }, { dir: 'down', target: '客厅' }] },
+  };
+  // 角色圖的副檔名（publish.py 轉成無損 WebP）
+  const SPRITE_EXT = 'webp';
   // key = 角色圖檔名，也是條件家具的旗標（例如璐法加入後的豎琴 = lufa）；prefer = 偏好朝向
   const HEROES = [
     { key: 'aina', name: '爱娜', prefer: 'R' }, { key: 'lin', name: '琳', prefer: 'L' },
@@ -74,7 +88,10 @@
   filter: drop-shadow(calc(var(--px) * 2) 0 0 #fff3d0) drop-shadow(calc(var(--px) * -2) 0 0 #fff3d0)
           drop-shadow(0 calc(var(--px) * 2) 0 #fff3d0) drop-shadow(0 calc(var(--px) * -2) 0 #fff3d0); }
 .ph-root .ph-exit { opacity: 0; transition: opacity .12s; z-index: 8; }
-.ph-root .ph-exit.ph-on { opacity: .35; }
+/* 顯示出口範圍：白色半透明＋金色外框（外框讓範圍邊界清楚，觸控時特別需要） */
+.ph-root .ph-exit.ph-on { opacity: .55;
+  filter: drop-shadow(var(--px) 0 0 #ffcc66) drop-shadow(calc(var(--px) * -1) 0 0 #ffcc66)
+          drop-shadow(0 var(--px) 0 #ffcc66) drop-shadow(0 calc(var(--px) * -1) 0 #ffcc66); }
 .ph-root .ph-tint { position: absolute; inset: 0; pointer-events: none; z-index: 900; }
 .ph-root .ph-stage[data-t="dawn"] .ph-actor, .ph-root .ph-stage[data-t="dusk"] .ph-actor { filter: sepia(.22) saturate(1.1) brightness(.93); }
 .ph-root .ph-stage[data-t="night"] .ph-actor { filter: brightness(.8) saturate(.85) sepia(.12); }
@@ -142,7 +159,7 @@
       // sprites.json 和角色圖同時下載
       const [meta] = await Promise.all([fetchJson(base + 'sprites.json'), ...HEROES.flatMap(h => [h.key, h.sit]).map(async key => {
         try {
-          const img = await loadImg(`${base}sprites/${key}.png`);
+          const img = await loadImg(`${base}sprites/${key}.${SPRITE_EXT}`);
           imgs[key] = { img, mask: alphaMask(img) };
         } catch (e) { /* 沒有這張圖 */ }
       })]);
@@ -179,7 +196,7 @@
     const want = TIME_SCENE[t];
     const has = (room.data.times || ['day']).includes(want);
     const f = (room.data.variants || []).find(v => flags.has(v));
-    return { url: `${room.dir}scene_${has ? want : 'day'}${f ? '_' + f : ''}.png`,
+    return { url: `${room.dir}scene_${has ? want : 'day'}${f ? '_' + f : ''}.${room.data.sceneExt || 'png'}`,
              tint: has ? (TIME_EXTRA[t] || NO_TINT) : DAYNIGHT[t] };
   }
 
@@ -222,6 +239,15 @@
     el.style.top = `calc(var(--px) * ${y})`;
     if (w != null) el.style.width = `calc(var(--px) * ${w})`;
     if (h != null) el.style.height = `calc(var(--px) * ${h})`;
+  }
+
+  // 觸控放開後，瀏覽器還會在同一個位置送出一次 click。這時選單或立繪面板已經打開，
+  // click 會落在選項上造成誤觸（例如直接選了樓梯選單的第一個房間），所以吃掉這一次 click。
+  function swallowNextClick() {
+    const eat = e => { e.stopPropagation(); e.preventDefault(); done(); };
+    const done = () => { document.removeEventListener('click', eat, true); clearTimeout(timer); };
+    const timer = setTimeout(done, 600);
+    document.addEventListener('click', eat, true);
   }
 
   // 角色適不適合某個位置：只能朝一邊時，偏好相同 > 沒有偏好 > 偏好相反；位置有角色權重時再乘上倍數
@@ -319,18 +345,34 @@
       this.actorH = room.data.actorPx.heightPx;
       this.stage.style.setProperty('--scene-w', w);
       this.stage.style.setProperty('--scene-h', h);
-      this.closeMenu(); this.setHover(null);
-      this.exits.forEach(e => e.el.remove());
-      this.exits = room.exits.map(e => {
+      this.closeMenu(); this.setHover(null); this.armed = null;
+      this.exits.forEach(e => e.parts.forEach(p => p.el.remove()));
+      // 每個出口 = 一個或多個遮罩（parts）；樓梯的上下樓出口合併成一個
+      const stair = STAIRS[room.id];
+      const groups = [];
+      for (const e of room.exits) {
         const el = document.createElement('img');
         el.className = 'ph-exit'; el.alt = ''; el.crossOrigin = 'anonymous'; el.src = e.src;
         place(el, e.x, e.y, e.w, e.h);
         this.stage.appendChild(el);
-        return { ...e, el };
-      });
+        const part = { x: e.x, y: e.y, w: e.w, h: e.h, mask: e.mask, el };
+        if (stair && stair.exits.includes(e.name)) {
+          let g = groups.find(g => g.stair);
+          if (!g) groups.push(g = { name: '楼梯', stair: true, options: stair.options, parts: [] });
+          g.parts.push(part);
+        } else {
+          groups.push({ name: e.name, parts: [part] });
+        }
+      }
+      for (const g of groups) {   // 外框範圍（標籤與選單的位置）
+        g.x = Math.min(...g.parts.map(p => p.x)); g.y = Math.min(...g.parts.map(p => p.y));
+        g.w = Math.max(...g.parts.map(p => p.x + p.w)) - g.x; g.h = Math.max(...g.parts.map(p => p.y + p.h)) - g.y;
+      }
+      this.exits = groups;
     }
 
     buildActors(sprites, present, flags, seed) {
+      this.deselect();   // 角色重新排位：取消選取（主檔的立繪面板也會關閉）
       this.actors.forEach(a => { a.el.remove(); if (a.fg) a.fg.remove(); });
       this.actors = [];
       this.hover = null;
@@ -518,9 +560,11 @@
         if (!a.mask || a.mask[ly * a.w + lx]) return { type: 'actor', a };
       }
       for (const e of this.exits) {
-        const lx = Math.floor(ix - e.x), ly = Math.floor(iy - e.y);
-        if (lx < 0 || ly < 0 || lx >= e.w || ly >= e.h) continue;
-        if (!e.mask || e.mask[ly * e.w + lx]) return { type: 'exit', e };
+        for (const p of e.parts) {
+          const lx = Math.floor(ix - p.x), ly = Math.floor(iy - p.y);
+          if (lx < 0 || ly < 0 || lx >= p.w || ly >= p.h) continue;
+          if (!p.mask || p.mask[ly * p.w + lx]) return { type: 'exit', e };
+        }
       }
       return null;
     }
@@ -528,15 +572,17 @@
     showTag(hit) {
       if (this.tagEl) this.tagEl.remove();
       this.tagEl = null; this.tagFor = hit;
-      if (!hit || (hit.type === 'actor' && this.sel === hit.a)) return;
+      if (!hit || (hit.type === 'actor' && (this.picked === hit.a || (this.sel && this.sel.a === hit.a)))) return;
       const el = document.createElement('div');
       let x, y;
       if (hit.type === 'actor') {
         [x, y] = this.toMap(hit.a.sx, hit.a.top - 4);
         el.className = 'ph-tag'; el.textContent = hit.a.hero.name;
       } else {
-        [x, y] = this.toMap(hit.e.x + hit.e.w / 2, hit.e.y - 2);
-        el.className = 'ph-tag ph-tag-exit'; el.textContent = '前往 ' + hit.e.name;
+        const e = hit.e;
+        [x, y] = this.toMap(e.x + e.w / 2, e.y - 2);
+        el.className = 'ph-tag ph-tag-exit';
+        el.textContent = (e.stair ? e.name : '前往 ' + e.name) + (this.armed === e ? '（再点一次）' : '');
       }
       el.style.left = x + 'px'; el.style.top = Math.max(22, y) + 'px';
       this.root.appendChild(el);
@@ -546,10 +592,38 @@
       const cur = this.hover;
       const same = hit && cur && hit.type === cur.type && (hit.a || hit.e) === (cur.a || cur.e);
       if (same || (!hit && !cur)) return;
-      if (cur) (cur.type === 'actor' ? cur.a.el : cur.e.el).classList.remove(cur.type === 'actor' ? 'ph-hover' : 'ph-on');
+      if (cur) {
+        if (cur.type === 'actor') cur.a.el.classList.remove('ph-hover');
+        else cur.e.parts.forEach(p => p.el.classList.remove('ph-on'));
+      }
       this.hover = hit;
-      if (hit) (hit.type === 'actor' ? hit.a.el : hit.e.el).classList.add(hit.type === 'actor' ? 'ph-hover' : 'ph-on');
+      if (hit) {
+        if (hit.type === 'actor') hit.a.el.classList.add('ph-hover');
+        else hit.e.parts.forEach(p => p.el.classList.add('ph-on'));
+      }
       this.showTag(hit);
+    }
+    // 觸控第一下點到的出口（再點一次才前往）
+    disarm() {
+      if (!this.armed) return;
+      this.armed = null;
+      if (this.hover && this.hover.type === 'exit') this.setHover(null);
+    }
+
+    // 角色選取（主檔顯示立繪面板）：選取外框保留到取消選取為止
+    selectActor(a) {
+      this.deselect(true);
+      this.picked = a;
+      a.el.classList.add('ph-sel');
+      this.showTag(null);
+      this.host.showCharacter(a.hero.name);
+    }
+    // silent = 不通知主檔（主檔自己關閉面板時用）
+    deselect(silent) {
+      if (!this.picked) return;
+      this.picked.el.classList.remove('ph-sel');
+      this.picked = null;
+      if (!silent && this.host.showCharacter) this.host.showCharacter(null);
     }
 
     closeMenu() {
@@ -591,18 +665,35 @@
       menu.style.top = Math.max(4, Math.min(mh - h - 4, y)) + 'px';
     }
 
-    onTap(clientX, clientY) {
+    onTap(clientX, clientY, pointerType) {
       const hit = this.hitTest(clientX, clientY);
-      if (!hit) { this.closeMenu(); return; }
       const host = this.host;
+      if (!hit || hit.type !== 'exit') this.disarm();
+      if (!hit) { this.closeMenu(); this.deselect(); return; }
       if (hit.type === 'exit') {
-        const e = hit.e, targets = MULTI_EXITS[e.name];
-        if (!targets) { this.closeMenu(); if (host.navigate) host.navigate(e.name); return; }
-        this.openMenu(e.name, targets.map(t => [t, () => host.navigate && host.navigate(t)]),
+        const e = hit.e;
+        // 觸控沒有滑鼠移入：第一下只顯示目的地與範圍，同一個出口再點一下才前往
+        if (pointerType !== 'mouse' && this.armed !== e) {
+          this.closeMenu();
+          this.armed = e;
+          this.setHover(hit);
+          this.showTag(hit);
+          return;
+        }
+        this.disarm(); this.closeMenu();
+        if (!e.stair) { if (host.navigate) host.navigate(e.name); return; }
+        if (host.chooseExit) { host.chooseExit({ title: e.name, options: e.options }); return; }
+        this.openMenu(e.name, e.options.map(o => [(o.dir === 'up' ? '▲ ' : '▼ ') + o.target,
+                                                  () => host.navigate && host.navigate(o.target)]),
                       { type: 'exit', left: e.x, top: e.y, w: e.w });
         return;
       }
       const a = hit.a;
+      if (host.showCharacter) {   // 主檔顯示立繪與選單；再點同一個角色 = 取消選取
+        this.closeMenu();
+        if (this.picked === a) this.deselect(); else this.selectActor(a);
+        return;
+      }
       if (this.sel && this.sel.a === a) { this.closeMenu(); return; }
       const items = [];
       if (host.talk) items.push(['交谈', () => host.talk(a.hero.name)]);
@@ -637,7 +728,7 @@
         if (drag && pointers.size === 1) {
           const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
           if (!drag.moved && Math.hypot(dx, dy) > 6) {
-            drag.moved = true; root.classList.add('ph-dragging'); this.closeMenu(); this.setHover(null);
+            drag.moved = true; root.classList.add('ph-dragging'); this.closeMenu(); this.armed = null; this.setHover(null);
           }
           if (drag.moved) { this.view.ox = drag.ox + dx; this.view.oy = drag.oy + dy; this.applyView(); }
           return;
@@ -656,7 +747,10 @@
         }
         if (pointers.size < 2) pinch = null;
         if (drag && pointers.size === 0) {
-          if (!drag.moved && e.type === 'pointerup') this.onTap(e.clientX, e.clientY);
+          if (!drag.moved && e.type === 'pointerup') {
+            if (e.pointerType !== 'mouse') swallowNextClick();
+            this.onTap(e.clientX, e.clientY, e.pointerType);
+          }
           drag = null;
           root.classList.remove('ph-dragging');
         }
@@ -677,6 +771,12 @@
   const instances = new WeakMap();
 
   function has(location) { return !!ROOMS[location]; }
+
+  // 取消角色選取（主檔的立繪面板自己關閉時呼叫；不會再通知主檔）
+  function deselect(mapArea) {
+    const sc = mapArea && instances.get(mapArea);
+    if (sc) sc.deselect(true);
+  }
 
   function clear(mapArea) {
     const sc = mapArea && instances.get(mapArea);
@@ -735,6 +835,6 @@
     version: VERSION,
     base: 'https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/pixel-home/v1/',
     locations: Object.keys(ROOMS),   // 有像素場景的地點
-    has, render, clear, preload,
+    has, render, clear, preload, deselect,
   };
 })();
