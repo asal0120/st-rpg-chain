@@ -1951,6 +1951,16 @@
         stroke: rgba(0, 0, 0, 0.85); /* 恢復黑色 */
     }
     .mm-hit-zone { fill: transparent; stroke: none; }
+    .mm-zone-label {
+        font-family: "Noto Serif SC", "Noto Serif TC", serif;
+        font-size: 9px; font-weight: bold; letter-spacing: 1px;
+        fill: #d0c8b6; stroke: rgba(0, 0, 0, 0.9); stroke-width: 2.5px; paint-order: stroke;
+        text-anchor: middle; dominant-baseline: middle; pointer-events: none;
+        transition: fill 0.2s;
+    }
+    .mm-zone-group.enabled:hover .mm-zone-label { fill: var(--p-gold-bright); }
+    /* 玩家自己：不顯示圓環按鈕 */
+    .mm-svg-layer.no-zones #mm-zones-container { display: none; }
 
     /* 懸停效果 (僅在 enabled 時生效) */
     .mm-zone-group.enabled:hover .mm-visual-arc {
@@ -2591,7 +2601,40 @@
 /* --- 像素家園顯示時：場景中的門、樓梯、角色取代方向按鈕與隊伍立繪 --- */
 /*     （party-wrap 的 display 由 renderParty 寫在行內樣式，所以要 !important） */
 .rpg-v7-root .map-area.pixel-home-active .home-nav-arrow,
-.rpg-v7-root .map-area.pixel-home-active .party-wrap { display: none !important; }
+.rpg-v7-root .map-area.pixel-home-active .party-wrap,
+.rpg-v7-root .map-area.pixel-home-loading .home-nav-arrow,
+.rpg-v7-root .map-area.pixel-home-loading .party-wrap { display: none !important; }
+
+/* --- 像素家園的讀取畫面：開啟角色卡時，像素開關與 pixel-home.js 都要非同步載入，
+   這段時間蓋住舊版家園畫面（背景圖），像素場景出現後淡出。第 19 層：在像素場景（20）與 HUD（85）之下 --- */
+.pixel-home-loader {
+    position: absolute;
+    inset: 0;
+    z-index: 19;
+    background: #1c1916;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+.pixel-home-loader.done { opacity: 0; }
+.pixel-home-loader span {
+    color: #c8aa6e;
+    font-size: 14px;
+    letter-spacing: 3px;
+    font-family: "Noto Serif SC", "Noto Serif TC", serif;
+    animation: pixelHomeLoaderPulse 1.2s ease-in-out infinite;
+}
+@keyframes pixelHomeLoaderPulse {
+    0%, 100% { opacity: 0.35; }
+    50% { opacity: 1; }
+}
+
+/* --- 家園選單依地圖寬度縮放：--home-u = 地圖寬 900px 時的 1px。
+   選單尺寸 = 原本的 px × 倍率 × --home-u，但不小於原本的 px（倍率 = 地圖寬 900px 時是原本的幾倍）。倍率在選單的 --s 調整。
+   不支援容器單位（cqw）的瀏覽器用前一行的固定 px --- */
+.rpg-v7-root .map-area { container-type: inline-size; --home-u: calc(100cqw / 900); }
 
 /* --- 像素家園：角色立繪面板（右側立繪，左邊選單）---
    立繪原圖是 1500×1000 的畫布（和 map-area 同為 3:2），角色在中間約 31%–64% 的寬度。
@@ -2628,6 +2671,7 @@
     pointer-events: auto;
 }
 .home-char-menu {
+    --s: var(--home-char-menu-scale, 2);
     position: absolute;
     top: 50%;
     right: 45%;
@@ -2636,8 +2680,11 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
+    gap: max(8px, calc(8 * var(--s) * var(--home-u)));
     min-width: 132px;
+    min-width: max(132px, calc(132 * var(--s) * var(--home-u)));
     padding: 12px 10px;
+    padding: max(12px, calc(12 * var(--s) * var(--home-u))) max(10px, calc(10 * var(--s) * var(--home-u)));
     background: linear-gradient(to bottom, #2a2522, #15110f);
     border: 1px solid #8a734b;
     border-top: 3px solid #ffaa00;
@@ -2652,15 +2699,20 @@
     font-family: "Noto Serif SC", "Noto Serif TC", serif;
     letter-spacing: 2px;
     padding-bottom: 6px;
+    padding-bottom: max(6px, calc(6 * var(--s) * var(--home-u)));
+    font-size: max(18px, calc(18 * var(--s) * var(--home-u)));
     border-bottom: 1px solid rgba(138, 115, 75, 0.4);
 }
 .home-char-btn {
     padding: 10px 14px;
+    padding: max(10px, calc(10 * var(--s) * var(--home-u))) max(14px, calc(14 * var(--s) * var(--home-u)));
     border: 1px solid rgba(138, 115, 75, 0.5);
     border-radius: 4px;
     background: rgba(138, 115, 75, 0.12);
     color: #d0c8b6;
     font-size: 15px;
+    font-size: max(15px, calc(15 * var(--s) * var(--home-u)));
+    white-space: nowrap;
     font-family: "Noto Serif SC", "Noto Serif TC", serif;
     cursor: pointer;
 }
@@ -2669,9 +2721,72 @@
     border-color: #ffaa00;
     color: #fff;
 }
-.rpg-v7-root.mobile-layout .home-char-menu { min-width: 104px; padding: 8px; gap: 6px; }
-.rpg-v7-root.mobile-layout .home-char-name { font-size: 15px; }
-.rpg-v7-root.mobile-layout .home-char-btn { padding: 8px 10px; font-size: 14px; }
+/* 手機：地圖小，倍率另外設；不小於原本的手機尺寸 */
+.rpg-v7-root.mobile-layout .home-char-menu {
+    --s: var(--home-char-menu-scale-mobile, 1.2);
+    min-width: max(104px, calc(104 * var(--s) * var(--home-u)));
+    padding: max(8px, calc(8 * var(--s) * var(--home-u)));
+    gap: max(6px, calc(6 * var(--s) * var(--home-u)));
+}
+.rpg-v7-root.mobile-layout .home-char-name { font-size: max(15px, calc(15 * var(--s) * var(--home-u))); }
+.rpg-v7-root.mobile-layout .home-char-btn {
+    padding: max(8px, calc(8 * var(--s) * var(--home-u))) max(10px, calc(10 * var(--s) * var(--home-u)));
+    font-size: max(14px, calc(14 * var(--s) * var(--home-u)));
+}
+
+/* --- 自由互动／邀请约会的輸入視窗：置中在整個 .rpg-v7-root 的可見範圍（地圖區域太小） --- */
+.char-action-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 600;
+    background: rgba(0, 0, 0, 0.55);
+    animation: homeOverlayFadeIn 0.2s ease;
+}
+.char-action-dialog {
+    position: absolute;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: min(560px, calc(100% - 32px));
+    box-sizing: border-box;
+    padding: 18px 18px 14px;
+    background: linear-gradient(to bottom, #2a2522, #15110f);
+    border: 1px solid #8a734b;
+    border-top: 3px solid #ffaa00;
+    border-radius: 6px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.8);
+    font-family: "Noto Serif SC", "Noto Serif TC", serif;
+    animation: homeMenuSlideIn 0.25s ease;
+}
+.char-action-title {
+    text-align: center;
+    color: #ffcc66;
+    font-size: 20px;
+    font-weight: bold;
+    letter-spacing: 2px;
+    padding-bottom: 8px;
+    margin-bottom: 12px;
+    border-bottom: 1px solid rgba(138, 115, 75, 0.4);
+}
+.rpg-v7-root .char-action-input {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 120px;
+    resize: vertical;
+    padding: 10px 12px;
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(138, 115, 75, 0.6);
+    border-radius: 4px;
+    color: #ebe3d6;
+    font-family: inherit;
+    font-size: 16px;
+    line-height: 1.6;
+}
+.rpg-v7-root .char-action-input:focus { outline: none; border-color: #ffaa00; }
+.char-action-hint { min-height: 18px; margin-top: 6px; font-size: 12px; color: #a09880; }
+.char-action-buttons { display: flex; justify-content: flex-end; gap: 10px; margin-top: 8px; }
+.rpg-v7-root .char-action-buttons .home-char-btn { min-width: 96px; padding: 8px 16px; font-size: 15px; text-align: center; }
+.rpg-v7-root .char-action-buttons .home-char-btn.primary { border-color: #ffaa00; color: #ffcc66; }
 
 /* --- 當前位置標籤 --- */
 .home-location-label {
@@ -2818,10 +2933,16 @@
     border: 1px solid #8a734b;
     border-top: 3px solid #ffaa00;
     border-radius: 6px;
+    --s: var(--home-room-menu-scale, 1.5);
     padding: 16px 8px 12px;
+    padding: max(16px, calc(16 * var(--s) * var(--home-u))) max(8px, calc(8 * var(--s) * var(--home-u)))
+             max(12px, calc(12 * var(--s) * var(--home-u)));
     min-width: 240px;
+    min-width: min(92%, max(240px, calc(240 * var(--s) * var(--home-u))));
     max-width: 340px;
+    max-width: min(92%, max(340px, calc(340 * var(--s) * var(--home-u))));
     max-height: 70%;
+    max-height: 80%;
     overflow-y: auto;
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.8);
     animation: homeMenuSlideIn 0.25s ease;
@@ -2842,6 +2963,9 @@
     padding-bottom: 8px;
     border-bottom: 1px solid rgba(138, 115, 75, 0.4);
     letter-spacing: 2px;
+    font-size: max(18px, calc(18 * var(--s) * var(--home-u)));
+    margin-bottom: max(12px, calc(12 * var(--s) * var(--home-u)));
+    padding-bottom: max(8px, calc(8 * var(--s) * var(--home-u)));
 }
 
 /* --- 房間選項 --- */
@@ -2850,11 +2974,15 @@
     justify-content: space-between;
     align-items: center;
     padding: 10px 14px;
+    padding: max(10px, calc(10 * var(--s) * var(--home-u))) max(14px, calc(14 * var(--s) * var(--home-u)));
     margin: 4px 0;
+    margin: max(4px, calc(4 * var(--s) * var(--home-u))) 0;
+    gap: 12px;
     border-radius: 4px;
     cursor: pointer;
     color: #d0c8b6;
     font-size: 15px;
+    font-size: max(15px, calc(15 * var(--s) * var(--home-u)));
     font-family: "Noto Serif SC", "Noto Serif TC", serif;
     transition: all 0.2s ease;
     border: 1px solid transparent;
@@ -2865,6 +2993,17 @@
     border-color: rgba(138, 115, 75, 0.4);
     color: #fff;
     padding-left: 18px;
+    padding-left: max(18px, calc(18 * var(--s) * var(--home-u)));
+}
+
+/* 未加入角色的房間：不能選 */
+.home-room-option.locked { cursor: default; opacity: 0.4; }
+.home-room-option.locked:hover {
+    background: none;
+    border-color: transparent;
+    color: #d0c8b6;
+    padding-left: 14px;
+    padding-left: max(14px, calc(14 * var(--s) * var(--home-u)));
 }
 
 .home-room-option .room-name {
@@ -2873,8 +3012,10 @@
 
 .home-room-option .room-occupants {
     font-size: 12px;
+    font-size: max(12px, calc(12 * var(--s) * var(--home-u)));
     color: #a09880;
     max-width: 140px;
+    max-width: max(140px, calc(140 * var(--s) * var(--home-u)));
     text-align: right;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -6993,13 +7134,16 @@ async function renderCurrentMemberGallery() {
         cx: 100, cy: 100,
         r_visual: 100,      // 黑條半徑
         r_inner: 75,        // 感應區內徑 (貼合人物)
-        r_outer: 300,       // 感應區外徑 (確保覆蓋)
+        r_outer: 115,       // 感應區外徑（只比黑條外緣多一點；太大時點圓環外面會觸發按鈕，不能關閉）
+        r_label: 116,       // 按鈕文字的半徑（黑條外側）
         r_ring: 82,         // 好感度圓環半徑
         gap_deg: 4          // 黑條縫隙
     };
     
-    // 是否啟用四個扇形感應區 (目前設為 false)
-    const ENABLE_MM_ZONES = false;
+    // 是否啟用四個扇形感應區
+    const ENABLE_MM_ZONES = true;
+    // 目前開啟的角色（圓環按鈕用）
+    let mmCurrentCharId = null;
 
     // 輔助：極座標轉笛卡爾
     function polarToCartesian(centerX, centerY, radius, angleInDegrees) {
@@ -7054,11 +7198,15 @@ async function renderCurrentMemberGallery() {
         if(!container || container.children.length > 0) return; // 避免重複生成
 
         const gap = MM_CFG.gap_deg / 2;
+        // 角度：0° 是 12 點鐘，順時針。A 右上留空（不建感應區，關閉鈕在右上外側）
+        const charName = () => charIdToData.get(mmCurrentCharId)?.name;
         const zones = [
-            { id: 'zone-A', label: 'A', start: 0, end: 90 },
-            { id: 'zone-B', label: 'B', start: 90, end: 180 },
-            { id: 'zone-C', label: 'C', start: 180, end: 270 },
-            { id: 'zone-D', label: 'D', start: 270, end: 360 }
+            { id: 'zone-B', label: '个人页', start: 90, end: 180,
+              action: () => { const id = mmCurrentCharId; closeMiniModal(); jumpToStatusChar(id); } },
+            { id: 'zone-C', label: '邀请约会', start: 180, end: 270,
+              action: () => { const n = charName(); closeMiniModal(); window.openCharActionDialog('date', n); } },
+            { id: 'zone-D', label: '自由互动', start: 270, end: 360,
+              action: () => { const n = charName(); closeMiniModal(); window.openCharActionDialog('free', n); } },
         ];
 
         zones.forEach(z => {
@@ -7068,7 +7216,7 @@ async function renderCurrentMemberGallery() {
             // 點擊事件 (目前僅 console log)
             g.onclick = (e) => {
                 e.stopPropagation();
-                console.log(`Clicked Zone: ${z.label}`);
+                if (mmCurrentCharId) z.action();
             };
 
             // 視覺黑條 (Visual)
@@ -7081,8 +7229,17 @@ async function renderCurrentMemberGallery() {
             pathHit.setAttribute("class", "mm-hit-zone");
             pathHit.setAttribute("d", describeSector(MM_CFG.cx, MM_CFG.cy, MM_CFG.r_inner, MM_CFG.r_outer, z.start + 1, z.end - 1));
 
+            // 按鈕文字（黑條外側的中間）
+            const mid = polarToCartesian(MM_CFG.cx, MM_CFG.cy, MM_CFG.r_label, (z.start + z.end) / 2);
+            const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            label.setAttribute("class", "mm-zone-label");
+            label.setAttribute("x", mid.x);
+            label.setAttribute("y", mid.y);
+            label.textContent = z.label;
+
             g.appendChild(pathHit);
             g.appendChild(pathVis);
+            g.appendChild(label);
             container.appendChild(g);
         });
     }
@@ -7096,6 +7253,9 @@ async function renderCurrentMemberGallery() {
         // 2. 尋找角色資料
         const charData = charIdToData.get(charId);
         if(!charData) return;
+        mmCurrentCharId = charId;
+        // 玩家自己不顯示圓環按鈕
+        document.querySelector('.mm-svg-layer')?.classList.toggle('no-zones', charData.id === 'p1');
 
         // 3. 填入資料
         const avatarEl = document.getElementById('mm-avatar');
@@ -10025,9 +10185,89 @@ previewArea.appendChild(dot);
         openHomeRoomMenu(title, entries);
     }
 
-    // 立繪面板「互动」按鈕送出的訊息（送出後觸發 AI 回覆）。
-    // 【佔位】正式內容要配合 lorebook 決定，之後只改這裡。
-    const HOME_INTERACT_MESSAGE = name => `【家园互动】${name}`;
+    // === 自由互动／邀请约会的輸入視窗（家園的立繪面板與 Q 版人物狀態介面共用）===
+    // 玩家輸入具體內容後直接送出（和小遊戲戰勝後相同，用 sendMsgViaDOM 觸發 AI 回覆）。
+    // 視窗置中在整個 .rpg-v7-root 的可見範圍（地圖區域太小）。
+    // 【佔位】送出的提示詞格式待定，之後只改 CHAR_ACTION_PROMPTS。
+    const CHAR_ACTION_PROMPTS = {
+        free: { title: '自由互动', placeholder: name => `想和${name}做什么？`,
+                build: (name, text) => `【自由互动】${name}：${text}` },
+        date: { title: '邀请约会', placeholder: name => `想约${name}去哪里、做什么？`,
+                build: (name, text) => `【邀请约会】${name}：${text}` },
+    };
+
+    // 容器在畫面上看得到的範圍的中心（容器內的 y）：iframe 隨聊天捲動，容器可能比畫面高
+    function charActionCenterY(root) {
+        const r = root.getBoundingClientRect();
+        let top = 0, bottom = window.innerHeight;
+        try {
+            const fe = window.frameElement;   // 酒館的 iframe 和父頁面同源
+            if (fe) {
+                const fr = fe.getBoundingClientRect();
+                const vh = fe.ownerDocument.defaultView.innerHeight;
+                top = Math.max(0, -fr.top);
+                bottom = Math.min(fr.height, vh - fr.top);
+            }
+        } catch (e) { /* 讀不到父頁面時用整個 iframe */ }
+        const a = Math.max(r.top, top), b = Math.min(r.bottom, bottom);
+        return (b > a ? (a + b) / 2 : (r.top + r.bottom) / 2) - r.top;
+    }
+
+    window.openCharActionDialog = function(kind, name) {
+        const spec = CHAR_ACTION_PROMPTS[kind];
+        const root = els.mapArea?.closest('.rpg-v7-root') || document.querySelector('.rpg-v7-root');
+        if (!spec || !name || !root) return;
+        root.querySelectorAll('.char-action-overlay').forEach(el => el.remove());
+
+        const overlay = document.createElement('div');
+        overlay.className = 'char-action-overlay';
+        const box = document.createElement('div');
+        box.className = 'char-action-dialog';
+        const title = document.createElement('div');
+        title.className = 'char-action-title';
+        title.textContent = `${spec.title} · ${name}`;
+        const input = document.createElement('textarea');
+        input.className = 'char-action-input';
+        input.placeholder = spec.placeholder(name);
+        const hint = document.createElement('div');
+        hint.className = 'char-action-hint';
+        const buttons = document.createElement('div');
+        buttons.className = 'char-action-buttons';
+        const cancelBtn = document.createElement('button');
+        cancelBtn.type = 'button';
+        cancelBtn.className = 'home-char-btn';
+        cancelBtn.textContent = '取消';
+        const sendBtn = document.createElement('button');
+        sendBtn.type = 'button';
+        sendBtn.className = 'home-char-btn primary';
+        sendBtn.textContent = '送出';
+        buttons.append(cancelBtn, sendBtn);
+        box.append(title, input, hint, buttons);
+        overlay.appendChild(box);
+
+        const close = () => overlay.remove();
+        const send = () => {
+            const text = input.value.trim();
+            if (!text) { input.focus(); return; }
+            if (isGenerating) { hint.textContent = '生成中，请稍后再送出'; return; }
+            if (sendMsgViaDOM(spec.build(name, text))) close();
+            else hint.textContent = '送出失败：找不到酒馆的输入框（请确认沉浸模式已关闭）';
+        };
+        cancelBtn.onclick = (e) => { e.stopPropagation(); close(); };
+        sendBtn.onclick = (e) => { e.stopPropagation(); send(); };
+        overlay.onclick = (e) => { if (e.target === overlay) close(); };
+        box.addEventListener('keydown', (e) => {
+            e.stopPropagation();
+            if (e.key === 'Escape') close();
+            else if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) send();
+        });
+
+        root.appendChild(overlay);
+        const h = box.offsetHeight;
+        const y = Math.max(h / 2 + 8, Math.min(root.clientHeight - h / 2 - 8, charActionCenterY(root)));
+        box.style.top = y + 'px';
+        input.focus();
+    };
 
     // 角色立繪面板：點像素場景中的角色時，map-area 右側顯示立繪，左邊是選單。
     // 只有選單和角色身體的範圍擋住點擊，所以面板開著時仍然可以點左側露出的角色或空地。
@@ -10044,10 +10284,12 @@ previewArea.appendChild(dot);
         title.className = 'home-char-name';
         title.textContent = name;
         menu.appendChild(title);
+        // 點場景空白處會關閉面板，所以不放「关闭」
+        const inParty = isCharInParty(name);
         const actions = [
-            ['互动', () => { closeHomeCharPanel(true); sendMsgViaDOM(HOME_INTERACT_MESSAGE(name)); }],
-            ['查看状态', () => { closeHomeCharPanel(true); openMiniModal(charId); }],
-            ['关闭', () => closeHomeCharPanel(true)],
+            ['自由互动', () => { closeHomeCharPanel(true); window.openCharActionDialog('free', name); }],
+            ['邀请约会', () => { closeHomeCharPanel(true); window.openCharActionDialog('date', name); }],
+            [inParty ? '取消同行' : '邀请同行', () => { closeHomeCharPanel(true); togglePartyState(name, inParty); }],
         ];
         for (const [label, fn] of actions) {
             const b = document.createElement('button');
@@ -10075,10 +10317,67 @@ previewArea.appendChild(dot);
     }
 
     // 顯示像素場景；沒有場景、載入失敗或開關停用時，照舊顯示背景圖、方向按鈕與隊伍立繪
+    // 未加入角色的個人房不能進入（像素交誼廳的門、舊版樓層選單、navigateHome 共用）
+    function isHomeLocationLocked(loc) {
+        const owner = HOME_LOCATIONS[loc]?.owner;
+        return !!owner && !isCharConquered(owner);
+    }
+    function getLockedHomeLocations() {
+        return Object.keys(HOME_LOCATIONS).filter(isHomeLocationLocked);
+    }
+
+    // 有像素場景的地點（和 pixel-home.js 的 ROOMS 相同）：腳本還沒下載時，用來決定要不要先顯示讀取畫面
+    const PIXEL_HOME_LOCATIONS = new Set([
+        '客厅', '浴室', '厨房饭厅', '交谊厅', '玩家房间', '爱娜的房间', '琳的房间', '米拉露恩的房间', '黛芬妮的房间',
+        '芙蕾嘉的房间', '穗的房间', '莉迪娅的房间', '璐法的房间', '奈芙蒂的房间',
+    ]);
+    // 像素開關存在聊天變數，開啟角色卡時要等 /getvar 讀回來。上次的開關狀態另外存在瀏覽器，
+    // 只用來決定讀到開關之前要不要先顯示讀取畫面（實際開關仍以聊天變數為準）
+    const PIXEL_HOME_PREF_KEY = 'rpgPixelHome';
+    let pixelHomePrefReady = false;   // 已從聊天變數讀到開關
+    function readPixelHomePref() {
+        try { return topWindow.localStorage.getItem(PIXEL_HOME_PREF_KEY) === '1'; } catch (e) { return false; }
+    }
+    function savePixelHomePref(on) {
+        try { topWindow.localStorage.setItem(PIXEL_HOME_PREF_KEY, on ? '1' : '0'); } catch (e) { /* 不能存時只是少了讀取畫面 */ }
+    }
+
+    // 讀取畫面：蓋住舊版家園畫面，像素場景出現後淡出；逾時就移除（之後像素場景載入完仍會蓋上）
+    const PIXEL_HOME_LOADER_TIMEOUT = 8000;
+    let pixelHomeLoaderTimer = null;
+    function setPixelHomeLoading(on) {
+        if (!els.mapArea) return;
+        clearTimeout(pixelHomeLoaderTimer);
+        let loader = els.mapArea.querySelector('.pixel-home-loader');
+        if (on) {
+            if (!loader) {
+                loader = document.createElement('div');
+                loader.className = 'pixel-home-loader';
+                loader.innerHTML = '<span>载入中…</span>';
+                els.mapArea.appendChild(loader);
+            }
+            loader.classList.remove('done');
+            els.mapArea.classList.add('pixel-home-loading');
+            pixelHomeLoaderTimer = setTimeout(() => setPixelHomeLoading(false), PIXEL_HOME_LOADER_TIMEOUT);
+        } else {
+            els.mapArea.classList.remove('pixel-home-loading');
+            if (loader && !loader.classList.contains('done')) {
+                loader.classList.add('done');
+                setTimeout(() => loader.remove(), 300);
+            }
+        }
+    }
+    // 這次同步會不會顯示像素場景（開關還沒讀到時用上次的狀態推測）
+    function expectPixelHome(location) {
+        if (!state.isHome || state.homeSystemEnabled === false || !PIXEL_HOME_LOCATIONS.has(location)) return false;
+        return pixelHomePrefReady ? !!state.pixelHomeEnabled : readPixelHomePref();
+    }
+
     async function renderPixelHome() {
         if (!els.mapArea) return;
         const seq = ++pixelHomeSeq;
         const location = getPlayerHomeLocation();
+        if (expectPixelHome(location) && !els.mapArea.classList.contains('pixel-home-active')) setPixelHomeLoading(true);
         let ok = false;
         if (state.isHome && state.pixelHomeEnabled && await loadPixelHome() && window.PixelHome.has(location)) {
             ok = await window.PixelHome.render(els.mapArea, {
@@ -10086,6 +10385,7 @@ previewArea.appendChild(dot);
                 hour: parseInt(getVariable('世界.当前.时间.时')),
                 present: heroineList.filter(name => isCharConquered(name) && getCharHomeLocation(name) === location),
                 joined: heroineList.filter(isCharConquered),
+                locked: getLockedHomeLocations(),
                 seed: window.RPG_MESSAGE_ID ?? 0,   // 同一則訊息的排位不變
             }, PIXEL_HOME_HOST);
         } else if (window.PixelHome) {
@@ -10094,6 +10394,8 @@ previewArea.appendChild(dot);
         if (seq !== pixelHomeSeq) return;
         els.mapArea.classList.toggle('pixel-home-active', ok);
         if (!ok) closeHomeCharPanel(false);
+        // 開關還沒讀到（推測會顯示像素場景）時保留讀取畫面，讀到開關後會再呼叫一次
+        if (ok || pixelHomePrefReady || !expectPixelHome(location)) setPixelHomeLoading(false);
     }
 
     function clearPixelHome() {
@@ -10101,6 +10403,7 @@ previewArea.appendChild(dot);
         if (!els.mapArea) return;
         if (window.PixelHome) window.PixelHome.clear(els.mapArea);
         els.mapArea.classList.remove('pixel-home-active');
+        setPixelHomeLoading(false);
         closeHomeCharPanel(false);
     }
 
@@ -10114,6 +10417,7 @@ previewArea.appendChild(dot);
 
     window.setPixelHome = function(enabled) {
         state.pixelHomeEnabled = !!enabled;
+        savePixelHomePref(state.pixelHomeEnabled);
         try {
             triggerSlash('/setvar key=' + PIXEL_HOME_VAR_KEY + ' ' + (enabled ? '1' : '0')).catch(() => {});
         } catch (e) { /* 酒館 API 不可用時只在記憶體內生效 */ }
@@ -10157,8 +10461,11 @@ previewArea.appendChild(dot);
             const raw = await triggerSlash('/getvar key=' + PIXEL_HOME_VAR_KEY);
             state.pixelHomeEnabled = String(raw ?? '').trim() === '1';
         } catch (e) { state.pixelHomeEnabled = false; }
+        pixelHomePrefReady = true;
+        savePixelHomePref(state.pixelHomeEnabled);
         syncPixelHomeButtons();
         if (state.pixelHomeEnabled && state.isHome) renderPixelHome();
+        else setPixelHomeLoading(false);
         schedulePixelHomePreload();
     })();
 
@@ -10251,6 +10558,7 @@ previewArea.appendChild(dot);
             showRoomMenu(target);
             return;
         }
+        if (isHomeLocationLocked(target)) return;   // 未加入角色的房間
         if (_homeNavigationPending) return;
         _homeNavigationPending = true;
 
@@ -10349,11 +10657,18 @@ previewArea.appendChild(dot);
             occSpan.textContent = occupants.length > 0 ? occupants.join('、') : '无人';
             option.appendChild(occSpan);
 
-            option.onclick = (e) => {
-                e.stopPropagation();
-                overlay.remove();
-                navigateHome(roomName);
-            };
+            if (isHomeLocationLocked(roomName)) {   // 未加入角色的房間：灰色、不能選
+                option.classList.add('locked');
+                occSpan.className = 'room-occupants';
+                occSpan.textContent = '未入住';
+                option.onclick = (e) => e.stopPropagation();
+            } else {
+                option.onclick = (e) => {
+                    e.stopPropagation();
+                    overlay.remove();
+                    navigateHome(roomName);
+                };
+            }
 
             menu.appendChild(option);
         });
