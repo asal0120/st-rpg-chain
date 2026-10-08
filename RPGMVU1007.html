@@ -10310,6 +10310,50 @@ previewArea.appendChild(dot);
         return v === '是' || v === 'True' || v === 'true';
     }
 
+    // --- 在隊角色對帳：計畫（不寫入）---
+    // 只看 在队状态 是 且 狀態 >= 3 的角色。target = 玩家的家中位置（無效時為前庭，同 initHomeSystem）。
+    // release：角色位置是另一個有效的家中地點 → 劇情帶走她，解除在隊。follow：外出／空白／無法辨識 → 跟玩家回家。
+    function planHomeParty() {
+        const playerLoc = getPlayerHomeLocation();
+        const target = HOME_LOCATIONS[playerLoc] ? playerLoc : '前庭';
+        const release = [], follow = [];
+        heroineList.forEach(name => {
+            if (!isCharConquered(name) || !isCharInParty(name)) return;
+            const loc = getCharHomeLocation(name);
+            if (loc === target) return;
+            (loc && HOME_LOCATIONS[loc] ? release : follow).push(name);
+        });
+        return { target, release, follow };
+    }
+
+    // --- 在隊角色對帳：寫入 ---
+    // 傳入 sd（updateVariablesWith 回呼裡的 stat_data）→ 寫進該批次；沒傳 → 自己做一次 updateVariablesWith。回傳是否有變更。
+    function reconcileHomeParty(sd) {
+        if (!sd && _varsSnapshot) beginVarBatch(); // 先重拍，避免讀到同步開頭的舊快照
+        const plan = planHomeParty();
+        if (!plan.release.length && !plan.follow.length) return false;
+        const apply = (data) => {
+            plan.release.forEach(name => {
+                console.log(`[Home] ${name} 在隊但已在別處（${getCharHomeLocation(name)}），解除同行`);
+                _.set(data, `世界.妈妈.${name}.在队状态`, '否');
+            });
+            plan.follow.forEach(name => {
+                _.set(data, `世界.妈妈.${name}.家中位置`, plan.target);
+                _.set(data, `世界.妈妈.${name}.停留轮数`, 0);
+            });
+        };
+        if (sd) {
+            apply(sd);
+        } else {
+            updateVariablesWith(function(variables) {
+                apply(variables.stat_data || variables);
+                return variables;
+            }, { type: 'message' });
+            if (_varsSnapshot) beginVarBatch();
+        }
+        return true;
+    }
+
     // --- 進入家園時的初始化 ---
     function initHomeSystem() {
         console.log('[Home] 進入家园系统');
@@ -10323,8 +10367,10 @@ previewArea.appendChild(dot);
         const playerFix = getPlayerHomeVar() !== partyTarget;
         // 在隊角色跟隨玩家。initHomeSystem 在重新整理、開聊天、訊息重繪時也會跑（state.isHome 每個新 iframe 都從 false 開始），
         // 所以不能無條件把在隊角色搬走：只有位置和玩家不同才寫入，全部相同就不寫任何變數。
-        const needWrite = playerFix || heroineList.some(name =>
-            isCharConquered(name) && (isCharInParty(name) ? getCharHomeLocation(name) !== partyTarget : !getCharHomeLocation(name)));
+        // 在隊角色的對帳規則見 reconcileHomeParty（位置不同：有效地點 → 解除在隊；外出／空白／無效 → 搬到玩家位置）
+        const partyPlan = planHomeParty();
+        const needWrite = playerFix || partyPlan.release.length > 0 || partyPlan.follow.length > 0 || heroineList.some(name =>
+            isCharConquered(name) && !isCharInParty(name) && !getCharHomeLocation(name));
         if (!needWrite) return;
 
         // 批次寫入所有初始化變量（單次 updateVariablesWith）
@@ -10341,11 +10387,7 @@ previewArea.appendChild(dot);
                 if (!isCharConquered(name)) return; // 未攻略 → 不參與家園
                 const charLoc = getCharHomeLocation(name);
                 if (isCharInParty(name)) {
-                    // 在隊角色 → 跟隨玩家；位置已經相同就不動（不重設停留轮数）
-                    if (charLoc !== partyTarget) {
-                        _.set(sd, `世界.妈妈.${name}.家中位置`, partyTarget);
-                        _.set(sd, `世界.妈妈.${name}.停留轮数`, 0);
-                    }
+                    return; // 在隊角色由 reconcileHomeParty 處理（下方）
                 } else if (!charLoc || charLoc === '外出') {
                     // 未初始化位置的已攻略角色 → 放到前庭；外出中的保持原樣
                     if (charLoc !== '外出') {
@@ -10355,6 +10397,8 @@ previewArea.appendChild(dot);
                 }
                 // 已有位置且非在隊 → 保持原位置
             });
+
+            reconcileHomeParty(sd); // 在隊角色：位置相同不動；在別的有效地點 → 解除在隊；外出／空白／無效 → 搬到玩家位置
 
             return variables;
         }, { type: 'message' });
@@ -11511,6 +11555,10 @@ if (state.homeSystemEnabled !== false && !_nowHome && getVariable('世界.位置
     setVar('世界.位置.家中位置', '前庭');
     if (_varsSnapshot) beginVarBatch(); // 重拍批次快照
 }
+
+// === 在隊角色對帳：劇情把在隊角色帶去別的房間 → 解除在隊；外出／空白／無效 → 搬到玩家位置。只有需要變更才寫 ===
+// 放在 simulateHomeMovement（finally 裡）之前，被解除的角色之後就當作非在隊處理。
+if (state.homeSystemEnabled !== false && _nowHome) reconcileHomeParty();
 
 // === 防呆：修正模型可能誤寫成子地點的獨立迷宮地點 ===
 const STANDALONE_LOCATIONS = [
