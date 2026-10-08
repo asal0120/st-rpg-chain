@@ -1875,7 +1875,7 @@
         /* 變數繼承 */
         --p-gold: #c8aa6e;       
         --p-gold-bright: #f0e6d2;
-        --mm-ring-bg: rgba(0, 0, 0, 0.5);
+        --mm-ring-bg: rgba(255, 255, 255, 0.16);
     }
 
     /* 3. 內容包裝 */
@@ -1943,12 +1943,13 @@
     /* 如果要啟用，可以在 JS 中切换 class，或直接改這裡為 auto */
     .mm-zone-group.enabled { pointer-events: auto; }
 
+    /* 按鈕底板：封閉的環形扇區（填色＋細外框）；停用時全透明 */
     .mm-visual-arc {
-        fill: none; stroke: transparent; stroke-width: 20;
-        transition: stroke 0.2s, filter 0.2s;
+        fill: transparent; stroke: transparent; stroke-width: 0.8;
+        transition: fill 0.2s, stroke 0.2s, filter 0.2s;
     }
 	.mm-zone-group.enabled .mm-visual-arc {
-        stroke: rgba(0, 0, 0, 0.85); /* 恢復黑色 */
+        fill: rgba(255, 250, 240, 0.2); stroke: rgba(240, 230, 210, 0.55); /* 半透明淺色底板 */
     }
     .mm-hit-zone { fill: transparent; stroke: none; }
     .mm-zone-label {
@@ -1959,14 +1960,21 @@
         transition: fill 0.2s;
     }
     .mm-zone-group.enabled:hover .mm-zone-label { fill: var(--p-gold-bright); }
+    /* 按鈕圖示（畫在底板中央） */
+    .mm-zone-icon {
+        fill: #f0e6d2; pointer-events: none; transition: fill 0.2s;
+        filter: drop-shadow(0 0 1.5px rgba(0, 0, 0, 0.9));
+    }
+    .mm-zone-group.enabled:hover .mm-zone-icon { fill: #fff; }
     /* 玩家自己：不顯示圓環按鈕 */
     .mm-svg-layer.no-zones #mm-zones-container { display: none; }
 
     /* 懸停效果 (僅在 enabled 時生效) */
     .mm-zone-group.enabled:hover .mm-visual-arc {
-        stroke: var(--p-gold); filter: drop-shadow(0 0 10px var(--p-gold));
+        fill: rgba(200, 170, 110, 0.45); stroke: var(--p-gold-bright); stroke-width: 1;
+        filter: drop-shadow(0 0 6px var(--p-gold));
     }
-    .mm-zone-group.enabled:active .mm-visual-arc { stroke: #fff; }
+    .mm-zone-group.enabled:active .mm-visual-arc { fill: rgba(255, 255, 255, 0.55); }
 
     /* 好感度圓環 */
     .mm-ring-group { pointer-events: none; }
@@ -7253,12 +7261,14 @@ async function renderCurrentMemberGallery() {
     // === Mini-Modal 幾何配置 ===
     const MM_CFG = {
         cx: 100, cy: 100,
-        r_visual: 100,      // 黑條半徑
+        r_visual: 100,      // 底板中心半徑
+        band_half: 10,      // 底板半寬（內外各 10，和舊的 20 寬黑條佔同樣位置）
         r_inner: 75,        // 感應區內徑 (貼合人物)
-        r_outer: 115,       // 感應區外徑（只比黑條外緣多一點；太大時點圓環外面會觸發按鈕，不能關閉）
-        r_label: 116,       // 按鈕文字的半徑（黑條外側）
+        r_outer: 115,       // 感應區外徑（只比底板外緣多一點；太大時點圓環外面會觸發按鈕，不能關閉）
+        r_label: 124,       // 按鈕文字的半徑（底板外側，避開圖示）
         r_ring: 82,         // 好感度圓環半徑
-        gap_deg: 4          // 黑條縫隙
+        icon_size: 16,      // 按鈕圖示大小（viewBox 單位）
+        gap_deg: 4          // 底板縫隙
     };
     
     // 是否啟用四個扇形感應區
@@ -7321,12 +7331,17 @@ async function renderCurrentMemberGallery() {
         const gap = MM_CFG.gap_deg / 2;
         // 角度：0° 是 12 點鐘，順時針。A 右上留空（不建感應區，關閉鈕在右上外側）
         const charName = () => charIdToData.get(mmCurrentCharId)?.name;
+        // 圖示：24×24 設計、fill-rule evenodd
+        const ICON_BUST = 'M12 3.2a4.3 4.3 0 1 1 0 8.6a4.3 4.3 0 1 1 0-8.6z M3.5 21c0-4.6 3.8-7.6 8.5-7.6s8.5 3 8.5 7.6z';
+        const ICON_HEART = 'M12 20.6l-1.3-1.2C5.9 15.1 2.8 12.3 2.8 8.8C2.8 6 5 3.8 7.8 3.8c1.6 0 3.1.7 4.2 1.9c1.1-1.2 2.6-1.9 4.2-1.9c2.8 0 5 2.2 5 5c0 3.5-3.1 6.3-7.9 10.6z';
+        const ICON_CHAT = 'M5 3.5h14a2.5 2.5 0 0 1 2.5 2.5v9a2.5 2.5 0 0 1-2.5 2.5h-8.2l-4.6 3.6v-3.6H5A2.5 2.5 0 0 1 2.5 15V6A2.5 2.5 0 0 1 5 3.5z'
+            + ' M7.6 10.5a1.5 1.5 0 1 0 0 .01z M12 10.5a1.5 1.5 0 1 0 0 .01z M16.4 10.5a1.5 1.5 0 1 0 0 .01z';
         const zones = [
-            { id: 'zone-B', label: '个人页', start: 90, end: 180,
+            { id: 'zone-B', label: '个人页', icon: ICON_BUST, start: 90, end: 180,
               action: () => { const id = mmCurrentCharId; closeMiniModal(); jumpToStatusChar(id); } },
-            { id: 'zone-C', label: '邀请亲密', start: 180, end: 270,
+            { id: 'zone-C', label: '邀请亲密', icon: ICON_HEART, start: 180, end: 270,
               action: () => { const n = charName(); closeMiniModal(); window.openCharActionDialog('date', n); } },
-            { id: 'zone-D', label: '自由互动', start: 270, end: 360,
+            { id: 'zone-D', label: '自由互动', icon: ICON_CHAT, start: 270, end: 360,
               action: () => { const n = charName(); closeMiniModal(); window.openCharActionDialog('free', n); } },
         ];
 
@@ -7340,17 +7355,17 @@ async function renderCurrentMemberGallery() {
                 if (mmCurrentCharId) z.action();
             };
 
-            // 視覺黑條 (Visual)
+            // 視覺底板 (Visual)：封閉的環形扇區
             const pathVis = document.createElementNS("http://www.w3.org/2000/svg", "path");
             pathVis.setAttribute("class", "mm-visual-arc");
-            pathVis.setAttribute("d", describeArc(MM_CFG.cx, MM_CFG.cy, MM_CFG.r_visual, z.start + gap, z.end - gap));
+            pathVis.setAttribute("d", describeSector(MM_CFG.cx, MM_CFG.cy, MM_CFG.r_visual - MM_CFG.band_half, MM_CFG.r_visual + MM_CFG.band_half, z.start + gap, z.end - gap));
             
             // 感應區 (Hit Zone)
             const pathHit = document.createElementNS("http://www.w3.org/2000/svg", "path");
             pathHit.setAttribute("class", "mm-hit-zone");
             pathHit.setAttribute("d", describeSector(MM_CFG.cx, MM_CFG.cy, MM_CFG.r_inner, MM_CFG.r_outer, z.start + 1, z.end - 1));
 
-            // 按鈕文字（黑條外側的中間）
+            // 按鈕文字（底板外側的中間）
             const mid = polarToCartesian(MM_CFG.cx, MM_CFG.cy, MM_CFG.r_label, (z.start + z.end) / 2);
             const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
             label.setAttribute("class", "mm-zone-label");
@@ -7358,9 +7373,18 @@ async function renderCurrentMemberGallery() {
             label.setAttribute("y", mid.y);
             label.textContent = z.label;
 
+            // 圖示（畫在底板中央）
+            const ip = polarToCartesian(MM_CFG.cx, MM_CFG.cy, MM_CFG.r_visual, (z.start + z.end) / 2);
+            const icon = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            icon.setAttribute("class", "mm-zone-icon");
+            icon.setAttribute("fill-rule", "evenodd");
+            icon.setAttribute("d", z.icon);
+            icon.setAttribute("transform", "translate(" + (ip.x - MM_CFG.icon_size / 2) + " " + (ip.y - MM_CFG.icon_size / 2) + ") scale(" + (MM_CFG.icon_size / 24) + ")");
+
             g.appendChild(pathHit);
             g.appendChild(pathVis);
             g.appendChild(label);
+            g.appendChild(icon);
             container.appendChild(g);
         });
     }
