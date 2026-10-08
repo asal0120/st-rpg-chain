@@ -5,7 +5,13 @@
  *     navigate(target),                        點門：前往該地點
  *     chooseExit({ title, options }),          點樓梯：主檔顯示選單；options = [{ dir: 'up' | 'down', target }]
  *     showCharacter(name | null),              點角色：主檔顯示立繪與選單；null = 取消選取
+ *     onHidden(names)                          （選用）因人數上限（房間資料的 maxActors）而沒畫出來的角色名單；
+ *                                              每次排位後都會呼叫，沒有人被隱藏時傳空陣列
  *   }
+ *   PixelHome.showActor(mapArea, name)：把被隱藏的角色換進畫面（換掉最後一位非房間主人的顯示角色），
+ *     重新排位並再呼叫 onHidden。回傳 boolean（false = 該角色不在場或沒被隱藏）。
+ *     換進來的選擇會保留到這則訊息結束：同一個房間、同一個 seed 再次顯示時會沿用（離開再回來不變）；新的 seed 重新抽選。
+ *     主檔用 typeof PixelHome.showActor === 'function' 判斷有沒有這項功能。
  *   主檔的立繪面板自己關閉時，呼叫 PixelHome.deselect(mapArea) 取消角色的選取外框。
  *   沒有提供 chooseExit / showCharacter 時，改用場景內的小選單（host.openStatus、host.talk）。
  * 操作：滑鼠移到門上會顯示目的地，點一下就前往；觸控沒有滑鼠移入，所以第一下只顯示目的地，同一個門再點一下才前往。
@@ -13,7 +19,7 @@
  * 介面說明見 notes.md「像素家園：接入主檔」。 */
 (function () {
   'use strict';
-  const VERSION = '1.4.0';
+  const VERSION = '1.5.0';
   if (window.PixelHome && window.PixelHome.version === VERSION) return;
 
   // 地點 → 房間資料夾
@@ -292,12 +298,18 @@
   // 把角色分配到位置（數量相同）：先處理有角色權重的位置，再處理只能朝一邊的位置
   // 顯示人數上限（房間資料的 maxActors，個人房用）：超過時房間主人（owner）一定顯示，其他人依種子抽選。
   // 沒顯示的角色仍然在這個地點，只是不畫出來
-  function capActors(heroes, R, rng) {
-    if (!R.maxActors || heroes.length <= R.maxActors) return heroes;
+  // pins：玩家指定要顯示的角色名（最新的在前）。不在場的忽略；指定的角色排在其他非主人角色之前
+  function capActors(heroes, R, rng, pins) {
+    if (!R.maxActors || heroes.length <= R.maxActors) return { shown: heroes, hidden: [] };
     const rest = heroes.filter(h => h.key !== R.owner);
     for (let k = rest.length - 1; k > 0; k--) { const j = Math.floor(rng() * (k + 1)); [rest[k], rest[j]] = [rest[j], rest[k]]; }
-    return heroes.filter(h => h.key === R.owner).concat(rest).slice(0, R.maxActors);
+    const pinned = (pins || []).map(n => rest.find(h => h.name === n)).filter(Boolean);
+    const order = heroes.filter(h => h.key === R.owner).concat(pinned, rest.filter(h => !pinned.includes(h)));
+    return { shown: order.slice(0, R.maxActors), hidden: order.slice(R.maxActors) };
   }
+  // 玩家指定顯示的角色（pins）：房間＋seed 為鍵，同一則訊息內離開再回來仍有效
+  const pinStore = new Map();
+  const pinKey = (room, seed) => room.id + '|' + seed;
 
   function assign(heroes, slots, rng) {
     const left = heroes.slice(), out = [];
@@ -327,6 +339,7 @@
       this.token = 0;
       this.room = null;
       this.actors = []; this.exits = [];
+      this.hiddenHeroes = []; this.shownList = [];
       this.hover = null; this.sel = null;
       this.view = { scale: 1, ox: 0, oy: 0 };
       this.lastSize = null;
@@ -374,8 +387,9 @@
       const actorKey = JSON.stringify([present.map(h => h.key), [...flags], ctx.seed]);
       if (roomChanged || actorKey !== this.actorKey) {
         this.actorKey = actorKey;
+        this.lastBuild = { sprites, present, flags, seed: seedNum(ctx.seed) };
         this.buildActors(sprites, present, flags, seedNum(ctx.seed));
-      }
+      } else this.notifyHidden();   // 沒有重排：主檔可能換了 host（重新繪製介面），再告知一次
       if (roomChanged) this.resetView();
       this.root.classList.add('ph-ready');
     }
@@ -450,7 +464,11 @@
       const spots = R.spots.map(s => ({ pos: [s.x, s.y], faces: s.faces || ['L', 'R'], weights: s.weights || null }));
       const seats = (R.seats || []).map(s => ({ ...s, pos: [s.x, s.y], faces: s.faces || ['L', 'R'] }));
       const rng = mulberry32(seed);
-      const heroes = capActors(present.filter(h => imgs[h.key]), R, rng);
+      const pinsKey = pinKey(this.room, seed);
+      const cap = capActors(present.filter(h => imgs[h.key]), R, rng, pinStore.get(pinsKey));
+      const heroes = cap.shown;
+      this.hiddenHeroes = cap.hidden;
+      this.shownList = heroes;
       const placed = [];
       const seatIdx = seats.map((_, i) => i).filter(i => !seats[i].when || flags.has(seats[i].when));
       for (const i of seatIdx.filter(i => seats[i].only)) {   // 專屬坐位：主人在場時不一定坐上去
@@ -532,6 +550,27 @@
         this.actors.push({ hero, el, fg, left, top, w, h, sx, sy, mask: data.mask, flip, clip });
       }
       this.actors.sort((a, b) => b.sy - a.sy);   // 前面的先判定
+      this.notifyHidden();
+    }
+
+    notifyHidden() {
+      const fn = this.host && this.host.onHidden;
+      if (typeof fn !== 'function') return;
+      try { fn(this.hiddenHeroes.map(h => h.name)); } catch (e) { console.warn('[PixelHome] onHidden 失敗：', e); }
+    }
+
+    // 把被隱藏的角色換進畫面，換掉最後一位非房間主人的顯示角色
+    showActor(name) {
+      const b = this.lastBuild;
+      if (!b || !this.room || !this.hiddenHeroes.some(h => h.name === name)) return false;
+      const R = this.room.data;
+      const victim = this.shownList.filter(h => h.key !== R.owner).pop();
+      const key = pinKey(this.room, b.seed);
+      const pins = (pinStore.get(key) || []).filter(n => n !== name && n !== (victim && victim.name));
+      pins.unshift(name);
+      pinStore.set(key, pins);
+      this.buildActors(b.sprites, b.present, b.flags, b.seed);
+      return true;
     }
 
     // ---------------- 鏡頭 ----------------
@@ -886,6 +925,12 @@
     if (sc) sc.deselect(true);
   }
 
+  // 把被隱藏的角色換進畫面（見檔頭說明）
+  function showActor(mapArea, name) {
+    const sc = mapArea && instances.get(mapArea);
+    return !!sc && !sc.destroyed && sc.showActor(name);
+  }
+
   function clear(mapArea) {
     const sc = mapArea && instances.get(mapArea);
     if (!sc) return;
@@ -943,6 +988,6 @@
     version: VERSION,
     base: 'https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/pixel-home/v1/',
     locations: Object.keys(ROOMS),   // 有像素場景的地點
-    has, render, clear, preload, deselect,
+    has, render, clear, preload, deselect, showActor,
   };
 })();
