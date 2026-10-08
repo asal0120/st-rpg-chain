@@ -13,7 +13,7 @@
  * 介面說明見 notes.md「像素家園：接入主檔」。 */
 (function () {
   'use strict';
-  const VERSION = '1.3.0';
+  const VERSION = '1.4.0';
   if (window.PixelHome && window.PixelHome.version === VERSION) return;
 
   // 地點 → 房間資料夾
@@ -21,6 +21,8 @@
     '客厅': 'living', '浴室': 'bath', '厨房饭厅': 'kitchen', '交谊厅': 'lounge',
     '玩家房间': 'player', '爱娜的房间': 'aina', '琳的房间': 'lin', '米拉露恩的房间': 'miralune', '黛芬妮的房间': 'daphne',
     '芙蕾嘉的房间': 'freya', '穗的房间': 'sui', '莉迪娅的房间': 'lydia', '璐法的房间': 'lufa', '奈芙蒂的房间': 'nefti',
+    '书房': 'study', '工房': 'workshop', '储物间': 'storage', '锻炼场': 'training',
+    '前庭': 'frontyard', '后院': 'backyard',
   };
   // 樓梯：同一座樓梯的上樓與下樓出口（渲染腳本的 exit、exitDown）合併成一個點擊範圍，點擊後顯示選單。
   // options 的 target 可以是主檔的選單節點（例如 地下室），由主檔展開成該樓層的房間
@@ -29,6 +31,12 @@
     lounge: { exits: ['三楼', '客厅'],
               options: [{ dir: 'up', target: '书房' }, { dir: 'up', target: '工房' }, { dir: 'down', target: '客厅' }] },
   };
+  // 同層互通的出口（房間資料夾 → 出口名稱）：常駐顯示箭頭（目的地＋指向出口的箭頭）。
+  // 這些出口在場景邊緣，預設鏡頭常常看不到；出口在畫面外時箭頭停在畫框邊緣、指向出口的方向。點箭頭等於點門
+  const LINKS = {
+    study: '工房', workshop: '书房', storage: '锻炼场', training: '储物间', frontyard: '后院', backyard: '前庭',
+  };
+  const LINK_ARROW = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1 6h8V2l6 6-6 6v-4H1z"/></svg>';
   // 角色圖的副檔名（publish.py 轉成無損 WebP）
   const SPRITE_EXT = 'webp';
   // key = 角色圖檔名，也是條件家具的旗標（例如璐法加入後的豎琴 = lufa）；prefer = 偏好朝向
@@ -114,6 +122,16 @@
 .ph-root .ph-sign[data-align="top"] { transform: translate(-50%, 0); }
 .ph-root .ph-sign[data-align="left"] { transform: translate(-100%, -50%); }
 .ph-root .ph-sign[data-align="right"] { transform: translate(0, -50%); }
+/* 互通出口的箭頭（LINKS）：常駐、會輕微晃動；--ang = 指向出口的角度。箭頭朝左時放在文字前面（ph-link-rev） */
+.ph-root .ph-link { position: absolute; z-index: 945; display: flex; align-items: center; gap: 4px; padding: 3px 9px;
+  transform: translate(-50%, -50%); font-size: 12px; letter-spacing: 1px; white-space: nowrap; pointer-events: none;
+  background: rgba(20, 16, 13, .86); border: 1px solid #c9a24a; border-radius: 12px; color: #ffe6a8;
+  box-shadow: 0 0 6px rgba(255, 204, 102, .45); }
+.ph-root .ph-link.ph-link-rev { flex-direction: row-reverse; }
+.ph-root .ph-link.ph-on { border-color: #ffcc66; color: #fff3d0; box-shadow: 0 0 10px rgba(255, 204, 102, .85); }
+.ph-root .ph-link svg { width: 14px; height: 14px; flex: none; transform: rotate(var(--ang)); overflow: visible; }
+.ph-root .ph-link svg path { fill: #ffcc66; animation: ph-nudge 1.2s ease-in-out infinite; }
+@keyframes ph-nudge { 0%, 100% { transform: translateX(-1px); } 50% { transform: translateX(3px); } }
 .ph-root .ph-menu { position: absolute; z-index: 970; min-width: 112px; background: rgba(24, 19, 15, .96);
   border: 1px solid #8a734b; box-shadow: 0 2px 8px rgba(0, 0, 0, .5); padding: 4px; cursor: default; }
 .ph-root .ph-menu .ph-mt { font-size: 12px; color: #ffcc66; padding: 2px 6px 4px; border-bottom: 1px solid #5a4a3a;
@@ -370,7 +388,7 @@
       this.stage.style.setProperty('--scene-w', w);
       this.stage.style.setProperty('--scene-h', h);
       this.closeMenu(); this.setHover(null); this.armed = null;
-      this.exits.forEach(e => { e.parts.forEach(p => p.el.remove()); if (e.signEl) e.signEl.remove(); });
+      this.exits.forEach(e => { e.parts.forEach(p => p.el.remove()); e.signEl?.remove(); e.linkEl?.remove(); });
       // 每個出口 = 一個或多個遮罩（parts）；樓梯的上下樓出口合併成一個
       const stair = STAIRS[room.id];
       const groups = [];
@@ -392,6 +410,13 @@
             g.signEl.className = 'ph-sign'; g.signEl.textContent = e.sign.text; g.signEl.dataset.align = e.sign.align;
             this.root.appendChild(g.signEl);
           }
+          if (LINKS[room.id] === e.name) {
+            g.linkEl = document.createElement('div');
+            g.linkEl.className = 'ph-link';
+            g.linkEl.innerHTML = LINK_ARROW;
+            g.linkEl.prepend(document.createTextNode(e.name));
+            this.root.appendChild(g.linkEl);
+          }
           groups.push(g);
         }
       }
@@ -408,6 +433,7 @@
       for (const e of this.exits) {
         e.locked = !e.stair && set.has(e.name);
         if (e.signEl) e.signEl.hidden = e.locked;
+        if (e.linkEl) e.linkEl.hidden = e.locked;
       }
       const cur = this.hover && this.hover.type === 'exit' ? this.hover.e : null;
       if (cur && cur.locked) { this.armed = null; this.setHover(null); }
@@ -544,8 +570,25 @@
         const [x, y] = this.toMap(e.sign.x, e.sign.y);
         e.signEl.style.left = x + 'px'; e.signEl.style.top = y + 'px';
       }
+      for (const e of this.exits) if (e.linkEl) this.placeLink(e);
       if (this.sel) this.positionMenu();
       if (this.tagFor) this.showTag(this.tagFor);
+    }
+    // 互通出口的箭頭：放在門口內側、指向出口（方向 = 場景中心 → 出口）；出口在畫面外時停在畫框邊緣
+    placeLink(e) {
+      const el = e.linkEl, [mw, mh] = this.mapSize();
+      const cx = e.x + e.w / 2, cy = e.y + e.h / 2;
+      let dx = cx - this.imgW / 2, dy = cy - this.imgH / 2;
+      const n = Math.hypot(dx, dy) || 1;
+      dx /= n; dy /= n;
+      el.style.setProperty('--ang', Math.atan2(dy, dx) + 'rad');
+      el.classList.toggle('ph-link-rev', dx < 0);
+      const bw = el.offsetWidth, bh = el.offsetHeight;
+      let [x, y] = this.toMap(cx, cy);
+      x -= dx * (bw / 2 + 10); y -= dy * (bh / 2 + 10);
+      x = Math.min(mw - bw / 2 - 6, Math.max(bw / 2 + 6, x));
+      y = Math.min(mh - bh / 2 - 6, Math.max(bh / 2 + 34, y));   // 上方留給位置標籤
+      el.style.left = x + 'px'; el.style.top = y + 'px';
     }
     // 鏡頭對準在場角色的中心（沒有角色時對準房間中心）
     resetView() {
@@ -604,10 +647,13 @@
     }
     toMap(x, y) { return [this.view.ox + x * this.view.scale, this.view.oy + y * this.view.scale]; }
     hitTest(clientX, clientY) {
-      for (const e of this.exits) {
-        if (!e.signEl || e.locked) continue;
-        const r = e.signEl.getBoundingClientRect();
-        if (clientX >= r.left && clientX <= r.right && clientY >= r.top && clientY <= r.bottom) return { type: 'exit', e };
+      for (const e of this.exits) {   // 名牌、互通箭頭：等於點門
+        if (e.locked) continue;
+        for (const el of [e.signEl, e.linkEl]) {
+          if (!el) continue;
+          const r = el.getBoundingClientRect();
+          if (clientX >= r.left && clientX <= r.right && clientY >= r.top && clientY <= r.bottom) return { type: 'exit', e };
+        }
       }
       const [ix, iy] = this.toArt(clientX, clientY);
       for (const a of this.actors) {
@@ -640,6 +686,9 @@
       } else {
         const e = hit.e;
         [x, y] = this.toMap(e.x + e.w / 2, e.y - 2);
+        if (e.linkEl) {   // 互通出口：標籤放在箭頭上方（出口可能在畫面外）
+          x = parseFloat(e.linkEl.style.left); y = parseFloat(e.linkEl.style.top) - e.linkEl.offsetHeight / 2 - 3;
+        }
         el.className = 'ph-tag ph-tag-exit';
         el.textContent = (e.stair ? e.name : '前往 ' + e.name) + (this.armed === e ? '（再点一次）' : '');
       }
@@ -653,12 +702,12 @@
       if (same || (!hit && !cur)) return;
       if (cur) {
         if (cur.type === 'actor') cur.a.el.classList.remove('ph-hover');
-        else { cur.e.parts.forEach(p => p.el.classList.remove('ph-on')); cur.e.signEl?.classList.remove('ph-on'); }
+        else { cur.e.parts.forEach(p => p.el.classList.remove('ph-on')); cur.e.signEl?.classList.remove('ph-on'); cur.e.linkEl?.classList.remove('ph-on'); }
       }
       this.hover = hit;
       if (hit) {
         if (hit.type === 'actor') hit.a.el.classList.add('ph-hover');
-        else { hit.e.parts.forEach(p => p.el.classList.add('ph-on')); hit.e.signEl?.classList.add('ph-on'); }
+        else { hit.e.parts.forEach(p => p.el.classList.add('ph-on')); hit.e.signEl?.classList.add('ph-on'); hit.e.linkEl?.classList.add('ph-on'); }
       }
       this.showTag(hit);
     }
