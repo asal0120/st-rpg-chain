@@ -1036,7 +1036,7 @@
     /* 背景圖層 */
     .quest-scaler .bg-layer {
         position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-        background: url('https://cdn.imgchest.com/files/493cacd4d6ee.png') no-repeat center/cover;
+        background: no-repeat center/cover;   /* 圖片由 setBgImage() 設定（UI_BG） */
         opacity: 0.3; filter: sepia(0.8) contrast(1.1);
         z-index: 0;
     }
@@ -1262,7 +1262,7 @@
     /* 背景圖層 (注意：圖片與 Quest 不同) */
     .bag-scaler .bg-layer {
         position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-        background: url('https://cdn.imgchest.com/files/3909a3a272b6.png') no-repeat center/cover;
+        background: no-repeat center/cover;   /* 圖片由 setBgImage() 設定（UI_BG） */
         opacity: 0.3; filter: sepia(0.8) contrast(1.1);
         z-index: 0;
     }
@@ -2605,6 +2605,29 @@
 .rpg-v7-root .map-area.pixel-home-loading .home-nav-arrow,
 .rpg-v7-root .map-area.pixel-home-loading .party-wrap { display: none !important; }
 
+/* --- 像素家園（含讀取中）：電腦版隱藏左上 HUD，頂欄中間顯示日期（只顯示，不能點）。
+   根元素的 pixel-home-on 由 syncPixelHomeTopbar() 設定 --- */
+.rpg-v7-root.pixel-home-on:not(.mobile-layout) .map-topbar .hud-toggle-btn,
+.rpg-v7-root.pixel-home-on:not(.mobile-layout) .map-area .hud-wrap { display: none !important; }
+.rpg-v7-root.pixel-home-on:not(.mobile-layout) .map-topbar .menu-wrap { margin-left: auto; }
+.rpg-v7-root.pixel-home-on:not(.mobile-layout) .topbar-date-strip {
+    display: flex;
+    align-items: center;
+    position: absolute;
+    left: 50%;
+    top: 0;
+    height: 100%;
+    transform: translateX(-50%);
+    pointer-events: none;
+    white-space: nowrap;
+    font-family: "Cinzel", "Noto Serif SC", "Noto Serif TC", serif;
+    font-size: 15px;
+    font-weight: bold;
+    letter-spacing: 2px;
+    color: var(--text-color);
+}
+.rpg-v7-root.pixel-home-on:not(.mobile-layout) .topbar-date-strip .tds-chev { display: none; }
+
 /* --- 像素家園的讀取畫面：開啟角色卡時，像素開關與 pixel-home.js 都要非同步載入，
    這段時間蓋住舊版家園畫面（背景圖），像素場景出現後淡出。第 19 層：在像素場景（20）與 HUD（85）之下 --- */
 .pixel-home-loader {
@@ -2734,7 +2757,7 @@
     font-size: max(14px, calc(14 * var(--s) * var(--home-u)));
 }
 
-/* --- 自由互动／邀请约会的輸入視窗：置中在整個 .rpg-v7-root 的可見範圍（地圖區域太小） --- */
+/* --- 自由互动／邀请亲密的輸入視窗：置中在整個 .rpg-v7-root 的可見範圍（地圖區域太小） --- */
 .char-action-overlay {
     position: absolute;
     inset: 0;
@@ -5067,6 +5090,24 @@
     padding: 1px 8px;
     bottom: 6px;
 }
+/* 電腦版方向按鈕放大：--home-nav-scale（預設 1.3 倍）；往上的木牌往下移，避開位置標籤 */
+.rpg-v7-root:not(.mobile-layout) .home-nav-arrow {
+    --s: var(--home-nav-scale, 1.3);
+    border-width: calc(8px * var(--s)) calc(16px * var(--s));
+    border-image-width: calc(8px * var(--s)) calc(16px * var(--s));
+    padding: calc(4px * var(--s)) calc(10px * var(--s));
+    font-size: calc(16px * var(--s));
+    gap: calc(6px * var(--s));
+}
+.rpg-v7-root:not(.mobile-layout) .home-nav-arrow .arrow-icon { font-size: calc(16px * var(--s)); }
+.rpg-v7-root:not(.mobile-layout) .home-nav-arrow.arrow-down {
+    font-size: calc(14px * var(--s));
+    padding: calc(1px * var(--s)) calc(8px * var(--s));
+}
+.rpg-v7-root:not(.mobile-layout) .home-nav-arrow.arrow-up,
+.rpg-v7-root:not(.mobile-layout) .home-nav-arrow.arrow-up-right { top: 58px; }
+/* 右下的木牌移到靜音鈕上方 */
+.rpg-v7-root:not(.mobile-layout) .home-nav-arrow.arrow-down-right { bottom: 58px; }
 
 /* --- 手機頂欄：邊緣「展開／收起」提示，不影響日期置中 --- */
 .rpg-v7-root.mobile-layout .topbar-date-strip {
@@ -5239,7 +5280,7 @@
             <!-- 圖片來源 -->
             <div class="display-section-label" style="margin-top:20px;">图床</div>
             <div class="display-img-host-list" id="display-img-host-list">
-                <div class="display-host-item active" id="host-imgchest" onclick="selectHost('imgchest')">
+                <div class="display-host-item" id="host-imgchest" onclick="selectHost('imgchest')">
                     <span class="display-host-dot"></span>
                     <div>
                         <div class="display-host-name">Imgchest</div>
@@ -5253,8 +5294,15 @@
                         <div class="display-host-desc">图床2</div>
                     </div>
                 </div>
+                <div class="display-host-item active" id="host-github" onclick="selectHost('github')">
+                    <span class="display-host-dot"></span>
+                    <div>
+                        <div class="display-host-name">GitHub</div>
+                        <div class="display-host-desc">图床3（角色与家园图片）</div>
+                    </div>
+                </div>
             </div>
-            <div class="display-host-hint">切换后需点击编辑以套用设定（或等待下一次回复）</div>
+            <div class="display-host-hint">切换后需点击编辑以套用设定（或等待下一次回复）；图片载入失败时会自动改用其他图床</div>
 
                         <!-- 文本過濾 -->
             <div class="display-section-label filter-toggle-label" id="filter-rules-toggle" style="margin-top:24px;">
@@ -5638,7 +5686,7 @@ if (!topWindow.RPG_GLOBAL_STATE) {
     topWindow.RPG_GLOBAL_STATE = {
         isMuted: true,
         theme: 'dark',
-        imageHost: 'imgchest'
+        imageHost: 'github'
     };
 }
 
@@ -6664,7 +6712,9 @@ window.setLayout = function(mode) {
 };
 
 window.selectHost = function(host) {
+    if (!IMG_HOST_ORDER[host]) return;
     topWindow.RPG_GLOBAL_STATE.imageHost = host;  // 統一存這裡
+    saveImageHostSetting(host);
     window.switchImageHost(host); // 已有的函數
     document.querySelectorAll('.display-host-item').forEach(el => {
         const isActive = el.id === `host-${host}`;
@@ -6673,11 +6723,82 @@ window.selectHost = function(host) {
     });
 };
 
-const img = (imgchestUrl, catboxUrl) => {
-    const host = topWindow?.RPG_GLOBAL_STATE?.imageHost || 'imgchest';
-    if (host === 'imgchest') return imgchestUrl;
-    return catboxUrl || imgchestUrl;
+// ============================================================
+// 圖床與備援
+// img(imgchest, catbox, github) 依使用者選的圖床回傳網址，同一張圖的其他網址記在 _imgAlts；
+// 載入失敗時照 IMG_HOST_ORDER 換下一個：<img> 由下方的 error 監聽處理，CSS 背景圖用 setBgImage()，
+// new Image() 用 nextImgUrl()。失敗過的網址記在父視窗，之後的訊息直接排到最後。
+// github 只有 fullPartyData 與家園背景（st-rpg-chain 的 images/，無損 WebP），其他圖跳過 github。
+// ============================================================
+const IMG_GITHUB_BASE = 'https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/images/';
+const IMG_HOST_ORDER = {
+    imgchest: ['imgchest', 'github', 'catbox'],
+    catbox:   ['catbox', 'github', 'imgchest'],
+    github:   ['github', 'imgchest', 'catbox'],
 };
+// 圖床設定存在聊天變數（開局頁也寫這裡）；另存在瀏覽器，聊天變數沒有設定時用上次的選擇
+const IMG_HOST_VAR_KEY = '图床';
+const IMG_HOST_PREF_KEY = 'rpgImageHost';
+function saveImageHostSetting(host) {
+    try { topWindow.localStorage.setItem(IMG_HOST_PREF_KEY, host); } catch (e) { /* 不能存時只用聊天變數 */ }
+    try { triggerSlash('/setvar key=' + IMG_HOST_VAR_KEY + ' ' + host).catch(() => {}); } catch (e) { /* 酒館 API 不可用 */ }
+}
+(function loadImageHostSetting() {
+    let host = null;
+    try { host = String(getAllVariables()?.[IMG_HOST_VAR_KEY] ?? '').trim(); } catch (e) { /* 讀不到時用瀏覽器的記錄 */ }
+    if (!IMG_HOST_ORDER[host]) {
+        try { host = topWindow.localStorage.getItem(IMG_HOST_PREF_KEY); } catch (e) { host = null; }
+    }
+    if (IMG_HOST_ORDER[host]) topWindow.RPG_GLOBAL_STATE.imageHost = host;
+})();
+
+if (!topWindow.__IMG_FAILED) topWindow.__IMG_FAILED = new topWindow.Set();
+const _imgFailed = topWindow.__IMG_FAILED;
+const _imgAlts = new Map();   // 網址 → 同一張圖依序嘗試的網址
+
+const img = (imgchestUrl, catboxUrl, githubPath) => {
+    const urls = { imgchest: imgchestUrl, catbox: catboxUrl, github: githubPath ? IMG_GITHUB_BASE + githubPath : '' };
+    const order = IMG_HOST_ORDER[topWindow?.RPG_GLOBAL_STATE?.imageHost] || IMG_HOST_ORDER.github;
+    const list = order.map(h => urls[h]).filter(Boolean)
+        .sort((a, b) => _imgFailed.has(a) - _imgFailed.has(b));   // 失敗過的排到最後（穩定排序）
+    list.forEach(u => { if (!_imgAlts.has(u)) _imgAlts.set(u, list); });
+    return list[0];
+};
+
+// 記下 url 載入失敗，回傳同一張圖的下一個網址（沒有備援或都失敗過時回傳 null）
+function nextImgUrl(url) {
+    const list = _imgAlts.get(url);
+    if (!list) return null;
+    _imgFailed.add(url);
+    return list.slice(list.indexOf(url) + 1).find(u => !_imgFailed.has(u)) || null;
+}
+
+// CSS 背景圖沒有載入失敗的事件：另外用 Image 載入同一個網址（和背景共用瀏覽器快取），失敗就換下一個
+function setBgImage(el, url) {
+    el.style.backgroundImage = url ? `url('${url}')` : '';
+    if (!url || !_imgAlts.has(url)) return;
+    const probe = new Image();
+    probe.onerror = () => {
+        const next = nextImgUrl(url);
+        if (next && el.style.backgroundImage.includes(url)) setBgImage(el, next);
+    };
+    probe.src = url;
+}
+
+// <img> 載入失敗時換下一個圖床（error 事件不會冒泡，所以在捕獲階段監聽整份文件）
+document.addEventListener('error', (e) => {
+    const el = e.target;
+    if (el?.tagName !== 'IMG') return;
+    const next = nextImgUrl(el.getAttribute('src'));
+    if (next) el.src = next;
+}, { capture: true, signal: _rpgLifetime.signal });
+
+// 任務、背包的背景（原本寫在 CSS，只有 imgchest）
+const UI_BG = {
+    '.quest-scaler .bg-layer': img('https://cdn.imgchest.com/files/493cacd4d6ee.png', '', 'ui/quest_bg.webp'),
+    '.bag-scaler .bg-layer':   img('https://cdn.imgchest.com/files/3909a3a272b6.png', '', 'ui/bag_bg.webp'),
+};
+Object.entries(UI_BG).forEach(([sel, url]) => document.querySelectorAll(sel).forEach(el => setBgImage(el, url)));
 
     // ==================================
     const DEBUG_MODE = false; // 整合時設為 false 以讀取真實變數
@@ -6709,21 +6830,21 @@ const _userName = (() => {
             id: "p1", name: _userName,
             dataA: "---", dataB: "冒险者", dataC: "---", 
             desc: "剑术无双，魔法烂光的强大冒险者。\n在第二次魔人战争中颇为活跃，却选择匿名处理。\n最近，似乎有在交谊活动中请求女性成为自己母亲的奇妙传闻……", 
-            img:     img("https://cdn.imgchest.com/files/7dcbb8b9ba87.png", "https://files.catbox.moe/sq441t.png"),
-            imgDiff: img("https://cdn.imgchest.com/files/7dcbb8b9ba87.png", "https://files.catbox.moe/sq441t.png"),
-            face:    img("https://cdn.imgchest.com/files/e82870b91d30.png", "https://files.catbox.moe/r1rgqt.png"),
-            bg:      img("https://cdn.imgchest.com/files/951e90c0a29f.png", "https://files.catbox.moe/fs53um.png"),
+            img:     img("https://cdn.imgchest.com/files/7dcbb8b9ba87.png", "https://files.catbox.moe/sq441t.png", "party/player/img.webp"),
+            imgDiff: img("https://cdn.imgchest.com/files/7dcbb8b9ba87.png", "https://files.catbox.moe/sq441t.png", "party/player/img.webp"),
+            face:    img("https://cdn.imgchest.com/files/e82870b91d30.png", "https://files.catbox.moe/r1rgqt.png", "party/player/face.webp"),
+            bg:      img("https://cdn.imgchest.com/files/951e90c0a29f.png", "https://files.catbox.moe/fs53um.png", "party/player/bg.webp"),
             sdImg: "",
         },
         { 
             id: "p2", name: "爱娜",
             race: "人类", birth: "4月13日", interest: "小动物、烹饪、家务", height: "144cm",
             desc: "以凡人之身在魔法造诣踏入神域的千年大魔女。 \n性格温婉慈爱，但生起气来有点可怕。", 
-            img:     img("https://cdn.imgchest.com/files/ffded04458b1.png", "https://files.catbox.moe/iurzeo.png"),
-            imgDiff: img("https://cdn.imgchest.com/files/c06deb7bcf87.png", "https://files.catbox.moe/r8opmo.png"),
-            face:    img("https://cdn.imgchest.com/files/d61e9fec63af.png", "https://files.catbox.moe/vzyxnm.png"),
-            bg:      img("https://cdn.imgchest.com/files/71183e63bb1d.png", "https://files.catbox.moe/ceb8db.png"),
-            sdImg:   img("https://cdn.imgchest.com/files/4a138a01617e.png", "https://files.catbox.moe/k2qqsy.png"),
+            img:     img("https://cdn.imgchest.com/files/ffded04458b1.png", "https://files.catbox.moe/iurzeo.png", "party/aina/img.webp"),
+            imgDiff: img("https://cdn.imgchest.com/files/c06deb7bcf87.png", "https://files.catbox.moe/r8opmo.png", "party/aina/imgDiff.webp"),
+            face:    img("https://cdn.imgchest.com/files/d61e9fec63af.png", "https://files.catbox.moe/vzyxnm.png", "party/aina/face.webp"),
+            bg:      img("https://cdn.imgchest.com/files/71183e63bb1d.png", "https://files.catbox.moe/ceb8db.png", "party/aina/bg.webp"),
+            sdImg:   img("https://cdn.imgchest.com/files/4a138a01617e.png", "https://files.catbox.moe/k2qqsy.png", "party/aina/sdImg.webp"),
             cgData: [
                 { unlocked: false, cover: "", images: [] },
                 { unlocked: false, cover: "", images: [] },
@@ -6736,81 +6857,81 @@ const _userName = (() => {
         { id: "p3", name: "黛芬妮",
           race: "人偶", birth: "2月19日", interest: "裁缝、戏剧", height: "138cm",
           desc: "过去被不知名的存在赋予生命与灵魂的人偶，与人类几无区分。 \n反应有些淡然，实则内心柔软。", 
-          img:     img("https://cdn.imgchest.com/files/7396e46c9622.png", "https://files.catbox.moe/qmoavv.png"),
-          imgDiff: img("https://cdn.imgchest.com/files/dbb4e18ee304.png", "https://files.catbox.moe/x5i2in.png"),
-          face:    img("https://cdn.imgchest.com/files/8f434206b743.png", "https://files.catbox.moe/vq0qxy.png"),
-          bg:      img("https://cdn.imgchest.com/files/f2c77f71b582.png", "https://files.catbox.moe/cncjcp.png"),
-          sdImg:   img("https://cdn.imgchest.com/files/ca5ce96a0344.png", "https://files.catbox.moe/zuut1k.png"),
+          img:     img("https://cdn.imgchest.com/files/7396e46c9622.png", "https://files.catbox.moe/qmoavv.png", "party/daphne/img.webp"),
+          imgDiff: img("https://cdn.imgchest.com/files/dbb4e18ee304.png", "https://files.catbox.moe/x5i2in.png", "party/daphne/imgDiff.webp"),
+          face:    img("https://cdn.imgchest.com/files/8f434206b743.png", "https://files.catbox.moe/vq0qxy.png", "party/daphne/face.webp"),
+          bg:      img("https://cdn.imgchest.com/files/f2c77f71b582.png", "https://files.catbox.moe/cncjcp.png", "party/daphne/bg.webp"),
+          sdImg:   img("https://cdn.imgchest.com/files/ca5ce96a0344.png", "https://files.catbox.moe/zuut1k.png", "party/daphne/sdImg.webp"),
           cgData: [ { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] } ]
         },
         { id: "p4", name: "穗",
           race: "仙人", birth: "12月16日", interest: "舞蹈、玩耍", height: "135cm",
           desc: "未知时代的信仰凝聚而成的仙灵，曾庇佑着土地与作物。 \n努力维持的威严下藏着纯粹的善与童真。", 
-          img:     img("https://cdn.imgchest.com/files/299c6a475806.png", "https://files.catbox.moe/dsyvgw.png"),
-          imgDiff: img("https://cdn.imgchest.com/files/9dce762303b8.png", "https://files.catbox.moe/3e81yd.png"),
-          face:    img("https://cdn.imgchest.com/files/a4502b0964b6.png", "https://files.catbox.moe/7g8y1e.png"),
-          bg:      img("https://cdn.imgchest.com/files/2c53549a79f9.png", "https://files.catbox.moe/d0bpe8.png"),
-          sdImg:   img("https://cdn.imgchest.com/files/c8a84a967a69.png", "https://files.catbox.moe/vz9bd5.png"),
+          img:     img("https://cdn.imgchest.com/files/299c6a475806.png", "https://files.catbox.moe/dsyvgw.png", "party/sui/img.webp"),
+          imgDiff: img("https://cdn.imgchest.com/files/9dce762303b8.png", "https://files.catbox.moe/3e81yd.png", "party/sui/imgDiff.webp"),
+          face:    img("https://cdn.imgchest.com/files/a4502b0964b6.png", "https://files.catbox.moe/7g8y1e.png", "party/sui/face.webp"),
+          bg:      img("https://cdn.imgchest.com/files/2c53549a79f9.png", "https://files.catbox.moe/d0bpe8.png", "party/sui/bg.webp"),
+          sdImg:   img("https://cdn.imgchest.com/files/c8a84a967a69.png", "https://files.catbox.moe/vz9bd5.png", "party/sui/sdImg.webp"),
           cgData: [ { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] } ]
         },
         { id: "p5", name: "芙蕾嘉",
           race: "精灵", birth: "9月29日", interest: "园艺、踏青", height: "141cm",
           desc: "拉比林斯本土的第一代精灵之一，照看了生命之树数百年。 \n柔弱随和，却又意外有着刚毅的一面。", 
-          img:     img("https://cdn.imgchest.com/files/44a7eab2e247.png", "https://files.catbox.moe/bw1nro.png"),
-          imgDiff: img("https://cdn.imgchest.com/files/0e430d798aaa.png", "https://files.catbox.moe/3zujkf.png"),
-          face:    img("https://cdn.imgchest.com/files/eddda37d3dc3.png", "https://files.catbox.moe/5j2ma4.png"),
-          bg:      img("https://cdn.imgchest.com/files/f048e83095df.png", "https://files.catbox.moe/8mrnsl.png"),
-          sdImg:   img("https://cdn.imgchest.com/files/973c56e2f7af.png", "https://files.catbox.moe/485jkh.png"),
+          img:     img("https://cdn.imgchest.com/files/44a7eab2e247.png", "https://files.catbox.moe/bw1nro.png", "party/freya/img.webp"),
+          imgDiff: img("https://cdn.imgchest.com/files/0e430d798aaa.png", "https://files.catbox.moe/3zujkf.png", "party/freya/imgDiff.webp"),
+          face:    img("https://cdn.imgchest.com/files/eddda37d3dc3.png", "https://files.catbox.moe/5j2ma4.png", "party/freya/face.webp"),
+          bg:      img("https://cdn.imgchest.com/files/f048e83095df.png", "https://files.catbox.moe/8mrnsl.png", "party/freya/bg.webp"),
+          sdImg:   img("https://cdn.imgchest.com/files/973c56e2f7af.png", "https://files.catbox.moe/485jkh.png", "party/freya/sdImg.webp"),
           cgData: [ { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] } ]
         },
         { id: "p6", name: "琳",
           race: "真祖", birth: "6月14日", interest: "时尚、夜游", height: "141cm",
           desc: "星球的宠儿，任性不羁的代名词。 \n生来慧而忠于欲望，但难以招架感情的直球攻势。", 
-          img:     img("https://cdn.imgchest.com/files/9cd9c13142a8.png", "https://files.catbox.moe/8neyi0.png"),
-          imgDiff: img("https://cdn.imgchest.com/files/4abdf3e590fa.png", "https://files.catbox.moe/xjm5ob.png"),
-          face:    img("https://cdn.imgchest.com/files/d52523fdb6a3.png", "https://files.catbox.moe/yomixt.png"),
-          bg:      img("https://cdn.imgchest.com/files/3a52940c19f7.png", "https://files.catbox.moe/0kuuuf.png"),
-          sdImg:   img("https://cdn.imgchest.com/files/30a480088b23.png", "https://files.catbox.moe/civeuq.png"),
+          img:     img("https://cdn.imgchest.com/files/9cd9c13142a8.png", "https://files.catbox.moe/8neyi0.png", "party/lin/img.webp"),
+          imgDiff: img("https://cdn.imgchest.com/files/4abdf3e590fa.png", "https://files.catbox.moe/xjm5ob.png", "party/lin/imgDiff.webp"),
+          face:    img("https://cdn.imgchest.com/files/d52523fdb6a3.png", "https://files.catbox.moe/yomixt.png", "party/lin/face.webp"),
+          bg:      img("https://cdn.imgchest.com/files/3a52940c19f7.png", "https://files.catbox.moe/0kuuuf.png", "party/lin/bg.webp"),
+          sdImg:   img("https://cdn.imgchest.com/files/30a480088b23.png", "https://files.catbox.moe/civeuq.png", "party/lin/sdImg.webp"),
           cgData: [ { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] } ]
         },
         { id: "p7", name: "米拉露恩",
           race: "古龙", birth: "8月7日", interest: "阅读、写作、摸魚", height: "140cm",
           desc: "喜好与其他同族格格不入的强大古龙。\n天性慵懒、我行我素，但对自己感兴趣的事物十分上心。", 
-          img:     img("https://cdn.imgchest.com/files/3f5735d532e0.png", "https://files.catbox.moe/oyp53t.png"),
-          imgDiff: img("https://cdn.imgchest.com/files/8a2e53ef12a0.png", "https://files.catbox.moe/anlwu3.png"),
-          face:    img("https://cdn.imgchest.com/files/be06c02284ff.png", "https://files.catbox.moe/57m9l7.png"),
-          bg:      img("https://cdn.imgchest.com/files/e3deddba5945.png", "https://files.catbox.moe/f12i1j.png"),
-          sdImg:   img("https://cdn.imgchest.com/files/c0c61c8c8475.png", "https://files.catbox.moe/zavdit.png"),
+          img:     img("https://cdn.imgchest.com/files/3f5735d532e0.png", "https://files.catbox.moe/oyp53t.png", "party/miralune/img.webp"),
+          imgDiff: img("https://cdn.imgchest.com/files/8a2e53ef12a0.png", "https://files.catbox.moe/anlwu3.png", "party/miralune/imgDiff.webp"),
+          face:    img("https://cdn.imgchest.com/files/be06c02284ff.png", "https://files.catbox.moe/57m9l7.png", "party/miralune/face.webp"),
+          bg:      img("https://cdn.imgchest.com/files/e3deddba5945.png", "https://files.catbox.moe/f12i1j.png", "party/miralune/bg.webp"),
+          sdImg:   img("https://cdn.imgchest.com/files/c0c61c8c8475.png", "https://files.catbox.moe/zavdit.png", "party/miralune/sdImg.webp"),
           cgData: [ { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] } ]
         },
         { id: "p8", name: "璐法",
           race: "人类", birth: "9月12日", interest: "恋爱故事、慈善活动", height: "142cm",
           desc: `圣教国的现任圣女，年纪比${_userName}略小。\n散发着柔软治愈的气场，但恋爱中的少女亦有其刚强之处。`, 
-          img:     img("https://cdn.imgchest.com/files/65aa8ceb2b4f.png", "https://files.catbox.moe/x0iioz.png"),
-          imgDiff: img("https://cdn.imgchest.com/files/54516f85fd90.png", "https://files.catbox.moe/cnh0pd.png"),
-          face:    img("https://cdn.imgchest.com/files/69fb07af45a3.png", "https://files.catbox.moe/3bupkt.png"),
-          bg:      img("https://cdn.imgchest.com/files/ef0916e7f9cf.png", "https://files.catbox.moe/xj13hg.png"),
-          sdImg:   img("https://cdn.imgchest.com/files/c4dee393ba2d.png", "https://files.catbox.moe/9sgl35.png"),
+          img:     img("https://cdn.imgchest.com/files/65aa8ceb2b4f.png", "https://files.catbox.moe/x0iioz.png", "party/lufa/img.webp"),
+          imgDiff: img("https://cdn.imgchest.com/files/54516f85fd90.png", "https://files.catbox.moe/cnh0pd.png", "party/lufa/imgDiff.webp"),
+          face:    img("https://cdn.imgchest.com/files/69fb07af45a3.png", "https://files.catbox.moe/3bupkt.png", "party/lufa/face.webp"),
+          bg:      img("https://cdn.imgchest.com/files/ef0916e7f9cf.png", "https://files.catbox.moe/xj13hg.png", "party/lufa/bg.webp"),
+          sdImg:   img("https://cdn.imgchest.com/files/c4dee393ba2d.png", "https://files.catbox.moe/9sgl35.png", "party/lufa/sdImg.webp"),
           cgData: [ { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] } ]
         },
         { id: "p9", name: "莉迪娅",
           race: "人类", birth: "5月8日", interest: "恋爱故事、幻想、运动", height: "146cm",
           desc: `艾赫罗曼帝国的独生皇女，年纪比${_userName}略小。\n自信却不傲慢，只不过有些别扭闷骚。`, 
-          img:     img("https://cdn.imgchest.com/files/fa9164f2fb93.png", "https://files.catbox.moe/nh3jl8.png"),
-          imgDiff: img("https://cdn.imgchest.com/files/69eb4beaee92.png", "https://files.catbox.moe/un6ib2.png"),
-          face:    img("https://cdn.imgchest.com/files/b8834c569bc4.png", "https://files.catbox.moe/vn5nok.png"),
-          bg:      img("https://cdn.imgchest.com/files/717c305ab5d3.png", "https://files.catbox.moe/ca70l8.png"),
-          sdImg:   img("https://cdn.imgchest.com/files/62c350200304.png", "https://files.catbox.moe/qw2n11.png"),
+          img:     img("https://cdn.imgchest.com/files/fa9164f2fb93.png", "https://files.catbox.moe/nh3jl8.png", "party/lydia/img.webp"),
+          imgDiff: img("https://cdn.imgchest.com/files/69eb4beaee92.png", "https://files.catbox.moe/un6ib2.png", "party/lydia/imgDiff.webp"),
+          face:    img("https://cdn.imgchest.com/files/b8834c569bc4.png", "https://files.catbox.moe/vn5nok.png", "party/lydia/face.webp"),
+          bg:      img("https://cdn.imgchest.com/files/717c305ab5d3.png", "https://files.catbox.moe/ca70l8.png", "party/lydia/bg.webp"),
+          sdImg:   img("https://cdn.imgchest.com/files/62c350200304.png", "https://files.catbox.moe/qw2n11.png", "party/lydia/sdImg.webp"),
           cgData: [ { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] } ]
         },
         { id: "p10", name: "奈芙蒂",
           race: "魔族", birth: "11月24日", interest: "家人、探索世界", height: "136cm",
           desc: "自拉比林斯权限诞生的强大生命，千年来不断压制着自身。\n天真无邪、外向活泼，难以与「魔王」二字联想在一起的烂漫少女。", 
-          img:     img("https://cdn.imgchest.com/files/d0d789082cd8.png", "https://files.catbox.moe/0cqdjy.png"),
-          imgDiff: img("https://cdn.imgchest.com/files/28dfa5b42364.png", "https://files.catbox.moe/6jxhrj.png"),
-          face:    img("https://cdn.imgchest.com/files/7de9ef0ca4df.png", "https://files.catbox.moe/b0x36j.png"),
-          bg:      img("https://cdn.imgchest.com/files/1f3e3f91e74a.png", "https://files.catbox.moe/5wk4kj.png"),
-          sdImg:   img("https://cdn.imgchest.com/files/b2af14057a7b.png", "https://files.catbox.moe/8t6uw9.png"),
+          img:     img("https://cdn.imgchest.com/files/d0d789082cd8.png", "https://files.catbox.moe/0cqdjy.png", "party/nefti/img.webp"),
+          imgDiff: img("https://cdn.imgchest.com/files/28dfa5b42364.png", "https://files.catbox.moe/6jxhrj.png", "party/nefti/imgDiff.webp"),
+          face:    img("https://cdn.imgchest.com/files/7de9ef0ca4df.png", "https://files.catbox.moe/b0x36j.png", "party/nefti/face.webp"),
+          bg:      img("https://cdn.imgchest.com/files/1f3e3f91e74a.png", "https://files.catbox.moe/5wk4kj.png", "party/nefti/bg.webp"),
+          sdImg:   img("https://cdn.imgchest.com/files/b2af14057a7b.png", "https://files.catbox.moe/8t6uw9.png", "party/nefti/sdImg.webp"),
           cgData: [ { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] }, { unlocked: false, cover: "", images: [] } ]
         }
     ];
@@ -7203,7 +7324,7 @@ async function renderCurrentMemberGallery() {
         const zones = [
             { id: 'zone-B', label: '个人页', start: 90, end: 180,
               action: () => { const id = mmCurrentCharId; closeMiniModal(); jumpToStatusChar(id); } },
-            { id: 'zone-C', label: '邀请约会', start: 180, end: 270,
+            { id: 'zone-C', label: '邀请亲密', start: 180, end: 270,
               action: () => { const n = charName(); closeMiniModal(); window.openCharActionDialog('date', n); } },
             { id: 'zone-D', label: '自由互动', start: 270, end: 360,
               action: () => { const n = charName(); closeMiniModal(); window.openCharActionDialog('free', n); } },
@@ -7494,7 +7615,7 @@ const data = activePartyData.find(p => p.id === id);
 if (data) {
     currentStatusCharacterData = data;
     if (els.charName) els.charName.innerText = data.name;
-    if (els.dynamicBg) els.dynamicBg.style.backgroundImage = `url('${data.bg}')`;
+    if (els.dynamicBg) setBgImage(els.dynamicBg, data.bg);
     
     // big-tachie, tabs-player, tabs-member 也可以直接用 els.bigTachie, els.tabsPlayer, els.tabsMember
     const tachie = els.bigTachie; 
@@ -8388,7 +8509,7 @@ if (typeof window.setLayout === 'function') {
     window.setLayout(_gs.layout || 'auto');
 }
 
-    let IMAGE_HOST = topWindow.RPG_GLOBAL_STATE?.imageHost || 'imgchest';
+    let IMAGE_HOST = topWindow.RPG_GLOBAL_STATE?.imageHost || 'github';
 
 
     // ============================================================
@@ -8780,30 +8901,30 @@ if (typeof window.setLayout === 'function') {
     // --- 所有家中地點 ---
     const HOME_LOCATIONS = {
         // 一樓
-        "前庭":     { floor: 1, bg: img("https://cdn.imgchest.com/files/7948fc96eb32.png", "https://files.catbox.moe/pfodmt.png") },
-        "客厅":     { floor: 1, bg: img("https://cdn.imgchest.com/files/b981b868431f.png", "https://files.catbox.moe/r49fu0.png") },
-        "浴室":     { floor: 1, bg: img("https://cdn.imgchest.com/files/191c6765c90c.png", "https://files.catbox.moe/5m7xnj.png") },
-        "后院":     { floor: 1, bg: img("https://cdn.imgchest.com/files/f14b347574ac.png", "https://files.catbox.moe/m5qg3m.png") },
-        "厨房饭厅": { floor: 1, bg: img("https://cdn.imgchest.com/files/8aaece52ea23.png", "https://files.catbox.moe/q8nowg.png") },
+        "前庭":     { floor: 1, bg: img("https://cdn.imgchest.com/files/7948fc96eb32.png", "https://files.catbox.moe/pfodmt.png", "home/frontyard.webp") },
+        "客厅":     { floor: 1, bg: img("https://cdn.imgchest.com/files/b981b868431f.png", "https://files.catbox.moe/r49fu0.png", "home/living.webp") },
+        "浴室":     { floor: 1, bg: img("https://cdn.imgchest.com/files/191c6765c90c.png", "https://files.catbox.moe/5m7xnj.png", "home/bath.webp") },
+        "后院":     { floor: 1, bg: img("https://cdn.imgchest.com/files/f14b347574ac.png", "https://files.catbox.moe/m5qg3m.png", "home/backyard.webp") },
+        "厨房饭厅": { floor: 1, bg: img("https://cdn.imgchest.com/files/8aaece52ea23.png", "https://files.catbox.moe/q8nowg.png", "home/kitchen.webp") },
         // 二樓：交誼廳（樓梯所在，連接一、三樓與個人房間；hub 不列入個人房間選單）
-        "交谊厅":   { floor: 2, bg: img("https://cdn.imgchest.com/files/237a0e5a8f11.webp", "https://files.catbox.moe/xlx64b.webp"), hub: true },
+        "交谊厅":   { floor: 2, bg: img("https://cdn.imgchest.com/files/237a0e5a8f11.webp", "https://files.catbox.moe/xlx64b.webp", "home/lounge.webp"), hub: true },
         // 二樓：個人房間
-        "玩家房间":       { floor: 2, bg: img("https://cdn.imgchest.com/files/3231b5f1cbc9.png", "https://files.catbox.moe/469iaz.png"), isRoom: true },
-        "爱娜的房间":     { floor: 2, bg: img("https://cdn.imgchest.com/files/93d8844b69ea.png", "https://files.catbox.moe/w3kanx.png"), isRoom: true, owner: "爱娜" },
-        "琳的房间":       { floor: 2, bg: img("https://cdn.imgchest.com/files/2d6fdb39d45c.png", "https://files.catbox.moe/pchvit.png"), isRoom: true, owner: "琳" },
-        "米拉露恩的房间": { floor: 2, bg: img("https://cdn.imgchest.com/files/99af29c1cf12.png", "https://files.catbox.moe/7ys9aw.png"), isRoom: true, owner: "米拉露恩" },
-        "黛芬妮的房间":   { floor: 2, bg: img("https://cdn.imgchest.com/files/eef15bb4db4e.png", "https://files.catbox.moe/kh115n.png"), isRoom: true, owner: "黛芬妮" },
-        "芙蕾嘉的房间":   { floor: 2, bg: img("https://cdn.imgchest.com/files/46369d601916.png", "https://files.catbox.moe/oqih12.png"), isRoom: true, owner: "芙蕾嘉" },
-        "穗的房间":       { floor: 2, bg: img("https://cdn.imgchest.com/files/741cdf0ee695.png", "https://files.catbox.moe/dsp0c7.png"), isRoom: true, owner: "穗" },
-        "莉迪娅的房间":   { floor: 2, bg: img("https://cdn.imgchest.com/files/e048f240a63c.png", "https://files.catbox.moe/xx5btj.png"), isRoom: true, owner: "莉迪娅" },
-        "璐法的房间":     { floor: 2, bg: img("https://cdn.imgchest.com/files/2e3d707bd09b.png", "https://files.catbox.moe/sxn4hr.png"), isRoom: true, owner: "璐法" },
-        "奈芙蒂的房间":   { floor: 2, bg: img("https://cdn.imgchest.com/files/fd2b98ad6897.png", "https://files.catbox.moe/9uiluq.png"), isRoom: true, owner: "奈芙蒂" },
+        "玩家房间":       { floor: 2, bg: img("https://cdn.imgchest.com/files/3231b5f1cbc9.png", "https://files.catbox.moe/469iaz.png", "home/player.webp"), isRoom: true },
+        "爱娜的房间":     { floor: 2, bg: img("https://cdn.imgchest.com/files/93d8844b69ea.png", "https://files.catbox.moe/w3kanx.png", "home/aina.webp"), isRoom: true, owner: "爱娜" },
+        "琳的房间":       { floor: 2, bg: img("https://cdn.imgchest.com/files/2d6fdb39d45c.png", "https://files.catbox.moe/pchvit.png", "home/lin.webp"), isRoom: true, owner: "琳" },
+        "米拉露恩的房间": { floor: 2, bg: img("https://cdn.imgchest.com/files/99af29c1cf12.png", "https://files.catbox.moe/7ys9aw.png", "home/miralune.webp"), isRoom: true, owner: "米拉露恩" },
+        "黛芬妮的房间":   { floor: 2, bg: img("https://cdn.imgchest.com/files/eef15bb4db4e.png", "https://files.catbox.moe/kh115n.png", "home/daphne.webp"), isRoom: true, owner: "黛芬妮" },
+        "芙蕾嘉的房间":   { floor: 2, bg: img("https://cdn.imgchest.com/files/46369d601916.png", "https://files.catbox.moe/oqih12.png", "home/freya.webp"), isRoom: true, owner: "芙蕾嘉" },
+        "穗的房间":       { floor: 2, bg: img("https://cdn.imgchest.com/files/741cdf0ee695.png", "https://files.catbox.moe/dsp0c7.png", "home/sui.webp"), isRoom: true, owner: "穗" },
+        "莉迪娅的房间":   { floor: 2, bg: img("https://cdn.imgchest.com/files/e048f240a63c.png", "https://files.catbox.moe/xx5btj.png", "home/lydia.webp"), isRoom: true, owner: "莉迪娅" },
+        "璐法的房间":     { floor: 2, bg: img("https://cdn.imgchest.com/files/2e3d707bd09b.png", "https://files.catbox.moe/sxn4hr.png", "home/lufa.webp"), isRoom: true, owner: "璐法" },
+        "奈芙蒂的房间":   { floor: 2, bg: img("https://cdn.imgchest.com/files/fd2b98ad6897.png", "https://files.catbox.moe/9uiluq.png", "home/nefti.webp"), isRoom: true, owner: "奈芙蒂" },
         // 三樓
-        "书房":     { floor: 3, bg: img("https://cdn.imgchest.com/files/f27e128af7dd.png", "https://files.catbox.moe/g4sbn1.png") },
-        "工房":     { floor: 3, bg: img("https://cdn.imgchest.com/files/c45cf57a4202.png", "https://files.catbox.moe/6phrtw.png") },
+        "书房":     { floor: 3, bg: img("https://cdn.imgchest.com/files/f27e128af7dd.png", "https://files.catbox.moe/g4sbn1.png", "home/study.webp") },
+        "工房":     { floor: 3, bg: img("https://cdn.imgchest.com/files/c45cf57a4202.png", "https://files.catbox.moe/6phrtw.png", "home/workshop.webp") },
         // 地下
-        "锻炼场":   { floor: -1, bg: img("https://cdn.imgchest.com/files/09cbc6709bc9.png", "https://files.catbox.moe/r3l3k2.png") },
-        "储物间":   { floor: -1, bg: img("https://cdn.imgchest.com/files/0776bbbd24d8.png", "https://files.catbox.moe/8ddcnj.png") },
+        "锻炼场":   { floor: -1, bg: img("https://cdn.imgchest.com/files/09cbc6709bc9.png", "https://files.catbox.moe/r3l3k2.png", "home/training.webp") },
+        "储物间":   { floor: -1, bg: img("https://cdn.imgchest.com/files/0776bbbd24d8.png", "https://files.catbox.moe/8ddcnj.png", "home/storage.webp") },
     };
 
     // --- 舊地點名稱對照：前端曾用「工坊」「训练场」，MVU 變量結構與世界書用「工房」「锻炼场」---
@@ -8812,11 +8933,12 @@ if (typeof window.setLayout === 'function') {
     // --- 導航鄰接圖：鍵為方向 CSS class 的後綴，值為目標地點 ---
     // 虛擬節點 "二楼"/"地下室" 會觸發選單而非直接進入
     const HOME_ADJACENCY = {
-        "前庭":     { up: "客厅" },
+        // 前庭 ↔ 后院：從房子側面直通
+        "前庭":     { up: "客厅", right: "后院" },
         "客厅":     { down: "前庭", left: "厨房饭厅", right: "浴室", up: "交谊厅", "up-right": "后院", "down-right": "地下室" },
         "厨房饭厅": { right: "客厅" },
         "浴室":     { left: "客厅" },
-        "后院":     { down: "客厅" },
+        "后院":     { down: "客厅", right: "前庭" },
         // 二樓交誼廳：↓客廳、↑書房／工房、→個人房間選單
         "交谊厅":   { down: "客厅", up: "书房", "up-right": "工房", right: "二楼" },
         // 二樓房間：↓回交誼廳、→換房（重開二樓選單）
@@ -9713,18 +9835,18 @@ function preloadBackgroundImage(url) {
         if (signal.aborted || __PRELOAD_DONE.has(url)) { resolve(); return; }
         const image = new Image();
         let timeout = null;
-        const finish = (loaded) => {
+        const finish = (loaded, next = null) => {
             clearTimeout(timeout);
             signal.removeEventListener('abort', cancel);
             image.onload = image.onerror = null;
             if (loaded) __PRELOAD_DONE.add(url);
             else image.removeAttribute('src');
-            resolve();
+            resolve(next ? preloadBackgroundImage(next) : undefined);   // 載入失敗：改預載下一個圖床
         };
         const cancel = () => finish(false);
         signal.addEventListener('abort', cancel, { once: true });
         image.onload = () => finish(true);
-        image.onerror = () => finish(false);
+        image.onerror = () => finish(false, nextImgUrl(url));
         image.fetchPriority = 'low';
         image.decoding = 'async';
         timeout = setTimeout(() => finish(false), 15000);
@@ -9848,7 +9970,7 @@ function scheduleBackgroundPreload(currentPartyIds = []) {
     previewArea.innerHTML = '';
     const url = mapAssets[region];
     if (url) {
-        previewArea.style.backgroundImage = `url('${url}')`;
+        setBgImage(previewArea, url);
     } else {
         previewArea.style.backgroundImage = '';
     }
@@ -10185,15 +10307,16 @@ previewArea.appendChild(dot);
         openHomeRoomMenu(title, entries);
     }
 
-    // === 自由互动／邀请约会的輸入視窗（家園的立繪面板與 Q 版人物狀態介面共用）===
+    // === 自由互动／邀请亲密的輸入視窗（家園的立繪面板與 Q 版人物狀態介面共用）===
     // 玩家輸入具體內容後直接送出（和小遊戲戰勝後相同，用 sendMsgViaDOM 觸發 AI 回覆）。
     // 視窗置中在整個 .rpg-v7-root 的可見範圍（地圖區域太小）。
-    // 【佔位】送出的提示詞格式待定，之後只改 CHAR_ACTION_PROMPTS。
+    // 送出的訊息開頭【自由互动】／【邀请亲密】是綠燈 lorebook 的關鍵詞（觸發劇情指導）；
+    // 酒館正則在之後的樓層刪除這個標記，留下「对象：…；内容：…」。改格式時要一起改 lorebook 與正則。
     const CHAR_ACTION_PROMPTS = {
         free: { title: '自由互动', placeholder: name => `想和${name}做什么？`,
-                build: (name, text) => `【自由互动】${name}：${text}` },
-        date: { title: '邀请约会', placeholder: name => `想约${name}去哪里、做什么？`,
-                build: (name, text) => `【邀请约会】${name}：${text}` },
+                build: (name, text) => `【自由互动】对象：${name}；内容：${text}` },
+        date: { title: '邀请亲密', placeholder: name => `想约${name}做些什么色色的事？`,
+                build: (name, text) => `【邀请亲密】对象：${name}；内容：${text}` },
     };
 
     // 容器在畫面上看得到的範圍的中心（容器內的 y）：iframe 隨聊天捲動，容器可能比畫面高
@@ -10288,7 +10411,7 @@ previewArea.appendChild(dot);
         const inParty = isCharInParty(name);
         const actions = [
             ['自由互动', () => { closeHomeCharPanel(true); window.openCharActionDialog('free', name); }],
-            ['邀请约会', () => { closeHomeCharPanel(true); window.openCharActionDialog('date', name); }],
+            ['邀请亲密', () => { closeHomeCharPanel(true); window.openCharActionDialog('date', name); }],
             [inParty ? '取消同行' : '邀请同行', () => { closeHomeCharPanel(true); togglePartyState(name, inParty); }],
         ];
         for (const [label, fn] of actions) {
@@ -10330,6 +10453,7 @@ previewArea.appendChild(dot);
     const PIXEL_HOME_LOCATIONS = new Set([
         '客厅', '浴室', '厨房饭厅', '交谊厅', '玩家房间', '爱娜的房间', '琳的房间', '米拉露恩的房间', '黛芬妮的房间',
         '芙蕾嘉的房间', '穗的房间', '莉迪娅的房间', '璐法的房间', '奈芙蒂的房间',
+        '书房', '工房', '储物间', '锻炼场', '前庭', '后院',
     ]);
     // 像素開關存在聊天變數，開啟角色卡時要等 /getvar 讀回來。上次的開關狀態另外存在瀏覽器，
     // 只用來決定讀到開關之前要不要先顯示讀取畫面（實際開關仍以聊天變數為準）
@@ -10358,14 +10482,22 @@ previewArea.appendChild(dot);
             }
             loader.classList.remove('done');
             els.mapArea.classList.add('pixel-home-loading');
+            syncPixelHomeTopbar();
             pixelHomeLoaderTimer = setTimeout(() => setPixelHomeLoading(false), PIXEL_HOME_LOADER_TIMEOUT);
         } else {
             els.mapArea.classList.remove('pixel-home-loading');
+            syncPixelHomeTopbar();
             if (loader && !loader.classList.contains('done')) {
                 loader.classList.add('done');
                 setTimeout(() => loader.remove(), 300);
             }
         }
+    }
+    // 電腦版在像素場景（含讀取中）時改用頂欄的日期，見 CSS「像素家園（含讀取中）」
+    function syncPixelHomeTopbar() {
+        const cl = els.mapArea.classList;
+        els.mapArea.closest('.rpg-v7-root')?.classList.toggle('pixel-home-on',
+            cl.contains('pixel-home-active') || cl.contains('pixel-home-loading'));
     }
     // 這次同步會不會顯示像素場景（開關還沒讀到時用上次的狀態推測）
     function expectPixelHome(location) {
@@ -10393,6 +10525,7 @@ previewArea.appendChild(dot);
         }
         if (seq !== pixelHomeSeq) return;
         els.mapArea.classList.toggle('pixel-home-active', ok);
+        syncPixelHomeTopbar();
         if (!ok) closeHomeCharPanel(false);
         // 開關還沒讀到（推測會顯示像素場景）時保留讀取畫面，讀到開關後會再呼叫一次
         if (ok || pixelHomePrefReady || !expectPixelHome(location)) setPixelHomeLoading(false);
@@ -10403,6 +10536,7 @@ previewArea.appendChild(dot);
         if (!els.mapArea) return;
         if (window.PixelHome) window.PixelHome.clear(els.mapArea);
         els.mapArea.classList.remove('pixel-home-active');
+        syncPixelHomeTopbar();
         setPixelHomeLoading(false);
         closeHomeCharPanel(false);
     }
@@ -10576,8 +10710,10 @@ previewArea.appendChild(dot);
                     const inParty = partyValue === '是' || partyValue === 'True' || partyValue === 'true';
                     if (!inParty) return;
                     if (releaseParty) {
-                        // 同批次解除同行後，角色留在原位置，不跟隨首次移動。
+                        // 同批次解除同行，並讓角色進入客廳（不跟隨首次移動的目標）。
                         _.set(variables, 'stat_data.' + base + '.在队状态', '否');
+                        _.set(variables, 'stat_data.' + base + '.家中位置', '客厅');
+                        _.set(variables, 'stat_data.' + base + '.停留轮数', 0);
                     } else if ((parseInt(read(base + '.状态')) || 0) >= 3) {
                         _.set(variables, 'stat_data.' + base + '.家中位置', target);
                         _.set(variables, 'stat_data.' + base + '.停留轮数', 0);
@@ -11224,7 +11360,7 @@ heroineList.forEach((id, i) => {
             if (els.hudBg) {
                 const bgUrl = hudAssets[hudStyleVar] || hudAssets[defaultHudStyle];
                 if (els.hudBg.dataset.currentBg !== bgUrl) {
-                    els.hudBg.style.backgroundImage = `url('${bgUrl}')`;
+                    setBgImage(els.hudBg, bgUrl);
                     els.hudBg.dataset.currentBg = bgUrl;
                 }
             }
@@ -11234,7 +11370,7 @@ heroineList.forEach((id, i) => {
                 const homeLocation = getPlayerHomeLocation();
                 const homeBgUrl = HOME_LOCATIONS[homeLocation]?.bg || 'placeholder_frontyard.png';
                 if (els.mapArea.dataset.currentMapUrl !== homeBgUrl) {
-                    els.mapArea.style.backgroundImage = `url('${homeBgUrl}')`;
+                    setBgImage(els.mapArea, homeBgUrl);
                     els.mapArea.dataset.currentMapUrl = homeBgUrl;
                 }
                 // 清除常規地圖元素
@@ -11248,8 +11384,12 @@ heroineList.forEach((id, i) => {
                 if (url && els.mapArea && els.mapArea.dataset.currentMapUrl !== url) {
                     const preloader = new Image();
                     preloader.onload = () => {
-                        els.mapArea.style.backgroundImage = `url('${url}')`;
+                        els.mapArea.style.backgroundImage = `url('${preloader.src}')`;
                         els.mapArea.dataset.currentMapUrl = url;  
+                    };
+                    preloader.onerror = () => {
+                        const next = nextImgUrl(preloader.getAttribute('src'));
+                        if (next) preloader.src = next;
                     };
                     preloader.src = url;
                     state.lastRegion = region;
@@ -11828,7 +11968,7 @@ if (topWindow.RPG_AUDIO_STATE) {
         topWindow.RPG_GLOBAL_STATE = {
             isMuted: true,
             theme: 'dark',
-            imageHost: 'imgchest',
+            imageHost: 'github',
             layout: 'auto'
         };
     }
@@ -12368,6 +12508,7 @@ await syncGameState();
         if (tbStrip) {
             tbStrip.onclick = (e) => {
                 e.stopPropagation();
+                if (!root.classList.contains('mobile-layout')) return;   // 電腦版的像素家園只顯示日期
                 if (root.classList.contains('topbar-sheet-open')) tbCollapse();
                 else tbExpand('status');
             };
@@ -12565,7 +12706,7 @@ if (displayMenuBtn) {
         document.getElementById('layout-mobile-btn')?.classList.toggle('active', currentLayout === 'mobile');
 
         // 同步圖床（從 RPG_GLOBAL_STATE 讀，不是從固定預設）
-        const currentHost = topWindow.RPG_GLOBAL_STATE?.imageHost || 'catbox';
+        const currentHost = topWindow.RPG_GLOBAL_STATE?.imageHost || 'github';
         document.querySelectorAll('.display-host-item').forEach(el => {
             const isActive = el.id === `host-${currentHost}`;
             el.classList.toggle('active', isActive);
