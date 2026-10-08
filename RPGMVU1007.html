@@ -1976,6 +1976,18 @@
     }
     .mm-zone-group.enabled:active .mm-visual-arc { fill: rgba(255, 255, 255, 0.55); }
 
+    /* 鎖定（邀请亲密需要好感度）：變淡、沒有 hover／按下效果；點了只顯示提示 */
+    .mm-zone-group.locked { cursor: not-allowed; }
+    .mm-zone-group.locked .mm-visual-arc,
+    .mm-zone-group.locked .mm-zone-label,
+    .mm-zone-group.locked .mm-zone-icon { opacity: 0.35; }
+    .mm-zone-group.enabled.locked:hover .mm-visual-arc,
+    .mm-zone-group.enabled.locked:active .mm-visual-arc {
+        fill: rgba(255, 250, 240, 0.2); stroke: rgba(240, 230, 210, 0.55); stroke-width: 0.8; filter: none;
+    }
+    .mm-zone-group.enabled.locked:hover .mm-zone-label { fill: #d0c8b6; }
+    .mm-zone-group.enabled.locked:hover .mm-zone-icon { fill: #f0e6d2; }
+
     /* 好感度圓環 */
     .mm-ring-group { pointer-events: none; }
     .mm-ring-bg { fill: none; stroke: var(--mm-ring-bg); stroke-width: 6; }
@@ -2818,6 +2830,36 @@
 .char-action-buttons { display: flex; justify-content: flex-end; gap: 10px; margin-top: 8px; }
 .rpg-v7-root .char-action-buttons .home-char-btn { min-width: 96px; padding: 8px 16px; font-size: 15px; text-align: center; }
 .rpg-v7-root .char-action-buttons .home-char-btn.primary { border-color: #ffaa00; color: #ffcc66; }
+/* 鎖定的按鈕（邀请亲密需要好感度）：灰掉、沒有 hover 效果；點了只顯示提示 */
+.home-char-btn.locked,
+.home-char-btn.locked:hover {
+    opacity: 0.45;
+    cursor: not-allowed;
+    background: rgba(138, 115, 75, 0.12);
+    border-color: rgba(138, 115, 75, 0.5);
+    color: #d0c8b6;
+}
+/* 短暫提示：置中在 .rpg-v7-root 的可見範圍，不擋點擊 */
+.char-action-toast {
+    position: absolute;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 700;
+    max-width: calc(100% - 32px);
+    box-sizing: border-box;
+    padding: 10px 18px;
+    background: rgba(21, 17, 15, 0.95);
+    border: 1px solid #8a734b;
+    border-top: 2px solid #ffaa00;
+    border-radius: 6px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.7);
+    color: #ffcc66;
+    font-size: 15px;
+    text-align: center;
+    font-family: "Noto Serif SC", "Noto Serif TC", serif;
+    pointer-events: none;
+    animation: homeOverlayFadeIn 0.2s ease;
+}
 
 /* --- 當前位置標籤 --- */
 .home-location-label {
@@ -2847,6 +2889,42 @@
 .home-location-label.fade-in {
     animation: homeLabelFadeIn 0.4s ease forwards;
 }
+
+/* --- 人數超限：名牌輪播「人数超限」「点我切换」，可以點開被隱藏角色的清單 --- */
+.home-location-label > span { display: inline-block; transition: opacity 0.2s ease; }
+.home-location-label.can-switch { pointer-events: auto; cursor: pointer; }
+.home-hidden-menu {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 181;
+    min-width: 120px;
+    max-height: 60%;
+    overflow-y: auto;
+    padding: 4px;
+    background: linear-gradient(to bottom, rgba(42, 37, 34, 0.97), rgba(26, 21, 18, 0.97));
+    border: 1px solid #8a734b;
+    border-bottom: 2px solid #ffaa00;
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+    font-family: "Noto Serif SC", "Noto Serif TC", serif;
+}
+.home-hidden-menu button {
+    display: block;
+    width: 100%;
+    background: none;
+    border: 0;
+    color: #ffcc66;
+    padding: 6px 16px;
+    font-size: 16px;
+    font-family: inherit;
+    font-weight: bold;
+    letter-spacing: 2px;
+    text-align: center;
+    white-space: nowrap;
+    cursor: pointer;
+}
+.home-hidden-menu button:hover { background: rgba(255, 204, 102, 0.16); }
 
 @keyframes homeLabelFadeIn {
     from { opacity: 0; transform: translateX(-50%) translateY(-8px); }
@@ -3933,6 +4011,8 @@
     overflow: hidden;
     text-overflow: ellipsis;
 }
+.rpg-v7-root.mobile-layout .home-hidden-menu { min-width: 96px; }
+.rpg-v7-root.mobile-layout .home-hidden-menu button { padding: 5px 12px; font-size: 13px; letter-spacing: 1px; }
 
 /* 按鈕通用：小膠囊化 */
 .rpg-v7-root.mobile-layout .home-nav-arrow {
@@ -7275,6 +7355,7 @@ async function renderCurrentMemberGallery() {
     const ENABLE_MM_ZONES = true;
     // 目前開啟的角色（圓環按鈕用）
     let mmCurrentCharId = null;
+    let mmFavor = 0;   // 目前圓環角色的好感度（邀请亲密的鎖定判斷與提示用）
 
     // 輔助：極座標轉笛卡爾
     function polarToCartesian(centerX, centerY, radius, angleInDegrees) {
@@ -7348,10 +7429,12 @@ async function renderCurrentMemberGallery() {
         zones.forEach(z => {
             const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
             g.setAttribute("class", "mm-zone-group" + (ENABLE_MM_ZONES ? " enabled" : ""));
+            g.setAttribute("data-zone", z.id);
             
             // 點擊事件 (目前僅 console log)
             g.onclick = (e) => {
                 e.stopPropagation();
+                if (g.classList.contains('locked')) { showCharActionToast(intimacyLockedText(mmFavor)); return; }
                 if (mmCurrentCharId) z.action();
             };
 
@@ -7420,6 +7503,11 @@ async function renderCurrentMemberGallery() {
             }
         } catch(e) { console.log(e); }
         
+        // 邀请亲密：好感度不夠就鎖定（玩家自己沒有區域）
+        mmFavor = bondVal;
+        document.querySelector('#mm-zones-container [data-zone="zone-C"]')
+            ?.classList.toggle('locked', charData.id !== 'p1' && bondVal < INTIMACY_MIN_FAVOR);
+
         // === [核心修改] 計算百分比 ===
         // 限制最大不超過 100 (避免圓環畫爆)
         let bondPercent = (bondVal / MAX_BOND_LIMIT) * 100;
@@ -10228,14 +10316,24 @@ previewArea.appendChild(dot);
         state.isHome = true;
         state._homeFirstMoveDone = false; // 標記：尚未執行過「首次離開前庭」
 
+        // 玩家位置無效 → 改成前庭；在隊角色的目標位置 = 玩家目前（改完後）的家中位置
+        // 變數本身空白、'0'、舊名稱或無法辨識也要寫成正式名稱（讀取時 getPlayerHomeLocation 會當作前庭，但變數不能一直留著空白）
+        const currentHomeLoc = getPlayerHomeLocation();
+        const partyTarget = HOME_LOCATIONS[currentHomeLoc] ? currentHomeLoc : '前庭';
+        const playerFix = getPlayerHomeVar() !== partyTarget;
+        // 在隊角色跟隨玩家。initHomeSystem 在重新整理、開聊天、訊息重繪時也會跑（state.isHome 每個新 iframe 都從 false 開始），
+        // 所以不能無條件把在隊角色搬走：只有位置和玩家不同才寫入，全部相同就不寫任何變數。
+        const needWrite = playerFix || heroineList.some(name =>
+            isCharConquered(name) && (isCharInParty(name) ? getCharHomeLocation(name) !== partyTarget : !getCharHomeLocation(name)));
+        if (!needWrite) return;
+
         // 批次寫入所有初始化變量（單次 updateVariablesWith）
         updateVariablesWith(function(variables) {
             const sd = variables.stat_data || variables;
 
             // 設定預設位置為前庭
-            const currentHomeLoc = getPlayerHomeLocation();
-            if (!HOME_LOCATIONS[currentHomeLoc]) {
-                _.set(sd, '世界.位置.家中位置', '前庭');
+            if (playerFix) {
+                _.set(sd, '世界.位置.家中位置', partyTarget);
             }
 
             // 初始化角色位置（僅已攻略角色）
@@ -10243,9 +10341,11 @@ previewArea.appendChild(dot);
                 if (!isCharConquered(name)) return; // 未攻略 → 不參與家園
                 const charLoc = getCharHomeLocation(name);
                 if (isCharInParty(name)) {
-                    // 在隊角色 → 跟隨玩家放到前庭
-                    _.set(sd, `世界.妈妈.${name}.家中位置`, '前庭');
-                    _.set(sd, `世界.妈妈.${name}.停留轮数`, 0);
+                    // 在隊角色 → 跟隨玩家；位置已經相同就不動（不重設停留轮数）
+                    if (charLoc !== partyTarget) {
+                        _.set(sd, `世界.妈妈.${name}.家中位置`, partyTarget);
+                        _.set(sd, `世界.妈妈.${name}.停留轮数`, 0);
+                    }
                 } else if (!charLoc || charLoc === '外出') {
                     // 未初始化位置的已攻略角色 → 放到前庭；外出中的保持原樣
                     if (charLoc !== '外出') {
@@ -10258,6 +10358,7 @@ previewArea.appendChild(dot);
 
             return variables;
         }, { type: 'message' });
+        if (_varsSnapshot) beginVarBatch(); // 批次內的快照是舊的，重拍後畫面才讀得到新位置
     }
 
     // --- 離開家園時的清理 ---
@@ -10315,7 +10416,109 @@ previewArea.appendChild(dot);
         navigate: target => navigateHome(target),
         chooseExit: spec => showPixelStairMenu(spec),
         showCharacter: name => (name ? showHomeCharPanel(name) : closeHomeCharPanel(false)),
+        onHidden: names => setPixelHiddenHeroes(names),
     };
+
+    // === 人數超限：被隱藏的角色（pixel-home.js 1.5.0 起的 onHidden／showActor）===
+    // 名牌輪流顯示「地點」→「人数超限」→「点我切换」，點名牌展開清單，點名字把她換進畫面。
+    // 舊版 pixel-home.js 沒有 showActor：整套功能不啟用，名牌維持原樣。
+    const HIDDEN_CYCLE = [[null, 2500], ['人数超限', 1200], ['点我切换', 1200]];   // null = 地點文字
+    let pixelHiddenHeroes = [];   // 目前地點被隱藏的角色名
+    let pixelHiddenLoc = null;    // 上面這份名單對應的地點
+    let hiddenCycleTimer = null, hiddenCycleLabel = null, hiddenMenuCloser = null;
+    _rpgLifetime.signal.addEventListener('abort', () => { clearTimeout(hiddenCycleTimer); hiddenCycleTimer = null; }, { once: true });
+
+    function canSwitchHidden(label) {   // label.dataset.room = 名牌對應的地點
+        return typeof window.PixelHome?.showActor === 'function' && state.isHome
+            && pixelHiddenHeroes.length > 0 && !!label && label.dataset.room === pixelHiddenLoc;
+    }
+    function setPixelHiddenHeroes(names) {
+        const list = (typeof window.PixelHome?.showActor === 'function' && Array.isArray(names)) ? names.slice() : [];
+        const same = list.length === pixelHiddenHeroes.length && list.every((n, i) => n === pixelHiddenHeroes[i]);
+        pixelHiddenHeroes = list;
+        if (!same) closeHiddenMenu();
+        syncHiddenLabel();
+    }
+    // 換地點、關閉像素場景時清空名單
+    function resetPixelHidden(loc) {
+        if (loc !== undefined && loc === pixelHiddenLoc) return;
+        pixelHiddenLoc = loc === undefined ? null : loc;
+        pixelHiddenHeroes = [];
+        closeHiddenMenu();
+        syncHiddenLabel();
+    }
+    function stopHiddenCycle() {
+        clearTimeout(hiddenCycleTimer);
+        hiddenCycleTimer = null;
+        const label = hiddenCycleLabel;
+        hiddenCycleLabel = null;
+        if (label) {
+            label.classList.remove('can-switch');
+            const sp = label.firstElementChild;
+            if (sp) { sp.textContent = label.dataset.loc || ''; sp.style.opacity = ''; }
+        }
+    }
+    // 依名單開始／停止名牌輪播（名牌已在輪播中就不重新開始）
+    function syncHiddenLabel() {
+        const label = els.mapArea?.querySelector('.home-location-label');
+        if (!canSwitchHidden(label)) { stopHiddenCycle(); closeHiddenMenu(); return; }
+        if (hiddenCycleLabel === label) return;
+        stopHiddenCycle();
+        hiddenCycleLabel = label;
+        label.classList.add('can-switch');
+        const step = i => {
+            const sp = label.firstElementChild;
+            if (!sp || hiddenCycleLabel !== label || !label.isConnected) return;
+            hiddenCycleTimer = setTimeout(() => {   // 這個狀態顯示完：淡出，換字，淡入
+                if (hiddenCycleLabel !== label) return;
+                sp.style.opacity = '0';
+                hiddenCycleTimer = setTimeout(() => {
+                    if (hiddenCycleLabel !== label) return;
+                    const next = (i + 1) % HIDDEN_CYCLE.length;
+                    sp.textContent = HIDDEN_CYCLE[next][0] ?? label.dataset.loc;
+                    sp.style.opacity = '1';
+                    step(next);
+                }, 200);
+            }, HIDDEN_CYCLE[i][1]);
+        };
+        step(0);
+    }
+    function closeHiddenMenu() {
+        els.mapArea?.querySelectorAll('.home-hidden-menu').forEach(el => el.remove());
+        if (hiddenMenuCloser) {
+            document.removeEventListener('pointerdown', hiddenMenuCloser, true);
+            hiddenMenuCloser = null;
+        }
+    }
+    function toggleHiddenMenu() {
+        const label = els.mapArea?.querySelector('.home-location-label');
+        if (!canSwitchHidden(label)) return;
+        if (els.mapArea.querySelector('.home-hidden-menu')) { closeHiddenMenu(); return; }
+        const idNum = n => { const m = /\d+/.exec(String(charNameToId.get(n) ?? '')); return m ? +m[0] : Infinity; };
+        const names = pixelHiddenHeroes.map((n, i) => [n, i]).sort((a, b) => idNum(a[0]) - idNum(b[0]) || a[1] - b[1]).map(x => x[0]);
+        const menu = document.createElement('div');
+        menu.className = 'home-hidden-menu';
+        menu.style.top = (label.offsetTop + label.offsetHeight + 4) + 'px';
+        for (const name of names) {
+            const b = document.createElement('button');
+            b.type = 'button';
+            b.textContent = name;
+            b.onclick = (e) => {
+                e.stopPropagation();
+                closeHiddenMenu();
+                window.PixelHome?.showActor?.(els.mapArea, name);
+            };
+            menu.appendChild(b);
+        }
+        for (const ev of ['click', 'pointerdown', 'mousedown', 'touchstart']) menu.addEventListener(ev, e => e.stopPropagation());
+        els.mapArea.appendChild(menu);
+        // 點清單與名牌以外的地方：關閉
+        hiddenMenuCloser = (e) => {
+            if (menu.contains(e.target) || label.contains(e.target)) return;
+            closeHiddenMenu();
+        };
+        document.addEventListener('pointerdown', hiddenMenuCloser, true);
+    }
 
     // 樓梯選單：沿用舊版房間選單的彈窗；選單節點（例如 地下室）展開成該樓層的房間
     function showPixelStairMenu({ title, options }) {
@@ -10329,6 +10532,31 @@ previewArea.appendChild(dot);
             rooms.forEach(room => entries.push({ room, label: arrow + room }));
         }
         openHomeRoomMenu(title, entries);
+    }
+
+    // === 邀请亲密的好感度門檻（圓環、立繪面板、openCharActionDialog 共用）===
+    const INTIMACY_MIN_FAVOR = 135;   // 好感度 >= 這個值才能邀请亲密
+    function readCharFavor(name) {
+        return parseInt(getVariable(`世界.妈妈.${name}.好感度`)) || 0;
+    }
+    function intimacyLockedText(favor) {
+        return `好感度达到 ${INTIMACY_MIN_FAVOR} 后解锁（目前 ${favor}）`;
+    }
+    // 短暫提示（約 1.8 秒，一次只有一個）：置中在 .rpg-v7-root 的可見範圍，手機也能看到
+    let charActionToastTimer = null;
+    function showCharActionToast(text) {
+        const root = els.mapArea?.closest('.rpg-v7-root') || document.querySelector('.rpg-v7-root');
+        if (!root) return;
+        clearTimeout(charActionToastTimer);
+        root.querySelectorAll('.char-action-toast').forEach(el => el.remove());
+        const t = document.createElement('div');
+        t.className = 'char-action-toast';
+        t.setAttribute('role', 'status');
+        t.textContent = text;
+        root.appendChild(t);
+        const h = t.offsetHeight;
+        t.style.top = Math.max(h / 2 + 8, Math.min(root.clientHeight - h / 2 - 8, charActionCenterY(root))) + 'px';
+        charActionToastTimer = setTimeout(() => t.remove(), 1800);
     }
 
     // === 自由互动／邀请亲密的輸入視窗（家園的立繪面板與 Q 版人物狀態介面共用）===
@@ -10364,6 +10592,10 @@ previewArea.appendChild(dot);
         const spec = CHAR_ACTION_PROMPTS[kind];
         const root = els.mapArea?.closest('.rpg-v7-root') || document.querySelector('.rpg-v7-root');
         if (!spec || !name || !root) return;
+        if (kind === 'date') {   // 保險：不管從哪裡呼叫，好感度不夠都不開
+            const favor = readCharFavor(name);
+            if (favor < INTIMACY_MIN_FAVOR) { showCharActionToast(intimacyLockedText(favor)); return; }
+        }
         root.querySelectorAll('.char-action-overlay').forEach(el => el.remove());
 
         const overlay = document.createElement('div');
@@ -10433,9 +10665,14 @@ previewArea.appendChild(dot);
         menu.appendChild(title);
         // 點場景空白處會關閉面板，所以不放「关闭」
         const inParty = isCharInParty(name);
+        const favor = readCharFavor(name);
+        const intimacyLocked = favor < INTIMACY_MIN_FAVOR;   // 邀请亲密要好感度夠
         const actions = [
             ['自由互动', () => { closeHomeCharPanel(true); window.openCharActionDialog('free', name); }],
-            ['邀请亲密', () => { closeHomeCharPanel(true); window.openCharActionDialog('date', name); }],
+            ['邀请亲密', () => {
+                if (intimacyLocked) { showCharActionToast(intimacyLockedText(favor)); return; }   // 面板維持開啟
+                closeHomeCharPanel(true); window.openCharActionDialog('date', name);
+            }],
             [inParty ? '取消同行' : '邀请同行', () => { closeHomeCharPanel(true); togglePartyState(name, inParty); }],
         ];
         for (const [label, fn] of actions) {
@@ -10443,13 +10680,16 @@ previewArea.appendChild(dot);
             b.type = 'button';
             b.className = 'home-char-btn';
             b.textContent = label;
+            if (label === '邀请亲密' && intimacyLocked) { b.classList.add('locked'); b.setAttribute('aria-disabled', 'true'); }
             b.onclick = (e) => { e.stopPropagation(); fn(); };
             menu.appendChild(b);
         }
         const portrait = document.createElement('img');
         portrait.className = 'home-char-portrait';
         portrait.alt = name;
-        portrait.src = data.img;
+        const nsfwVal = getVariable(`世界.妈妈.${name}.NSFW状态`);   // NSFW 狀態為是時，用差分立繪
+        const isNsfw = nsfwVal === '是' || nsfwVal === 'True' || nsfwVal === 'true' || nsfwVal === true;
+        portrait.src = (isNsfw && data.imgDiff) || data.img;
         const hit = document.createElement('div');   // 擋住角色身體範圍的點擊（點立繪不會點到後面的場景）
         hit.className = 'home-char-hit';
         panel.append(portrait, hit, menu);
@@ -10536,6 +10776,7 @@ previewArea.appendChild(dot);
         if (expectPixelHome(location) && !els.mapArea.classList.contains('pixel-home-active')) setPixelHomeLoading(true);
         let ok = false;
         if (state.isHome && state.pixelHomeEnabled && await loadPixelHome() && window.PixelHome.has(location)) {
+            resetPixelHidden(location);   // 換地點時清掉上一個地點的隱藏名單；render 會用 onHidden 回報新的
             ok = await window.PixelHome.render(els.mapArea, {
                 location,
                 hour: parseInt(getVariable('世界.当前.时间.时')),
@@ -10546,11 +10787,12 @@ previewArea.appendChild(dot);
             }, PIXEL_HOME_HOST);
         } else if (window.PixelHome) {
             window.PixelHome.clear(els.mapArea);
+            resetPixelHidden();
         }
         if (seq !== pixelHomeSeq) return;
         els.mapArea.classList.toggle('pixel-home-active', ok);
         syncPixelHomeTopbar();
-        if (!ok) closeHomeCharPanel(false);
+        if (!ok) { closeHomeCharPanel(false); resetPixelHidden(); }
         // 開關還沒讀到（推測會顯示像素場景）時保留讀取畫面，讀到開關後會再呼叫一次
         if (ok || pixelHomePrefReady || !expectPixelHome(location)) setPixelHomeLoading(false);
     }
@@ -10563,6 +10805,7 @@ previewArea.appendChild(dot);
         syncPixelHomeTopbar();
         setPixelHomeLoading(false);
         closeHomeCharPanel(false);
+        resetPixelHidden();
     }
 
     function syncPixelHomeButtons() {
@@ -10648,11 +10891,11 @@ previewArea.appendChild(dot);
 
         // [修復] 去重：檢查現有標籤文字是否相同
         const existingLabel = els.mapArea.querySelector('.home-location-label');
-        const labelUnchanged = existingLabel && existingLabel.textContent === newLabelText;
+        const labelUnchanged = existingLabel && existingLabel.dataset.loc === newLabelText;   // 輪播會改可見文字，所以比對 data-loc
 
         // 只清除箭頭和選單遮罩（不清除未變化的標籤）
         els.mapArea.querySelectorAll('.home-nav-arrow, .home-room-menu-overlay').forEach(el => el.remove());
-        if (!labelUnchanged && existingLabel) existingLabel.remove();
+        if (!labelUnchanged && existingLabel) { stopHiddenCycle(); closeHiddenMenu(); existingLabel.remove(); }
 
         // 箭頭方向 → CSS class + 圖標文字
         const ARROW_ICONS = {
@@ -10701,9 +10944,15 @@ previewArea.appendChild(dot);
         if (!labelUnchanged) {
             const label = document.createElement('div');
             label.className = 'home-location-label fade-in'; // 首次/變更時加入動畫
-            label.textContent = newLabelText;
+            label.dataset.loc = newLabelText;
+            label.dataset.room = currentLoc;
+            const labelText = document.createElement('span');   // 輪播時只淡入淡出這個 span
+            labelText.textContent = newLabelText;
+            label.appendChild(labelText);
+            label.addEventListener('click', (e) => { e.stopPropagation(); toggleHiddenMenu(); });
             els.mapArea.appendChild(label);
         }
+        syncHiddenLabel();
 
         // 像素家園（同步與換房都會經過這裡；不等待載入，避免拖慢同步）
         renderPixelHome();
@@ -11225,12 +11474,30 @@ const LOCATION_BUTTONS = [
 
             const [locData, playerData, timeData, punishData, homeEnabledRaw] = batchPromises;
 	    [region] = locData;
-            const [, locationName, subLocation] = locData;
+            let [, locationName, subLocation] = locData;
 // [新增] 快取家园系统開關狀態（預設啟用，'0' 為停用）
 state.homeSystemEnabled = (String(homeEnabledRaw) === '1');
 state.region = region;
 state.location = locationName;
 state.subLocation = subLocation;
+
+// === 防呆：模型把家中房間名稱誤寫進 子地点（要寫「家」，房間放在 家中位置）===
+// 放在 isInHome 之前，所以同一次同步就會進家園。只比對完全相同的房間名稱（或舊名稱），不做模糊匹配。
+if (state.homeSystemEnabled !== false && region === '自由都市' && locationName === '伦德' && typeof subLocation === 'string') {
+    const _homeRoomSub = HOME_LOCATIONS[subLocation] ? subLocation : HOME_LOCATION_ALIASES[subLocation];
+    if (_homeRoomSub && HOME_LOCATIONS[_homeRoomSub]) {
+        console.warn(`[RPG 防呆] 子地點「${subLocation}」是家中位置，自動修正為「家」，家中位置＝${_homeRoomSub}...`);
+        updateVariablesWith(function(variables) {
+            const sd = variables.stat_data || variables;
+            _.set(sd, '世界.位置.子地点', '家');
+            _.set(sd, '世界.位置.家中位置', _homeRoomSub);
+            return variables;
+        }, { type: 'message' });
+        if (_varsSnapshot) beginVarBatch(); // 批次內的快照是舊的，重拍才讀得到新值（後面的家園畫面會讀 家中位置）
+        subLocation = '家';
+        state.subLocation = '家';
+    }
+}
 
 // === 家园系统：進入/離開檢測 ===
 const _wasHome = state.isHome || false;
@@ -11238,6 +11505,12 @@ const _nowHome = isInHome();
 if (!_wasHome && _nowHome) initHomeSystem();
 if (_wasHome && !_nowHome) exitHomeSystem();
 state.isHome = _nowHome;
+
+// === 離家重設：不在家時，家中位置回到前庭（下次回家從前庭開始）。只有不同才寫，所以離開後只寫一次 ===
+if (state.homeSystemEnabled !== false && !_nowHome && getVariable('世界.位置.家中位置') !== '前庭') {
+    setVar('世界.位置.家中位置', '前庭');
+    if (_varsSnapshot) beginVarBatch(); // 重拍批次快照
+}
 
 // === 防呆：修正模型可能誤寫成子地點的獨立迷宮地點 ===
 const STANDALONE_LOCATIONS = [
