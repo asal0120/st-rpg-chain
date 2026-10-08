@@ -1353,23 +1353,98 @@
         { id: 8, owner: "莉迪娅", name: "不动信念", cost: 1, max: 1, desc: "3回合内，结束时不弃牌" }
     ];
 
+    // ============================================================
+    // 圖床與備援（同主檔的 img()）
+    // img(imgchest, catbox, github) 依主檔的圖床偏好回傳網址，同一張圖的其他網址記在 _imgAlts；
+    // 載入失敗時照 IMG_HOST_ORDER 換下一個：<img> 由下方的 error 監聽處理，背景圖用 setBodyBg()。
+    // 失敗過的網址記在主檔那一層的視窗（__IMG_FAILED，和主檔共用），之後的圖直接排到最後。
+    // ============================================================
+    const IMG_GITHUB_BASE = 'https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/images/';
+    const IMG_HOST_ORDER = {
+        imgchest: ['imgchest', 'github', 'catbox'],
+        catbox:   ['catbox', 'github', 'imgchest'],
+        github:   ['github', 'imgchest', 'catbox'],
+    };
+    // 主檔把圖床存在酒館頁面的 RPG_GLOBAL_STATE：從父視窗往上找第一個有的；找不到用最上層，單獨開啟就用自己
+    const _imgWin = (() => {
+        try {
+            let w = window;
+            while (w.parent && w.parent !== w) {
+                w = w.parent;
+                try { if (w.RPG_GLOBAL_STATE) return w; } catch (e) { /* 跨網域的視窗讀不到，往上找 */ }
+            }
+        } catch (e) { /* 往上找失敗 */ }
+        try { if (window.top) return window.top; } catch (e) { /* 讀不到最上層 */ }
+        return window;
+    })();
+    function _imgHost() {
+        let host = null;
+        try { host = _imgWin.RPG_GLOBAL_STATE?.imageHost; } catch (e) { /* 讀不到時用瀏覽器的記錄 */ }
+        if (!IMG_HOST_ORDER[host]) {
+            try { host = _imgWin.localStorage.getItem('rpgImageHost'); } catch (e) { host = null; }
+        }
+        return IMG_HOST_ORDER[host] ? host : 'github';
+    }
+    let _imgFailed;
+    try {
+        if (!_imgWin.__IMG_FAILED) _imgWin.__IMG_FAILED = new _imgWin.Set();
+        _imgFailed = _imgWin.__IMG_FAILED;
+    } catch (e) { _imgFailed = new Set(); }
+    const _imgAlts = new Map();   // 網址 → 同一張圖依序嘗試的網址
+
+    const img = (imgchestUrl, catboxUrl, githubPath) => {
+        const urls = { imgchest: imgchestUrl, catbox: catboxUrl, github: githubPath ? IMG_GITHUB_BASE + githubPath : '' };
+        const list = IMG_HOST_ORDER[_imgHost()].map(h => urls[h]).filter(Boolean)
+            .sort((a, b) => _imgFailed.has(a) - _imgFailed.has(b));   // 失敗過的排到最後（穩定排序）
+        list.forEach(u => { if (!_imgAlts.has(u)) _imgAlts.set(u, list); });
+        return list[0];
+    };
+
+    // 記下 url 載入失敗，回傳同一張圖的下一個網址（沒有備援或都失敗過時回傳 null）
+    function nextImgUrl(url) {
+        const list = _imgAlts.get(url);
+        if (!list) return null;
+        _imgFailed.add(url);
+        return list.slice(list.indexOf(url) + 1).find(u => !_imgFailed.has(u)) || null;
+    }
+
+    // 戰鬥背景：CSS 背景圖沒有載入失敗的事件，另外用 Image 載入同一個網址（共用瀏覽器快取），失敗就換下一個
+    function setBodyBg(url) {
+        document.body.style.backgroundImage = `linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('${url}')`;
+        if (!_imgAlts.has(url)) return;
+        const probe = new Image();
+        probe.onerror = () => {
+            const next = nextImgUrl(url);
+            if (next && document.body.style.backgroundImage.includes(url)) setBodyBg(next);
+        };
+        probe.src = url;
+    }
+
+    // <img> 載入失敗時換下一個圖床（error 事件不會冒泡，所以在捕獲階段監聽整份文件）
+    document.addEventListener('error', (e) => {
+        const el = e.target;
+        if (el?.tagName !== 'IMG') return;
+        const next = nextImgUrl(el.getAttribute('src'));
+        if (next) el.src = next;
+    }, { capture: true });
+
 	const SKILL_ICONS = {
-    "爱娜": "https://cdn.imgchest.com/files/4a138a01617e.png",    
-    "琳": "https://cdn.imgchest.com/files/30a480088b23.png",     
-    "米拉露恩": "https://cdn.imgchest.com/files/c0c61c8c8475.png", 
-    "黛芬妮": "https://cdn.imgchest.com/files/ca5ce96a0344.png",
-    "芙蕾嘉": "https://cdn.imgchest.com/files/973c56e2f7af.png",
-    "穗": "https://cdn.imgchest.com/files/c8a84a967a69.png",
-    "莉迪娅": "https://cdn.imgchest.com/files/62c350200304.png",
-    "璐法": "https://cdn.imgchest.com/files/c4dee393ba2d.png"
+    "爱娜": img("https://cdn.imgchest.com/files/4a138a01617e.png", "https://files.catbox.moe/k2qqsy.png", "party/aina/sdImg.webp"),    
+    "琳": img("https://cdn.imgchest.com/files/30a480088b23.png", "https://files.catbox.moe/civeuq.png", "party/lin/sdImg.webp"),     
+    "米拉露恩": img("https://cdn.imgchest.com/files/c0c61c8c8475.png", "https://files.catbox.moe/zavdit.png", "party/miralune/sdImg.webp"), 
+    "黛芬妮": img("https://cdn.imgchest.com/files/ca5ce96a0344.png", "https://files.catbox.moe/zuut1k.png", "party/daphne/sdImg.webp"),
+    "芙蕾嘉": img("https://cdn.imgchest.com/files/973c56e2f7af.png", "https://files.catbox.moe/485jkh.png", "party/freya/sdImg.webp"),
+    "穗": img("https://cdn.imgchest.com/files/c8a84a967a69.png", "https://files.catbox.moe/vz9bd5.png", "party/sui/sdImg.webp"),
+    "莉迪娅": img("https://cdn.imgchest.com/files/62c350200304.png", "https://files.catbox.moe/qw2n11.png", "party/lydia/sdImg.webp"),
+    "璐法": img("https://cdn.imgchest.com/files/c4dee393ba2d.png", "https://files.catbox.moe/9sgl35.png", "party/lufa/sdImg.webp")
 };
   
     const ENEMIES_DB = {
         "enemy_1": { 
             name: "高塔的魔女 - 爱娜", 
-            img: "https://cdn.imgchest.com/files/ffded04458b1.png",
+            img: img("https://cdn.imgchest.com/files/ffded04458b1.png", "https://files.catbox.moe/iurzeo.png", "party/aina/img.webp"),
 			bgm: "https://files.catbox.moe/vlllik.ogg",
-            bg: "linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('https://cdn.imgchest.com/files/fde1e6539f6e.png')",
+            bg: img("https://cdn.imgchest.com/files/fde1e6539f6e.png", "", "mini/aina_bg.webp"),
             phases: [
                 { hp: 5, atk: 10, mode: "count", desc: "基础：出一张牌造成 1 点伤害" },
                 { hp: 7, atk: 15, mode: "count", desc: "基础：出一张牌造成 1 点伤害" },
@@ -1379,9 +1454,9 @@
         },
         "enemy_2": { 
             name: "机巧人偶 - 黛芬妮", 
-            img: "https://cdn.imgchest.com/files/7396e46c9622.png",
+            img: img("https://cdn.imgchest.com/files/7396e46c9622.png", "https://files.catbox.moe/qmoavv.png", "party/daphne/img.webp"),
 			bgm: "https://files.catbox.moe/ep9wz3.ogg",
-            bg: "linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('https://cdn.imgchest.com/files/a5c7463338b2.png')",
+            bg: img("https://cdn.imgchest.com/files/a5c7463338b2.png", "", "mini/daphne_bg.webp"),
             phases: [
                 { hp: 7, atk: 20, mode: "color_chain", params: {color:'red'}, desc: "红色连击：连续出红牌造成 1 点伤害" },
                 { hp: 7, atk: 23, mode: "color_chain", params: {color:'blue'}, desc: "蓝色连击：连续出蓝牌造成 1 点伤害" },
@@ -1391,9 +1466,9 @@
         },
         "enemy_3": { 
             name: "丰饶之狐仙 - 穗", 
-			img: "https://cdn.imgchest.com/files/299c6a475806.png",
+			img: img("https://cdn.imgchest.com/files/299c6a475806.png", "https://files.catbox.moe/dsyvgw.png", "party/sui/img.webp"),
 			bgm: "https://files.catbox.moe/6dk58a.ogg",
-            bg: "linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('https://cdn.imgchest.com/files/8ce1992d18ee.png')",
+            bg: img("https://cdn.imgchest.com/files/8ce1992d18ee.png", "", "mini/sui_bg.webp"),
             phases: [
                 { hp: 5, atk: 12, mode: "color_switch", desc: "变幻：切换颜色时造成 1 点伤害" },
                 { hp: 5, atk: 15, mode: "color_switch", desc: "变幻：切换颜色时造成 1 点伤害" },
@@ -1403,9 +1478,9 @@
         },
         "enemy_4": { 
             name: "血月真祖 - 琳", 
-			img: "https://cdn.imgchest.com/files/9cd9c13142a8.png",
+			img: img("https://cdn.imgchest.com/files/9cd9c13142a8.png", "https://files.catbox.moe/8neyi0.png", "party/lin/img.webp"),
 			bgm: "https://files.catbox.moe/r2nk9x.ogg",
-            bg: "linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('https://cdn.imgchest.com/files/6610a1163c98.png')",
+            bg: img("https://cdn.imgchest.com/files/6610a1163c98.png", "", "mini/lin_bg.webp"),
             phases: [
                 { hp: 20, atk: 20, mode: "diff", desc: "落差：造成前后牌差值的伤害" },
                 { hp: 25, atk: 22, mode: "diff", desc: "落差：造成前后牌差值的伤害" },
@@ -1415,9 +1490,9 @@
         },
         "enemy_5": { 
             name: "生命之树的园丁 - 芙蕾嘉", 
-			img: "https://cdn.imgchest.com/files/44a7eab2e247.png",
+			img: img("https://cdn.imgchest.com/files/44a7eab2e247.png", "https://files.catbox.moe/bw1nro.png", "party/freya/img.webp"),
 			bgm: "https://files.catbox.moe/ho39fr.ogg",
-            bg: "linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('https://cdn.imgchest.com/files/c497ed656454.png')",
+            bg: img("https://cdn.imgchest.com/files/c497ed656454.png", "", "mini/freya_bg.webp"),
             phases: [
                 { hp: 7, atk: 12, mode: "combo_mod", params: {mod:2}, desc: "二连拍：每 2 连击造成 1 伤害" },
                 { hp: 5, atk: 15, mode: "combo_mod", params: {mod:3}, desc: "三连拍：每 3 连击造成 1 伤害" },
@@ -1427,9 +1502,9 @@
         },
         "enemy_6": { 
             name: "无尽书库的古龙 - 米拉露恩", 
-			img: "https://cdn.imgchest.com/files/3f5735d532e0.png",
+			img: img("https://cdn.imgchest.com/files/3f5735d532e0.png", "https://files.catbox.moe/oyp53t.png", "party/miralune/img.webp"),
 			bgm: "https://files.catbox.moe/yi2xi9.ogg",
-            bg: "linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('https://cdn.imgchest.com/files/a4f7ce51ac53.png')",
+            bg: img("https://cdn.imgchest.com/files/a4f7ce51ac53.png", "", "mini/miralune_bg.webp"),
             phases: [
                 { hp: 1, atk: 20, mode: "sum_target", params: {target:15}, desc: "总和 15：出牌总和刚好 15 造成 1 伤害" },
                 { hp: 1, atk: 22, mode: "sum_target", params: {target:20}, desc: "总和 20：出牌总和刚好 20 造成 1 伤害" },
@@ -1439,9 +1514,9 @@
         },
         "enemy_7": { 
             name: "千年帝国的皇女 - 莉迪娅", 
-			img: "https://cdn.imgchest.com/files/fa9164f2fb93.png",
+			img: img("https://cdn.imgchest.com/files/fa9164f2fb93.png", "https://files.catbox.moe/nh3jl8.png", "party/lydia/img.webp"),
 			bgm: "https://files.catbox.moe/025ta8.ogg",
-            bg: "linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('https://cdn.imgchest.com/files/bf860e2b694a.png')",
+            bg: img("https://cdn.imgchest.com/files/bf860e2b694a.png", "", "mini/lydia_bg.webp"),
             phases: [
                 { hp: 40, atk: 20, mode: "value", desc: "重击：牌面数值 = 伤害" },
                 { hp: 60, atk: 25, mode: "value", desc: "重击：牌面数值 = 伤害" },
@@ -1451,9 +1526,9 @@
         },
         "enemy_8": { 
             name: "起始与终局之魔王 - 奈芙蒂", 
-			img: "https://cdn.imgchest.com/files/d0d789082cd8.png",
+			img: img("https://cdn.imgchest.com/files/d0d789082cd8.png", "https://files.catbox.moe/0cqdjy.png", "party/nefti/img.webp"),
 			bgm: "https://files.catbox.moe/p6396r.ogg",
-            bg: "linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('https://cdn.imgchest.com/files/a5f6e89b8fcd.png')",
+            bg: img("https://cdn.imgchest.com/files/a5f6e89b8fcd.png", "", "mini/nefti_bg.webp"),
             phases: [
                 { hp: 1, atk: 30 },
                 { hp: 1, atk: 35 },
@@ -1463,9 +1538,9 @@
         },
         "enemy_9": { 
             name: "神选之圣女 - 璐法", 
-            img: "https://cdn.imgchest.com/files/65aa8ceb2b4f.png", 
+            img: img("https://cdn.imgchest.com/files/65aa8ceb2b4f.png", "https://files.catbox.moe/x0iioz.png", "party/lufa/img.webp"), 
 			bgm: "https://files.catbox.moe/ypyat2.ogg",
-            bg: "linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('https://cdn.imgchest.com/files/9a2a15de37c1.png')",
+            bg: img("https://cdn.imgchest.com/files/9a2a15de37c1.png", "", "mini/lufa_bg.webp"),
             phases: [
                 { hp: 6, atk: 20, mode: "compare_asc", desc: "升序：后牌 > 前牌 时伤害" },
                 { hp: 6, atk: 20, mode: "compare_desc", desc: "降序：后牌 < 前牌 时伤害" },
@@ -1475,7 +1550,7 @@
         },
         "默认": { 
             name: "訓練木樁", 
-            img: "https://files.catbox.moe/cb2da1.png",
+            img: img("", "https://files.catbox.moe/cb2da1.png", ""),
             phases: [{ hp: 50, atk: 5, mode: "count", desc: "練習：出一張牌 1 傷害" }]
         }
     };
@@ -1616,7 +1691,7 @@
         
         // [新增] 應用 BOSS 專屬背景
         if (currentEnemyData.bg) {
-            document.body.style.backgroundImage = currentEnemyData.bg;
+            setBodyBg(currentEnemyData.bg);
         } else {
              document.body.style.backgroundImage = "radial-gradient(circle at center, #1a1512, #050403)";
         }
