@@ -1216,6 +1216,294 @@
 @keyframes rfPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
 @keyframes rfStamp { from { transform: scale(1.8) rotate(-20deg); opacity: 0; } to { transform: scale(1) rotate(0); opacity: 1; } }
 </style>
+<style id="rf-mobile-style">
+/* miniMVU2 手機版面覆寫層（草案 v4）
+ * 放在 rf-refresh-style 之後。分兩部分：
+ *   1. 共通修正（電腦版也套用）：選擇畫面「次数」壓到卡框、對比太低；去掉場景光效；勝利條件字放大；減少動態。
+ *   2. html.rf-m：手機直式版面。畫布 1080 × 1440（3:4），主檔依地圖寬縮放（380px 寬時約 0.35 倍）。
+ *      字級下限：主要資訊 40px、次要標籤 34.2px（380px 寬時約 14px／12px；34px 只有 11.96px）。
+ * 編排沿用電腦版的分區：上＝BOSS 與傷害預兆、緞帶；右側欄＝母愛支援；中＝立繪；下＝牌桌、手牌。
+ * v3 依用戶建議：牌桌改全寬並放入玩家生命，結束回合放在最右；增益移進牌桌、未來視界移到立繪旁，不蓋立繪；立繪放大。
+ * v4：玩家生命移到重新准备、结束回合上面，按鈕集中在右下；出牌紀錄、增益往左移；立繪位置與大小改用變數（預覽頁可調）。
+ * 只改外觀與版位，不改遊戲狀態與流程。 */
+
+/* ================= 1. 共通修正 ================= */
+/* 卡框的裝飾寬 30px，內容要留出來，否則最下面的「次数」會壓在框線上 */
+.sel-card {
+    height: auto !important; min-height: 150px;
+    padding: 16px 22px 24px !important;
+}
+.sel-card > div:last-child {
+    color: #a8977a !important;
+    border-top-color: rgba(216, 180, 106, 0.25) !important;
+}
+
+/* 場景光效（光束、地面光暈、塵點）：用戶要求去掉 */
+.rf-stage-fx { display: none; }
+
+/* 勝利條件：原本 16px 太小，放大到 22px（手機版另外用 40px）。最長的條件約 380px，緞帶內約 570px，仍是一行 */
+.condition-box { font-size: 22px !important; padding: 9px 8px 13px !important; }
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* ================= 2. 手機直式版面 ================= */
+/* 版位（畫布 px）：
+ *   上排 y 20–228：BOSS 欄 x 20–740｜傷害預兆 x 760–1060（同高）
+ *   勝利條件緞帶：上排下面，全寬置中，一行；總和／升降同：緞帶下面，對齊中央欄
+ *   右側欄 x 760–1060：母愛支援 340 起
+ *   立繪：中心 x 425、頂端 y 300、高 950（變數 --rf-fig-*，用戶在預覽頁指定）；下半身在牌桌後面，同電腦版
+ *   牌桌 x 20–1060、y 850–1200：上＝出牌紀錄（左）、玩家生命（右，在兩個按鈕上面）；
+ *                              下＝增益（左）、COMBO｜DECK｜重新准备｜结束回合（右下）
+ *   未來視界：立繪區左下，靠牌桌左上
+ *   手牌 y 1200–1440 */
+html.rf-m body { width: 1080px; height: var(--rf-stage-h, 1440px); touch-action: manipulation; }
+
+/* ---- 系統按鈕 ----
+ * 跳過：BOSS 欄右上角（電腦版掛在 BOSS 欄右端）。
+ * 音樂：右下角（同電腦版） */
+html.rf-m .ingame-skip-btn {
+    top: 16px; right: 16px; left: auto; bottom: auto; transform: none;
+    width: 70px; height: 70px; font-size: 34.2px; z-index: 3;
+}
+html.rf-m #bgm-toggle-btn {
+    right: 16px; bottom: 16px; top: auto; left: auto;
+    width: 72px; height: 72px; font-size: 34.2px;
+}
+
+/* ---- 上排：BOSS 欄（名稱一行；血條、階段寶珠、血量一行） ---- */
+html.rf-m .area-top { top: 20px; left: 20px; right: 20px; height: auto; }
+html.rf-m .area-top .boss-hp-box {
+    align-self: flex-start; width: 720px; min-height: 208px;
+    display: grid; grid-template-columns: 1fr auto auto; align-content: center; align-items: center;
+    column-gap: 14px; row-gap: 22px;
+    padding: 22px 26px 28px !important;
+}
+html.rf-m .boss-title-row { display: contents; font-size: 44px; letter-spacing: 1px; }
+/* 最長「起始与终局之魔王 - 奈芙蒂」；右邊留給跳過鈕 */
+html.rf-m .boss-name-text { grid-column: 1 / -1; grid-row: 1; font-size: 44px; line-height: 1.2; padding-right: 76px; }
+html.rf-m .hp-track { grid-column: 1; grid-row: 2; height: 36px; border-radius: 18px; }
+html.rf-m .hp-fill { border-radius: 18px; }
+html.rf-m .hp-fill::after { width: 12px; }
+html.rf-m .inline-orb-row { grid-column: 2; grid-row: 2; gap: 6px; }
+html.rf-m .inline-orb { width: 28px; height: 28px; }
+html.rf-m .hp-text-val { grid-column: 3; grid-row: 2; font-size: 40px; color: #ffb8a8; text-shadow: 0 1px 3px #000; }
+
+/* ---- 上排：傷害預兆（與 BOSS 欄同高） ---- */
+html.rf-m .area-right-top {
+    top: 20px; right: 20px; width: 300px; height: 208px; padding: 8px 16px 12px;
+}
+html.rf-m .area-right-top::before { background-size: 140px; }
+html.rf-m .intent-label { font-size: 36px; line-height: 1.1; margin-bottom: 0; letter-spacing: 3px; }
+html.rf-m .intent-label::before, html.rf-m .intent-label::after { content: none; }
+html.rf-m .dmg-val { font-size: 92px; margin-bottom: 4px; }
+html.rf-m .def-info { font-size: 34.2px; line-height: 1.2; padding: 2px 16px; border-radius: 20px; }
+html.rf-m .def-val { font-size: 40px; }
+
+/* ---- 勝利條件：全寬緞帶，一行（最長約 690px，40px 字） ---- */
+html.rf-m .condition-box {
+    max-width: 100%; margin-top: 10px !important; white-space: nowrap;
+    border-width: 0 46px !important;
+    border-image-width: 0 46px !important;
+    padding: 14px 10px 22px !important;
+    font-size: 40px !important; line-height: 1.3; letter-spacing: 0.5px;
+}
+/* 總和／升降同：緞帶下面，對齊中央欄（中心 x 380；.area-top 的中心是 540） */
+html.rf-m .sum-display-box, html.rf-m .special-status-box {
+    position: relative; left: -160px;
+    margin-top: 10px; padding: 4px 30px; border-radius: 30px; font-size: 40px; line-height: 1.3;
+}
+html.rf-m .special-status-box { gap: 30px; }
+
+/* ---- 立繪：位置與大小用變數（預覽頁可調）。下半身在牌桌後面，同電腦版 ----
+ * --rf-fig-x：圖片的水平中心｜--rf-fig-top：圖片頂端｜--rf-fig-h：圖片高度（立繪 1500 × 1000，人物佔滿整張的高度、寬約一半）
+ * 電腦版人物高約 555。數值由用戶在預覽頁指定（2026-10-14）。 */
+html.rf-m { --rf-fig-x: 425px; --rf-fig-top: 300px; --rf-fig-h: 950px; }
+html.rf-m .boss-img-container {
+    top: var(--rf-fig-top); height: var(--rf-fig-h); left: calc(var(--rf-fig-x) - 1000px); width: 2000px; right: auto; bottom: auto;
+    /* 立繪超過牌桌框線底（y 1190）的部分剪掉，不然腳會露在牌桌和手牌之間 */
+    clip-path: inset(-200px 0 max(0px, calc(var(--rf-fig-top) + var(--rf-fig-h) - 1190px)) 0);
+}
+html.rf-m .boss-img { height: 100%; width: auto; max-height: none; max-width: none; }
+
+/* ---- 右側欄：母愛支援（一欄四列；頭像在左、文字在右） ---- */
+html.rf-m .area-right-mid {
+    top: 340px; bottom: auto; right: 20px; width: 300px; height: auto;
+    padding: 10px 12px 14px !important; gap: 8px;
+}
+html.rf-m .skill-title { font-size: 34.2px; letter-spacing: 4px; padding: 0 0 12px; background-size: 150px 12px; }
+html.rf-m .skill-container { grid-template-columns: 1fr; grid-template-rows: none; grid-auto-rows: 92px; gap: 8px; flex-grow: 0; }
+html.rf-m .skill-btn {
+    display: grid; grid-template-columns: 66px 1fr; grid-template-rows: 1fr 1fr;
+    column-gap: 10px; row-gap: 2px; align-items: center; justify-items: start;
+    padding: 6px 8px; border-radius: 14px; text-align: left;
+}
+html.rf-m .skill-btn::before { content: none; }
+html.rf-m .skill-btn .s-img {
+    position: static; grid-column: 1; grid-row: 1 / 3; align-self: center;
+    width: 66px; height: 66px; object-fit: cover; border-radius: 50%;
+    -webkit-mask: none; mask: none;
+    box-shadow: 0 0 0 2px rgba(216, 180, 106, 0.45);
+    background: rgba(0, 0, 0, 0.35);
+}
+html.rf-m .skill-btn .s-name { grid-column: 2; grid-row: 1; align-self: end; font-size: 36px; line-height: 1.15; margin: 0; white-space: nowrap; }
+html.rf-m .skill-btn .s-count {
+    grid-column: 2; grid-row: 2; align-self: start; font-size: 34.2px; line-height: 1.2;
+    padding: 0 10px; border-radius: 10px; margin: 2px 0 0; letter-spacing: 0;
+}
+html.rf-m .skill-btn:hover:not(:disabled) { transform: none; }
+html.rf-m .skill-btn:hover:not(:disabled) .s-img { transform: none; }
+html.rf-m .skill-btn:active:not(:disabled) { transform: scale(0.97); }
+
+/* ---- 牌桌：全寬（內側 x 30–1050、y 860–1190） ----
+ * 上：出牌紀錄（x 48–726）｜玩家生命（在重新准备、结束回合上面）
+ * 下：增益（左）｜COMBO｜DECK｜重新准备｜结束回合（右下，能按的集中在一起；结束回合在最右，右手拇指） */
+html.rf-m .dashboard-container {
+    top: 850px; bottom: auto; left: 20px; right: 20px; height: 350px;
+    transform: none; grid-template-columns: 1fr; grid-template-rows: 1fr 128px;
+}
+html.rf-m .dash-left { padding: 12px 324px 6px 18px; }
+html.rf-m .dash-left > div:first-child {
+    font-size: 34.2px !important; line-height: 48px; height: 48px; margin-bottom: 6px !important; letter-spacing: 4px;
+}
+html.rf-m .track-box { gap: 20px; padding: 0 18px; border-radius: 14px; }
+html.rf-m .track-box > span { font-size: 36px; letter-spacing: 2px; }
+html.rf-m .mini-card { width: 66px; height: 96px; padding-bottom: 24px; font-size: 42px; border-radius: 8px; }
+html.rf-m .mini-card[data-link]::before { left: -15px; font-size: 22px; }
+html.rf-m .mini-card[data-link="bonus"]::before { font-size: 26px; }
+/* 四格靠右：COMBO x 316–466｜DECK 476–626｜重新准备 636–806｜结束回合 816–1036 */
+html.rf-m .dash-right {
+    justify-self: end; width: 748px;
+    grid-template-columns: 150px 150px 170px 1fr; grid-template-rows: 1fr; gap: 10px; padding: 6px 14px 14px;
+}
+html.rf-m .dash-cell { justify-content: flex-end; padding-bottom: 6px; }
+html.rf-m .cell-tag { top: 6px; left: 0; right: 0; text-align: center; font-size: 34.2px; letter-spacing: 1px; }
+html.rf-m .cell-big-text { font-size: 58px; line-height: 1; }
+html.rf-m .btn-restart { font-size: 36px !important; line-height: 1.2; }
+html.rf-m .btn-end { font-size: 42px !important; line-height: 1.15; letter-spacing: 4px; }
+
+/* 玩家生命：出牌紀錄右邊空白處的正中（x 726–1036、y 860–1068 → 圓心 x 881、y 964，直徑約 190） */
+html.rf-m .area-right-bot {
+    top: 849px; left: 771px; right: auto; bottom: auto; z-index: 25;
+    transform: scale(0.95); transform-origin: center;
+}
+html.rf-m .php-val { font-size: 76px; }
+html.rf-m .php-lbl { font-size: 0; letter-spacing: 0; margin-top: 2px; }
+html.rf-m .php-lbl::after { content: "生命"; font-size: 34.2px; letter-spacing: 6px; font-family: "Noto Serif SC", serif; }
+
+/* 增益（鼓舞之心、不動信念）：牌桌左下（COMBO 左邊），上下排；剩餘回合數用圓章 */
+html.rf-m .area-left {
+    top: 1068px; left: 44px; width: 260px; height: 108px; z-index: 25;
+    flex-direction: column; justify-content: center; align-items: stretch; gap: 4px;
+    padding: 0 !important; border: none !important; border-image: none !important;
+    background: none !important; box-shadow: none !important;
+}
+html.rf-m .buff-panel-title { display: none; }
+html.rf-m .buff-chip {
+    width: auto; justify-content: flex-start; flex-direction: row; gap: 8px; height: 52px; margin: 0;
+    padding: 0 6px 0 14px; border-radius: 26px; line-height: 1;
+}
+/* 圖示寬度固定（✦ 和 🛡 的字寬不同），兩個膠囊同寬，名稱才會對齊 */
+html.rf-m .buff-chip-icon { font-size: 34.2px; margin: 0; width: 40px; flex: none; text-align: center; }
+html.rf-m .buff-chip-name { font-size: 34.2px; line-height: 1; color: #e0cc98; white-space: nowrap; }
+html.rf-m .buff-chip-name br { display: none; }
+html.rf-m .buff-chip-turns {
+    font-size: 34.2px; margin: 0; width: 42px; height: 42px; border-radius: 50%;
+    display: grid; place-items: center;
+    background: rgba(0, 0, 0, 0.5); box-shadow: inset 0 0 0 2px rgba(216, 180, 106, 0.5);
+}
+html.rf-m .buff-chip-turns-label { display: none; }
+
+/* 未來視界：牌庫接下來的 3 張。立繪區的左下，靠牌桌左上（x 20–198、y 628–842） */
+html.rf-m .future-sight-container {
+    top: 628px; left: 20px; width: 178px; padding: 10px 12px 14px !important; gap: 8px;
+}
+html.rf-m .fs-label {
+    width: auto; font-size: 34.2px; letter-spacing: 1px; line-height: 1.15; text-align: center;
+    padding: 0 0 10px; background-size: 90px 10px;
+}
+html.rf-m #fs-cards-list { flex-direction: row !important; justify-content: center; gap: 6px !important; }
+html.rf-m .fs-card-slot { width: 48px; height: 74px; padding-bottom: 16px; font-size: 34.2px; }
+
+/* ---- 手牌 ---- */
+html.rf-m .area-hand { height: 240px; padding-bottom: 14px; align-items: flex-end; }
+html.rf-m .card {
+    width: 140px; height: 192px; margin: 0 -6px; border-radius: 12px; font-size: 76px;
+}
+html.rf-m .area-hand:has(.card:nth-child(8)) .card { margin: 0 -18px; }
+html.rf-m .area-hand:has(.card:nth-child(10)) .card { margin: 0 -32px; }
+/* 12 張以上再疊多一點，不要碰到右下角的音樂鈕 */
+html.rf-m .area-hand:has(.card:nth-child(12)) .card { margin: 0 -44px; }
+html.rf-m .card.token::after { top: 34px; right: 12px; font-size: 26px; }
+/* 觸控沒有「移過去」：點過的牌不要卡在抬起的狀態，改成按下時回饋 */
+html.rf-m .card:hover { transform: translateY(var(--fan-y, 0)) rotate(var(--fan-r, 0deg)); z-index: auto; }
+html.rf-m .card:not(.disabled):active { transform: translateY(calc(var(--fan-y, 0px) - 24px)) rotate(0deg) scale(1.06); z-index: 100; }
+
+/* ---- 提示文字、回合過場、選色器 ---- */
+html.rf-m #log-overlay { top: 560px; left: 380px; font-size: 60px; padding: 10px 50px; white-space: nowrap; }
+html.rf-m #turn-overlay-text { font-size: 104px; padding: 30px 120px; background-size: 760px 18px, 760px 18px, auto; }
+html.rf-m #turn-overlay-sub { font-size: 42px; }
+html.rf-m #color-picker { gap: 44px; }
+html.rf-m #color-picker h2 { font-size: 48px !important; padding-bottom: 28px; background-size: 420px 16px; }
+html.rf-m .cp-options { flex-wrap: wrap; justify-content: center; width: 760px; gap: 50px; padding: 50px 60px !important; }
+html.rf-m .cp-btn { width: 220px; height: 220px; }
+html.rf-m .cp-btn::after { background-size: 100px; }
+html.rf-m .cp-cancel-btn { font-size: 40px; padding: 24px 80px; }
+
+/* ---- 讀取、開場、失敗 ---- */
+html.rf-m #loading-screen { font-size: 64px; }
+html.rf-m #ready-screen, html.rf-m #defeat-modal { gap: 50px; }
+html.rf-m #ready-screen::before, html.rf-m #defeat-modal::before { width: 940px; height: 640px; border-image-width: 48px; }
+html.rf-m .ready-title { font-size: 104px; padding-bottom: 30px; background-size: 520px 18px; }
+html.rf-m .ready-desc { font-size: 42px; max-width: 760px; text-align: center; line-height: 1.5; margin-bottom: 10px; }
+html.rf-m .btn-ready, html.rf-m .btn-start, html.rf-m .d-btn { font-size: 52px; padding: 28px 100px; clip-path: polygon(26px 0, calc(100% - 26px) 0, 100% 50%, calc(100% - 26px) 100%, 26px 100%, 0 50%); }
+html.rf-m .defeat-title { font-size: 112px; padding-bottom: 30px; background-size: 520px 18px; }
+html.rf-m .defeat-btn-group { flex-direction: column; gap: 36px; }
+
+/* ---- 戰前準備：一欄八列（頭像在左；技能名、角色、次數一行，說明下一行） ---- */
+html.rf-m #selection-screen { justify-content: flex-start; padding-top: 30px; }
+html.rf-m .sel-header { margin-bottom: 0; }
+html.rf-m .sel-header h1 { font-size: 54px; margin: 0 0 6px !important; padding-bottom: 16px; background-size: 340px 16px; }
+html.rf-m .sel-header > div:nth-child(2) { font-size: 38px; color: #c8b8a0 !important; margin-bottom: 0 !important; }
+html.rf-m .sel-grid { grid-template-columns: 1fr; gap: 6px; max-width: none; width: 1000px; margin: 12px 40px 0; }
+html.rf-m .sel-card {
+    width: auto; min-height: 0; padding: 7px 30px 9px 20px !important;
+    display: grid !important; grid-template-columns: 88px auto 1fr auto; grid-template-rows: auto auto;
+    grid-template-areas: "i t o c" "i d d d"; gap: 0 18px; align-items: center;
+}
+html.rf-m .sel-card:hover { transform: none; filter: none; }
+html.rf-m .sel-card:active { transform: scale(0.99); }
+html.rf-m .rf-sel-portrait {
+    position: static !important; grid-area: i; width: 88px; height: 88px; object-fit: cover; border-radius: 50%;
+    opacity: 0.75; filter: sepia(0.25); -webkit-mask: none; mask: none;
+    box-shadow: 0 0 0 2px rgba(216, 180, 106, 0.4); background: rgba(0, 0, 0, 0.35);
+}
+html.rf-m .sel-card.selected .rf-sel-portrait { opacity: 1; filter: none; box-shadow: 0 0 0 3px var(--rf-gold-hi); }
+html.rf-m .sel-card.selected::after { width: 50px; height: 50px; left: 4px; right: auto; top: 0; }
+html.rf-m .sel-title { grid-area: t; font-size: 40px; padding-bottom: 0; border-bottom: none; line-height: 1.2; }
+html.rf-m .sel-owner { grid-area: o; font-size: 34.2px; margin-bottom: 0; line-height: 1.25; }
+html.rf-m .sel-desc { grid-area: d; font-size: 36px; line-height: 1.25; }
+html.rf-m .sel-card > div:last-child {
+    grid-area: c; margin: 0 !important; border-top: none !important; padding: 0 !important;
+    font-size: 34.2px !important; line-height: 1.25;
+}
+html.rf-m .rf-sel-count { position: absolute; top: 46px; right: 40px; font-size: 38px; padding: 6px 30px; border-radius: 30px; margin-top: 0; }
+html.rf-m .btn-start { position: absolute; bottom: 34px; left: 50%; transform: translateX(-50%); margin-top: 0; font-size: 48px; padding: 22px 96px; }
+html.rf-m .btn-start:hover { transform: translateX(-50%); }
+html.rf-m .btn-start:active { transform: translateX(-50%) scale(0.97); }
+</style>
+<script id="rf-mobile-switch">
+/* 宿主注入 INJECTED_MOBILE_LAYOUT 時改用手機直式版面；INJECTED_STAGE_H 可指定畫布高度（預設 1440） */
+if (window.INJECTED_MOBILE_LAYOUT) {
+    document.documentElement.classList.add('rf-m');
+    if (window.INJECTED_STAGE_H) document.documentElement.style.setProperty('--rf-stage-h', window.INJECTED_STAGE_H + 'px');
+}
+</script>
 </head>
 <body>
     <div id="bgm-toggle-btn" class="sys-btn" onclick="toggleLocalMusic()">🔊</div>

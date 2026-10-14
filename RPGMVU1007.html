@@ -806,7 +806,7 @@
         z-index: 30;
         transition: background 0.5s;
     }
-    .nav-group { display: flex; align-items: center; gap: 12px; }
+    .nav-group { display: flex; align-items: center; gap: 12px; margin-left: auto; }
 
     /* 通用按鈕樣式 */
     .nav-btn, .mode-switch { 
@@ -1954,7 +1954,7 @@
     .mm-hit-zone { fill: transparent; stroke: none; }
     .mm-zone-label {
         font-family: "Noto Serif SC", "Noto Serif TC", serif;
-        font-size: 9px; font-weight: bold; letter-spacing: 1px;
+        font-size: 17.1px; font-weight: bold; letter-spacing: 1px;
         fill: #d0c8b6; stroke: rgba(0, 0, 0, 0.9); stroke-width: 2.5px; paint-order: stroke;
         text-anchor: middle; dominant-baseline: middle; pointer-events: none;
         transition: fill 0.2s;
@@ -4299,6 +4299,10 @@
 .rpg-v7-root.mobile-layout.topbar-sheet-open .map-area {
     aspect-ratio: 3 / 4;
 }
+/* 手機開小遊戲（2026-10-14）：地圖區同樣改 3:4，小遊戲畫布 1080 × 1440（直式版面） */
+.rpg-v7-root.mobile-layout.minigame-mobile .map-area {
+    aspect-ratio: 3 / 4;
+}
 
 /* --- [新增] 狀態頁：3:4 加高後重排（內容優先） ---
    原窄屏方案（3:2 時代）因空間不足：面板佔滿 76% 高仍要捲動、
@@ -4485,6 +4489,107 @@
 }
 .rpg-v7-root.mobile-layout .display-modal-body {
     padding: 24px 28px 40px;
+}
+
+/* 手機面板字級下限（2026-10-14）：實際顯示 ≥ 12px（380 寬） */
+/* 畫布縮放 0.3519（380 寬）：34px 只有 11.96px，所以標 34 的地方用 34.2px（= 12.03px）。後面的規則與前面的手機規則同權重，靠順序蓋過。 */
+
+/* ---- 狀態 ---- */
+/* 提示「※ 属性影响等级…」的 18px 寫在 style 屬性，只能用 !important。
+   次要說明：不強求 12px，用 26px（實際約 9px），比原本大、但明顯小於下方 36px 的角色介紹 */
+.rpg-v7-root.mobile-layout .status-scaler #tab-p-main > div[style*="font-size"] {
+    font-size: 26px !important;
+}
+.rpg-v7-root.mobile-layout .status-scaler .points-row > span,
+.rpg-v7-root.mobile-layout .status-scaler .points-row > .points-val {
+    font-size: 36px;
+}
+/* 頁籤字變大，左右內距縮小，總寬不超過原本（「邀请同行」鈕固定在頁籤列之後，不能被擠到） */
+.rpg-v7-root.mobile-layout .status-scaler .tab-btn {
+    font-size: 36px;
+    padding-left: 24px;
+    padding-right: 24px;
+}
+.rpg-v7-root.mobile-layout .status-scaler .data-row > span:first-child,
+.rpg-v7-root.mobile-layout .status-scaler .stat-label,
+.rpg-v7-root.mobile-layout .status-scaler .exp-item > span {
+    font-size: 36px;
+}
+.rpg-v7-root.mobile-layout .status-scaler #player-desc,
+.rpg-v7-root.mobile-layout .status-scaler #member-desc,
+.rpg-v7-root.mobile-layout .status-scaler .exp-val {
+    font-size: 36px;
+}
+.rpg-v7-root.mobile-layout .status-scaler .stat-control-row {
+    height: auto;
+    min-height: 80px;
+}
+.rpg-v7-root.mobile-layout .status-scaler .batch-input {
+    width: 76px;
+    height: 52px;
+    font-size: 36px;
+}
+.rpg-v7-root.mobile-layout .status-scaler .btn-plus {
+    width: 68px;
+    height: 68px;
+    font-size: 40px;
+}
+.rpg-v7-root.mobile-layout .status-scaler .toggle-party-btn {
+    font-size: 34.2px;
+}
+
+/* ---- 任務 ---- */
+.rpg-v7-root.mobile-layout .quest-scaler .q-npc,
+.rpg-v7-root.mobile-layout .quest-scaler .q-npc b > span {
+    font-size: 34.2px;
+}
+.rpg-v7-root.mobile-layout .quest-scaler .filter-opt {
+    font-size: 36px;
+}
+
+/* ---- 任務／背包 ---- */
+.rpg-v7-root.mobile-layout .quest-scaler .cat-btn,
+.rpg-v7-root.mobile-layout .quest-scaler .cat-btn > span,
+.rpg-v7-root.mobile-layout .bag-scaler .cat-btn,
+.rpg-v7-root.mobile-layout .bag-scaler .cat-btn > span {
+    font-size: 36px;
+}
+
+/* ---- 背包 ---- */
+/* 數量「x3」的 0.6em 寫在 style 屬性，只能用 !important */
+.rpg-v7-root.mobile-layout .bag-scaler .item-name > span {
+    font-size: 36px !important;
+}
+.rpg-v7-root.mobile-layout .bag-scaler .item-desc {
+    font-size: 36px;
+    max-height: 110px;   /* 兩行 36px × 1.5 = 108，不要一開始就出現捲軸 */
+}
+.rpg-v7-root.mobile-layout .bag-scaler .currency-box,
+.rpg-v7-root.mobile-layout .bag-scaler #currency-val {
+    font-size: 38px;
+}
+
+/* ---- 世界地圖 ---- */
+.rpg-v7-root.mobile-layout .worldmap-scaler .wm-preview-label {
+    font-size: 34.2px;
+}
+.rpg-v7-root.mobile-layout .worldmap-scaler .wm-sidebar-label {
+    font-size: 34.2px;
+}
+.rpg-v7-root.mobile-layout .worldmap-scaler .wm-region-btn {
+    font-size: 36px;
+}
+
+/* ---- 角色小視窗 ---- */
+/* 圓環按鈕文字：改在基本規則（手機與電腦版同一比例），見下方「圓環文字字級」 */
+.rpg-v7-root.mobile-layout .mini-modal-scaler .close-btn {
+    font-size: 40px;
+    line-height: 1;
+    /* 原圓鈕 44px 裝不下 40px 的 ✖（字型的行框會超出約 6px），放大到 56px，並往左上移 6px 讓圓心不變 */
+    width: 56px;
+    height: 56px;
+    top: 64px;
+    left: 274px;
 }
 
 
@@ -4958,6 +5063,33 @@
   .rpg-v7-root.mvu-paper.stock-study:where([data-stock-ready~="paging"])[data-stock-paging="on"] .nav-btn:focus-visible {
     outline: 2px solid var(--stock-ink);
     outline-offset: 2px;
+  }
+
+  /* 手機主文控制列排成一行（2026-10-14）：原本需要約 420px，換行後翻頁鈕會跑到左下。
+     縮小內距、間距與按鈕寬度，裝飾圖跟著縮放（模式鈕 156 × 39.955 → 136 × 34.83）。 */
+  .rpg-v7-root.mvu-paper.stock-study.mobile-layout:where([data-stock-ready~="button"])[data-stock-button="on"] .control-panel,
+  .rpg-v7-root.mvu-paper.stock-study.mobile-layout:where([data-stock-ready~="paging"])[data-stock-paging="on"] .control-panel {
+    padding-left: 12px;
+    padding-right: 12px;
+    gap: 8px 10px;
+  }
+  .rpg-v7-root.mvu-paper.stock-study.mobile-layout:where([data-stock-ready~="button"])[data-stock-button="on"] .mode-switch {
+    width: 136px;
+    padding: 9px 16px;
+  }
+  .rpg-v7-root.mvu-paper.stock-study.mobile-layout:where([data-stock-ready~="button"])[data-stock-button="on"] .mode-switch::before {
+    -webkit-mask-size: 136px 34.83px;
+    mask-size: 136px 34.83px;
+  }
+  .rpg-v7-root.mvu-paper.stock-study.mobile-layout:where([data-stock-ready~="button"])[data-stock-button="on"] .mode-switch::after {
+    inset: 10px 11px;
+  }
+  .rpg-v7-root.mvu-paper.stock-study.mobile-layout:where([data-stock-ready~="paging"])[data-stock-paging="on"] .nav-group {
+    gap: 8px;
+  }
+  .rpg-v7-root.mvu-paper.stock-study.mobile-layout:where([data-stock-ready~="paging"])[data-stock-paging="on"] .nav-btn {
+    width: 64px;
+    padding: 9px 10px;
   }
 
   .rpg-v7-root.mvu-paper.stock-study:where([data-stock-ready~="round"])[data-stock-menu-trigger="on"] .menu-toggle {
@@ -7345,7 +7477,7 @@ async function renderCurrentMemberGallery() {
         band_half: 10,      // 底板半寬（內外各 10，和舊的 20 寬黑條佔同樣位置）
         r_inner: 75,        // 感應區內徑 (貼合人物)
         r_outer: 115,       // 感應區外徑（只比底板外緣多一點；太大時點圓環外面會觸發按鈕，不能關閉）
-        r_label: 124,       // 按鈕文字的半徑（底板外側，避開圖示）
+        r_label: 120,       // 按鈕文字的半徑（底板外側；文字往外延伸，見 initMiniModal）
         r_ring: 82,         // 好感度圓環半徑
         icon_size: 16,      // 按鈕圖示大小（viewBox 單位）
         gap_deg: 4          // 底板縫隙
@@ -7454,6 +7586,8 @@ async function renderCurrentMemberGallery() {
             label.setAttribute("class", "mm-zone-label");
             label.setAttribute("x", mid.x);
             label.setAttribute("y", mid.y);
+            // 往外側延伸：左側靠右對齊、右側靠左對齊（CSS 的 text-anchor: middle 會蓋過屬性，所以用 style）
+            label.style.textAnchor = mid.x < MM_CFG.cx ? "end" : "start";
             label.textContent = z.label;
 
             // 圖示（畫在底板中央）
@@ -12254,6 +12388,7 @@ pauseBgm: async function() {
         const layer = document.getElementById('minigame-layer');
         const frame = document.getElementById('minigame-frame');
         if(layer) layer.classList.remove('active');
+        setMinigameMobile(false);
         
         // 清空 src 釋放資源
         if(frame) setTimeout(() => frame.src = "", 300);
@@ -12373,11 +12508,24 @@ const MINIGAME_RAW_URL = "https://raw.githubusercontent.com/asal0120/st-rpg-chai
 
 window.__MINIGAME_CACHE = window.__MINIGAME_CACHE || {};
 
+// [手機小遊戲直式版面 2026-10-14] on：地圖區 3:4、畫布 1080 × 1440；off：恢復 3:2、1080 × 720
+function setMinigameMobile(on) {
+    const root = document.querySelector('.rpg-v7-root');
+    const scaler = document.getElementById('minigame-scaler');
+    if (root) root.classList.toggle('minigame-mobile', !!on);
+    if (scaler) scaler.style.height = on ? '1440px' : '';
+    if (typeof requestParentResize === 'function') requestParentResize();
+}
+
 async function openMinigame(url) { 
     const layer = document.getElementById('minigame-layer');
     const frame = document.getElementById('minigame-frame');
     const scaler = document.getElementById('minigame-scaler');
     
+    // [手機小遊戲直式版面] 手機版面：地圖區改 3:4、畫布 1080 × 1440，並通知小遊戲改用直式版面
+    const mobileStage = !!document.querySelector('.rpg-v7-root')?.classList.contains('mobile-layout');
+    setMinigameMobile(mobileStage);
+
     // 1. 同步縮放比例
     const mapArea = document.querySelector('.map-area') || document.body;
     const scale = mapArea.offsetWidth / 1080;
@@ -12439,7 +12587,8 @@ frame.onload = () => {
 const injectionScript =
     '<script>window.INJECTED_MUTE_STATE = ' +
     JSON.stringify(injectedMuteState) +
-    ';</' + 'script>';
+    ';' + (mobileStage ? 'window.INJECTED_MOBILE_LAYOUT = true;' : '') +
+    '</' + 'script>';
 
 htmlText = htmlText.replace('<head>', '<head>' + injectionScript);
 
@@ -12470,6 +12619,7 @@ function _triggerVictoryFallback(targetName) {
     const frame = document.getElementById('minigame-frame');
     
     if (layer) layer.classList.remove('active');
+    setMinigameMobile(false);
     if (frame) setTimeout(() => frame.src = '', 300);
     if (window.gameLoopPaused) {
         window.gameLoopPaused = false;
