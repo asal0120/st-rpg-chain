@@ -1219,7 +1219,7 @@
 <style id="rf-mobile-style">
 /* miniMVU2 手機版面覆寫層（草案 v4）
  * 放在 rf-refresh-style 之後。分兩部分：
- *   1. 共通修正（電腦版也套用）：選擇畫面「次数」壓到卡框、對比太低；去掉場景光效；勝利條件字放大；減少動態。
+ *   1. 共通修正（電腦版也套用）：選擇畫面「次数」壓到卡框、對比太低；去掉場景光效；勝利條件字放大；出牌紀錄寬度固定；減少動態。
  *   2. html.rf-m：手機直式版面。畫布 1080 × 1440（3:4），主檔依地圖寬縮放（380px 寬時約 0.35 倍）。
  *      字級下限：主要資訊 40px、次要標籤 34.2px（380px 寬時約 14px／12px；34px 只有 11.96px）。
  * 編排沿用電腦版的分區：上＝BOSS 與傷害預兆、緞帶；右側欄＝母愛支援；中＝立繪；下＝牌桌、手牌。
@@ -1243,6 +1243,19 @@
 
 /* 勝利條件：原本 16px 太小，放大到 22px（手機版另外用 40px）。最長的條件約 380px，緞帶內約 570px，仍是一行 */
 .condition-box { font-size: 22px !important; padding: 9px 8px 13px !important; }
+
+/* 出牌紀錄：寬度固定。原本格線欄會依內容變寬，牌一多就把右邊的格子擠出去（手機約 9 張、電腦版約 11 張）。
+ * 超出時保留最新的牌（程式會捲到最右），舊的往左淡出：在左側內距放一層固定在捲動區左緣的漸層（position: sticky），
+ * 寬度等於左內距，所以沒有超出時只蓋在空白的內距上。 */
+.dashboard-container { grid-template-columns: minmax(0, 1fr) 240px; }
+.dash-left, .track-box { min-width: 0; }
+.track-box { --rf-fade: 22px; --rf-gap: 14px; padding-left: var(--rf-fade); }
+.track-box::before {
+    content: ""; position: sticky; left: 0; z-index: 1; flex: none; align-self: stretch;
+    width: var(--rf-fade); margin-left: calc(-1 * var(--rf-fade)); margin-right: calc(-1 * var(--rf-gap));
+    background: linear-gradient(to right, rgba(8, 6, 3, 0.95), rgba(8, 6, 3, 0));
+    pointer-events: none;
+}
 
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
@@ -1365,13 +1378,13 @@ html.rf-m .skill-btn:active:not(:disabled) { transform: scale(0.97); }
  * 下：增益（左）｜COMBO｜DECK｜重新准备｜结束回合（右下，能按的集中在一起；结束回合在最右，右手拇指） */
 html.rf-m .dashboard-container {
     top: 850px; bottom: auto; left: 20px; right: 20px; height: 350px;
-    transform: none; grid-template-columns: 1fr; grid-template-rows: 1fr 128px;
+    transform: none; grid-template-columns: minmax(0, 1fr); grid-template-rows: 1fr 128px;
 }
 html.rf-m .dash-left { padding: 12px 324px 6px 18px; }
 html.rf-m .dash-left > div:first-child {
     font-size: 34.2px !important; line-height: 48px; height: 48px; margin-bottom: 6px !important; letter-spacing: 4px;
 }
-html.rf-m .track-box { gap: 20px; padding: 0 18px; border-radius: 14px; }
+html.rf-m .track-box { --rf-fade: 32px; --rf-gap: 20px; gap: 20px; padding: 0 18px 0 var(--rf-fade); border-radius: 14px; }
 html.rf-m .track-box > span { font-size: 36px; letter-spacing: 2px; }
 html.rf-m .mini-card { width: 66px; height: 96px; padding-bottom: 24px; font-size: 42px; border-radius: 8px; }
 html.rf-m .mini-card[data-link]::before { left: -15px; font-size: 22px; }
