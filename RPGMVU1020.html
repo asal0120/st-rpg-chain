@@ -13,8 +13,30 @@ html:not(.rpg-classic) .rpg-v7-root .status-scaler .data-content {
     box-shadow: none;
     border-radius: 0;
     border-color: transparent;
-    border-image: url('https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/restyle/v1-warm/decor-d-knot.png') 220 640 380 148 / 110px 320px 190px 74px / 40px 64px 60px 30px stretch;
     filter: drop-shadow(0 10px 18px rgba(0,0,0,.55));
+}
+html:not(.rpg-classic) .rpg-v7-root:not(.mobile-layout) .status-scaler .data-content {
+    overflow: visible;
+}
+html:not(.rpg-classic) .rpg-v7-root:not(.mobile-layout) .status-scaler .data-content > .tab-page {
+    position: absolute;
+    top: 0; right: 0; bottom: 0; left: 0;
+    box-sizing: border-box;
+    padding: 30px 30px 20px;
+    overflow-y: auto;
+}
+html:not(.rpg-classic) .rpg-v7-root:not(.mobile-layout) .status-scaler .data-content > .tab-page::-webkit-scrollbar {
+    width: 0;
+}
+html:not(.rpg-classic) .rpg-v7-root:not(.mobile-layout) .status-scaler .data-content::after {
+    content: '';
+    position: absolute;
+    top: -1px; right: -1px; bottom: -1px; left: -1px;
+    box-sizing: border-box;
+    border: 1px solid transparent;
+    border-image: url('https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/restyle/v1-warm/decor-d-knot.png') 220 640 380 148 / 110px 320px 190px 74px / 40px 64px 60px 30px stretch;
+    pointer-events: none;
+    z-index: 100;
 }
 html:not(.rpg-classic) .rpg-v7-root .status-scaler .tab-row {
     background: url('https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/restyle/v1-warm/strip-1.png') left top / 24px 100% no-repeat, url('https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/restyle/v1-warm/strip-3.png') right top / 52px 100% no-repeat, url('https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/UI/restyle/v1-warm/strip-2.png') 23px top / calc(100% - 74px) 100% no-repeat;
@@ -8396,8 +8418,11 @@ async function renderCurrentMemberGallery() {
     if (tabName === 'm-exp') btns[1]?.classList.add('active');
     if (tabName === 'm-gallery') btns[2]?.classList.add('active');
 
+    const nextTabPage = document.getElementById(`tab-${tabName}`);
+    const tabPageChanged = !!nextTabPage && !nextTabPage.classList.contains('active');
     document.querySelectorAll('.tab-page').forEach(p => p.classList.remove('active'));
-    document.getElementById(`tab-${tabName}`)?.classList.add('active');
+    nextTabPage?.classList.add('active');
+    if (tabPageChanged) nextTabPage.scrollTop = 0;   // 換到不同的分頁：從頂端開始（捲動容器是分頁本身，不然會記住上次的位置）
 
     const cards = Array.from(stTrack?.children || []);
     const centerIndex = (cards.length > 1) ? 1 : 0;
