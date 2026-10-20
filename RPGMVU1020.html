@@ -521,6 +521,19 @@ html:not(.rpg-classic) .rpg-v7-root .status-scaler .stat-control-row .stat-num {
     text-align: left;
 }
 /* === RPG-RESTYLE END === */
+/* === 手動修正：分頁底線動畫 ===
+   底線以 background 簡寫繪製，若 transition 涵蓋 background，
+   切換時 background-position / size 會從左上角補間，造成底線由左上滑入。
+   這裡的 transition 只保留顏色類屬性。 */
+html:not(.rpg-classic) .rpg-v7-root .topbar-tab {
+    transition: color .25s ease, border-color .25s ease;
+}
+html:not(.rpg-classic) .rpg-v7-root .status-scaler .tab-btn {
+    transition: color .3s, border-color .3s, text-shadow .3s;
+}
+html:not(.rpg-classic) .rpg-v7-root :is(.bag-scaler, .quest-scaler) .cat-btn {
+    transition: color .3s ease, border-color .3s ease, text-shadow .3s ease;
+}
 </style>
 <style>
     /* 引入 Uncial Antiqua (英文/數字) 與 ZCOOL XiaoWei (中文古典風) */
