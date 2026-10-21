@@ -1510,11 +1510,102 @@ html.rf-m .btn-start { position: absolute; bottom: 34px; left: 50%; transform: t
 html.rf-m .btn-start:hover { transform: translateX(-50%); }
 html.rf-m .btn-start:active { transform: translateX(-50%) scale(0.97); }
 </style>
+<style id="rf-shared-style">
+/* 劇情戰鬥與自由戰鬥共用的畫面樣式（主檔「暖色」主題的圓形鈕、銘牌鈕、電腦版立繪位移）。
+ * 由 tools/patches/mini_story_style_20261020.py 放進兩個原版（miniMVU2.html、mini261014.html）的 <style id="rf-shared-style">，
+ * 位置在 rf-mobile-style 之後；自由戰鬥檔是從原版產生的，所以也會有這一份（free-mode.css 不再重複）。
+ * 圓框素材的 @asset 佔位字（路徑相對於 st-rpg-chain 的 UI 資料夾）由修補腳本換成 data URI 內嵌，小遊戲沒有主檔的 CDN 備援，不從網路讀。
+ * 選擇器不依賴 html.rf-free：兩種模式都生效。 */
+
+/* ---------- 圓形外框（主檔「暖色」主題；跳過、靜音鈕用，當 mask）與銘牌鈕的框（SVG 9-slice） ---------- */
+html {
+    --fr-ring: url("data:image/webp;base64,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");
+    --fr-btn-gold: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23f6e2ab'/%3E%3Cstop offset='.5' stop-color='%23d0a454'/%3E%3Cstop offset='1' stop-color='%238a6224'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M8 1H40L47 8V40L40 47H8L1 40V8Z' fill='url(%23g)' stroke='%234a2e0a' stroke-width='1.6'/%3E%3Cpath d='M9.5 4.5H38.5L43.5 9.5V38.5L38.5 43.5H9.5L4.5 38.5V9.5Z' fill='none' stroke='%23fff3cc' stroke-opacity='.6' stroke-width='1.1'/%3E%3C/svg%3E");
+    --fr-btn-dark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23382b1c'/%3E%3Cstop offset='1' stop-color='%2315100a'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M8 1H40L47 8V40L40 47H8L1 40V8Z' fill='url(%23g)' stroke='%23d8b46a' stroke-width='1.6'/%3E%3Cpath d='M9.5 4.5H38.5L43.5 9.5V38.5L38.5 43.5H9.5L4.5 38.5V9.5Z' fill='none' stroke='%23d8b46a' stroke-opacity='.38' stroke-width='1.1'/%3E%3C/svg%3E");
+    --fr-bw: 14px;   /* 框的寬度（border-image-width），手機版加大 */
+    --fr-dia: 9px;   /* 菱形飾點 */
+}
+
+/* ---------- 小遊戲按鈕（銘牌鈕）：开始战斗（準備畫面、選支援）、劇情結算的 d-btn、自由戰鬥的結算／說明視窗 ----------
+ * 照小遊戲外框的語彙：切角長方形＋雙線框，左右兩端中間各一顆菱形飾點（同外框四角的菱形）。
+ * 框用 SVG 9-slice（border-image，切 14），不讀外部圖片。主要：金色漸層（同「结束回合」）；次要：深色底＋金色雙線。
+ * .fr-btn 是自由戰鬥自己建立的按鈕；.btn-ready、.btn-start、.d-btn 是原版就有的按鈕（d-btn：金色＝.skip，深色＝重新挑战）。 */
+.fr-btn, html .btn-ready, html .btn-start, html .d-btn {
+    box-sizing: border-box; cursor: pointer; white-space: nowrap;
+    border: var(--fr-bw) solid transparent !important; border-radius: 0 !important; clip-path: none !important;
+    border-image: var(--fr-btn-gold) 14 fill / var(--fr-bw) stretch !important;
+    background: none !important; box-shadow: none !important;
+    color: #2a1804 !important; text-shadow: 0 1px 0 rgba(255, 240, 200, 0.55);
+    transition: filter 0.15s;
+}
+.fr-btn {
+    position: relative; display: inline-flex; align-items: center; justify-content: center;
+    height: 58px; min-width: 176px; padding: 0 24px; margin: 0;
+    font: 700 22px/1 "Noto Serif SC", "Cinzel", serif; letter-spacing: 4px; text-indent: 4px;
+}
+html .btn-ready, html .btn-start, html .d-btn { padding: 4px 44px; }
+.fr-btn.sec, html .d-btn:not(.skip) { border-image-source: var(--fr-btn-dark) !important; color: #f3dca0 !important; text-shadow: 0 1px 2px #000; }
+/* 菱形飾點：壓在左右兩端的外框線上 */
+.fr-btn::before, .fr-btn::after,
+html .btn-ready::before, html .btn-ready::after,
+html .btn-start::before, html .btn-start::after,
+html .d-btn::before, html .d-btn::after {
+    content: ""; position: absolute; top: 50%; width: var(--fr-dia); height: var(--fr-dia); box-sizing: border-box;
+    background: #f3dca0; border: 1.5px solid #4a2e0a; transform: translateY(-50%) rotate(45deg); pointer-events: none;
+}
+.fr-btn::before, html .btn-ready::before, html .btn-start::before, html .d-btn::before { left: calc(-1 * var(--fr-bw) - var(--fr-dia) / 2 + 1px); }
+.fr-btn::after, html .btn-ready::after, html .btn-start::after, html .d-btn::after { right: calc(-1 * var(--fr-bw) - var(--fr-dia) / 2 + 1px); }
+.fr-btn.sec::before, .fr-btn.sec::after, html .d-btn:not(.skip)::before, html .d-btn:not(.skip)::after { background: #d8b46a; border-color: #15100a; }
+.fr-btn:hover, html .btn-ready:hover, html .btn-start:hover, html .d-btn:hover {
+    filter: brightness(1.1) drop-shadow(0 0 10px rgba(243, 200, 110, 0.5));
+}
+.fr-btn.sec:hover, html .d-btn:not(.skip):hover { color: #fff3cf !important; }
+.fr-btn:active { transform: translateY(1px); }
+
+/* ---------- 跳過鈕、靜音鈕：主檔「暖色」主題的圓形按鈕 ----------
+ * 深色圓底（#1d1611）＋金色圓框（avatar.webp 當 mask，填 #c5a059、不透明度 .85、懸停 1）；圖示是金色 SVG（currentColor），由遊戲 script 放進去（RF_ICON_*）。
+ * 位置與大小沿用原本的（電腦版 30／44、手機版 70／72），圓框畫在按鈕外側，所以觸控範圍不變小。 */
+html .ingame-skip-btn, html #bgm-toggle-btn {
+    isolation: isolate; display: flex; align-items: center; justify-content: center; padding: 0;
+    border: 0 !important; border-radius: 50%; background: transparent !important; box-shadow: none; color: #c5a059;
+}
+html .ingame-skip-btn::before, html #bgm-toggle-btn::before {
+    content: ""; position: absolute; inset: -3px; z-index: -1; pointer-events: none;
+    background: #c5a059; opacity: 0.85; -webkit-mask: var(--fr-ring) center / contain no-repeat; mask: var(--fr-ring) center / contain no-repeat;
+}
+html .ingame-skip-btn::after, html #bgm-toggle-btn::after {
+    content: ""; position: absolute; inset: 1px; z-index: -2; pointer-events: none; border-radius: 50%; background: #1d1611;
+}
+html .ingame-skip-btn:hover, html #bgm-toggle-btn:hover { color: #e2c98f; border: 0; }
+html .ingame-skip-btn:hover::before, html #bgm-toggle-btn:hover::before { opacity: 1; }
+html .ingame-skip-btn svg, html #bgm-toggle-btn svg { width: 54%; height: 54%; display: block; pointer-events: none; }
+/* 電腦版跳過鈕：原本 right -37 會壓到 BOSS 框的金框角，移到 BOSS 框與傷害預兆之間的空位中央 */
+html:not(.rf-m) .ingame-skip-btn { right: -45px; }
+
+/* ---------- 手機版 html.rf-m ---------- */
+/* 圓形鈕：圓框加粗 */
+html.rf-m .ingame-skip-btn::before, html.rf-m #bgm-toggle-btn::before { inset: -5px; }
+/* 銘牌鈕：框寬 20、菱形 14；.fr-btn 高 100（觸控 ≥ 70）、字級 44；自由戰鬥結算三顆一排（约 790）要放得進外框內距 */
+html.rf-m { --fr-bw: 20px; --fr-dia: 14px; }
+html.rf-m .fr-btn { height: 100px; min-width: 200px; padding: 0 28px; font-size: 44px; letter-spacing: 4px; text-indent: 4px; }
+html.rf-m .btn-ready, html.rf-m .d-btn { padding: 12px 84px; }
+html.rf-m .btn-start { padding: 8px 80px; }
+
+/* ---------- 電腦版立繪位移 ----------
+ * 這四位的頭部原本被條件緞帶（含自由戰鬥左邊的領域標籤列）遮住；依敵人把立繪整個往下移，立繪大小不變。手機版不動。
+ * 敵人 ID 由遊戲 script 的 loadBattleData（劇情）與 free-mode.js 的 loadFreeBattleData（自由戰鬥）寫在 <html data-rf-enemy>；其他五位不移動。
+ * 奈芙蒂（enemy_8）：自由戰鬥借用別人的條件、領域、技能，不換立繪，所以換階段也維持 60px。 */
+html:not(.rf-m)[data-rf-enemy="enemy_7"] .boss-img-container { transform: translateY(55px); }   /* 莉迪娅 */
+html:not(.rf-m)[data-rf-enemy="enemy_6"] .boss-img-container { transform: translateY(60px); }   /* 米拉露恩 */
+html:not(.rf-m)[data-rf-enemy="enemy_9"] .boss-img-container { transform: translateY(50px); }   /* 璐法 */
+html:not(.rf-m)[data-rf-enemy="enemy_8"] .boss-img-container { transform: translateY(60px); }   /* 奈芙蒂 */
+</style>
 <style id="rf-free-style">
 /* 自由戰鬥（試玩）的畫面元件樣式。只有 window.INJECTED_BATTLE_MODE = 'free' 時才會建立這些元件。
  * 電腦版：畫布 1080 × 720；手機版 html.rf-m：畫布 1080 × 1440，字級下限：主要資訊 40px、次要標籤 34.2px、觸控目標 ≥ 70px。
  * 位置原則：每個元件放在它所屬的東西旁邊（敵人 MP＝BOSS 欄血條下；領域＝緞帶左端；下一層＝緞帶下的條件進度位置；
- * 決斗＝傷害預兆框；減益＝增益面板）。 */
+ * 決斗＝傷害預兆框；減益＝增益面板）。
+ * 劇情戰鬥也有的元件（跳過／靜音圓形鈕、銘牌鈕、電腦版立繪位移）在 story-shared.css，已放進原版，這裡不重複。 */
 
 /* ---------- 敵人 MP：BOSS 欄血條正下方 ---------- */
 .free-mp { display: none; align-items: center; gap: 10px; margin-top: 6px; font-size: 13px; line-height: 1.2; color: #d9b6ff; }
@@ -1717,51 +1808,6 @@ html.rf-m .btn-start:active { transform: translateX(-50%) scale(0.97); }
 }
 #free-noopp .fn-txt { font-size: 2rem; letter-spacing: 4px; color: var(--rf-gold-hi, #f3dca0); text-shadow: 0 2px 4px #000; }
 
-/* ---------- 主檔「暖色」主題的圓形外框（由產生器換成 data URI；free-mode.css 原始檔只寫 url(@asset 路徑) 佔位字）：跳過、靜音鈕用，當 mask ---------- */
-html.rf-free {
-    --fr-ring: url("data:image/webp;base64,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");
-}
-
-/* ---------- 小遊戲按鈕（銘牌鈕）：結算畫面、开始战斗、說明視窗與「没有指定对手」的关闭 ----------
- * 照小遊戲外框的語彙：切角長方形＋雙線框，左右兩端中間各一顆菱形飾點（同外框四角的菱形）。
- * 框用 SVG 9-slice（border-image，切 14），不讀外部圖片。主要：金色漸層（同「结束回合」）；次要：深色底＋金色雙線。 */
-html.rf-free {
-    --fr-btn-gold: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23f6e2ab'/%3E%3Cstop offset='.5' stop-color='%23d0a454'/%3E%3Cstop offset='1' stop-color='%238a6224'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M8 1H40L47 8V40L40 47H8L1 40V8Z' fill='url(%23g)' stroke='%234a2e0a' stroke-width='1.6'/%3E%3Cpath d='M9.5 4.5H38.5L43.5 9.5V38.5L38.5 43.5H9.5L4.5 38.5V9.5Z' fill='none' stroke='%23fff3cc' stroke-opacity='.6' stroke-width='1.1'/%3E%3C/svg%3E");
-    --fr-btn-dark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23382b1c'/%3E%3Cstop offset='1' stop-color='%2315100a'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M8 1H40L47 8V40L40 47H8L1 40V8Z' fill='url(%23g)' stroke='%23d8b46a' stroke-width='1.6'/%3E%3Cpath d='M9.5 4.5H38.5L43.5 9.5V38.5L38.5 43.5H9.5L4.5 38.5V9.5Z' fill='none' stroke='%23d8b46a' stroke-opacity='.38' stroke-width='1.1'/%3E%3C/svg%3E");
-    --fr-bw: 14px;   /* 框的寬度（border-image-width），手機版加大 */
-    --fr-dia: 9px;   /* 菱形飾點 */
-}
-.fr-btn, html.rf-free .btn-ready, html.rf-free .btn-start {
-    box-sizing: border-box; cursor: pointer; white-space: nowrap;
-    border: var(--fr-bw) solid transparent !important; border-radius: 0 !important; clip-path: none !important;
-    border-image: var(--fr-btn-gold) 14 fill / var(--fr-bw) stretch !important;
-    background: none !important; box-shadow: none !important;
-    color: #2a1804 !important; text-shadow: 0 1px 0 rgba(255, 240, 200, 0.55);
-    transition: filter 0.15s;
-}
-.fr-btn {
-    position: relative; display: inline-flex; align-items: center; justify-content: center;
-    height: 58px; min-width: 176px; padding: 0 24px; margin: 0;
-    font: 700 22px/1 "Noto Serif SC", "Cinzel", serif; letter-spacing: 4px; text-indent: 4px;
-}
-html.rf-free .btn-ready, html.rf-free .btn-start { padding: 4px 44px; }
-.fr-btn.sec { border-image-source: var(--fr-btn-dark) !important; color: #f3dca0 !important; text-shadow: 0 1px 2px #000; }
-/* 菱形飾點：壓在左右兩端的外框線上 */
-.fr-btn::before, .fr-btn::after,
-html.rf-free .btn-ready::before, html.rf-free .btn-ready::after,
-html.rf-free .btn-start::before, html.rf-free .btn-start::after {
-    content: ""; position: absolute; top: 50%; width: var(--fr-dia); height: var(--fr-dia); box-sizing: border-box;
-    background: #f3dca0; border: 1.5px solid #4a2e0a; transform: translateY(-50%) rotate(45deg); pointer-events: none;
-}
-.fr-btn::before, html.rf-free .btn-ready::before, html.rf-free .btn-start::before { left: calc(-1 * var(--fr-bw) - var(--fr-dia) / 2 + 1px); }
-.fr-btn::after, html.rf-free .btn-ready::after, html.rf-free .btn-start::after { right: calc(-1 * var(--fr-bw) - var(--fr-dia) / 2 + 1px); }
-.fr-btn.sec::before, .fr-btn.sec::after { background: #d8b46a; border-color: #15100a; }
-.fr-btn:hover, html.rf-free .btn-ready:hover, html.rf-free .btn-start:hover {
-    filter: brightness(1.1) drop-shadow(0 0 10px rgba(243, 200, 110, 0.5));
-}
-.fr-btn.sec:hover { color: #fff3cf !important; }
-.fr-btn:active { transform: translateY(1px); }
-
 /* ---------- 結算畫面（沿用 #defeat-modal 的底） ----------
  * 外框畫在 .free-result-box 上，高度隨內容（原本的固定高度外框 ::before 關掉）。
  * 結構：標題（底下是分隔飾線）→ 統計列 → 按鈕列（一排、置中、間距一致）。
@@ -1781,7 +1827,7 @@ html.rf-free .btn-start::before, html.rf-free .btn-start::after {
 #defeat-modal.free-result #free-stats { display: block; }
 .fr-btns { display: flex; justify-content: center; align-items: center; gap: 20px; margin-top: 14px; }
 
-/* 按鈕外觀見上面「小遊戲按鈕（銘牌鈕）」。停用（已发送）：去色、變暗，不再有懸停效果 */
+/* 按鈕外觀見 story-shared.css 的「小遊戲按鈕（銘牌鈕）」（劇情戰鬥共用）。停用（已发送）：去色、變暗，不再有懸停效果 */
 .fr-btn:disabled { cursor: default; filter: grayscale(1) brightness(0.6); transform: none; }
 .fr-btn:disabled:hover { filter: grayscale(1) brightness(0.6); }
 
@@ -1895,11 +1941,6 @@ html.rf-m .free-result-box { width: 980px; min-width: 0; gap: 30px; padding: 100
 html.rf-m .free-result-box::before { border-image-width: 48px; }
 html.rf-m #free-stats { font-size: 44px; margin-top: 0; }
 html.rf-m .fr-btns { gap: 28px; margin-top: 20px; }
-/* 銘牌鈕（手機版）：框寬 20、菱形 14；高 100（觸控 ≥ 70）、字級 44；三顆一排（约 790）要放得進外框內距 */
-html.rf-m.rf-free { --fr-bw: 20px; --fr-dia: 14px; }
-html.rf-m .fr-btn { height: 100px; min-width: 200px; padding: 0 28px; font-size: 44px; letter-spacing: 4px; text-indent: 4px; }
-html.rf-m.rf-free .btn-ready { padding: 12px 84px; }
-html.rf-m.rf-free .btn-start { padding: 8px 80px; }
 html.rf-m #defeat-modal.win #defeat-title::after { width: 520px; height: 18px; }
 html.rf-m #free-noopp { gap: 60px; }
 html.rf-m #free-noopp .fn-txt { font-size: 64px; }
@@ -1931,37 +1972,6 @@ html.rf-m .col-k { border-width: 2px; }
 
 /* ================= 條件緞帶：审判反转生效中（文字換成「反转·…」並變色） ================= */
 #condition-text.rf-reversed { color: #ffb4a0 !important; text-shadow: 0 0 8px rgba(255, 90, 60, 0.85), 0 1px 2px #000 !important; }
-
-/* ================= 電腦版立繪位移（只有自由戰鬥電腦版） =================
- * 這三位的頭部原本被條件緞帶（含左邊的領域標籤列）遮住；依對手把立繪整個往下移（--rf-free-dy），立繪大小不變。
- * 對手名稱由 free-mode.js 的 loadFreeBattleData 寫在 <html data-free-opp>；其他五位不移動；手機版不動。 */
-html.rf-free:not(.rf-m) .boss-img-container { transform: translateY(var(--rf-free-dy, 0px)); }
-html.rf-free:not(.rf-m)[data-free-opp="莉迪娅"] { --rf-free-dy: 55px; }
-html.rf-free:not(.rf-m)[data-free-opp="米拉露恩"] { --rf-free-dy: 60px; }
-html.rf-free:not(.rf-m)[data-free-opp="璐法"] { --rf-free-dy: 50px; }
-/* 奈芙蒂：data-free-opp 一直是“奈芙蒂”（借用的對手只換條件、領域、技能，不換立繪），所以換階段也維持 60px */
-html.rf-free:not(.rf-m)[data-free-opp="奈芙蒂"] { --rf-free-dy: 60px; }
-
-/* ================= 跳過鈕、靜音鈕：主檔「暖色」主題的圓形按鈕（只有自由戰鬥） =================
- * 深色圓底（#1d1611）＋金色圓框（avatar.webp 當 mask，填 #c5a059、不透明度 .85、懸停 1）；圖示是金色 SVG（currentColor），由 free-mode.js 放進去。
- * 位置與大小沿用原本的（電腦版 30／44、手機版 70／72），圓框畫在按鈕外側，所以觸控範圍不變小。 */
-html.rf-free .ingame-skip-btn, html.rf-free #bgm-toggle-btn {
-    isolation: isolate; display: flex; align-items: center; justify-content: center; padding: 0;
-    border: 0 !important; border-radius: 50%; background: transparent !important; box-shadow: none; color: #c5a059;
-}
-html.rf-free .ingame-skip-btn::before, html.rf-free #bgm-toggle-btn::before {
-    content: ""; position: absolute; inset: -3px; z-index: -1; pointer-events: none;
-    background: #c5a059; opacity: 0.85; -webkit-mask: var(--fr-ring) center / contain no-repeat; mask: var(--fr-ring) center / contain no-repeat;
-}
-html.rf-free .ingame-skip-btn::after, html.rf-free #bgm-toggle-btn::after {
-    content: ""; position: absolute; inset: 1px; z-index: -2; pointer-events: none; border-radius: 50%; background: #1d1611;
-}
-html.rf-free .ingame-skip-btn:hover, html.rf-free #bgm-toggle-btn:hover { color: #e2c98f; border: 0; }
-html.rf-free .ingame-skip-btn:hover::before, html.rf-free #bgm-toggle-btn:hover::before { opacity: 1; }
-html.rf-free .ingame-skip-btn svg, html.rf-free #bgm-toggle-btn svg { width: 54%; height: 54%; display: block; pointer-events: none; }
-html.rf-m.rf-free .ingame-skip-btn::before, html.rf-m.rf-free #bgm-toggle-btn::before { inset: -5px; }
-/* 電腦版跳過鈕：原本 right -37 會壓到 BOSS 框的金框角，移到 BOSS 框與傷害預兆之間的空位中央 */
-html.rf-free:not(.rf-m) .ingame-skip-btn { right: -45px; }
 
 /* ================= 奈芙蒂：魔王也要玩（她的手牌、她打出的牌） =================
  * 紫色 #c58cff：比領域標籤（rgba(190,140,255) 暗底）和敵人 MP 條（#5b2a96→#b57cff）更亮；只用在奈芙蒂的牌（手牌的 NEXT 外框與光暈、出牌紀錄的紫框與「魔」記號、飛行中的牌）。
@@ -2091,7 +2101,7 @@ if (window.INJECTED_MOBILE_LAYOUT) {
                     <span class="hp-text-val" id="hp-text">200/200</span>
                 </div>
                 <div class="hp-track"><div id="hp-bar" class="hp-fill"></div></div>
-                <div class="ingame-skip-btn" onclick="skipBattle()" title="作弊：直接勝利">⏩</div>
+                <div class="ingame-skip-btn" onclick="skipBattle()" title="作弊：直接勝利"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z"/></svg></div>
             </div>
             <div class="condition-box" id="condition-text">胜利条件: 击败敌人</div>
             
@@ -4423,17 +4433,17 @@ if (window.INJECTED_MOBILE_LAYOUT) {
 	let currentTargetName = "";
     let isLocalMuted = (typeof window.INJECTED_MUTE_STATE !== 'undefined') ? window.INJECTED_MUTE_STATE : false;
 
+	const RF_ICON_NOTE = `<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>`;
+	const RF_ICON_MUTE = `<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73 4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>`;
+	const RF_ICON_SKIP = `<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z"/></svg>`;
+
 	function updateBgmButtonUI() {
         const btn = document.getElementById('bgm-toggle-btn');
         if (!btn) return;
         
-        if (isLocalMuted) {
-            btn.innerText = "🔇";
-            btn.style.color = "#ff6b6b";
-        } else {
-            btn.innerText = "🔊";
-            btn.style.color = "#fff";
-        }
+        // 金色 SVG 圖示（沒靜音＝音符、靜音＝喇叭斜線）；顏色由 CSS（story-shared.css）管，清掉行內顏色
+        btn.innerHTML = isLocalMuted ? RF_ICON_MUTE : RF_ICON_NOTE;
+        btn.style.color = '';
     }
 
     // 切換音樂開關
@@ -4548,6 +4558,7 @@ async function execST(cmd) {
         }
         
         if (!ENEMIES_DB[enemyId]) enemyId = "enemy_1";
+        document.documentElement.dataset.rfEnemy = enemyId;   // 電腦版立繪位移用（story-shared.css 依敵人 ID）
         currentEnemyData = JSON.parse(JSON.stringify(ENEMIES_DB[enemyId]));
         
         // [新增] 應用 BOSS 專屬背景
@@ -5125,16 +5136,11 @@ async function handleVictory() {
 // 唯一會發訊息的地方：結算畫面的發送鈕（玩家自己按；用既有的 sendMsgViaDOM，訊息文字見下面的 freeReportMessage，不含 <state> 區塊）：
 // 鈕上的字一律是「发送到剧情」（勝利、失敗都一樣），FREE_CAN_SEND 為 false 時不顯示。不會自動發訊息；按「关闭」「再战」都不發訊息。
 // 結算畫面按鈕（一排）：勝利（含跳過）＝发送到剧情（主要）、关闭（次要）；失敗＝再战（主要）、发送到剧情（次要）、关闭（次要）；不可發送時各少「发送到剧情」。勝利沒有「再战」。
-// 勝利整組換綠色（#defeat-modal.win）、失敗維持紅色。跳過鈕、靜音鈕換成主檔「暖色」主題的圓形按鈕（SVG 圖示，見 freeInit）。
+// 勝利整組換綠色（#defeat-modal.win）、失敗維持紅色。跳過鈕、靜音鈕是主檔「暖色」主題的圓形按鈕（SVG 圖示、樣式在原版，story-shared.css；freeInit 只改跳過鈕的點擊與 title）。
 // 此檔由 tools/patches/mini_free_core_20261019.py 放進兩個 _free.html 的遊戲 <script> 結尾。
 // ============================================================
 const FREE_MODE = window.INJECTED_BATTLE_MODE === 'free';
 const FREE_CAN_SEND = window.INJECTED_FREE_SEND !== false;      // 可否發送結果（玩家在家園時 true）
-
-// ---------- 圓形按鈕的圖示（SVG，currentColor；音符、靜音喇叭與主檔 RPGMVU1007.html 的 ICON_NOTE、ICON_MUTE 相同） ----------
-const FREE_ICON_NOTE = `<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>`;
-const FREE_ICON_MUTE = `<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73 4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>`;
-const FREE_ICON_SKIP = `<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z"/></svg>`;
 
 // ---------- 戰報訊息（要改內容只改這個函式；不要放 <state> 區塊或任何變數指令） ----------
 // opp：對手名（例如「莉迪娅」）；win：玩家的立場（勝利含跳過 → true）；turns：回合數；hp：剩餘生命；skipped：是否跳過
@@ -5154,17 +5160,8 @@ function freeInit() {
     document.querySelectorAll('.ingame-skip-btn').forEach(el => {
         el.removeAttribute('onclick');
         el.addEventListener('click', freeSkip);
-        el.title = '跳过战斗（直接胜利）';
-        el.innerHTML = FREE_ICON_SKIP;
+        el.title = '跳过战斗（直接胜利）';   // 圖示（SVG）在原版的 HTML 裡
     });
-
-    // 靜音鈕：原本的 updateBgmButtonUI 會寫 emoji 與顏色；自由戰鬥在它後面接一層，把內容換成 SVG（沒靜音＝音符、靜音＝喇叭斜線）。原函式照常執行
-    const origBgmUI = updateBgmButtonUI;
-    updateBgmButtonUI = function () {
-        origBgmUI.apply(this, arguments);
-        freeSyncBgmIcon();
-    };
-    freeSyncBgmIcon();
 
     // 敵人 MP：BOSS 欄血條正下方
     const track = document.querySelector('.boss-hp-box .hp-track');
@@ -5272,10 +5269,11 @@ async function loadFreeBattleData() {
     // 對手固定：宿主指定（INJECTED_FREE_ENEMY）而且有 FREE_DB 資料才有效；沒有指定或無效 → 不開戰，顯示「没有指定对手」
     const inj = window.INJECTED_FREE_ENEMY;
     freeCtx.opp = (inj && RulesCore.FREE_DB[inj]) ? inj : null;
-    document.documentElement.dataset.freeOpp = freeCtx.opp || '';   // 電腦版立繪位移用（free-mode.css 依對手名稱選位移）
+    document.documentElement.dataset.freeOpp = freeCtx.opp || '';   // 手機版奈芙蒂的版面調整用（free-mode.css）
     if (!freeCtx.opp) { availableSkills = []; return; }
 
     const def = RulesCore.FREE_DB[freeCtx.opp];
+    document.documentElement.dataset.rfEnemy = def.enemyId;   // 電腦版立繪位移用（story-shared.css 依敵人 ID）；奈芙蒂一直是 enemy_8
     const base = JSON.parse(JSON.stringify(ENEMIES_DB[def.enemyId]));
     const fd = RulesCore.makeFreeEnemyData(freeCtx.opp, window.INJECTED_FREE_OPTIONS || {});
     currentEnemyData = Object.assign(base, { name: fd.name, phases: fd.phases, free: fd.free });
@@ -5285,14 +5283,6 @@ async function loadFreeBattleData() {
     // 支援：母親狀態 3，而且不能是這場的對手
     availableSkills = SKILLS_DB.filter(s => s.owner !== freeCtx.opp && st[s.owner]);
     selectedSkillIds = selectedSkillIds.filter(id => availableSkills.some(s => s.id === id));
-}
-
-// 靜音鈕的圖示：沒靜音＝音符、靜音＝喇叭斜線（金色，顏色由 CSS 管；清掉原函式寫的 emoji 顏色）
-function freeSyncBgmIcon() {
-    const btn = $f('bgm-toggle-btn');
-    if (!btn) return;
-    btn.innerHTML = isLocalMuted ? FREE_ICON_MUTE : FREE_ICON_NOTE;
-    btn.style.color = '';
 }
 
 // ---------- 沒有指定對手 ----------

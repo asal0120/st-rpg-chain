@@ -2366,6 +2366,12 @@ html:not(.rpg-classic) .rpg-v7-root :is(.bag-scaler, .quest-scaler) .cat-btn {
     .status-scaler .face-card:hover img { filter: grayscale(0%) brightness(1); }
     .status-scaler .face-card.active { border-color: var(--p-gold); transform: scale(1.15) translateY(-12px); box-shadow: 0 0 15px rgba(200, 170, 110, 0.4), 0 10px 20px rgba(0,0,0,0.9); z-index: 10; }
     .status-scaler .face-card.active img { filter: grayscale(0%) brightness(1.1); }
+    /* [試用 2026-10-21] 隊伍小頭像：維持 #rpg-restyle 的菱形，配色改回 0916（深金邊、黑底；懸停淺色、選中金色）。
+       與 #rpg-restyle 同權重、位置較後，所以會覆蓋；整段刪除即回到金色菱形 */
+    html:not(.rpg-classic) .rpg-v7-root .status-scaler .face-card { background: #5a4a35; transition: transform 0.3s, background 0.3s; }
+    html:not(.rpg-classic) .rpg-v7-root .status-scaler .face-card:hover { background: var(--p-text); }
+    html:not(.rpg-classic) .rpg-v7-root .status-scaler .face-card.active { background: var(--p-gold); }
+    html:not(.rpg-classic) .rpg-v7-root .status-scaler .face-card img { background: #000; }
 	
 	/* ========================================= */
     /* === [新增] 界面間切换導航按鈕 === */
@@ -3696,6 +3702,10 @@ html:not(.rpg-classic) .rpg-v7-root :is(.bag-scaler, .quest-scaler) .cat-btn {
     box-sizing: border-box;
     z-index: 190; /* [修復] 從 170 提升至 190，確保選單在家園箭頭(170)之上 */
 }
+/* 電腦版：下拉選單要蓋在狀態／背包／任務層(200)之上；低於房間選單遮罩(250)與地圖／顯示設定層(300) */
+.rpg-v7-root:not(.mobile-layout) .map-topbar {
+    z-index: 240;
+}
 
 /* 頂部橫條存在時，地圖內容往下推（避免被橫條蓋住） */
 .rpg-v7-root .hud-wrap {
@@ -4864,7 +4874,8 @@ html:not(.rpg-classic) .rpg-v7-root :is(.bag-scaler, .quest-scaler) .cat-btn {
 }
 .rpg-v7-root.mobile-layout .status-scaler .tachie-img {
     height: 94%;   /* [使用者實測校準] 立繪立在面板右側空區 */
-    right: -120%;  /* [使用者實測校準] 補償立繪圖檔的透明邊距，可與面板右緣局部重疊 */
+    --m-tachie-shift: 0%;  /* 每個角色的值在 JS 的 MOBILE_TACHIE_SHIFT（換立繪時寫到元素上） */
+    right: calc(-120% - var(--m-tachie-shift));  /* [使用者實測校準] -120% 補償立繪圖檔的透明邊距，可與面板右緣局部重疊 */
 }
 .rpg-v7-root.mobile-layout .status-scaler .tachie-img.show {
     opacity: 1;    /* 覆蓋窄屏 v2 的 0.38 半透明 */
@@ -7657,6 +7668,24 @@ const _userName = (() => {
 })();
 
 
+    // 手機版狀態頁立繪的水平位移：每個角色各自調整（正值往右、負值往左，以立繪區寬度的 % 計，例 '5%'）。只影響手機版
+    const MOBILE_TACHIE_SHIFT = {
+        '玩家': '5%',
+        '爱娜': '10%',
+        '黛芬妮': '8%',
+        '穗': '7%',
+        '芙蕾嘉': '10%',
+        '琳': '14%',
+        '米拉露恩': '10%',
+        '璐法': '8%',
+        '莉迪娅': '14%',
+        '奈芙蒂': '14%',
+    };
+    function applyMobileTachieShift(tachie, data) {
+        const key = data.id === 'p1' ? '玩家' : data.name;
+        tachie.style.setProperty('--m-tachie-shift', MOBILE_TACHIE_SHIFT[key] || '0%');
+    }
+
     // 您的原始角色數據 (完整保留)
     const fullPartyData = [
         { 
@@ -8455,6 +8484,7 @@ async function renderCurrentMemberGallery() {
         if (tachie && !tachie.src.includes(targetImg)) {
             tachie.classList.remove('show');
             setTimeout(() => {
+                applyMobileTachieShift(tachie, data);
                 tachie.src = targetImg;
                 tachie.onload = () => tachie.classList.add('show');
                 if (tachie.complete) tachie.classList.add('show');
@@ -8508,6 +8538,7 @@ if (data) {
             if (!tachie.src.includes(targetImg)) {
                 tachie.classList.remove('show');
                 setTimeout(() => {
+                    applyMobileTachieShift(tachie, data);
                     tachie.src = targetImg;
                     tachie.onload = () => tachie.classList.add('show');
                     if(tachie.complete) tachie.classList.add('show');
@@ -13732,9 +13763,10 @@ await syncGameState();
                 document.querySelectorAll('.location-action-btn-wrap').forEach(el => el.style.display = 'none');
                 e.stopPropagation();
                 const qLayer = document.getElementById('quest-layer');
-                // 關閉 Bag (互斥)
+                // 關閉 Bag、Status (互斥)
                 const bLayer = document.getElementById('bag-layer');
                 if(bLayer) bLayer.classList.remove('active');
+                document.getElementById('status-layer')?.classList.remove('active');
 
                 // 顯示 Quest
                 qLayer.classList.add('active');
@@ -13773,9 +13805,10 @@ await syncGameState();
                 document.querySelectorAll('.location-action-btn-wrap').forEach(el => el.style.display = 'none');
                 e.stopPropagation();
                 
-                // 關閉 Quest (互斥)
+                // 關閉 Quest、Status (互斥)
                 const qLayer = document.getElementById('quest-layer');
                 if(qLayer) qLayer.classList.remove('active');
+                document.getElementById('status-layer')?.classList.remove('active');
 
                 // 顯示 Bag
                 const bLayer = document.getElementById('bag-layer');
@@ -13943,10 +13976,7 @@ document.getElementById('display-layer')?.addEventListener('click', (e) => {
             worldmapMenuBtn.onclick = (e) => {
                 e.stopPropagation();
 
-                // 關閉其他互斥界面
-                document.getElementById('quest-layer')?.classList.remove('active');
-                document.getElementById('bag-layer')?.classList.remove('active');
-                document.getElementById('status-layer')?.classList.remove('active');
+                // 狀態／背包／任務頁保持開啟：地圖層(300)蓋在上面，關閉地圖後回到原頁面
 
                 // 開啟世界地圖層
                 document.getElementById('worldmap-layer').classList.add('active');
