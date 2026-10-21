@@ -8099,6 +8099,7 @@ let activePartyData = [];
     // ==========================================
     
     window.switchInterface = function(targetName) {
+        let statusReady;   // 'status' 時回傳 initStatusInterface 的 promise，讓呼叫端等初始化完成
         // 1. 關閉所有界面層
         const layers = ['quest-layer', 'bag-layer', 'status-layer'];
         layers.forEach(id => {
@@ -8121,11 +8122,12 @@ let activePartyData = [];
             document.getElementById('status-layer').classList.add('active');
             updateUIScale();
             // 呼叫 Status 的初始化與按鈕綁定
-            if(window.initStatusInterface) window.initStatusInterface();
+            if(window.initStatusInterface) statusReady = window.initStatusInterface();
             // 注意：這裡假設 bindStatusButtons 已經包含在 initStatusInterface 裡，
             // 或者您之前有將其分開。如果有分開，記得在這裡也呼叫 bindStatusButtons();
             if(typeof bindStatusButtons === 'function') bindStatusButtons();
         }
+        return statusReady;
     }
 
     // === Mini-Modal 幾何配置 ===
@@ -8475,6 +8477,23 @@ let activePartyData = [];
     }
 }
 
+    // 換立繪：src 要 150ms 後才改（先淡出）。共用一個計時器，後來的呼叫取消先前還沒生效的換圖，避免舊的覆蓋新的
+    let tachieSwapTimer = null;
+    function swapTachie(tachie, data, targetImg) {
+        clearTimeout(tachieSwapTimer);
+        if (tachie.src.includes(targetImg)) {
+            tachie.classList.add('show');   // 被取消的那次可能已經移除 show
+            return;
+        }
+        tachie.classList.remove('show');
+        tachieSwapTimer = setTimeout(() => {
+            applyMobileTachieShift(tachie, data);
+            tachie.src = targetImg;
+            tachie.onload = () => tachie.classList.add('show');
+            if(tachie.complete) tachie.classList.add('show');
+        }, 150);
+    }
+
     window.switchPlayerTab = function(tabName) { /* Only 1 tab */ }
 
     window.switchMemberTab = function(tabName) {
@@ -8502,15 +8521,7 @@ let activePartyData = [];
         if(data) {
             const tachie = document.getElementById('big-tachie');
             let targetImg = (tabName === 'm-data') ? data.img : data.imgDiff; 
-            if (!tachie.src.includes(targetImg)) {
-                tachie.classList.remove('show');
-                setTimeout(() => {
-                    applyMobileTachieShift(tachie, data);
-                    tachie.src = targetImg;
-                    tachie.onload = () => tachie.classList.add('show');
-                    if(tachie.complete) tachie.classList.add('show');
-                }, 150);
-            }
+            swapTachie(tachie, data, targetImg);
         }
     }
 
@@ -8548,17 +8559,7 @@ let activePartyData = [];
             const isDiff = (data.id !== 'p1' && currentTab !== '资料');
             const targetImg = isDiff ? data.imgDiff : data.img;
 
-            if (!tachie.src.includes(targetImg)) {
-                tachie.classList.remove('show');
-                
-                // [修改] 移除無意義的 requestAnimationFrame 嵌套，直接使用 setTimeout
-                setTimeout(() => {
-                    applyMobileTachieShift(tachie, data);
-                    tachie.src = targetImg;
-                    tachie.onload = () => tachie.classList.add('show');
-                    if(tachie.complete) tachie.classList.add('show');
-                }, 150);
-            }
+            swapTachie(tachie, data, targetImg);
 
             const playerTabs = els.tabsPlayer;
     const memberTabs = els.tabsMember;
@@ -14660,11 +14661,11 @@ if (_generationEvents && !_rpgLifetime.signal.aborted) {
         closeCharSelector();
 
         // 2. 切换到 Status 界面
-        switchInterface('status');
+        const ready = switchInterface('status');
 
         // 3. 操作 DOM 來選中目標角色
-        // 這裡需要稍微延遲，等待 Status 界面初始化完成 (如果是第一次開啟)
-        setTimeout(() => {
+        // 等 Status 初始化完成才搬移（初始化是 async；沒等的話兩邊的 updateSelectionFromCenter 會交錯，立繪與選中角色不一致）
+        Promise.resolve(ready).then(() => {
             const track = document.getElementById('faces-track');
             if (!track) return;
             
@@ -14718,7 +14719,7 @@ if (_generationEvents && !_rpgLifetime.signal.aborted) {
                 updateSelectionFromCenter(); // 這裡會自動處理「切换角色強制回資料頁」的邏輯
             }
 
-        }, 100); // 100ms 緩衝
+        });
     };
 	refreshAnchorRulesCache().then(rules => {
     renderAnchorRules(rules);
