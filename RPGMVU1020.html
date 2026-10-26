@@ -6783,7 +6783,9 @@ let _compiledAnchorRegexes = null;
 
 // === ST 正則腳本整合 ===
 const ST_REGEX_SELECT_KEY = '正则选择';
+const ST_REGEX_EXCLUDE_KEY = '正则排除';
 let _stRegexSelectionCache = null;
+let _stRegexExcludeCache = null;
 let _stRegexAllCache = null;
 let _compiledSTRegexCache = null;
 
@@ -6868,6 +6870,44 @@ async function saveSTRegexSelection(selectedIds) {
     _compiledSTRegexCache = null;
 }
 
+// 預設中的「刪除類」正則（取代為空、無深度限制）自動生效，不需勾選
+function isAutoSTRegex(script) {
+    return !!script && script._source === 'preset' &&
+        String(script.replaceString || '').trim() === '' &&
+        !(Number(script.minDepth) > 0);
+}
+
+// 讀取自動類正則的排除清單（同步，從全局變數快取）
+function loadSTRegexExclusionSync() {
+    if (_stRegexExcludeCache !== null) return _stRegexExcludeCache;
+    try {
+        var allVars = getAllVariables({ type: 'global' }) || {};
+        var raw = allVars[ST_REGEX_EXCLUDE_KEY];
+        if (!raw || raw === '' || raw === '0') return [];
+        var parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+        _stRegexExcludeCache = Array.isArray(parsed) ? parsed : [];
+        return _stRegexExcludeCache;
+    } catch(e) { return []; }
+}
+
+// 非同步讀取排除清單
+async function refreshSTRegexExclusion() {
+    try {
+        var raw = await triggerSlash('/getglobalvar key=' + ST_REGEX_EXCLUDE_KEY);
+        if (!raw || raw === '' || raw === '0') { _stRegexExcludeCache = []; return []; }
+        var parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+        _stRegexExcludeCache = Array.isArray(parsed) ? parsed : [];
+        return _stRegexExcludeCache;
+    } catch(e) { _stRegexExcludeCache = _stRegexExcludeCache ?? []; return _stRegexExcludeCache; }
+}
+
+// 保存排除清單
+async function saveSTRegexExclusion(excludedIds) {
+    var json = JSON.stringify(excludedIds);
+    await triggerSlash('/setglobalvar key=' + ST_REGEX_EXCLUDE_KEY + ' ' + json);
+    _stRegexExcludeCache = excludedIds;
+}
+
 // 解析 ST findRegex 格式 "/pattern/flags" → RegExp
 function parseSTFindRegex(str) {
     if (!str) return null;
@@ -6885,6 +6925,22 @@ function expandRandomMacro(str) {
             ? choices[Math.floor(Math.random() * choices.length)]
             : '';
     });
+}
+
+// 擷取正文後套用自動類 ST 正則（不在排除清單者）
+function applyAutoSTRegex(text) {
+    var excluded = loadSTRegexExclusionSync();
+    var scripts = collectSTRegexScripts();
+    for (var i = 0; i < scripts.length; i++) {
+        var sc = scripts[i];
+        if (!isAutoSTRegex(sc) || excluded.indexOf(sc.id) !== -1) continue;
+        var rx = parseSTFindRegex(sc.findRegex);
+        if (!rx) continue;
+        var repl = expandRandomMacro(sc.replaceString || '');
+        rx.lastIndex = 0;
+        text = text.replace(rx, repl);
+    }
+    return text;
 }
 
 async function refreshAnchorRulesCache() {
@@ -7235,9 +7291,13 @@ function renderSTRegexPanel() {
 
     var allScripts = collectSTRegexScripts();
     var selectedIds = loadSTRegexSelectionSync();
+    var excludedIds = loadSTRegexExclusionSync();
     var activeCount = 0;
     for (var i = 0; i < allScripts.length; i++) {
-        if (selectedIds.indexOf(allScripts[i].id) !== -1) activeCount++;
+        var _on = isAutoSTRegex(allScripts[i])
+            ? excludedIds.indexOf(allScripts[i].id) === -1
+            : selectedIds.indexOf(allScripts[i].id) !== -1;
+        if (_on) activeCount++;
     }
 
     if (badge) badge.textContent = allScripts.length
@@ -7252,15 +7312,16 @@ function renderSTRegexPanel() {
     allScripts.forEach(function(script) {
         var item = document.createElement('div');
         item.className = 'st-regex-item';
-        var checked = selectedIds.indexOf(script.id) !== -1 ? 'checked' : '';
-        var sourceLabel = _stRegexSourceLabels[script._source] || '未知';
+        var isAuto = isAutoSTRegex(script);
+        var checked = (isAuto ? excludedIds.indexOf(script.id) === -1 : selectedIds.indexOf(script.id) !== -1) ? 'checked' : '';
+        var sourceLabel = isAuto ? '预设·自动' : (_stRegexSourceLabels[script._source] || '未知');
         var replStr = script.replaceString || '';
         var preview = replStr
             ? '→ ' + (replStr.length > 30 ? replStr.substring(0, 30) + '…' : replStr)
             : '→ (删除)';
         item.innerHTML =
             '<label class="st-regex-label">' +
-                '<input type="checkbox" data-id="' + script.id + '" ' + checked + ' />' +
+                '<input type="checkbox" data-id="' + script.id + '"' + (isAuto ? ' data-auto="1"' : '') + ' ' + checked + ' />' +
                 '<span class="st-regex-source">[' + sourceLabel + ']</span> ' +
                 '<span class="st-regex-name">' + _escAttr(script.scriptName) + '</span>' +
             '</label>' +
@@ -7271,9 +7332,16 @@ function renderSTRegexPanel() {
     // 勾選事件
     list.querySelectorAll('input[type="checkbox"]').forEach(function(cb) {
         cb.addEventListener('change', async function() {
-            var checkedEls = list.querySelectorAll('input:checked');
-            var ids = Array.from(checkedEls).map(function(el) { return el.dataset.id; });
-            await saveSTRegexSelection(ids);
+            if (cb.dataset.auto === '1') {
+                // 自動類：取消勾選＝加入排除清單
+                var exIds = loadSTRegexExclusionSync().filter(function(id) { return id !== cb.dataset.id; });
+                if (!cb.checked) exIds.push(cb.dataset.id);
+                await saveSTRegexExclusion(exIds);
+            } else {
+                var checkedEls = list.querySelectorAll('input:checked:not([data-auto="1"])');
+                var ids = Array.from(checkedEls).map(function(el) { return el.dataset.id; });
+                await saveSTRegexSelection(ids);
+            }
             // 觸發正文重新渲染
             window.__FORMAT_CACHE?.clear();
             _compiledFilterRegexes = null;
@@ -7309,7 +7377,7 @@ function renderSTRegexPanel() {
 // 刷新按鈕
 document.getElementById('st-regex-refresh-btn')?.addEventListener('click', function() {
     refreshSTRegexScripts();
-    refreshSTRegexSelection().then(function() {
+    Promise.all([refreshSTRegexSelection(), refreshSTRegexExclusion()]).then(function() {
         renderSTRegexPanel();
     });
 });
@@ -7324,7 +7392,7 @@ document.getElementById('st-regex-refresh-btn')?.addEventListener('click', funct
                     renderFilterRules();
                     renderAnchorRules();  // ← 補上
                     refreshSTRegexScripts();
-                    refreshSTRegexSelection().then(function() {
+                    Promise.all([refreshSTRegexSelection(), refreshSTRegexExclusion()]).then(function() {
                         renderSTRegexPanel();
                     });
                 }
@@ -9486,7 +9554,7 @@ if (typeof window.setLayout === 'function') {
         var _stAllScripts = collectSTRegexScripts();
         for (var _sti = 0; _sti < _stAllScripts.length; _sti++) {
             var _stScript = _stAllScripts[_sti];
-            if (_stSelectedIds.indexOf(_stScript.id) === -1) continue;
+            if (_stSelectedIds.indexOf(_stScript.id) === -1 || isAutoSTRegex(_stScript)) continue;
             var _stRx = parseSTFindRegex(_stScript.findRegex);
             if (!_stRx) continue;
             var _stReplace = expandRandomMacro(_stScript.replaceString || '');
@@ -9512,6 +9580,21 @@ if (typeof window.setLayout === 'function') {
             .trim();
     };
 
+    // 多段正文：取出所有完整配對（completeRx 需帶 g），再加上最後一組之後尚未閉合的段落（串流）。
+    // 沒有任何完整配對時回傳 null
+    const _joinSegments = (text, completeRx, openOnlyRx) => {
+        const _segs = [];
+        let _lastEnd = -1;
+        for (const _m of text.matchAll(completeRx)) {
+            _segs.push(_m[1]);
+            _lastEnd = _m.index + _m[0].length;
+        }
+        if (_lastEnd < 0) return null;
+        const _tail = text.slice(_lastEnd).match(openOnlyRx);
+        if (_tail) _segs.push(_tail[1]);
+        return _segs.map(_stripRpgShell).filter(Boolean).join('\n\n');
+    };
+
     const _anchorRules = loadAnchorRules();
 
     if (_anchorRules.length > 0) {
@@ -9525,7 +9608,7 @@ if (typeof window.setLayout === 'function') {
                 const _eao = _aOpen.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
                 const _eac = _aClose.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
                 _compiledAnchorRegexes.push({
-                    complete: new RegExp(_eao + '([\\s\\S]*?)' + _eac, 'i'),
+                    complete: new RegExp(_eao + '([\\s\\S]*?)' + _eac, 'gi'),
                     openOnly: new RegExp(_eao + '([\\s\\S]*)$', 'i')
                 });
             }
@@ -9533,9 +9616,9 @@ if (typeof window.setLayout === 'function') {
 
         // 第一輪：找完整容器
         for (const _ar of _compiledAnchorRegexes) {
-            const _completeMatch = content.match(_ar.complete);
-            if (_completeMatch) {
-                return _stripRpgShell(_completeMatch[1]);
+            const _joined = _joinSegments(content, _ar.complete, _ar.openOnly);
+            if (_joined !== null) {
+                return applyAutoSTRegex(_joined);
             }
         }
 
@@ -9543,28 +9626,29 @@ if (typeof window.setLayout === 'function') {
         for (const _ar of _compiledAnchorRegexes) {
             const _openOnlyMatch = content.match(_ar.openOnly);
             if (_openOnlyMatch) {
-                return _stripRpgShell(_openOnlyMatch[1]);
+                return applyAutoSTRegex(_stripRpgShell(_openOnlyMatch[1]));
             }
         }
     }
 
     // Step 5: 原始 [RPG]...[/RPG] 提取邏輯
     // 重點：不再允許「沒有 [RPG] 開頭」時匹配全文
-    const strictMatch = content.match(
-        /(?:\[|<)\s*RPG\s*(?:\]|>)([\s\S]*?)(?:\[|<)\/\s*RPG\s*(?:\]|>)/i
+    const _rpgOpenOnlyRx = /(?:\[|<)\s*RPG\s*(?:\]|>)([\s\S]*)$/i;
+    const _rpgJoined = _joinSegments(
+        content,
+        /(?:\[|<)\s*RPG\s*(?:\]|>)([\s\S]*?)(?:\[|<)\/\s*RPG\s*(?:\]|>)/gi,
+        _rpgOpenOnlyRx
     );
 
-    if (strictMatch) {
-        return _stripRpgShell(strictMatch[1]);
+    if (_rpgJoined !== null) {
+        return applyAutoSTRegex(_rpgJoined);
     }
 
     // 支援流式生成：[RPG] 已出現，但 [/RPG] 尚未出現
-    const openOnlyMatch = content.match(
-        /(?:\[|<)\s*RPG\s*(?:\]|>)([\s\S]*)$/i
-    );
+    const openOnlyMatch = content.match(_rpgOpenOnlyRx);
 
     if (openOnlyMatch) {
-        return _stripRpgShell(openOnlyMatch[1]);
+        return applyAutoSTRegex(_stripRpgShell(openOnlyMatch[1]));
     }
 
     // 沒有 AnchorRule 命中，也沒有 [RPG] 開頭：
