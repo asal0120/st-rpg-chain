@@ -9453,6 +9453,7 @@ if (typeof window.setLayout === 'function') {
     // Step 1: 清完整配對的內建思考標籤
     content = content.replace(/<thinking>[\s\S]*?<\/thinking>/gi, '');
     content = content.replace(/<think>[\s\S]*?<\/think>/gi, '');
+    content = content.replace(/<draft>[\s\S]*?<\/draft>\n?/gi, '');
     content = content.replace(/\[metacognition\][\s\S]*?\[\/metacognition\]/gi, '');
     content = content.replace(/<!--[\s\S]*?-->/g, '');
 
