@@ -12413,12 +12413,14 @@ const LOCATION_BUTTONS = [
     els.mapArea.appendChild(wrap);
 }                     
 
-    async function syncGameState() {
+    async function syncGameState(options) {
         console.log('[RPG] syncGameState 呼叫, isSyncing:', isSyncing);
         if (isSyncing) return;
         // [防護] 串流生成期間跳過同步，避免讀到過渡態的空變量
         // 生成結束時 _stGenEnd 或渲染腳本的 RPG_FORCE_REFRESH_FROM_VARIABLES 會再同步一次
-        if (isGenerating) {
+        // 例外：options.duringGeneration（載入時的第一次同步）。生成途中才建立的 iframe 沒有它，
+        // 串流期間 map-area 等區塊會是空的
+        if (isGenerating && !(options && options.duringGeneration)) {
             console.log('[RPG] 生成中，跳過本次 syncGameState');
             return;
         }
@@ -14126,7 +14128,7 @@ document.getElementById('display-layer')?.addEventListener('click', (e) => {
     refreshFilterRulesCache(),
     refreshAnchorRulesCache()
 ]).finally(() => {
-    syncGameState();
+    syncGameState({ duringGeneration: true });   // 載入時的第一次同步：生成中也執行
 });
     // [安全重置] 頁面載入後強制解除 generating 鎖定
         // 防止初始渲染時 isGenerating=true 卻沒有觸發 MESSAGE_RECEIVED 的情況
