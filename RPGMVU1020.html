@@ -6721,14 +6721,15 @@ function _measureTrueHeight() {
 // [效能優化] _measureTrueHeight 會強制同步重排（改 overflow → 讀 scrollHeight → 改回），
 // 高頻呼叫時形成重排風暴。此處做兩層治理：
 // 1. rAF 合併：同一幀內多次 requestParentResize 只量測一次
-// 2. 高度去重：量測結果與上次回報相差 <= 4px 就不 postMessage
-let _lastReportedHeight = 0;
-
+// 2. 高度去重：量測結果與 iframe 目前的實際高度（window.innerHeight）相差 <= 4px 就不 postMessage。
+//    不和「上次回報的值」比較：渲染腳本也可能寫入高度，只記自己回報的值會在外層改過高度後漏掉回報。
 function _doResizeReport() {
     try {
+        // iframe 被隱藏時（例如編輯樓層）沒有排版，根元素高度是 0；這時不回報，重新顯示後再量
+        const root = document.querySelector('.rpg-v7-root');
+        if (root && root.offsetHeight === 0) return;
         const height = _measureTrueHeight();
-        if (Math.abs(height - _lastReportedHeight) <= 4) return; // 高度未變，跳過回報
-        _lastReportedHeight = height;
+        if (Math.abs(height - window.innerHeight) <= 4) return; // 和目前的 iframe 高度相同，跳過回報
         window.parent?.postMessage({
             type: 'RPG_MVU_RESIZE',
             height,
@@ -6760,6 +6761,9 @@ function requestParentResize() {
         _doResizeReport();
     }, 350);
 }
+// 渲染腳本的 resizeFrame 會先找 iframe 的 window.requestParentResize，找到就交給主檔量測，
+// 不再用外層自己的量法直接寫入高度
+window.requestParentResize = requestParentResize;
 
 // Asset readiness can change toolbar height. Reuse the native coalesced reporter.
 document.addEventListener('mvu-stock-assets-change', requestParentResize, { signal: _rpgLifetime.signal });
