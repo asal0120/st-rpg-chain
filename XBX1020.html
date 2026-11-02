@@ -7047,7 +7047,7 @@ async function _saveAnchorWithFeedback(rules) {
     try {
         await saveAnchorRules(rules);
 		if (typeof updateTemplateVariables === 'function' && state?.rawMessage) {
-            updateTemplateVariables(state.rawMessage);
+            updateTemplateVariables(state.rawMessage, { rerender: true });
         }
         if (statusEl) {
             statusEl.textContent = '✓ 已保存';
@@ -7191,6 +7191,25 @@ function _readRulesFromDOM() {
 
 // 保存並顯示狀態反饋
 let _filterDirty = false;
+// 正文規則與過濾規則的快取每個樓層的 iframe 各有一份，只在載入時讀一次。
+// 打開設定頁時重新讀取：列表才會是最新值，儲存時也不會覆蓋其他樓層剛才的修改。
+// 規則有變時，用新規則重新渲染本樓層的正文。
+async function refreshRulesForSettings() {
+    const before = JSON.stringify([_anchorRulesCache, _filterRulesCache]);
+    _anchorDirty = false;
+    _filterDirty = false;
+    await Promise.all([refreshAnchorRulesCache(), refreshFilterRulesCache()]);
+    if (_rpgLifetime.signal.aborted) return;
+    // 讀取期間已經開始編輯的列表不重畫，避免清掉輸入中的內容
+    if (!_anchorDirty) renderAnchorRules();
+    if (!_filterDirty) renderFilterRules();
+    if (JSON.stringify([_anchorRulesCache, _filterRulesCache]) !== before && state?.rawMessage) {
+        window.__FORMAT_CACHE?.clear();
+        state.rawText = '';
+        updateTemplateVariables(state.rawMessage, { rerender: true });
+    }
+}
+
 async function _saveFilterWithFeedback(rules) {
     _filterDirty = false;
     const statusEl = document.getElementById('filter-save-status');
@@ -7199,7 +7218,7 @@ async function _saveFilterWithFeedback(rules) {
 
         // ★ 新增：直接用當前 iframe 內的 state.rawText 重新過一次 extractContent
         if (typeof updateTemplateVariables === 'function' && state?.rawMessage) {
-    updateTemplateVariables(state.rawMessage);  // 改用 rawMessage
+    updateTemplateVariables(state.rawMessage, { rerender: true });  // 改用 rawMessage
 }
 
         if (statusEl) {
@@ -7321,7 +7340,7 @@ function renderSTRegexPanel() {
                 await saveSTRegexSelection(ids);
             }
             if (typeof updateTemplateVariables === 'function' && state?.rawMessage) {
-                updateTemplateVariables(state.rawMessage);
+                updateTemplateVariables(state.rawMessage, { rerender: true });
             }
             renderSTRegexPanel();
         });
@@ -13272,6 +13291,13 @@ if (JSON.stringify(sortedIdsForKey) !== JSON.stringify(state.lastPartyIds)) {
 let streamTimeout = null;
 let isGenerating = false;
 let genResetTimer = null;
+// 酒館事件（見「生成狀態：酒館事件」）：_stEventMode＝讀得到事件；_stGenActive＝事件顯示正在生成；
+// _stGotUpdate＝這次生成中，這個樓層收到過內容
+let _stEventMode = false;
+let _stGenActive = false;
+let _stGenPoll = null;
+let _stStopSeen = false;
+let _stGotUpdate = false;
 
 // === [效能優化] 串流節流 ===
 // 流式生成時 updateTemplateVariables 每個 chunk 都被呼叫一次，而每次都做：
@@ -13279,7 +13305,7 @@ let genResetTimer = null;
 // 成本隨訊息長度成長，逐 chunk 全量處理形成 O(N²)。
 // 改為 leading + trailing 節流：首個 chunk 立即處理，之後每 150ms 最多處理一次。
 //
-// [XBX 適配] 本版沒有 MESSAGE_RECEIVED 事件，生成結束靠 genResetTimer 靜默超時判斷，
+// [XBX 適配] 讀不到酒館事件時，生成結束靠 genResetTimer 靜默超時判斷（讀得到時見「生成狀態：酒館事件」），
 // 因此：計時器重設保留在逐 chunk 輕量層（避免節流期間誤判結束）；
 // isFinished 由重量層計算並存入 _lastIsFinished，變化時重新武裝計時器；
 // 計時器到期時先 _flushPendingRaw() 沖洗最終內容再收尾。
@@ -13292,6 +13318,7 @@ let _lastIsFinished = false;
 // 生成結束收尾（原 genResetTimer 回調本體）
 function _onGenerationSettled() {
     if (_rpgLifetime.signal.aborted) return;
+    if (_stGenActive) return;   // 酒館事件顯示仍在生成中（_stGenEnd 會先結束事件狀態再呼叫這裡）
     isGenerating = false;
 
     const root = document.querySelector('.rpg-v7-root');
@@ -13336,7 +13363,8 @@ function _processRawContent(data) {
     // [XBX 適配] isFinished 狀態變化時重新武裝計時器（縮短為 300ms 收尾）
     if (isFinished !== _lastIsFinished) {
         _lastIsFinished = isFinished;
-        if (isGenerating) _armGenTimer();
+        // 讀得到酒館事件時不重設：生成中出現 </state> 不代表生成結束
+        if (isGenerating && !_stEventMode) _armGenTimer();
     }
 
     // ✅ 正文提取：現在傳入的是完整樓層原文，不再是 template-editor 正則切過的片段
@@ -13395,9 +13423,13 @@ function _scheduleProcessRaw(data) {
     }, STREAM_THROTTLE_MS);
 }
 
-window.updateTemplateVariables = function(data) {
+window.updateTemplateVariables = function(data, options) {
     if (_rpgLifetime.signal.aborted) return;
-    if (!isGenerating) {
+    // options.rerender：重新渲染已經完成的訊息（修改正文規則、過濾規則、酒館正則後），不是串流。
+    // 這時不進入「生成中」（不鎖按鈕），也不重設生成結束計時器（不會多一次 syncGameState）
+    const rerender = !!(options && options.rerender);
+    // 讀得到酒館事件時，生成中只由事件決定，這裡不設定
+    if (!rerender && !isGenerating && !_stEventMode) {
         isGenerating = true;
         _lastIsFinished = false; // [XBX 適配] 新一輪生成，重置完成標記（避免沿用上輪的 300ms 短超時）
         const root = document.querySelector('.rpg-v7-root');
@@ -13408,7 +13440,10 @@ window.updateTemplateVariables = function(data) {
     _scheduleProcessRaw(data);
 
     // [XBX 適配] 靜默超時計時器逐 chunk 重設（不可被節流，否則會提早誤判生成結束）
-    _armGenTimer();
+    // 讀得到酒館事件時：生成中只記下「收到過內容」；不在生成中時重設計時器（時間到了同步一次，不鎖按鈕）
+    if (rerender) return;
+    if (_stGenActive) _stGotUpdate = true;
+    else _armGenTimer();
 };
     // =========================================
 // === RPG Bridge: 主程式與小遊戲的橋樑 ===
@@ -13589,7 +13624,7 @@ window.RPGBridge = {
                 // 7. 寫入記憶體並平滑刷新畫面
                 msg.mes = finalText;
                 if (typeof parent.saveChatDebounced === 'function') parent.saveChatDebounced();
-                if (typeof window.updateTemplateVariables === 'function') window.updateTemplateVariables(finalText);
+                if (typeof window.updateTemplateVariables === 'function') window.updateTemplateVariables(finalText, { rerender: true });
                 return finalText;
 
             } catch (e) {
@@ -14470,6 +14505,7 @@ if (displayMenuBtn) {
         e.stopPropagation();
         document.getElementById('display-layer').classList.add('active');
         if (els.menuDrop) els.menuDrop.classList.remove('show');
+        refreshRulesForSettings();
 
         // 同步主題
         const isLight = root.classList.contains('light-mode');
@@ -14583,16 +14619,18 @@ function getGenerationEventProvider() {
     for (const scope of new Set([window, _parentWin])) {
         try {
             const context = scope.SillyTavern?.getContext?.();
-            const eventName = (scope.tavern_events || context?.EVENTS)?.MESSAGE_RECEIVED;
+            // 酒館的 getContext() 提供 eventTypes / event_types；EVENTS 是舊寫法，保留相容
+            const types = scope.tavern_events || context?.eventTypes || context?.event_types || context?.EVENTS;
+            const eventName = types?.MESSAGE_RECEIVED;
             if (!eventName) continue;
             const remove = scope.eventRemoveListener || scope.eventOff;
             if (typeof scope.eventOn === 'function' && typeof remove === 'function') {
-                return { name: eventName, on: scope.eventOn.bind(scope), off: remove.bind(scope) };
+                return { name: eventName, types, on: scope.eventOn.bind(scope), off: remove.bind(scope) };
             }
             const emitter = context?.eventSource;
             const off = emitter?.off || emitter?.removeListener;
             if (typeof emitter?.on === 'function' && typeof off === 'function') {
-                return { name: eventName, on: emitter.on.bind(emitter), off: off.bind(emitter) };
+                return { name: eventName, types, on: emitter.on.bind(emitter), off: off.bind(emitter) };
             }
         } catch (error) {
             console.warn('[RPG] 無法取得生成事件:', error);
@@ -14663,9 +14701,14 @@ if (_generationEvents && !_rpgLifetime.signal.aborted) {
         if (!['normal', 'regenerate', 'swipe', 'continue'].includes(type)) return;
         const msgs = typeof getChatMessages === 'function' ? getChatMessages(messageId) : [];
         if (msgs.length && msgs[0].role !== 'assistant') return;
+        _stGenStopTracking();
         isGenerating = false;
         clearTimeout(genResetTimer);
         document.querySelector('.rpg-v7-root')?.classList.remove('generating');
+        // 其他樓層只解除鎖定；這則訊息自己的樓層（讀不到樓層編號時也算）才同步、監看小白X 套用。
+        // 小白X 每個樓層都有 iframe，全部同步的話，負擔會隨樓層數增加
+        const frameId = getFrameMessageId();
+        if (frameId !== null && frameId !== normalizeMessageId(messageId)) return;
         _flushPendingRaw();
         updateStateViewer(extractStateContent(state.rawMessage || ''));
         clearTimeout(_messageSyncTimer);
@@ -14686,6 +14729,90 @@ if (_generationEvents && !_rpgLifetime.signal.aborted) {
     }
 } else {
     console.warn('[RPG] 找不到可解除的生成事件，沿用計時器');
+}
+
+// ============================================================
+// === 生成狀態：酒館事件 ===
+// ============================================================
+// 讀得到事件時，「生成中」只由事件決定：
+//   開始：GENERATION_STARTED（下面的類型，不含 dryRun）
+//   結束：MESSAGE_RECEIVED（上面的處理）、GENERATION_ENDED、GENERATION_STOPPED；
+//         生成中每 2 秒檢查停止鈕，這次生成中看過它出現、之後又消失，也算結束（漏掉事件時的備援）
+// 生成中，小白X 推送的正文照樣顯示，但不解除生成中、不同步。
+// 讀不到事件時，維持由 updateTemplateVariables 與計時器判斷的做法。
+const ST_GEN_TYPES = ['normal', 'regenerate', 'swipe', 'continue'];
+
+function _stopButtonVisible() {
+    try {
+        const btn = _parentWin.document.getElementById('mes_stop');
+        return !!btn && _parentWin.getComputedStyle(btn).display !== 'none';
+    } catch (e) {
+        return false;
+    }
+}
+
+// 只結束事件狀態（停止檢查停止鈕），不解除鎖定、不同步
+function _stGenStopTracking() {
+    _stGenActive = false;
+    clearInterval(_stGenPoll);
+    _stGenPoll = null;
+}
+
+function _stGenStart() {
+    if (_rpgLifetime.signal.aborted) return;
+    _stGenActive = true;
+    _stGotUpdate = false;
+    _stStopSeen = _stopButtonVisible();
+    clearTimeout(genResetTimer);
+    isGenerating = true;
+    _lastIsFinished = false;
+    document.querySelector('.rpg-v7-root')?.classList.add('generating');
+    if (!_stGenPoll) {
+        _stGenPoll = setInterval(() => {
+            const visible = _stopButtonVisible();
+            if (visible) _stStopSeen = true;
+            else if (_stStopSeen) _stGenEnd();
+        }, 2000);
+    }
+}
+
+function _stGenEnd() {
+    if (!_stGenActive) return;
+    _stGenStopTracking();
+    clearTimeout(genResetTimer);
+    // 生成中收到過內容的樓層：處理最後的正文、更新變數面板並同步。其他樓層只解除鎖定。
+    if (_stGotUpdate) {
+        _stGotUpdate = false;
+        _onGenerationSettled();
+    } else {
+        isGenerating = false;
+        document.querySelector('.rpg-v7-root')?.classList.remove('generating');
+    }
+}
+
+if (_generationEvents?.types?.GENERATION_STARTED && !_rpgLifetime.signal.aborted) {
+    const et = _generationEvents.types;
+    const handlers = [
+        [et.GENERATION_STARTED, (type, _options, dryRun) => {
+            if (!dryRun && ST_GEN_TYPES.includes(type)) _stGenStart();
+        }],
+        [et.GENERATION_ENDED, () => _stGenEnd()],
+        [et.GENERATION_STOPPED, () => _stGenEnd()],
+    ].filter(([name]) => !!name);
+    try {
+        for (const [name, fn] of handlers) _generationEvents.on(name, fn);
+        _stEventMode = true;
+        _rpgLifetime.signal.addEventListener('abort', () => {
+            for (const [name, fn] of handlers) {
+                try { _generationEvents.off(name, fn); } catch (e) {}
+            }
+            clearInterval(_stGenPoll);
+        }, { once: true });
+        // iframe 在生成途中才建立（新樓層在第一個 token 出現時才建立）
+        if (_stopButtonVisible()) _stGenStart();
+    } catch (error) {
+        console.warn('[RPG] 生成開始／結束事件註冊失敗，沿用計時器:', error);
+    }
 }
 
     // === [新增] 全角色選擇器邏輯 ===
@@ -14811,7 +14938,7 @@ if (_generationEvents && !_rpgLifetime.signal.aborted) {
     // 排除清單是非同步讀入的，重新渲染正文以免沿用先前套用了已排除正則的結果
     if (typeof updateTemplateVariables === 'function' && state?.rawMessage) {
         state.rawText = '';
-        updateTemplateVariables(state.rawMessage);
+        updateTemplateVariables(state.rawMessage, { rerender: true });
     }
 }).catch(function() {
     renderSTRegexPanel();

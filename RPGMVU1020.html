@@ -7046,7 +7046,7 @@ async function _saveAnchorWithFeedback(rules) {
         if (state.rawMessage) {
             window.__FORMAT_CACHE?.clear();
             state.rawText = '';
-            updateTemplateVariables(state.rawMessage);
+            updateTemplateVariables(state.rawMessage, { rerender: true });
         }
         if (statusEl) {
             statusEl.textContent = '✓ 已保存';
@@ -7223,7 +7223,7 @@ async function _saveFilterWithFeedback(rules) {
         if (state.rawMessage) {
             window.__FORMAT_CACHE?.clear();   // 清段落格式快取
             state.rawText = '';               // 強制 extractContent 重跑
-            updateTemplateVariables(state.rawMessage);
+            updateTemplateVariables(state.rawMessage, { rerender: true });
         }
 
         if (statusEl) {
@@ -7351,7 +7351,7 @@ function renderSTRegexPanel() {
             _compiledFilterRegexes = null;
             if (state.rawMessage) {
                 state.rawText = '';
-                updateTemplateVariables(state.rawMessage);
+                updateTemplateVariables(state.rawMessage, { rerender: true });
             }
             renderSTRegexPanel();
         });
@@ -7385,6 +7385,25 @@ document.getElementById('st-regex-refresh-btn')?.addEventListener('click', funct
         renderSTRegexPanel();
     });
 });
+// 正文規則與過濾規則的快取每個樓層的 iframe 各有一份，只在載入時讀一次。
+// 打開設定頁時重新讀取：列表才會是最新值，儲存時也不會覆蓋其他樓層剛才的修改。
+// 規則有變時，用新規則重新渲染本樓層的正文。
+async function refreshRulesForSettings() {
+    const before = JSON.stringify([_anchorRulesCache, _filterRulesCache]);
+    _anchorDirty = false;
+    _filterDirty = false;
+    await Promise.all([refreshAnchorRulesCache(), refreshFilterRulesCache()]);
+    if (_rpgLifetime.signal.aborted) return;
+    // 讀取期間已經開始編輯的列表不重畫，避免清掉輸入中的內容
+    if (!_anchorDirty) renderAnchorRules();
+    if (!_filterDirty) renderFilterRules();
+    if (JSON.stringify([_anchorRulesCache, _filterRulesCache]) !== before && state.rawMessage) {
+        window.__FORMAT_CACHE?.clear();
+        state.rawText = '';
+        updateTemplateVariables(state.rawMessage, { rerender: true });
+    }
+}
+
 // display-modal 開啟時重新渲染，確保讀到最新值
 (function() {
     const layer = document.getElementById('display-layer');
@@ -7395,6 +7414,7 @@ document.getElementById('st-regex-refresh-btn')?.addEventListener('click', funct
                 if (layer.classList.contains('active')) {
                     renderFilterRules();
                     renderAnchorRules();  // ← 補上
+                    refreshRulesForSettings();
                     refreshSTRegexScripts();
                     Promise.all([refreshSTRegexSelection(), refreshSTRegexExclusion()]).then(function() {
                         renderSTRegexPanel();
@@ -12397,7 +12417,7 @@ const LOCATION_BUTTONS = [
         console.log('[RPG] syncGameState 呼叫, isSyncing:', isSyncing);
         if (isSyncing) return;
         // [防護] 串流生成期間跳過同步，避免讀到過渡態的空變量
-        // 生成結束時 MESSAGE_RECEIVED 會再觸發一次正式同步
+        // 生成結束時 _stGenEnd 或渲染腳本的 RPG_FORCE_REFRESH_FROM_VARIABLES 會再同步一次
         if (isGenerating) {
             console.log('[RPG] 生成中，跳過本次 syncGameState');
             return;
@@ -12924,6 +12944,12 @@ state.currentMusicUrl = targetMusicUrl;
 let streamTimeout = null;
 let isGenerating = false;
 let genResetTimer = null;
+// 酒館事件（見「生成狀態：直接監聽酒館事件」）：_stEventMode＝讀得到事件；_stGenActive＝事件顯示正在生成
+let _stEventMode = false;
+let _stGenActive = false;
+let _stGenPoll = null;
+let _stStopSeen = false;
+let _stDeferredRefresh = false;
 
 // === [效能優化] 串流節流 ===
 // 流式生成時 updateTemplateVariables 每個 chunk 都被呼叫一次，
@@ -12969,7 +12995,7 @@ if (isFinished) {
     // isFinished = 內容看起來已完整，設短計時器備援
     // 若 MESSAGE_RECEIVED 先觸發，clearTimeout 會讓這個不執行
     genResetTimer = setTimeout(() => {
-        if (!isGenerating) return; // 事件監聽已處理過，直接跳出
+        if (!isGenerating || _stEventMode) return; // 事件已處理過，或生成中由酒館事件決定
         isGenerating = false;
         const root = document.querySelector('.rpg-v7-root');
         if (root) root.classList.remove('generating');
@@ -13010,21 +13036,26 @@ function _scheduleProcessRaw(rawString) {
     }, STREAM_THROTTLE_MS);
 }
 
-window.updateTemplateVariables = function(data) {
+window.updateTemplateVariables = function(data, options) {
+    // options.rerender：重新渲染已經完成的訊息（修改正文規則、過濾規則、酒館正則後），不是串流。
+    // 這時不進入「生成中」（不鎖按鈕、不略過 syncGameState），也不啟動 8 秒的安全計時器
+    const rerender = !!(options && options.rerender);
+    // 讀得到酒館事件時，生成中只由事件決定，這裡不設定
+    if (!rerender && !_stEventMode) {
+        clearTimeout(window.__safeUnlockTimer);
+        window.__safeUnlockTimer = setTimeout(() => {
+            if (isGenerating) {
+                isGenerating = false;
+                document.querySelector('.rpg-v7-root')?.classList.remove('generating');
+                console.log('[RPG] 安全重置：串流逾時，generating 已強制解除');
+            }
+        }, 8000);
 
-    clearTimeout(window.__safeUnlockTimer);
-    window.__safeUnlockTimer = setTimeout(() => {
-        if (isGenerating) {
-            isGenerating = false;
-            document.querySelector('.rpg-v7-root')?.classList.remove('generating');
-            console.log('[RPG] 安全重置：串流逾時，generating 已強制解除');
+        if (!isGenerating) {
+            isGenerating = true;
+            const root = document.querySelector('.rpg-v7-root');
+            if (root) root.classList.add('generating');
         }
-}, 8000);
-
-    if (!isGenerating) {
-        isGenerating = true;
-        const root = document.querySelector('.rpg-v7-root');
-        if (root) root.classList.add('generating');
     }
 
     const rawString = typeof data === 'string' ? data : (data && data.RPG ? String(data.RPG) : "");
@@ -13055,6 +13086,11 @@ window.updateTemplateVariables = function(data) {
 // === RPG MVU 外部流式入口：給 Tavern Helper iframe 外殼呼叫 ===
 // ============================================================
 window.RPG_FORCE_REFRESH_FROM_VARIABLES = async function(rawData = '') {
+    // 酒館事件顯示仍在生成中：不解除生成中、不同步，等生成結束（_stGenEnd）時執行一次
+    if (_stGenActive) {
+        _stDeferredRefresh = true;
+        return true;
+    }
     try {
         // 外部明確要求刷新時，視為生成已結束
         isGenerating = false;
@@ -13233,7 +13269,7 @@ if (topWindow.RPG_AUDIO_STATE) {
 
             // 寫回並刷新 UI
             await setChatMessages(mesId, [{ role: 'assistant', message: finalText }], { refresh: 'none' });
-            if (typeof window.updateTemplateVariables === 'function') window.updateTemplateVariables(finalText);
+            if (typeof window.updateTemplateVariables === 'function') window.updateTemplateVariables(finalText, { rerender: true });
             return finalText;
 
         } catch (e) { console.error("[RPG Bridge] 寫入文本失敗:", e); }
@@ -14095,7 +14131,7 @@ document.getElementById('display-layer')?.addEventListener('click', (e) => {
     // [安全重置] 頁面載入後強制解除 generating 鎖定
         // 防止初始渲染時 isGenerating=true 卻沒有觸發 MESSAGE_RECEIVED 的情況
         setTimeout(() => {
-            if (isGenerating) {
+            if (isGenerating && !_stGenActive) {
                 isGenerating = false;
                 document.querySelector('.rpg-v7-root')?.classList.remove('generating');
                 console.log('[RPG] 安全重置：generating 狀態已強制解除');
@@ -14104,41 +14140,92 @@ document.getElementById('display-layer')?.addEventListener('click', (e) => {
     };
 	
 // ============================================================
-// === 流式生成結束偵測 ===
+// === 生成狀態：直接監聽酒館事件 ===
 // ============================================================
+// 主檔的 iframe 由渲染腳本建立，沒有 eventOn / tavern_events；但和酒館頁面同源，
+// 所以直接用 topWindow.SillyTavern.getContext().eventSource 監聽。
+// 讀得到事件時，「生成中」只由事件決定：
+//   開始：GENERATION_STARTED（下面的類型，不含 dryRun）
+//   結束：MESSAGE_RECEIVED、GENERATION_ENDED、GENERATION_STOPPED；
+//         生成中每 2 秒檢查停止鈕，這次生成中看過它出現、之後又消失，也算結束（漏掉事件時的備援）
+// 生成中，渲染腳本送來的正文照樣顯示，但不解除生成中；RPG_FORCE_REFRESH_FROM_VARIABLES 延到結束時執行一次。
+// 讀不到事件時（例如測試環境），維持由 updateTemplateVariables 與計時器判斷的做法。
+const ST_GEN_TYPES = ['normal', 'regenerate', 'swipe', 'continue'];
 
-const _initEventListeners = () => {
-    eventOn(tavern_events.MESSAGE_RECEIVED, async (messageId, type) => {
-        console.log('[RPG] MESSAGE_RECEIVED 觸發, type:', type);
-        if (!['normal', 'regenerate', 'swipe', 'continue'].includes(type)) return;
-        const msgs = getChatMessages(messageId);
-const firstMsg = Array.isArray(msgs) ? msgs[0] : msgs;
-if (firstMsg && firstMsg.role !== 'assistant') return;
-        isGenerating = false;
-        clearTimeout(genResetTimer);
-        // [效能優化] 立即處理節流中尚未渲染的最終串流內容
-        _flushPendingRaw();
-        const root = document.querySelector('.rpg-v7-root');
-        if (root) root.classList.remove('generating');
-        updateStateViewer(extractStateContent(state.rawText || ''));
-        setTimeout(() => {
-            if (typeof syncGameState === 'function') syncGameState();
-        }, 500);
-    });
-	setAudioSettings('bgm', { mode: 'repeat_one' });
-};
-
-if (typeof tavern_events !== 'undefined') {
-    _initEventListeners();
-} else {
-    const _waitTimer = setInterval(() => {
-        if (typeof tavern_events !== 'undefined') {
-            clearInterval(_waitTimer);
-            _initEventListeners();
-        }
-    }, 100);
-    _rpgLifetime.signal.addEventListener('abort', () => clearInterval(_waitTimer), { once: true });
+function _setGeneratingUI(on) {
+    isGenerating = on;
+    document.querySelector('.rpg-v7-root')?.classList.toggle('generating', on);
 }
+
+function _stopButtonVisible() {
+    try {
+        const btn = topWindow.document.getElementById('mes_stop');
+        return !!btn && topWindow.getComputedStyle(btn).display !== 'none';
+    } catch (e) {
+        return false;
+    }
+}
+
+function _stGenStart() {
+    if (_rpgLifetime.signal.aborted) return;
+    _stGenActive = true;
+    _stStopSeen = _stopButtonVisible();
+    clearTimeout(genResetTimer);
+    clearTimeout(window.__safeUnlockTimer);
+    _setGeneratingUI(true);
+    if (!_stGenPoll) {
+        _stGenPoll = setInterval(() => {
+            const visible = _stopButtonVisible();
+            if (visible) _stStopSeen = true;
+            else if (_stStopSeen) _stGenEnd();
+        }, 2000);
+    }
+}
+
+function _stGenEnd() {
+    if (!_stGenActive) return;
+    _stGenActive = false;
+    clearInterval(_stGenPoll);
+    _stGenPoll = null;
+    _setGeneratingUI(false);
+    // 生成中被延後的刷新在這裡執行一次（會處理還沒渲染的正文、更新變數面板並同步）。
+    // 生成中沒有收到刷新要求的樓層（較舊的樓層）只解除鎖定。
+    if (_stDeferredRefresh) {
+        _stDeferredRefresh = false;
+        window.RPG_FORCE_REFRESH_FROM_VARIABLES(state.rawMessage || '');
+    }
+}
+
+(function _initStGenerationEvents() {
+    let ctx = null;
+    try { ctx = topWindow.SillyTavern?.getContext?.() || null; } catch (e) {}
+    const es = ctx?.eventSource;
+    const et = ctx?.eventTypes || ctx?.event_types;
+    if (!es || typeof es.on !== 'function' || !et?.GENERATION_STARTED) {
+        console.log('[RPG] 讀不到酒館事件，生成狀態改用正文推送與計時器判斷');
+        return;
+    }
+    const handlers = [
+        [et.GENERATION_STARTED, (type, _options, dryRun) => {
+            if (!dryRun && ST_GEN_TYPES.includes(type)) _stGenStart();
+        }],
+        [et.MESSAGE_RECEIVED, (_messageId, type) => {
+            if (!type || ST_GEN_TYPES.includes(type)) _stGenEnd();
+        }],
+        [et.GENERATION_ENDED, () => _stGenEnd()],
+        [et.GENERATION_STOPPED, () => _stGenEnd()],
+    ].filter(([name]) => !!name);
+    for (const [name, fn] of handlers) es.on(name, fn);
+    _stEventMode = true;
+    _rpgLifetime.signal.addEventListener('abort', () => {
+        for (const [name, fn] of handlers) {
+            try { (es.removeListener || es.off)?.call(es, name, fn); } catch (e) {}
+        }
+        clearInterval(_stGenPoll);
+    }, { once: true });
+    // iframe 在生成途中才建立（新樓層在第一個 token 出現時才建立）
+    if (_stopButtonVisible()) _stGenStart();
+})();
 
 	// === 全角色選擇器邏輯 ===
     
