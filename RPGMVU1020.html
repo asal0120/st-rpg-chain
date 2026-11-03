@@ -14142,6 +14142,129 @@ document.getElementById('display-layer')?.addEventListener('click', (e) => {
     };
 	
 // ============================================================
+// === MVU 指令路徑異體字修正 ===
+// ============================================================
+// AI 偶爾把變量鍵名寫成繁體或日文字形（例如 侍奉经験），MVU 找不到鍵就報錯。
+// 監聽 MVU 在套用指令前發出的 mag_command_parsed 事件，把 command.args[0] 的路徑修成 stat_data 中實際存在的鍵。
+// 全域只留一個監聽（topWindow.__RPG_CMD_FIX__）；handler 在主視窗建立，iframe 被移除後仍有效。
+// _rpgCmdFixFactory 必須只用自己的參數與 console（用 toString 在主視窗重建），不可以引用 iframe 的任何變數。
+function _rpgCmdFixFactory(MAP) {
+    const chars = Array.from(MAP);
+    const T = Object.create(null);
+    for (let i = 0; i + 1 < chars.length; i += 2) T[chars[i]] = chars[i + 1];
+    const conv = (k) => Array.from(k).map((c) => T[c] ?? c).join('');
+    const has = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
+    const FIX_TYPES = ['set', 'add', 'delete', 'remove', 'insert', 'assign', 'move'];
+    // 解析路徑 → 段落陣列；解析不了回傳 null
+    const parse = (str) => {
+        const p = str.trim().replace(/^['"`]+|['"`]+$/g, '');
+        if (!p) return null;
+        const segs = [];
+        let i = 0;
+        while (i < p.length) {
+            const c = p[i];
+            if (c === '.') { i++; continue; }
+            if (c === '[') {
+                const q = p[i + 1];
+                if (q === '"' || q === "'") {
+                    let j = i + 2, key = '';
+                    while (j < p.length && p[j] !== q) {
+                        if (p[j] === '\\' && j + 1 < p.length) j++;
+                        key += p[j++];
+                    }
+                    if (p[j] !== q || p[j + 1] !== ']') return null;
+                    segs.push(key);
+                    i = j + 2;
+                } else {
+                    const j = p.indexOf(']', i);
+                    if (j < 0) return null;
+                    segs.push(p.slice(i + 1, j).trim());
+                    i = j + 1;
+                }
+            } else {
+                let j = i;
+                while (j < p.length && p[j] !== '.' && p[j] !== '[') j++;
+                segs.push(p.slice(i, j));
+                i = j;
+            }
+        }
+        return segs.length ? segs : null;
+    };
+    const toLodash = (segs) => segs.map((k) => '["' + k.replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"]').join('');
+    return function handler(variables, commands) {
+        try {
+            if (!Array.isArray(commands)) return;
+            for (const cmd of commands) {
+                try {
+                    if (!cmd || !FIX_TYPES.includes(cmd.type) || !Array.isArray(cmd.args)) continue;
+                    const orig = cmd.args[0];
+                    if (typeof orig !== 'string') continue;
+                    const segs = parse(orig);
+                    if (!segs) continue;
+                    let cur = variables?.stat_data;
+                    let changed = false;
+                    for (let i = 0; i < segs.length; i++) {
+                        if (cur === null || typeof cur !== 'object') break;
+                        const k = segs[i];
+                        if (has(cur, k)) { cur = cur[k]; continue; }
+                        const ck = conv(k);
+                        const hit = Object.keys(cur).filter((x) => conv(x) === ck);
+                        if (hit.length !== 1) break;
+                        segs[i] = hit[0];
+                        changed = true;
+                        cur = cur[hit[0]];
+                    }
+                    if (!changed) continue;
+                    cmd.args[0] = toLodash(segs);
+                    console.info('[RPG] 指令路徑修正', orig, '→', cmd.args[0]);
+                } catch (e) {
+                    console.warn('[RPG] 指令路徑修正失敗', e);
+                }
+            }
+        } catch (e) {
+            console.warn('[RPG] 指令路徑修正失敗', e);
+        }
+    };
+}
+
+(function _installCmdFix() {
+    const CMD_FIX_VERSION = 1;
+    const CMD_FIX_MAP = "丟丢両两並并乾干亂乱予豫亙亘亜亚亞亚仏佛仮假伝传佇伫佈布佔占併并來来価价侷局係系俠侠俬私倉仓個个們们倖幸倫伦偉伟側侧傑杰傘伞備备傢家傳传傷伤傾倾僅仅價价儀仪億亿儘尽優优儲储儼俨兇凶児儿兒儿內内兩两円圆冊册凍冻凜凛処处凱凯別别則则剋克剎刹剛刚剣剑剰剩創创劃划劄札劇剧劉刘劍剑労劳効效勁劲動动務务勝胜勞劳勢势勵励匯汇區区協协単单卻却卽即厤历厳严參参収收叢丛吶呐員员唸念問问啓启啟启喫吃單单嗎吗嘆叹嘗尝噁恶噴喷噹当嚐尝嚮向嚴严囂嚣囉啰囑嘱団团囲围図图國国圍围圏圈園园圓圆圖图團团圧压埰采堅坚報报場场塊块塩盐塵尘墊垫増增墰坛墻墙壇坛壊坏壌壤壓压壜坛壞坏変变夠够夢梦夥伙夾夹奧奥奨奖奪夺奬奖奮奋婭娅媽妈嫵妩嬌娇嬰婴學学実实宮宫寀采寛宽實实寧宁審审寫写寬宽寵宠寶宝対对専专將将專专尋寻對对導导屆届屍尸屢屡層层屬属島岛峽峡嵗岁嶄崭嶼屿巌岩巖岩巻卷師师帯带帰归帶带幣币幫帮幷并幹干幾几庁厅広广庫库廂厢廃废廚厨廟庙廢废廣广廳厅弁辨弔吊張张強强弾弹彆别彈弹彌弥彎弯彔录彙汇彫雕彿佛後后徑径従从從从復复徳德徴征徵征徹彻応应恆恒恥耻悅悦悪恶悵怅悶闷惡恶愛爱慄栗態态慣惯慮虑慶庆慾欲憂忧憐怜憑凭憤愤憶忆應应懐怀懲惩懶懒懷怀懸悬懼惧戦战戯戏戰战戲戏戶户払拂抜拔択择拋抛拝拜拠据拡扩挾挟挿插捨舍捱挨捲卷掃扫掙挣掛挂採采掲揭揚扬換换揮挥揺摇損损搖摇搧扇搶抢摯挚摺折摻掺撃击撐撑撓挠撥拨撫抚撲扑擁拥擄掳擇择擊击擋挡擔担據据擠挤擡抬擰拧擱搁擴扩擺摆擾扰攏拢攜携攤摊敎教敗败敘叙敵敌數数斂敛斉齐斬斩斷断於于旣既昇升時时晩晚暈晕暢畅暦历暫暂曆历曏向曖暧曬晒書书曽曾會会朧胧朮术東东柵栅査查栄荣桜樱桿杆條条棄弃棟栋検检業业極极楽乐榘矩榦干榮荣構构槍枪様样樂乐樓楼標标樣样権权樸朴樹树機机橫横檔档檢检檯台檸柠檻槛櫃柜櫻樱欄栏權权欖榄欠缺歎叹歓欢歡欢歩步歲岁歳岁歴历歷历歸归殘残殭僵殲歼殺杀毎每氈毡気气氣气氾泛汎泛決决沒没沖冲沢泽沪滤況况洩泄洶汹涼凉淺浅渉涉減减渦涡測测渾浑湊凑湧涌満满準准溝沟溫温溼湿滅灭滙汇滯滞滲渗滿满漬渍漲涨漸渐潔洁潤润澤泽濃浓濕湿濾滤瀰弥灘滩灣湾災灾為为烏乌無无煉炼煙烟煩烦熱热燈灯燙烫燼烬爍烁爐炉爛烂爭争爲为爾尔牀床牆墙牴抵牽牵狀状猟猎猶犹獃呆獅狮獎奖獣兽獨独獲获獵猎獸兽獻献現现琱雕瑣琐瑪玛環环產产産产畢毕畫画異异畳叠畵画當当疇畴疊叠痠酸癒愈発发發发皺皱盃杯盞盏盡尽盤盘盪荡眞真眾众睏困睜睁瞞瞒矚瞩砕碎硃朱確确磚砖礎础礙碍祕秘禍祸禦御禮礼禱祷種种稱称穀谷穂穗積积穏稳穩稳穫获窩窝窮穷窺窥竈灶竜龙竪竖競竞箇个箚札節节範范築筑篤笃篩筛簡简簽签簾帘籌筹籟籁籠笼籤签籲吁粋粹粛肃糧粮糰团糸丝糾纠紀纪約约紅红紋纹納纳純纯紗纱紙纸級级紡纺紮扎細细紹绍終终絃弦組组経经結结絕绝絞绞絡络給给絨绒統统絲丝絶绝綁绑經经継继続续綜综綠绿綢绸綫线維维網网綳绷綵彩綻绽綽绰緊紧緋绯総总緑绿緒绪線线緣缘編编緩缓練练緹缇緻致縁缘縝缜縟缛縦纵縫缝縮缩縱纵縴纤總总績绩繃绷繆缪繊纤織织繞绕繫系繼继續续纍累纏缠纔才纖纤罈坛罎坛罰罚罷罢羅罗羣群義义習习翫玩翹翘聖圣聞闻聯联聲声聳耸聴听聶聂職职聽听肅肃脅胁脈脉脣唇脩修脫脱脳脑腦脑腳脚膚肤膽胆臉脸臓脏臟脏臥卧臨临臺台與与興兴舉举舊旧舖铺舘馆艙舱艶艳艷艳芸艺荊荆荘庄莊庄華华菸烟萬万葉叶葦苇葯药蒞莅蒼苍蓆席蓋盖蔘参蔵藏蕩荡薊蓟薔蔷薩萨薫薰薬药薹苔藍蓝藝艺藥药藴蕴藹蔼蘊蕴蘚藓蘭兰處处虛虚號号蛍萤螢萤蠻蛮衆众術术衕同衚胡衛卫衝冲袷夹裏里補补裝装裡里製制複复褲裤襪袜襬摆襯衬襲袭覈核見见規规視视覚觉覧览親亲観观覺觉覽览觀观觸触訂订計计訊讯討讨訓训託托記记訝讶訪访設设許许訴诉註注証证詞词詢询試试詩诗詭诡話话該该誇夸誌志認认誒诶誘诱語语誠诚誤误說说説说読读誰谁誼谊調调談谈請请諒谅論论諧谐諸诸諾诺謀谋謂谓謎谜講讲謝谢證证識识譜谱譟噪議议譲让護护讀读變变讓让讚赞豊丰豎竖豐丰豔艳豬猪貍狸貓猫貝贝負负財财貨货貪贪責责貴贵買买費费貼贴賀贺賛赞賜赐賞赏賦赋質质賭赌賴赖賺赚購购賽赛贊赞贏赢趕赶趨趋跡迹蹟迹蹤踪躍跃軀躯車车軌轨軍军軟软転转軸轴軽轻較较載载輒辄輔辅輕轻輛辆輝辉輩辈輪轮輯辑輸输輾辗轉转轟轰辦办辭辞農农辺边迴回逓递逕径這这連连週周進进遅迟遊游運运過过達达違违遙遥遜逊遞递遠远適适遲迟遶绕遷迁選选遺遗遼辽邁迈還还邊边邏逻鄉乡鄭郑酔醉醣糖釈释釋释釘钉針针鈕钮鈡钟鈴铃鉄铁鉅巨銀银銅铜銘铭銜衔銭钱銳锐銷销銹锈鋒锋鋪铺鋭锐鋼钢錄录錐锥錘锤錢钱錨锚錬炼錯错録录錶表鍊炼鍛锻鍵键鍼针鍾钟鎌镰鎖锁鎚锤鎧铠鎭镇鎮镇鏇旋鏈链鏡镜鏽锈鐘钟鐮镰鐵铁鐺铛鑑鉴鑒鉴鑲镶長长門门閃闪閉闭開开間间関关閣阁閤合閨闺閱阅閲阅闆板闇暗闊阔闕阙闖闯關关陞升陣阵陥陷陸陆険险陽阳隊队階阶際际隠隐隨随險险隱隐隻只雑杂雖虽雙双雜杂雞鸡離离難难雲云電电霊灵霧雾靈灵靜静鞦秋韆千響响頁页頂顶項项順顺須须頌颂預预頓顿頗颇領领頜颌頭头頰颊頷颔頸颈頼赖顆颗題题額额顏颜顔颜顕显願愿顛颠類类顧顾顫颤顯显風风颱台飄飘飛飞飯饭飲饮飽饱飾饰餘余館馆餬糊饋馈馬马駁驳駆驱駐驻駕驾駛驶騎骑験验騰腾驅驱驗验驚惊驟骤髏髅髒脏體体髪发髮发鬆松鬍胡鬚须鬢鬓鬥斗鬧闹鬨哄魚鱼魯鲁鮭鲑鮮鲜鯉鲤鱗鳞鳥鸟鳴鸣鵝鹅鵰雕鶏鸡鷄鸡鷲鹫鹽盐麗丽麥麦麪面麫面麯曲麴曲麵面麹曲麺面麼么麽么黃黄黒黑黙默點点鼕冬齊齐齡龄齢龄齣出龍龙龐庞龕龛𡻕岁";
+    try {
+        let es = null;
+        try { es = topWindow.SillyTavern?.getContext?.()?.eventSource || null; } catch (e) {}
+        if (!es || typeof es.on !== 'function') return;
+        const evt = topWindow.Mvu?.events?.COMMAND_PARSED ?? 'mag_command_parsed';
+        const off = (fn) => { try { (es.removeListener || es.off)?.call(es, evt, fn); } catch (e) {} };
+        const cur = topWindow.__RPG_CMD_FIX__;
+        if (cur && cur.version >= CMD_FIX_VERSION) return;
+        if (cur && typeof cur.handler === 'function') off(cur.handler);
+        let handler = null;
+        let inMain = true;
+        try {
+            // 在主視窗建立 handler：iframe 被移除後，監聽仍然有效
+            const factory = new topWindow.Function('return (' + _rpgCmdFixFactory.toString() + ')')();
+            handler = factory(CMD_FIX_MAP);
+        } catch (e) {
+            console.warn('[RPG] 指令路徑修正：無法在主視窗建立 handler，改用 iframe 內的函式', e);
+            inMain = false;
+            handler = _rpgCmdFixFactory(CMD_FIX_MAP);
+        }
+        es.on(evt, handler);
+        topWindow.__RPG_CMD_FIX__ = { version: CMD_FIX_VERSION, handler };
+        if (!inMain) {
+            _rpgLifetime.signal.addEventListener('abort', () => {
+                if (topWindow.__RPG_CMD_FIX__?.handler !== handler) return;
+                off(handler);
+                topWindow.__RPG_CMD_FIX__ = null;
+            }, { once: true });
+        }
+    } catch (e) {
+        console.warn('[RPG] 指令路徑修正安裝失敗', e);
+    }
+})();
+
+// ============================================================
 // === 生成狀態：直接監聽酒館事件 ===
 // ============================================================
 // 主檔的 iframe 由渲染腳本建立，沒有 eventOn / tavern_events；但和酒館頁面同源，
