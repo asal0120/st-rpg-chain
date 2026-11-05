@@ -4594,6 +4594,7 @@ html:not(.rpg-classic) .rpg-v7-root :is(.bag-scaler, .quest-scaler) .cat-btn {
     left: 6px;
     top: auto;
     bottom: 42%;             /* 從垂直置中改為中偏下，避開場景中央主體 */
+    bottom: max(42%, 87px);  /* 窄畫面時不低於右下木牌（54 + 27）上方 6px */
     transform: none;
 }
 .rpg-v7-root.mobile-layout .home-nav-arrow.arrow-left:hover {
@@ -4603,6 +4604,7 @@ html:not(.rpg-classic) .rpg-v7-root :is(.bag-scaler, .quest-scaler) .cat-btn {
     right: 6px;
     top: auto;
     bottom: 42%;
+    bottom: max(42%, 87px);
     transform: none;
 }
 .rpg-v7-root.mobile-layout .home-nav-arrow.arrow-right:hover {
@@ -4616,7 +4618,7 @@ html:not(.rpg-classic) .rpg-v7-root :is(.bag-scaler, .quest-scaler) .cat-btn {
     transform: translateX(-50%);
 }
 .rpg-v7-root.mobile-layout .home-nav-arrow.arrow-down-right {
-    bottom: 6px;
+    bottom: 54px;            /* 移到靜音鈕（bottom 12px、高 36px）上方，和桌面版相同 */
     right: 6px;
 }
 
@@ -4845,6 +4847,9 @@ html:not(.rpg-classic) .rpg-v7-root :is(.bag-scaler, .quest-scaler) .cat-btn {
    因此文字、按鈕大小不變，只是縱向可用空間變多。 */
 .rpg-v7-root.mobile-layout.topbar-sheet-open .map-area {
     aspect-ratio: 3 / 4;
+    /* 舊版瀏覽器（Safari 17 以前、較舊的 Chromium）的 container-type 會讓 .map-area 自成疊層，
+       界面層（z 200）跟著整個 .map-area 被底板（z 185）蓋住，畫面一片空白。展開時取消容器設定。 */
+    container-type: normal;
 }
 /* 手機開小遊戲（2026-10-14）：地圖區同樣改 3:4，小遊戲畫布 1080 × 1440（直式版面） */
 .rpg-v7-root.mobile-layout.minigame-mobile .map-area {
