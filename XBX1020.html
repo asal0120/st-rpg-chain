@@ -11977,14 +11977,28 @@ panelParent.appendChild(mobilePanel);
         const seq = ++pixelHomeSeq;
         let ok = false;
         try {
-            const location = state.isHome ? await getPlayerHomeLocation() : null;
-            if (seq !== pixelHomeSeq) return;
-            if (location && expectPixelHome(location) && !els.mapArea.classList.contains('pixel-home-active')) {
-                setPixelHomeLoading(true);
+            // [效能優化] 位置、角色、時間在同一個短批次內讀取：批次內 世界.* 只讀一次根快照（1 次 /xbgetvar），
+            // 否則批次外要逐一讀 20 次以上。外層（syncGameState）已有批次時深度疊加，不影響外層。
+            // 角色與時間在 loadPixelHome 之前讀好（載入可能要數秒，批次不能跨過去）；
+            // 讀取錯誤延後到原本讀取的位置才拋出，載入失敗或沒有場景時行為和原本相同。
+            let location = null, preRead = null;
+            beginVarBatch();
+            try {
+                location = state.isHome ? await getPlayerHomeLocation() : null;
+                if (seq !== pixelHomeSeq) return;
+                if (location && expectPixelHome(location) && !els.mapArea.classList.contains('pixel-home-active')) {
+                    setPixelHomeLoading(true);
+                }
+                if (state.isHome && state.pixelHomeEnabled) {
+                    preRead = await Promise.all([readPixelHomeChars(), readPixelHomeHour()]).then(v => ({ v }), e => ({ e }));
+                }
+            } finally {
+                endVarBatch();
             }
-            if (state.isHome && state.pixelHomeEnabled && await loadPixelHome()) {
+            if (preRead && await loadPixelHome()) {
                 if (window.PixelHome.has(location)) {
-                    const [{ joined, locOf }, hour] = await Promise.all([readPixelHomeChars(), readPixelHomeHour()]);
+                    if (preRead.e) throw preRead.e;
+                    const [{ joined, locOf }, hour] = preRead.v;
                     if (seq !== pixelHomeSeq) return;
                     resetPixelHidden(location);   // 換地點時清掉上一個地點的隱藏名單；render 會用 onHidden 回報新的
                     ok = await window.PixelHome.render(els.mapArea, {

@@ -11756,17 +11756,32 @@ previewArea.appendChild(dot);
     async function renderPixelHome() {
         if (!els.mapArea) return;
         const seq = ++pixelHomeSeq;
-        const location = getPlayerHomeLocation();
+        // [效能優化] 全部變量讀取在第一個 await 之前做完（await 之後 syncGameState 的快照多半已釋放，每次讀取都會讀整棵樹）。
+        // 外層（syncGameState）已有快照就直接用；沒有（換房、切換像素開關、啟動）就自己開一個短批次，讀完立刻釋放。
+        // 批次不能巢狀：外層有快照時不可呼叫 beginVarBatch／endVarBatch，否則會把外層的快照清掉。
+        const ownBatch = !_varsSnapshot;
+        if (ownBatch) beginVarBatch();
+        let location, ctx = null;
+        try {
+            location = getPlayerHomeLocation();
+            if (state.isHome && state.pixelHomeEnabled) {
+                ctx = {
+                    location,
+                    hour: parseInt(getVariable('世界.当前.时间.时')),
+                    present: heroineList.filter(name => isCharConquered(name) && getCharHomeLocation(name) === location),
+                    joined: heroineList.filter(isCharConquered),
+                    locked: getLockedHomeLocations(),
+                };
+            }
+        } finally {
+            if (ownBatch) endVarBatch();
+        }
         if (expectPixelHome(location) && !els.mapArea.classList.contains('pixel-home-active')) setPixelHomeLoading(true);
         let ok = false;
-        if (state.isHome && state.pixelHomeEnabled && await loadPixelHome() && window.PixelHome.has(location)) {
+        if (ctx && await loadPixelHome() && window.PixelHome.has(location)) {
             resetPixelHidden(location);   // 換地點時清掉上一個地點的隱藏名單；render 會用 onHidden 回報新的
             ok = await window.PixelHome.render(els.mapArea, {
-                location,
-                hour: parseInt(getVariable('世界.当前.时间.时')),
-                present: heroineList.filter(name => isCharConquered(name) && getCharHomeLocation(name) === location),
-                joined: heroineList.filter(isCharConquered),
-                locked: getLockedHomeLocations(),
+                ...ctx,
                 seed: window.RPG_MESSAGE_ID ?? 0,   // 同一則訊息的排位不變
             }, PIXEL_HOME_HOST);
         } else if (window.PixelHome) {
