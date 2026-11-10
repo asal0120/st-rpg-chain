@@ -19,7 +19,7 @@
  * 介面說明見 notes.md「像素家園：接入主檔」。 */
 (function () {
   'use strict';
-  const VERSION = '1.5.0';
+  const VERSION = '1.6.0';
   if (window.PixelHome && window.PixelHome.version === VERSION) return;
 
   // 地點 → 房間資料夾
@@ -59,6 +59,8 @@
   const SEAT_WEIGHT = 3;
   // 雙指縮放：倍率離裝置像素的整數倍在這個距離以內時吸附到整數倍（見 snapScale）
   const SNAP_NEAR = 0.15;
+  // 滾輪縮放：每格的倍率；吸附到整數倍的距離（比雙指小，否則從整數倍滾一格會被吸回去）
+  const WHEEL_STEP = 1.2, WHEEL_SNAP = 0.06;
   // 可以自由選擇朝向時，有偏好的角色朝偏好方向的機率
   const PREFER_WEIGHT = 0.7;
   // 預設鏡頭：角色在畫面上約 110 CSS px 高；最近時約 280 CSS px
@@ -646,9 +648,13 @@
       this.applyView();
     }
     // 以畫框內 (cx, cy) 為中心縮放
+    // 最大倍率：上限往上取到裝置像素的整數倍（最近的畫面仍是整數倍，像素最清楚）
+    zoomTop() { const dpr = window.devicePixelRatio || 1, b = this.scaleRange()[1]; return Math.max(b, Math.ceil(b * dpr - 0.001) / dpr); }
+    // loose = 'raw'：倍率已經決定（滾輪），只限制範圍
     zoomTo(s, cx, cy, loose) {
       const [a, b] = this.scaleRange();
-      s = this.snapScale(Math.max(a, Math.min(b, s)), loose);
+      if (loose === 'raw') s = Math.max(a, Math.min(this.zoomTop(), s));
+      else s = this.snapScale(Math.max(a, Math.min(b, s)), loose);
       if (cx == null) { const [mw, mh] = this.mapSize(); cx = mw / 2; cy = mh / 2; }
       const v = this.view;
       const ax = (cx - v.ox) / v.scale, ay = (cy - v.oy) / v.scale;
@@ -656,13 +662,14 @@
       v.ox = cx - ax * s; v.oy = cy - ay * s;
       this.applyView();
     }
-    // 一次一段：整數倍時加減 1 倍；小於 1 倍時直接跳到整個房間
+    // 滾輪一格：倍率乘或除以 WHEEL_STEP；很接近裝置像素的整數倍時吸附。
+    // 非整數倍時像素格的粗細略有不均，換取較多段（1 倍密度的螢幕原本只有整個房間、1 倍、2 倍三段）
     zoomStep(dir, cx, cy) {
-      const dpr = window.devicePixelRatio || 1, d = this.view.scale * dpr;
-      let s;
-      if (d >= 0.999) { const n = Math.max(1, Math.round(d)) + dir; s = n < 1 ? this.fitScale() : n / dpr; }
-      else s = dir > 0 ? 1 / dpr : this.fitScale();
-      this.zoomTo(s, cx, cy);
+      const dpr = window.devicePixelRatio || 1;
+      let s = Math.max(this.fitScale(), Math.min(this.zoomTop(), this.view.scale * (dir > 0 ? WHEEL_STEP : 1 / WHEEL_STEP)));
+      const n = Math.round(s * dpr);
+      if (n >= 1 && Math.abs(s * dpr - n) <= WHEEL_SNAP) s = n / dpr;
+      this.zoomTo(s, cx, cy, 'raw');
     }
     onResize() {
       if (!this.room) return;
