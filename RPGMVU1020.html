@@ -13474,9 +13474,10 @@ htmlText = htmlText.replace('<head>', '<head>' + injectionScript);
 
     if (fallbackBtn) fallbackBtn.style.display = 'block';
 
-    // 自由戰鬥：不把 frame 導到網址（載入完成會觸發 onload 把備援按鈕藏起來，只剩一頁 404 文字）；只留備援的「点此关闭」
-    if (isFree) frame.onload = null;
-    else frame.src = url;
+    // 備用網址（或 404 頁）載入完成也會觸發 onload，先清掉，否則按鈕會立刻被藏起來
+    frame.onload = null;
+    // 自由戰鬥：不把 frame 導到網址（避免只剩一頁 404 文字）；只留備援的「点此关闭」
+    if (!isFree) frame.src = url;
 }
 
     layer.classList.add('active');
