@@ -1607,6 +1607,178 @@ if (window.INJECTED_MOBILE_LAYOUT) {
     if (window.INJECTED_STAGE_H) document.documentElement.style.setProperty('--rf-stage-h', window.INJECTED_STAGE_H + 'px');
 }
 </script>
+<style id="gf-style">
+/* 小遊戲回饋層（game feel）樣式。放在所有既有樣式之後（</head> 前）。
+ * 原則：只加節點、class、CSS 變數；手牌與立繪的 transform 已被既有 CSS 使用，
+ * 所以這裡一律用獨立屬性 translate / scale / rotate，不覆蓋 transform。
+ * class 與 keyframes 一律 gf- 前綴。距離類數值乘上 --gf-k（電腦 1、手機版 1.6，由 feel-layer.js 依 FEEL_CONFIG.mobileScale 寫入）。 */
+
+:root { --gf-k: 1; }
+html.rf-m { --gf-k: 1.6; }
+
+/* ================= A. 按壓回饋（小） =================
+ * 按下去縮一點並亮一點，60ms。牌是 0.97 並稍微下壓。放開時回到各元件原本的 transition（補上 scale）。 */
+.card {
+    transition: transform 0.18s ease-out, filter 60ms linear, box-shadow 0.2s, scale 60ms ease-out, translate 60ms ease-out;
+}
+.card:not(.disabled):active { scale: 0.97; translate: 0 2px; filter: brightness(1.15); }
+
+.skill-btn:not([disabled]):active,
+.btn-full:active,
+.cp-btn:active,
+.sel-card:active,
+html .btn-ready:active,
+html .btn-start:active,
+html .d-btn:active { scale: 0.96; filter: brightness(1.15); transition-duration: 60ms; }
+
+.cp-btn { transition: transform 0.15s, filter 0.15s, scale 0.12s; }
+.sel-card { transition: transform 0.2s, filter 0.2s, scale 0.12s; }
+html .btn-ready, html .btn-start, html .d-btn { transition: filter 0.15s, scale 0.12s; }
+
+/* 手機版：技能鈕、選卡、開始戰鬥鈕本來就有 :active 的 transform 縮放，不要疊兩次，只留亮度 */
+html.rf-m .skill-btn:not([disabled]):active,
+html.rf-m .sel-card:active,
+html.rf-m .btn-start:active { scale: 1; filter: brightness(1.15); }
+
+/* ================= E. 不能出的牌：用 translate，不蓋掉扇形位置 ================= */
+.card.shake { animation: gf-deny 280ms linear; }
+@keyframes gf-deny {
+    0%, 100% { translate: 0 0; }
+    12% { translate: calc(-7px * var(--gf-k)) 0; }
+    30% { translate: calc(5.5px * var(--gf-k)) 0; }
+    48% { translate: calc(-3.8px * var(--gf-k)) 0; }
+    66% { translate: calc(2.4px * var(--gf-k)) 0; }
+    82% { translate: calc(-1px * var(--gf-k)) 0; }
+}
+
+/* ================= B. 出牌分身 ================= */
+.gf-clone {
+    position: fixed; margin: 0 !important; z-index: 9000; pointer-events: none;
+    transform: none !important; transform-origin: 50% 50% !important; transition: none !important;
+    will-change: translate, scale, rotate;
+}
+
+/* ================= F. 飄字 ================= */
+.gf-float {
+    position: fixed; left: 0; top: 0; z-index: 9500; pointer-events: none; white-space: nowrap;
+    transform: translate(-50%, -50%);
+    font: 700 2.2rem/1 "Cinzel", "Noto Serif SC", serif; letter-spacing: 1px;
+    color: var(--gf-color, #fff6d8);
+    text-shadow: 0 0 6px rgba(0, 0, 0, 0.95), 0 2px 0 #000, 0 0 16px var(--gf-glow, #ffb33a);
+    will-change: translate, scale, opacity;
+}
+.gf-float.gf-left { transform: translate(-100%, -50%); }
+html.rf-m .gf-float { font-size: 56px; }
+
+/* 血條延遲條：在 #hp-bar 下層 */
+.hp-track { position: relative; }
+.gf-hp-lag {
+    position: absolute; left: 0; top: 0; bottom: 0; width: 100%; pointer-events: none; border-radius: inherit;
+    background: linear-gradient(to right, rgba(255, 232, 182, 0.55), rgba(255, 246, 222, 0.9));
+}
+
+/* 階段寶珠爆開：光環與碎片 */
+.gf-ring {
+    position: fixed; z-index: 9400; pointer-events: none; border-radius: 50%; box-sizing: border-box;
+    border: 3px solid rgba(255, 226, 150, 0.95); box-shadow: 0 0 12px rgba(255, 200, 100, 0.85), inset 0 0 8px rgba(255, 200, 100, 0.6);
+}
+html.rf-m .gf-ring { border-width: 5px; }
+.gf-ring.gf-rect { border-radius: 10px; }
+.gf-ring.gf-blue { border-color: rgba(130, 195, 255, 0.95); box-shadow: 0 0 16px rgba(110, 180, 255, 0.85), inset 0 0 12px rgba(110, 180, 255, 0.6); }
+.gf-shard {
+    position: fixed; z-index: 9400; pointer-events: none; width: 7px; height: 7px; margin: -3px 0 0 -3px;
+    background: #ffd98a; box-shadow: 0 0 6px rgba(255, 200, 100, 0.9); border-radius: 1px;
+}
+html.rf-m .gf-shard { width: 11px; height: 11px; margin: -5px 0 0 -5px; }
+
+/* 玩家受傷暗角（我方受擊；唯一保留的大面積閃色，紅色） */
+.gf-vignette {
+    position: fixed; inset: 0; z-index: 9700; pointer-events: none; opacity: 0;
+    box-shadow: inset 0 0 120px 40px rgba(255, 30, 20, 0.7);
+}
+html.rf-m .gf-vignette { box-shadow: inset 0 0 220px 80px rgba(255, 30, 20, 0.7); }
+
+/* 擊破：傷害預兆格碎裂。碎片容器放在 #game-stage 內、和預兆格同位置同大小（座標由 JS 寫 inline style），
+ * 所以 html.rf-m 的手機樣式也套得上。碎片是「擊破前的預兆格」副本（id 已改成 data-gf-id；遊戲沒有以 id 為選擇器的預兆格樣式）。
+ * 做法參考 D:\NewCard\exploration-prototype.html 的遇敵碎裂轉場。 */
+.gf-shatter-fx { position: absolute; z-index: 15; pointer-events: none; overflow: visible; }
+.gf-shatter-fx .gf-piece { position: absolute; pointer-events: none; }
+.gf-shatter-fx .gf-cracks { position: absolute; left: 0; top: 0; width: 100%; height: 100%; overflow: hidden; pointer-events: none; }
+
+/* 橫幅副標「受到 N 点伤害」不顯示（回饋層加 class）；用 display: none，文字會留在色帶正中央 */
+#turn-overlay-sub.gf-hide { display: none; }
+
+/* ================= G. 回合過場：整片黑幕改成橫幅 =================
+ * 背景只剩輕微壓暗；文字後面一條橫向色帶（電腦 170px、手機 300px），由側邊掃入並略微過衝。
+ * 色帶顏色由 feel-layer.js 依文字加在 #turn-overlay 上的 class 決定：
+ * gf-enemy 紅、gf-guard 藍、gf-break 綠、gf-player 金。既有的 --rf-divider 裝飾線保留在文字上下。 */
+#turn-overlay {
+    background: rgba(0, 0, 0, 0.3); gap: 14px; overflow: hidden;
+    --gf-band: 42, 7, 7; --gf-line: #ff4d4d; --gf-sweep: calc(420px * var(--gf-k));
+}
+#turn-overlay.visible { animation: gf-fade-in 80ms linear; }
+#turn-overlay.gf-guard { --gf-band: 7, 26, 46; --gf-line: #4dabf7; }
+#turn-overlay.gf-break { --gf-band: 7, 34, 15; --gf-line: #51cf66; }
+#turn-overlay.gf-player { --gf-band: 42, 31, 6; --gf-line: #c5a059; }
+#turn-overlay.gf-skill { --gf-band: 30, 10, 46; --gf-line: #c77dff; }   /* 自由戰鬥：敵人技能演出（紫色） */
+
+#turn-overlay::before {
+    content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 170px; margin-top: -85px; z-index: 0; pointer-events: none;
+    background:
+        linear-gradient(var(--gf-line), var(--gf-line)) top / 100% 3px no-repeat,
+        linear-gradient(var(--gf-line), var(--gf-line)) bottom / 100% 3px no-repeat,
+        linear-gradient(90deg, rgba(var(--gf-band), 0), rgba(var(--gf-band), 0.94) 8%, rgba(var(--gf-band), 0.94) 92%, rgba(var(--gf-band), 0));
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.55);
+}
+html.rf-m #turn-overlay::before { height: 300px; margin-top: -150px; }
+#turn-overlay-text, #turn-overlay-sub { position: relative; z-index: 1; }
+/* 文字背後的深色漸層拿掉（色帶取代它），只留既有的上下裝飾線 */
+#turn-overlay-text {
+    background:
+        var(--rf-divider) center top / 420px 14px no-repeat,
+        var(--rf-divider) center bottom / 420px 14px no-repeat;
+}
+/* 手機版：原本 104px 的 ENEMY ATTACK! 會折成兩行（比 300px 色帶還高），縮成一行 */
+html.rf-m #turn-overlay-text { font-size: 88px; padding: 24px 40px; letter-spacing: 6px; white-space: nowrap; background-size: 760px 18px, 760px 18px; }
+#turn-overlay-sub { color: #d8d0c0; }
+
+#turn-overlay.visible::before { animation: gf-band-from-left 160ms cubic-bezier(.2, .8, .2, 1) both; }
+#turn-overlay.visible #turn-overlay-text { animation: gf-text-from-left 160ms cubic-bezier(.2, .8, .2, 1) both; }
+#turn-overlay.visible #turn-overlay-sub { animation: gf-text-from-left 160ms cubic-bezier(.2, .8, .2, 1) 30ms both; }
+#turn-overlay.gf-player.visible::before { animation-name: gf-band-from-right; }
+#turn-overlay.gf-player.visible #turn-overlay-text,
+#turn-overlay.gf-player.visible #turn-overlay-sub { animation-name: gf-text-from-right; }
+
+@keyframes gf-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes gf-band-from-left { 0% { translate: -105% 0; } 70% { translate: 2.5% 0; } 100% { translate: 0 0; } }
+@keyframes gf-band-from-right { 0% { translate: 105% 0; } 70% { translate: -2.5% 0; } 100% { translate: 0 0; } }
+@keyframes gf-text-from-left {
+    0% { translate: calc(-1 * var(--gf-sweep)) 0; opacity: 0; }
+    30% { opacity: 1; }
+    70% { translate: calc(var(--gf-sweep) * 0.03) 0; }
+    100% { translate: 0 0; opacity: 1; }
+}
+@keyframes gf-text-from-right {
+    0% { translate: var(--gf-sweep) 0; opacity: 0; }
+    30% { opacity: 1; }
+    70% { translate: calc(var(--gf-sweep) * -0.03) 0; }
+    100% { translate: 0 0; opacity: 1; }
+}
+
+/* ================= I. 減少動態 =================
+ * 橫幅改成原地淡入；不能出的牌不震，改成一次紅框閃爍。其餘（分身、震動、閃白、停頓）由 JS 依 matchMedia 略過。 */
+@media (prefers-reduced-motion: reduce) {
+    #turn-overlay.visible::before,
+    #turn-overlay.visible #turn-overlay-text,
+    #turn-overlay.visible #turn-overlay-sub { animation: gf-fade-in 120ms linear both !important; }
+    .card.shake { animation: gf-deny-reduced 280ms ease-out !important; }
+    .card, .skill-btn, .btn-full, .cp-btn, .d-btn, .btn-ready, .btn-start, .sel-card { scale: none !important; translate: none !important; }
+}
+@keyframes gf-deny-reduced {
+    0% { box-shadow: 0 0 0 3px rgba(255, 80, 60, 0.9); }
+    100% { box-shadow: 0 0 0 3px rgba(255, 80, 60, 0); }
+}
+</style>
 </head>
 <body>
     <div id="bgm-toggle-btn" class="sys-btn" onclick="toggleLocalMusic()">🔊</div>
@@ -3575,6 +3747,980 @@ async function handleVictory() {
         attributes: true, attributeFilter: ['class', 'style']
     });
     refresh();
+})();
+</script>
+<script id="gf-layer">
+/* 小遊戲回饋層（game feel）。只加畫面效果：不改遊戲狀態、規則、亂數呼叫次數、送出的訊息。
+ * 載入位置：遊戲主 <script> 與 rf-refresh-deco 之後（</body> 前）。
+ * 掛接方式：包裝全域函式 playCard、updateUI、showLog、initGame（classic script 的 function 宣告是 window 屬性，
+ *   遊戲內部用識別字呼叫也會走到包裝後的版本）。讀取全域 let：hand、enemy、player、currentTurnCards。
+ * 動畫技術：手牌 .card 與立繪 #boss-img 的 transform 已被既有 CSS 使用，所以一律用獨立屬性 translate / scale / rotate
+ *   （Web Animations API，不用 fill: forwards，結束後不留 inline style）；不用 requestAnimationFrame 迴圈改 style，
+ *   rf-refresh-deco 的 MutationObserver 因此不會被餵成無限迴圈。
+ * 這個檔案不呼叫 Math.random（遊戲用固定種子重播時，亂數呼叫次數必須與原版相同）。
+ * 對外：window.GameFeel = { config, preview(name), emit, getLog() }。 */
+(function () {
+  'use strict';
+  if (window.GameFeel) return;
+
+  const BACK = 'cubic-bezier(.34,1.56,.64,1)';   // 帶回彈（略微衝過頭再回到 1）
+
+  /* ================= 可調整的設定（所有時間、距離、門檻都在這裡） =================
+   * 時間單位 ms、距離單位 px（畫布單位）。距離類數值在手機版（html.rf-m）乘上 mobileScale。 */
+  const FEEL_CONFIG = {
+    mobileScale: 1.6,
+    shake: true,                 // false：關掉所有畫面／立繪震動（閃白、飄字仍在）
+    // J. 音效接口：只留接口，不建立任何 Audio 物件。要接音效就聽 window 的 'gamefeel' 事件，或用 GameFeel.getLog()。
+    sound: {
+      enabled: false,
+      files: { press: '', cardPlay: '', draw: '', deny: '', enemyHit: '', break: '', playerHit: '', guard: '', heal: '', turnEnemy: '', turnPlayer: '', victory: '' }
+    },
+    // B. 出牌：手牌分身飛向出牌紀錄
+    cardPlay: { flyExtraDelayMs: 70, flyMs: 220, flyEasing: 'cubic-bezier(.2,.8,.2,1)', tiltDeg: 7, landFrom: 1.25, landMs: 160, landEasing: BACK },
+    // C. 手牌移動與發牌
+    hand: {
+      flipMs: 140, flipEasing: 'ease-out',
+      dealMs: 200, dealEasing: 'ease-out', dealStaggerMs: 45, dealTiltDeg: -14, dealFromScale: 0.7,
+      tokenFrom: 0.6, tokenMs: 180, tokenEasing: BACK
+    },
+    // D. 數字回饋
+    numbers: {
+      comboFrom: 1.35, comboMs: 180, intentFrom: 1.2, intentMs: 160, deckFrom: 1.15, deckMs: 140, easing: BACK,
+      skillFlashMs: 280, skillFlashColor: '255,214,102'
+    },
+    // F. 打中敵人。分級：階段改變或勝利 = big；否則 傷害 ÷ 本階段 maxHp ≥ midRatio = mid；其餘 small
+    // 不用任何閃光（立繪閃白、全畫面白閃都已移除）；小／中沒有停頓，只有擊破有。
+    enemyHit: {
+      midRatio: 0.20,
+      mergeWindowMs: 600,          // 距離上一次命中這麼久之內再命中：飄字數字累加，不開新的
+      mergePopFrom: 1.18, mergePopMs: 120,
+      shakeCooldownMs: 450,        // 立繪震動（中級）冷卻：上一次立繪震動開始後這麼久之內不再觸發
+      streak: { count: 6, intervalMs: 120, tier: 'mid' },   // 測試面板「連續命中 ×6」
+      small: { floatPop: 1 },      // 小：只有飄字＋血條延遲條，立繪不動
+      mid: { shakePx: 4, shakeMs: 200, floatPop: 1.5 },
+      big: { stopMs: 110, figShakePx: 9, figShakeMs: 320, stageShakePx: 6, stageShakeMs: 280, floatPop: 1.8 }
+    },
+    // 擊破：傷害預兆格（#intent-box）碎裂。做法參考 D:\NewCard\exploration-prototype.html 的「遇敵碎裂轉場」（shatterGeometry／startTransition），
+    // 範圍只有預兆格；沒有全畫面閃光、沒有斜邊深色底。沒有亮度閃爍。碎片是「擊破前的預兆格」的副本。
+    shatter: {
+      seed: 11,                                   // 固定種子亂數（seeded），每次擊破 +7，圖樣不同但可重播；不用 Math.random
+      raysMin: 7, raysMax: 9,                     // 射線數
+      ringRadii: [0.22, 0.55],                    // 內圈、中圈半徑（乘上格子短邊）；第三圈一律往外到蓋住整格
+      radialMs: 150, crossMs: 90, crossDelayMs: 70, crossDelayJitterMs: 50, crackEase: 'cubic-bezier(.2,.8,.3,1)',
+      crossChanceRing2: 0.5,                      // 橫向裂痕：內圈一定有，第二圈有這個機率
+      crackDark: '#0b0d11', crackLight: '#f6efe0', crackDarkPx: 4, crackLightPx: 1.4,
+      shakePx: 3.5, shakeMs: 170,                 // 碎片容器小震動（受 FEEL_CONFIG.shake 控制）
+      fallStartMs: 240, crackFadeMs: 140,         // 240ms 起裂痕淡出、碎片落下
+      ringStaggerMs: 40, jitterMs: 45, fallMs: 420, fallEase: 'cubic-bezier(.55,0,.9,.5)',
+      pushPx: 6, pushUntil: 0.12, rotDeg: 45, scaleEnd: 0.9, dropMinH: 1.5, dropMaxH: 2.5,   // 先往外推 pushPx（前 12%），再旋轉、縮、往下掉 1.5～2.5 倍格子高度
+      reducedFadeMs: 300                          // 減少動態：副本淡出 300ms，不切碎、不震動、沒有裂痕
+    },
+    float: { risePx: 46, ms: 700, bossYFrac: 1 / 3, spreadPx: 26, popMs: 140, popEasing: BACK },
+    hpLag: { holdMs: 250, shrinkMs: 350 },
+    orb: { scaleTo: 1.7, ms: 420, ringScale: 2.6, ringMs: 450, shards: 6, shardDistPx: 28, shardMs: 460 },
+    // G. 玩家受傷、擋下、回復、回合橫幅
+    playerHit: {
+      // 分級：傷害 ÷ 受擊前的現有生命 ≥ midRatioOfCurrentHp，或這一下致命 → mid；其餘 small
+      midRatioOfCurrentHp: 0.15,
+      small: { shakePx: 3, shakeMs: 160 },
+      mid: { shakePx: 6, shakeMs: 260 },
+      vignetteMs: 300, textScale: 1.3, textMs: 320, textColor: '#ff4d4d'
+    },
+    guard: { ms: 300, color: '120,190,255' },
+    heal: { textScale: 1.3, textMs: 320, textColor: '#a8ffb8' },
+    banner: {
+      // 過場時間：回饋層包裝 endTurn／sleep，只改 endTurn 自己的五個等待（見 retimeFor）；preview 也用這些數字。
+      retime: true,   // false：不改過場時間（原版 700／300／300／600／300）
+      enemyMs: 520, enemyFadeMs: 180, gapMs: 260, playerMs: 380, playerFadeMs: 160,
+      lungeScale: 1.08, lungeDownPx: 14, lungeInMs: 180, lungeOutMs: 200
+    },
+    shakeFreqHz: [14, 23],        // 震動的水平／垂直頻率（衰減的 sin，不是每幀亂數）
+    shakeVertical: 0.25           // 垂直位移最多是水平的幾倍
+  };
+  const C = FEEL_CONFIG;
+
+  /* ================= 共用 ================= */
+  const root = document.documentElement;
+  const mq = typeof matchMedia === 'function' ? matchMedia('(prefers-reduced-motion: reduce)') : null;
+  const reduced = () => !!(mq && mq.matches);
+  const isMobile = () => root.classList.contains('rf-m');
+  const K = () => (isMobile() ? C.mobileScale : 1);
+  const $ = id => document.getElementById(id);
+  const $$ = (sel, el) => Array.from((el || document).querySelectorAll(sel));
+  const warn = e => { try { console.warn('[GameFeel]', e && e.stack || e); } catch (_) { /* 沒有 console 也不影響 */ } };
+  // 回饋層任何一段出錯都不能影響遊戲：包一層 try/catch
+  const safe = (fn, fallback) => { try { return fn(); } catch (e) { warn(e); return fallback; } };
+  const num = id => { const e = $(id); return e ? parseInt(e.textContent, 10) : NaN; };
+  // 遊戲的全域 let（不是 window 屬性）：classic script 之間共用全域詞法環境，直接用名字讀；每次都重新讀（遊戲會重新指派 hand、deck…）。
+  // 注意：這個 IIFE 裡不可以宣告同名的區域變數（hand、enemy、player、currentTurnCards），否則會蓋住全域的。
+  const g = {
+    get S() { return typeof S !== 'undefined' && S && S.hand ? S : null; },   // 自由戰鬥檔：狀態都在 S = G.state；劇情檔沒有 S，讀全域 let
+    get hand() { const st = this.S; return st ? st.hand : (typeof hand !== 'undefined' ? hand : []); },
+    get enemy() { const st = this.S; return st ? st.enemy : (typeof enemy !== 'undefined' ? enemy : null); },
+    get player() { const st = this.S; return st ? st.player : (typeof player !== 'undefined' ? player : null); },
+    get turnCards() { const st = this.S; return st ? st.currentTurnCards : (typeof currentTurnCards !== 'undefined' ? currentTurnCards : []); }
+  };
+  // 奈芙蒂插的牌（自由戰鬥）：她自己有飛入動畫，回饋層不替她建分身
+  const isNefCard = c => { try { return typeof G !== 'undefined' && G && typeof G.cardNef === 'function' && G.cardNef(c); } catch (_) { return false; } };
+
+  /* J. 事件紀錄與接口 */
+  const log = [];
+  function emit(name, detail) {
+    const entry = Object.assign({ name: name, t: Math.round(performance.now()) }, detail || {});
+    log.push(entry);
+    if (log.length > 500) log.shift();
+    try { window.dispatchEvent(new CustomEvent('gamefeel', { detail: entry })); } catch (e) { warn(e); }
+    return entry;
+  }
+
+  /* Web Animations 小工具：id 一律 gf- 前綴，驗收時用它找出回饋層的動畫 */
+  function anim(el, keyframes, options, id) {
+    if (!el || !el.animate) return null;
+    try {
+      const a = el.animate(keyframes, Object.assign({ fill: 'none' }, options));
+      a.id = 'gf-' + id;
+      return a;
+    } catch (e) { warn(e); return null; }
+  }
+  function tempNode(cls, text) {
+    const n = document.createElement('div');
+    n.className = cls;
+    if (text != null) n.textContent = text;
+    document.body.appendChild(n);
+    return n;
+  }
+  // 動畫播完就移除節點；另外用計時器保底（動畫被取消時也移除）
+  function disposeWith(node, a, ms) {
+    const rm = () => { if (node.isConnected) node.remove(); };
+    if (a && a.finished) a.finished.then(rm, rm);
+    setTimeout(rm, ms + 500);
+  }
+  function canvasRect() {
+    const r = document.body.getBoundingClientRect();
+    return r.width > 0 ? r : { left: 0, top: 0, right: innerWidth, bottom: innerHeight, width: innerWidth, height: innerHeight };
+  }
+  function center(el) {
+    const r = el.getBoundingClientRect();
+    return { x: r.left + r.width / 2, y: r.top + r.height / 2, r: r };
+  }
+  /* 震動：衰減的 sin（水平為主），取樣成 translate 關鍵影格。結束回到 0，不留 inline style。 */
+  function shakeKeyframes(px, ms) {
+    const n = Math.max(4, Math.round(ms / 16)), fx = C.shakeFreqHz[0], fy = C.shakeFreqHz[1], out = [];
+    for (let i = 0; i <= n; i++) {
+      const t = i / n, env = Math.pow(1 - t, 1.4), sec = t * ms / 1000;
+      const x = px * env * Math.sin(2 * Math.PI * fx * sec);
+      const y = px * C.shakeVertical * env * Math.sin(2 * Math.PI * fy * sec);
+      out.push({ translate: x.toFixed(2) + 'px ' + y.toFixed(2) + 'px', offset: t });
+    }
+    out[n].translate = '0px 0px';
+    return out;
+  }
+  const shaking = new WeakMap();
+  function shake(el, px, ms, delay, id) {
+    if (!el || !C.shake || reduced()) return null;
+    const prev = shaking.get(el);
+    if (prev) prev.cancel();
+    const a = anim(el, shakeKeyframes(px * K(), ms), { duration: ms, delay: delay || 0, easing: 'linear' }, id);
+    shaking.set(el, a);
+    return a;
+  }
+  // scale 彈一下（from → 1）
+  function pop(el, from, ms, easing, id) {
+    if (!el || reduced()) return null;
+    return anim(el, [{ scale: String(from) }, { scale: '1' }], { duration: ms, easing: easing || BACK }, id || 'pop');
+  }
+
+  /* ================= 飄字 ================= */
+  let floatSeq = 0;
+  function floatText(text, x, y, o) {
+    o = o || {};
+    const k = K(), cr = canvasRect(), margin = 40 * k;
+    const spread = o.left ? 0 : ((floatSeq++ % 3) - 1) * C.float.spreadPx * k;   // 連續打中時左右錯開，不疊在一起
+    const px = Math.min(cr.right - margin, Math.max(cr.left + margin, x + spread));
+    const py = Math.min(cr.bottom - margin, Math.max(cr.top + margin, y));
+    const n = tempNode('gf-float' + (o.left ? ' gf-left' : ''), text);
+    n.style.left = px + 'px'; n.style.top = py + 'px';
+    if (o.color) n.style.setProperty('--gf-color', o.color);
+    if (o.glow) n.style.setProperty('--gf-glow', o.glow);
+    startFloat(n, o.pop || 1);
+    return n;
+  }
+  // 播（或重播）飄字動畫。重播時舊動畫被取消，不能因此把節點移除（用 n._gfAnim 判斷是不是最新的那個）
+  function startFloat(n, pp) {
+    const ms = C.float.ms, rise = C.float.risePx * K();
+    let kf;
+    if (reduced()) {   // 減少動態：原地淡入淡出
+      kf = [{ opacity: 0, offset: 0 }, { opacity: 1, offset: 0.15 }, { opacity: 1, offset: 0.7 }, { opacity: 0, offset: 1 }];
+    } else {
+      kf = [
+        { translate: '0px 0px', scale: String(pp), opacity: 1, easing: 'ease-out', offset: 0 },
+        { translate: '0px ' + (-rise * 0.55) + 'px', scale: '1', opacity: 1, easing: 'linear', offset: 0.18 },
+        { translate: '0px ' + (-rise * 0.9) + 'px', scale: '1', opacity: 1, easing: 'ease-in', offset: 0.65 },
+        { translate: '0px ' + (-rise) + 'px', scale: '1', opacity: 0, offset: 1 }
+      ];
+    }
+    if (n._gfAnim) n._gfAnim.cancel();
+    const a = anim(n, kf, { duration: ms, fill: 'backwards' }, 'float');
+    n._gfAnim = a;
+    const rm = () => { if (n._gfAnim === a && n.isConnected) n.remove(); };
+    if (a && a.finished) a.finished.then(rm, rm);
+    clearTimeout(n._gfT);
+    n._gfT = setTimeout(rm, ms + 500);
+  }
+  // 敵方飄字：同時最多一個。距離上一次命中 mergeWindowMs 內再命中 → 數字累加、重設淡出、小彈跳；換階段（big）結束累加
+  let ef = null;                    // { node, total, t }
+  let lastFigShake = -1e9;
+  function bossFloat(dmg, tier, spec) {
+    const E = C.enemyHit, now = performance.now(), n = Number(dmg);
+    if (tier !== 'big' && ef && ef.node.isConnected && now - ef.t <= E.mergeWindowMs && isFinite(n)) {
+      ef.total += n; ef.t = now;
+      ef.node.textContent = '-' + ef.total;
+      startFloat(ef.node, 1);
+      if (!reduced()) anim(ef.node, [{ scale: String(E.mergePopFrom) }, { scale: '1' }], { duration: E.mergePopMs, easing: BACK }, 'floatpop');
+      return;
+    }
+    const a = bossAnchor();
+    const node = floatText('-' + dmg, a.x, a.y, { color: '#fff6d8', glow: tier === 'big' ? '#ff6a3a' : '#ffb33a', pop: spec.floatPop });
+    ef = tier === 'big' || !isFinite(n) ? null : { node: node, total: n, t: now };
+  }
+  function bossAnchor() {
+    const img = $('boss-img');
+    let r = img && img.getBoundingClientRect();
+    if (!r || r.width < 40 || r.height < 40) {   // 立繪圖沒載入時，改用立繪容器
+      const box = document.querySelector('.boss-img-container');
+      if (box) r = box.getBoundingClientRect();
+    }
+    if (!r) return { x: innerWidth / 2, y: innerHeight / 3 };
+    return { x: r.left + r.width / 2, y: r.top + r.height * C.float.bossYFrac };
+  }
+
+  /* ================= 打中敵人 ================= */
+  function orbBurst(orb) {
+    if (!orb || reduced()) return;
+    const O = C.orb, k = K(), c = center(orb), size = Math.max(orb.offsetWidth, 12);
+    anim(orb, [{ scale: '1' }, { scale: String(O.scaleTo), offset: 0.35 }, { scale: '1' }], { duration: O.ms, easing: 'ease-out' }, 'orb');
+    const ring = tempNode('gf-ring');
+    ring.style.width = size + 'px'; ring.style.height = size + 'px';
+    ring.style.left = (c.x - size / 2) + 'px'; ring.style.top = (c.y - size / 2) + 'px';
+    const ra = anim(ring, [{ scale: '0.6', opacity: 0.95 }, { scale: String(O.ringScale), opacity: 0 }], { duration: O.ringMs, easing: 'ease-out', fill: 'backwards' }, 'ring');
+    disposeWith(ring, ra, O.ringMs);
+    for (let i = 0; i < O.shards; i++) {
+      const ang = (i * 360 / O.shards + 15) * Math.PI / 180, d = O.shardDistPx * k;   // 角度固定（不用亂數）
+      const s = tempNode('gf-shard');
+      s.style.left = c.x + 'px'; s.style.top = c.y + 'px';
+      const sa = anim(s, [{ translate: '0px 0px', opacity: 1, scale: '1' }, { translate: (Math.cos(ang) * d).toFixed(1) + 'px ' + (Math.sin(ang) * d).toFixed(1) + 'px', opacity: 0, scale: '0.3' }],
+        { duration: O.shardMs, easing: 'ease-out', fill: 'backwards' }, 'shard');
+      disposeWith(s, sa, O.shardMs);
+    }
+  }
+  /* ===== 傷害預兆格碎裂 =====
+   * captureIntent()：在 playCard 呼叫原函式「之前」記下預兆格的副本（cloneNode）與位置；副本的 id 全部改成 data-gf-id（頁面上不可有重複 id）。
+   * shatterFx(snap)：偵測到擊破時，在 #game-stage 內、和預兆格同位置同大小放一個容器（pointer-events: none），
+   *   用副本當碎片（clip-path 多邊形），底下露出的是已經變成 BREAK 的真正預兆格。遊戲裡沒有任何以 id 為選擇器的預兆格樣式，所以副本外觀與原格一致，不必補規則。 */
+  function seeded(seed) { return function () { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; }; }
+  function captureIntent() {
+    const box = $('intent-box'), stage = $('game-stage');
+    if (!box || !stage || box.classList.contains('broken') || !box.offsetWidth) return null;
+    const cp = box.cloneNode(true), val = $('enemy-intent-val');
+    [cp].concat($$('[id]', cp)).forEach(e => { if (e.id) { e.setAttribute('data-gf-id', e.id); e.removeAttribute('id'); } });
+    cp.setAttribute('inert', ''); cp.setAttribute('aria-hidden', 'true');
+    let left = box.offsetLeft, top = box.offsetTop;
+    if (box.offsetParent !== stage) { const br = box.getBoundingClientRect(), sr = stage.getBoundingClientRect(); left = br.left - sr.left; top = br.top - sr.top; }
+    const br2 = box.getBoundingClientRect(), vr = (val || box).getBoundingClientRect();
+    return { copy: cp, left: left, top: top, w: box.offsetWidth, h: box.offsetHeight, hit: { x: vr.left + vr.width / 2 - br2.left, y: vr.top + vr.height / 2 - br2.top } };
+  }
+  let shat = null, shatCount = 0;
+  function cancelShatter() {
+    if (!shat) return;
+    const t = shat; shat = null;
+    clearTimeout(t.timer);
+    t.anims.forEach(a => { try { a.cancel(); } catch (_) { /* ignore */ } });
+    t.fx.remove();
+  }
+  // 碎片幾何（照參考的 shatterGeometry，尺寸改用預兆格）：以撞擊點為中心，射線 × 圈數切成多邊形；內圈三角形、其餘四邊形
+  function shatterGeometry(hit, W, H, r) {
+    const S = C.shatter, sm = Math.min(W, H), n = S.raysMin + Math.floor(r() * (S.raysMax - S.raysMin + 1)), a0 = r() * Math.PI * 2, rays = [];
+    for (let i = 0; i < n; i++) rays.push(a0 + (i + 0.25 + r() * 0.5) * Math.PI * 2 / n);
+    const outer = Math.hypot(W, H) * 1.3;
+    const pts = rays.map(a => [0, 1, 2].map(ring => {
+      const R = ring === 2 ? outer : sm * S.ringRadii[ring] * (0.85 + r() * 0.3), aa = a + (ring === 2 ? 0 : (r() - 0.5) * 0.12);
+      return { x: hit.x + Math.cos(aa) * R, y: hit.y + Math.sin(aa) * R };
+    }));
+    const polys = [];
+    for (let i = 0; i < n; i++) {
+      const A = pts[i], B = pts[(i + 1) % n];
+      polys.push({ ring: 0, pts: [hit, A[0], B[0]] });
+      for (let j = 0; j < 2; j++) polys.push({ ring: j + 1, pts: [A[j], A[j + 1], B[j + 1], B[j]] });
+    }
+    return { pts: pts, polys: polys, n: n, rings: 3 };
+  }
+  function shatterFx(snap) {
+    const stage = $('game-stage');
+    cancelShatter();
+    if (!snap || !stage) return;
+    const S = C.shatter, k = K(), W = snap.w, H = snap.h, off = reduced();
+    const fx = document.createElement('div');
+    fx.className = 'gf-shatter-fx';
+    fx.setAttribute('aria-hidden', 'true'); fx.setAttribute('inert', '');
+    fx.style.left = snap.left + 'px'; fx.style.top = snap.top + 'px'; fx.style.width = W + 'px'; fx.style.height = H + 'px';
+    stage.appendChild(fx);
+    const anims = [], mine = { fx: fx, anims: anims, timer: 0 };
+    shat = mine;
+    const A = (node, kf, opt, id) => { const a = anim(node, kf, Object.assign({ fill: 'both', easing: 'linear' }, opt), id); if (a) anims.push(a); return a; };
+    // 副本放進 node：位置與大小用 inline style 蓋過 .area-right-top 的 top／right／width（含 html.rf-m 的手機樣式）
+    const place = (node, left, top) => {
+      const c = snap.copy.cloneNode(true);
+      c.style.cssText = 'position:absolute;margin:0;right:auto;bottom:auto;transform:none;left:' + left + 'px;top:' + top + 'px;width:' + W + 'px;height:' + H + 'px';
+      node.appendChild(c);
+      return c;
+    };
+    if (off) {   // 減少動態：副本淡出 300ms；不切碎、不震動、沒有裂痕
+      const whole = document.createElement('div');
+      whole.className = 'gf-piece gf-fade';
+      whole.style.cssText = 'left:0;top:0;width:100%;height:100%';
+      fx.appendChild(whole); place(whole, 0, 0);
+      A(whole, [{ opacity: 1 }, { opacity: 0 }], { duration: S.reducedFadeMs, easing: 'ease-out' }, 'shatterfade');
+    } else {
+      const r = seeded(S.seed + 7 * (shatCount++)), g2 = shatterGeometry(snap.hit, W, H, r), sm = Math.min(W, H);
+      fx.setAttribute('data-rays', g2.n); fx.setAttribute('data-rings', g2.rings);
+      // 底層放一份完整副本，遮住碎片之間的細縫；碎片開始動時移除（同參考的 base）
+      const base = document.createElement('div');
+      base.className = 'gf-piece gf-base';
+      base.style.cssText = 'left:0;top:0;width:100%;height:100%';
+      fx.appendChild(base); place(base, 0, 0);
+      A(base, [{ opacity: 1 }, { opacity: 0 }], { duration: 1, delay: S.fallStartMs }, 'shatterbase');
+      const pieces = [];
+      g2.polys.forEach(poly => {
+        const xs = poly.pts.map(q => q.x), ys = poly.pts.map(q => q.y);
+        const bx = Math.max(0, Math.floor(Math.min.apply(null, xs))), by = Math.max(0, Math.floor(Math.min.apply(null, ys)));
+        const ex = Math.min(W, Math.ceil(Math.max.apply(null, xs))), ey = Math.min(H, Math.ceil(Math.max.apply(null, ys)));
+        // 完全落在格子外的碎片也留著（看不見，但數量 = 射線 × 圈數），給它 1px 大小
+        const sh = document.createElement('div');
+        sh.className = 'gf-piece';
+        sh.style.cssText = 'left:' + bx + 'px;top:' + by + 'px;width:' + Math.max(1, ex - bx) + 'px;height:' + Math.max(1, ey - by) + 'px;clip-path:polygon(' +
+          poly.pts.map(q => (q.x - bx).toFixed(1) + 'px ' + (q.y - by).toFixed(1) + 'px').join(',') + ')';
+        fx.appendChild(sh); place(sh, -bx, -by);
+        pieces.push({ node: sh, poly: poly });
+      });
+      // 裂痕：每條線畫兩次（深色粗線＋米白細線）。主裂痕從撞擊點沿射線往外並帶折角；內圈有橫向裂痕，第二圈約一半機率有
+      const NS = 'http://www.w3.org/2000/svg', svg = document.createElementNS(NS, 'svg');
+      svg.setAttribute('class', 'gf-cracks'); svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H); svg.setAttribute('preserveAspectRatio', 'none');
+      fx.appendChild(svg);
+      const jit = sm * 0.12, tip = Math.hypot(W, H) * 0.7, lines = [];
+      g2.pts.forEach(ray => {
+        const seg = [snap.hit];
+        [ray[0], ray[1]].forEach(q => {
+          const prev = seg[seg.length - 1];
+          seg.push({ x: (prev.x + q.x) / 2 + (r() - 0.5) * jit, y: (prev.y + q.y) / 2 + (r() - 0.5) * jit });
+          seg.push(q);
+        });
+        const dx = ray[1].x - snap.hit.x, dy = ray[1].y - snap.hit.y, d = Math.hypot(dx, dy) || 1;
+        seg.push({ x: snap.hit.x + dx / d * tip, y: snap.hit.y + dy / d * tip });
+        lines.push({ pts: seg, radial: true });
+      });
+      g2.pts.forEach((ray, i) => {
+        const next = g2.pts[(i + 1) % g2.pts.length];
+        lines.push({ pts: [ray[0], next[0]], radial: false });
+        if (r() < S.crossChanceRing2) lines.push({ pts: [ray[1], next[1]], radial: false });
+      });
+      fx.setAttribute('data-lines', lines.length);
+      lines.forEach(line => {
+        const d = 'M' + line.pts.map(q => q.x.toFixed(1) + ' ' + q.y.toFixed(1)).join('L'), delay = line.radial ? 0 : S.crossDelayMs + r() * S.crossDelayJitterMs;
+        // 線長直接用座標算
+        const len = line.pts.reduce((sum, q, i) => i ? sum + Math.hypot(q.x - line.pts[i - 1].x, q.y - line.pts[i - 1].y) : 0, 0);
+        [[S.crackDark, S.crackDarkPx * k], [S.crackLight, S.crackLightPx * k]].forEach(sp => {
+          const path = document.createElementNS(NS, 'path');
+          path.setAttribute('d', d); path.setAttribute('fill', 'none'); path.setAttribute('stroke', sp[0]); path.setAttribute('stroke-width', sp[1]);
+          path.setAttribute('stroke-linecap', 'round'); path.setAttribute('stroke-linejoin', 'round'); path.setAttribute('stroke-dasharray', len + ' ' + len * 2);
+          svg.appendChild(path);
+          A(path, [{ strokeDashoffset: len + 'px' }, { strokeDashoffset: '0px' }], { duration: line.radial ? S.radialMs : S.crossMs, delay: delay, easing: S.crackEase }, 'crack');
+        });
+      });
+      // 小震動（0ms，用 translate；FEEL_CONFIG.shake = false 時不震）
+      if (C.shake) {
+        const p = S.shakePx * k;
+        A(fx, [{ translate: '0px 0px' }, { translate: (-p) + 'px ' + (p * 0.55) + 'px' }, { translate: (p * 0.85) + 'px ' + (-p * 0.7) + 'px' }, { translate: (-p * 0.5) + 'px ' + (p * 0.3) + 'px' }, { translate: '0px 0px' }], { duration: S.shakeMs }, 'shatter-shake');
+      }
+      // 240ms 起裂痕淡出、碎片落下（離撞擊點越近越早掉）
+      A(svg, [{ opacity: 1 }, { opacity: 0 }], { duration: S.crackFadeMs, delay: S.fallStartMs, easing: 'ease-in' }, 'crackfade');
+      pieces.forEach(pc => {
+        const q = pc.poly.pts, cx = q.reduce((a, b) => a + b.x / q.length, 0), cy = q.reduce((a, b) => a + b.y / q.length, 0);
+        const dx = cx - snap.hit.x, dy = cy - snap.hit.y, dist = Math.hypot(dx, dy), out = Math.min(1, dist / (Math.hypot(W, H) * 0.9));
+        const rot = (r() * 2 - 1) * S.rotDeg, drop = (S.dropMinH + r() * (S.dropMaxH - S.dropMinH)) * H, delay = S.fallStartMs + pc.poly.ring * S.ringStaggerMs + r() * S.jitterMs;
+        const px = (dist ? dx / dist * S.pushPx : 0) * k, py = (dist ? dy / dist * S.pushPx : 0) * k;
+        A(pc.node, [
+          { translate: '0px 0px', rotate: '0deg', scale: '1', opacity: 1 },
+          { translate: px + 'px ' + py + 'px', rotate: '0deg', scale: '1', opacity: 1, offset: S.pushUntil },
+          { translate: (dx * 0.25 * out) + 'px ' + drop + 'px', rotate: rot + 'deg', scale: String(S.scaleEnd), opacity: 0 }
+        ], { duration: S.fallMs, delay: delay, easing: S.fallEase }, 'shard-fall');
+      });
+    }
+    const end = anims.reduce((m, a) => Math.max(m, a.effect.getComputedTiming().endTime), 0);
+    mine.end = end;
+    mine.timer = setTimeout(() => { if (shat === mine) cancelShatter(); }, end + 40);
+    return end;
+  }
+  // 測試面板：預兆格不會真的變狀態，所以暫時讓真正的預兆格顯示 BREAK，動畫結束後還原；期間遊戲呼叫 updateUI 就以遊戲為準
+  let previewRestore = null;
+  function previewShatter() {
+    const box = $('intent-box'), lab = $('intent-label'), val = $('enemy-intent-val');
+    const snap = captureIntent();
+    if (!box || !lab || !val || !snap) return;
+    const saved = { cls: box.className, lab: lab.textContent, val: val.textContent };
+    box.classList.add('broken'); lab.textContent = 'BOSS STUNNED'; val.textContent = 'BREAK';
+    previewRestore = saved;
+    const end = shatterFx(snap);
+    setTimeout(() => {
+      if (previewRestore !== saved) return;
+      previewRestore = null;
+      box.className = saved.cls; lab.textContent = saved.lab; val.textContent = saved.val;
+    }, end + 150);
+  }
+  // tier: small | mid | big。big = 擊破或勝利（orbs：這一擊變成 .lost 的寶珠）
+  function enemyHitFx(tier, text, orbs, victory) {
+    const E = C.enemyHit, spec = E[tier], now = performance.now();
+    const stop = reduced() ? 0 : (spec.stopMs || 0);   // 只有擊破有停頓；停頓只是畫面演出（延後這一擊的動畫），不擋輸入、不延後遊戲邏輯
+    if (tier === 'mid') {
+      if (C.shake && !reduced() && now - lastFigShake >= E.shakeCooldownMs) {   // 冷卻：上一次立繪震動開始後 shakeCooldownMs 內不再震
+        lastFigShake = now; stats.figShakes++;
+        shake($('boss-img'), spec.shakePx, spec.shakeMs, 0, 'figshake');
+      }
+    } else if (tier === 'big') {
+      if (C.shake && !reduced()) { lastFigShake = now; stats.figShakes++; }
+      shake($('boss-img'), spec.figShakePx, spec.figShakeMs, stop, 'figshake');
+      shake($('game-stage'), spec.stageShakePx, spec.stageShakeMs, stop, 'stageshake');
+      (orbs || []).forEach(o => { if (reduced()) return; stop ? setTimeout(() => orbBurst(o), stop) : orbBurst(o); });
+    }
+    if (text != null) bossFloat(text, tier, spec);
+  }
+
+  /* ================= 玩家受傷、擋下、回復 ================= */
+  function playerTextPulse(color, scaleFrom, ms) {
+    const el = $('player-hp-text');
+    if (!el) return;
+    const kf = [{ color: color, scale: reduced() ? '1' : String(scaleFrom), offset: 0 }, { color: color, scale: '1', offset: 0.45 }, { offset: 1 }];
+    anim(el, kf, { duration: ms, easing: 'ease-out' }, 'hptext');
+  }
+  function playerFloat(text, color, glow) {
+    const el = $('player-hp-text');
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    floatText(text, r.left - 8 * K(), r.top + r.height / 2, { left: true, color: color, glow: glow });
+  }
+  function vignette() {
+    const n = tempNode('gf-vignette'), ms = C.playerHit.vignetteMs;
+    const a = anim(n, [{ opacity: 0 }, { opacity: 1, offset: 0.25 }, { opacity: 0 }], { duration: ms, easing: 'ease-out', fill: 'backwards' }, 'vignette');
+    disposeWith(n, a, ms);
+  }
+  function playerHitFx(tier, dmg) {
+    const P = C.playerHit, spec = P[tier];
+    shake($('game-stage'), spec.shakePx, spec.shakeMs, 0, 'stageshake');
+    vignette();
+    playerTextPulse(P.textColor, P.textScale, P.textMs);
+    playerFloat('-' + dmg, '#ff6a5a', '#c01810');
+  }
+  function playerLightFx(dmg) {   // 輕量：沒有震動、沒有紅色暗角
+    playerTextPulse(C.playerHit.textColor, C.playerHit.textScale, C.playerHit.textMs);
+    playerFloat('-' + dmg, '#ff6a5a', '#c01810');
+  }
+  function guardFx() {
+    const G = C.guard, rgb = G.color;
+    // 敵方意圖框的 box-shadow 在既有 CSS 是 !important（動畫蓋不過去），所以用一個疊在上面的光環節點
+    const box = $('intent-box');
+    if (box) {
+      const c = center(box);
+      const ring = tempNode('gf-ring gf-blue gf-rect');
+      ring.style.width = c.r.width + 'px'; ring.style.height = c.r.height + 'px';
+      ring.style.left = c.r.left + 'px'; ring.style.top = c.r.top + 'px';
+      const kf = reduced() ? [{ opacity: 0.9 }, { opacity: 0 }] : [{ scale: '1', opacity: 0.9 }, { scale: '1.12 1.16', opacity: 0 }];
+      const a = anim(ring, kf, { duration: G.ms, easing: 'ease-out', fill: 'backwards' }, 'guardbox');
+      disposeWith(ring, a, G.ms);
+    }
+    const wrap = document.querySelector('.area-right-bot');   // 玩家生命格：圓形紋章，中心就是外框中心
+    if (wrap) {
+      const c = center(wrap), d = c.r.width * 0.9;
+      const ring = tempNode('gf-ring gf-blue');
+      ring.style.width = d + 'px'; ring.style.height = d + 'px';
+      ring.style.left = (c.x - d / 2) + 'px'; ring.style.top = (c.y - d / 2) + 'px';
+      const kf = reduced() ? [{ opacity: 0.9 }, { opacity: 0 }] : [{ scale: '0.92', opacity: 0.9 }, { scale: '1.22', opacity: 0 }];
+      const a = anim(ring, kf, { duration: G.ms, easing: 'ease-out', fill: 'backwards' }, 'guardring');
+      disposeWith(ring, a, G.ms);
+    }
+  }
+  function healFx(amount) {
+    playerTextPulse(C.heal.textColor, C.heal.textScale, C.heal.textMs);
+    playerFloat('+' + amount, '#b6ffc4', '#1a9a3a');
+  }
+
+  /* ================= G. 回合橫幅 ================= */
+  function bannerKind() {
+    const t = ($('turn-overlay-text') || {}).textContent || '', s = ($('turn-overlay-sub') || {}).textContent || '';
+    if (/YOUR\s*TURN/i.test(t)) return 'player';
+    if (/BREAK/i.test(t)) return 'break';
+    if (/GUARD/i.test(s)) return 'guard';
+    if (/^ENEMY\s*ATTACK/i.test(t)) return 'enemy';
+    return 'skill';   // 自由戰鬥：敵人技能演出（同樣用 #turn-overlay，標題是技能名稱）
+  }
+  function lunge() {
+    const img = $('boss-img');
+    if (!img || reduced()) return;
+    const B = C.banner, a = B.lungeInMs, b = B.lungeOutMs, k = K();
+    anim(img, [{ scale: '1', translate: '0px 0px', easing: 'ease-in' },
+      { scale: String(B.lungeScale), translate: '0px ' + (B.lungeDownPx * k) + 'px', offset: a / (a + b), easing: 'ease-out' },
+      { scale: '1', translate: '0px 0px' }], { duration: a + b }, 'lunge');
+  }
+  function onBannerShow(kind) {
+    if (kind === 'player') emit('turnPlayer', { tier: 'small', kind: kind });
+    else if (kind === 'skill') emit('turnSkill', { tier: 'small', kind: kind });   // 敵人技能演出：沒有立繪前衝
+    else {
+      enemyBannerSeen = true;
+      emit('turnEnemy', { tier: 'small', kind: kind });
+      if (kind !== 'break') lunge();   // 立繪前衝（BREAK = 敵方被打暈，不前衝）
+    }
+  }
+  /* ===== 回合過場時間（不改遊戲 script）=====
+   * 包裝 window.endTurn 與 window.sleep（兩者都是 function 宣告）。只在 endTurn 執行期間、只改它自己的五個過場等待：
+   *   敵方橫幅顯示 700→520、淡出 300→180（連同 overlay.style.animation 的 fadeOut 秒數）、間隔 300→260、我方橫幅 600→380、淡出 300→160。
+   * 辨識方法不靠毫秒數字：看呼叫 sleep 當下 #turn-overlay 的狀態與標題文字——
+   *   橫幅顯示中（.visible）且沒有 fadeOut 動畫 ＝ 顯示等待；顯示中且 style.animation 含 fadeOut ＝ 淡出等待；
+   *   橫幅不在 ＝ 間隔，但只有「上一個橫幅是敵方橫幅」才改（自由戰鬥敵人技能演出後面的 sleep(150) 前一個是技能橫幅，不動）；
+   *   標題不是 ENEMY ATTACK!／BREAK!／YOUR TURN（＝技能演出，標題是技能名稱）的橫幅一律不動。 */
+  let endTurnDepth = 0, lastKind = null, enemyBannerSeen = false, settled = false;
+  function retimeFor(ov, ms) {
+    const B = C.banner;
+    if (ov.classList.contains('visible')) {
+      const kind = bannerKind(), fading = /fadeOut/.test(ov.style.animation || '');   // style.animation 讀出來是正規化的字串（秒數在前），所以不用 ^ 開頭比對
+      if (kind === 'skill') { lastKind = 'skill'; return ms; }
+      lastKind = kind;
+      const player = kind === 'player';
+      if (fading) {
+        const fade = player ? B.playerFadeMs : B.enemyFadeMs;
+        ov.style.animation = 'fadeOut ' + (fade / 1000) + 's ease-out forwards';   // 同遊戲原本寫的格式，只縮短秒數
+        return fade;
+      }
+      return player ? B.playerMs : B.enemyMs;
+    }
+    if (lastKind && lastKind !== 'skill' && lastKind !== 'player') { lastKind = null; return B.gapMs; }
+    return ms;
+  }
+  wrap('endTurn', orig => function gfEndTurn() {
+    if (endTurnDepth === 0) { lastKind = null; enemyBannerSeen = false; settled = false; }
+    endTurnDepth++;
+    let p;
+    try { p = orig.apply(this, arguments); } catch (e) { endTurnDepth = Math.max(0, endTurnDepth - 1); throw e; }
+    const done = () => { endTurnDepth = Math.max(0, endTurnDepth - 1); };
+    if (p && typeof p.then === 'function') p.then(done, done); else done();
+    return p;   // 回傳值（Promise）、例外、pointerEvents 還原都由原函式處理，不經手
+  });
+  wrap('sleep', orig => function gfSleep(ms) {
+    if (endTurnDepth > 0 && C.banner.retime && typeof ms === 'number') {
+      const ov = $('turn-overlay'), n = ov ? safe(() => retimeFor(ov, ms), ms) : ms;
+      if (n !== ms) { const args = Array.prototype.slice.call(arguments); args[0] = n; return orig.apply(this, args); }
+    }
+    return orig.apply(this, arguments);
+  });
+  function watchOverlay() {
+    const ov = $('turn-overlay');
+    if (!ov) return;
+    let was = ov.classList.contains('visible'), kind = null;
+    new MutationObserver(() => {
+      const vis = ov.classList.contains('visible');
+      if (vis && !was) {
+        kind = safe(bannerKind, 'enemy');
+        ov.classList.add('gf-' + kind);
+        // 「受到 N 点伤害」不顯示（傷害改由受擊效果表示）；display: none 讓文字仍在色帶正中央
+        const sub = $('turn-overlay-sub');
+        if (sub) {
+          const m = /^受到 \d+ 点伤害([\s\S]*)$/.exec((sub.textContent || '').trim());
+          const rest = m ? m[1].trim() : '';
+          if (m && rest) sub.textContent = rest;   // 自由戰鬥：後面接吸血文字時，只拿掉傷害那一段，保留吸血文字
+          else sub.classList.toggle('gf-hide', !!m);
+        }
+        safe(() => onBannerShow(kind));
+      } else if (!vis && was) {
+        ['enemy', 'guard', 'break', 'player', 'skill'].forEach(k => ov.classList.remove('gf-' + k));
+        const sub2 = $('turn-overlay-sub');
+        if (sub2) sub2.classList.remove('gf-hide');
+        if (kind === 'guard') safe(() => { emit('guard', { tier: 'small' }); guardFx(); });   // 擋下：橫幅結束、結算傷害的那一刻
+        kind = null;
+      }
+      was = vis;
+    }).observe(ov, { attributes: true, attributeFilter: ['class'] });
+  }
+
+  /* ================= 出牌：分身飛到出牌紀錄 ================= */
+  const flights = [];
+  function miniFor(idx) {
+    const cards = g.turnCards;
+    const minis = $$('#played-cards-track .mini-card');
+    return minis[idx - Math.max(0, cards.length - 11)] || null;   // 遊戲只顯示最後 11 張
+  }
+  function hideMini(f) {
+    if (f.hide) f.hide.cancel();
+    const m = miniFor(f.idx);
+    f.hide = m ? anim(m, [{ opacity: 0 }, { opacity: 0 }], { duration: Math.max(1, f.end - performance.now()) + 400 }, 'hide') : null;
+  }
+  function landMini(f) {
+    if (f.hide) f.hide.cancel();
+    const m = miniFor(f.idx);
+    if (m) anim(m, [{ scale: String(C.cardPlay.landFrom) }, { scale: '1' }], { duration: C.cardPlay.landMs, easing: C.cardPlay.landEasing, fill: 'backwards' }, 'land');
+  }
+  function flyCard(pre, idx, delay) {
+    delay = delay || 0;
+    if (reduced() || !pre) return;
+    const cards = $$('#played-cards-track .mini-card');
+    const target = miniFor(idx) || cards[cards.length - 1];
+    if (!target) return;
+    const tr = target.getBoundingClientRect();
+    if (!tr.width || !pre.w) return;
+    const P = C.cardPlay, sx = tr.width / pre.w, sy = tr.height / pre.h;
+    const cx = pre.cx, cy = pre.cy, dx = tr.left + tr.width / 2 - cx, dy = tr.top + tr.height / 2 - cy;
+    const clone = document.createElement('div');
+    clone.className = pre.cls.replace(/\b(disabled|targetable|shake|gf-[\w-]+)\b/g, '').replace(/\s+/g, ' ').trim() + ' gf-clone';
+    clone.textContent = pre.text;
+    clone.style.left = (cx - pre.w / 2) + 'px'; clone.style.top = (cy - pre.h / 2) + 'px';
+    clone.style.width = pre.w + 'px'; clone.style.height = pre.h + 'px';
+    document.body.appendChild(clone);
+    const tilt = (idx % 2 ? 1 : -1) * P.tiltDeg, r0 = parseFloat(pre.fanR) || 0;
+    const a = anim(clone, [
+      { translate: '0px 0px', scale: '1 1', rotate: r0 + 'deg', offset: 0 },
+      { translate: (dx * 0.55) + 'px ' + (dy * 0.55) + 'px', scale: (1 + (sx - 1) * 0.55) + ' ' + (1 + (sy - 1) * 0.55), rotate: (tilt) + 'deg', offset: 0.55 },
+      { translate: dx + 'px ' + dy + 'px', scale: sx + ' ' + sy, rotate: '0deg', offset: 1 }
+    ], { duration: P.flyMs, delay: delay, easing: P.flyEasing, fill: 'backwards' }, 'fly');
+    const f = { idx: idx, end: performance.now() + delay + P.flyMs, hide: null };
+    flights.push(f);
+    hideMini(f);
+    const done = () => {
+      clone.remove();
+      const i = flights.indexOf(f);
+      if (i >= 0) flights.splice(i, 1);
+      landMini(f);
+    };
+    if (a && a.finished) a.finished.then(done, done); else done();
+    setTimeout(() => { if (clone.isConnected) done(); }, delay + P.flyMs + 500);
+  }
+
+  /* ================= updateUI：手牌 FLIP／發牌、數字、血條延遲條、玩家血量、寶珠 ================= */
+  const stats = { jobs: 0, retries: 0, figShakes: 0 };   // 驗收用：retries > 0 代表 rAF 順序不如預期；figShakes＝立繪震動開始的次數
+  let renderedHand = [];            // 上一次 updateUI 結束時的 hand（與 DOM 的 .card 一一對應）
+  let job = null;                   // 這一幀要做的手牌動畫：{ old: Map(牌物件 → 舊位置), tries }
+  let jobRaf = 0, seq = 0;
+  const dealing = new WeakMap();    // 牌物件 → 發牌動畫結束的時間（還沒發完的牌不當作「舊位置」）
+  let resetting = false;            // initGame 執行中：血量、血條、數字的變動是重新開始，不算效果
+  let inPlayCard = false;
+  let curSnap = null;               // playCard 呼叫前記下的預兆格副本
+  let lastHp = null, lastPhase = null, lastCharges = [];
+  let lastLogDamage = null;
+  const pendingOrbs = [];
+
+  function captureOld() {
+    const m = new Map(), now = performance.now();
+    $$('#hand-area .card').forEach((el, i) => {
+      const obj = renderedHand[i];
+      if (!obj || (dealing.get(obj) || 0) > now) return;
+      const r = el.getBoundingClientRect();
+      if (r.width) m.set(obj, { x: r.left + r.width / 2, y: r.top + r.height / 2 });
+    });
+    return m;
+  }
+  function snapPre() {
+    const bar = $('hp-bar'), w = bar ? parseFloat(bar.style.width) : NaN;
+    return {
+      combo: num('combo-count'), intent: num('enemy-intent-val'), deck: num('deck-count'),
+      barPct: isNaN(w) ? 100 : w,
+      broken: !!($('intent-box') && $('intent-box').classList.contains('broken')),
+      orbs: new Map($$('.inline-orb').map(o => [o.id, o.classList.contains('lost')]))
+    };
+  }
+  function ensureLag() {
+    const track = document.querySelector('.hp-track');
+    if (!track) return null;
+    let lag = track.querySelector('.gf-hp-lag');
+    if (!lag) {
+      lag = document.createElement('div');
+      lag.className = 'gf-hp-lag';
+      track.insertBefore(lag, track.firstChild);   // 在 #hp-bar 下層
+    }
+    return lag;
+  }
+  function updateLag(pre, phaseChanged) {
+    const bar = $('hp-bar'), track = document.querySelector('.hp-track');
+    if (!bar || !track) return;
+    const fresh = !track.querySelector('.gf-hp-lag'), lag = ensureLag();
+    const w = parseFloat(bar.style.width), now = isNaN(w) ? 100 : w;
+    let cur = pre.barPct;   // 目前延遲條畫出來的寬度（動畫進行中以實際寬度為準）
+    if (!fresh && track.clientWidth) cur = Math.max(pre.barPct, parseFloat(getComputedStyle(lag).width) / track.clientWidth * 100);
+    lag.getAnimations().forEach(a => { if (a.id === 'gf-lag') a.cancel(); });
+    lag.style.width = now + '%';
+    if (fresh || resetting || phaseChanged || reduced() || now >= cur - 0.01) return;   // 換階段回滿、重新開始、回血：直接跟上，不做動畫
+    const L = C.hpLag, total = L.holdMs + L.shrinkMs;
+    anim(lag, [{ width: cur + '%', offset: 0 }, { width: cur + '%', offset: L.holdMs / total }, { width: now + '%', offset: 1 }],
+      { duration: total, easing: 'ease-out' }, 'lag');
+  }
+  function onUpdated(pre) {
+    const N = C.numbers, rst = resetting, rd = reduced();
+    // D. 數字
+    if (!rst && !rd) {
+      const c = num('combo-count'), iv = num('enemy-intent-val'), d = num('deck-count');
+      if (c > pre.combo) pop($('combo-count'), N.comboFrom, N.comboMs, N.easing, 'combo');
+      if (iv < pre.intent) pop($('enemy-intent-val'), N.intentFrom, N.intentMs, N.easing, 'intent');
+      if (isFinite(d) && isFinite(pre.deck) && d !== pre.deck) pop($('deck-count'), N.deckFrom, N.deckMs, N.easing, 'deck');
+    }
+    // 技能 charges 減少 → 新的 .skill-btn 金色閃一下
+    const pl = g.player, en = g.enemy;
+    if (pl && pl.equippedSkills) {
+      const ch = pl.equippedSkills.map(s => s.charges);
+      if (!rst) {
+        const btns = $$('#equipped-skills-area .skill-btn');
+        ch.forEach((v, i) => {
+          if (lastCharges[i] != null && v < lastCharges[i] && btns[i]) {
+            const rgb = N.skillFlashColor;
+            anim(btns[i], [{ boxShadow: '0 0 0 0 rgba(' + rgb + ',0)' }, { boxShadow: '0 0 26px 8px rgba(' + rgb + ',0.9)', offset: 0.3 }, { boxShadow: '0 0 0 0 rgba(' + rgb + ',0)' }],
+              { duration: N.skillFlashMs, easing: 'ease-out', composite: 'add' }, 'skill');
+          }
+        });
+      }
+      lastCharges = ch;
+    }
+    // 血條延遲條
+    const phase = en ? en.phaseIndex : null;
+    updateLag(pre, lastPhase !== null && phase !== lastPhase);
+    lastPhase = phase;
+    // 玩家血量：減少 = 受傷、增加 = 回復
+    if (pl && typeof pl.hp === 'number') {
+      const hp = pl.hp;
+      if (lastHp === null || rst) lastHp = hp;
+      else if (hp < lastHp) {
+        const before = lastHp, dmg = before - hp, lethal = hp <= 0;   // 分母是受擊前的現有生命
+        const ratio = before > 0 ? dmg / before : 1, tier = lethal || ratio >= C.playerHit.midRatioOfCurrentHp ? 'mid' : 'small';
+        lastHp = hp;
+        // 敵方回合結算（endTurn 內、敵方橫幅之後、橫幅已收）= 完整受擊；玩家自己回合中扣血（血月付費、魔力过载自傷）= 輕量：只有數字變紅彈跳＋飄字
+        const ov = $('turn-overlay'), enemySettle = endTurnDepth > 0 && enemyBannerSeen && !settled && !(ov && ov.classList.contains('visible'));
+        if (enemySettle) settled = true;
+        emit('playerHit', { tier: tier, damage: dmg, hpBefore: before, ratio: ratio, lethal: lethal, light: !enemySettle });
+        if (enemySettle) playerHitFx(tier, dmg); else playerLightFx(dmg);
+      } else if (hp > lastHp) {
+        const amt = hp - lastHp;
+        lastHp = hp;
+        emit('heal', { tier: 'small', amount: amt });
+        healFx(amt);
+      }
+    }
+    // 階段寶珠：這次變成 .lost 的
+    const lost = $$('.inline-orb').filter(o => o.classList.contains('lost') && pre.orbs.get(o.id) === false);
+    if (lost.length && !rst) { if (inPlayCard) pendingOrbs.push.apply(pendingOrbs, lost); else lost.forEach(orbBurst); }
+    // 傷害預兆格變成 BREAK 的那一刻：用 playCard 呼叫前記下的「擊破前的樣子」碎裂
+    const ib = $('intent-box');
+    if (!rst && ib && !pre.broken && ib.classList.contains('broken') && inPlayCard && curSnap) shatterFx(curSnap);   // 和 110ms 停頓重疊：停頓中先長出裂痕
+    // 出牌分身飛行中：重畫後的新 mini-card 要繼續藏著
+    flights.forEach(hideMini);
+  }
+
+  // 手牌動畫：在 rf-refresh-deco 套好扇形變數之後的同一幀量測（我們的 MutationObserver 晚於 deco 建立，rAF 登記順序在它後面）
+  function runJob() {
+    jobRaf = 0;
+    const j = job;
+    if (!j) return;
+    const cards = $$('#hand-area .card');
+    if (cards.some(el => !el.style.getPropertyValue('--fan-r')) && j.tries++ < 3) { stats.retries++; jobRaf = requestAnimationFrame(runJob); return; }
+    job = null;
+    stats.jobs++;
+    if (!cards.length || cards.length !== renderedHand.length) return;
+    const H = C.hand, rd = reduced(), now = performance.now();
+    const deckEl = $('deck-count'), dc = deckEl ? center(deckEl) : null;
+    const fresh = [];
+    cards.forEach((el, i) => {
+      const obj = renderedHand[i], r = el.getBoundingClientRect();
+      if (!r.width) return;
+      const x = r.left + r.width / 2, y = r.top + r.height / 2, o = j.old.get(obj);
+      if (o) {
+        const dx = o.x - x, dy = o.y - y;
+        if (!rd && (Math.abs(dx) > 0.5 || Math.abs(dy) > 0.5)) anim(el, [{ translate: dx + 'px ' + dy + 'px' }, { translate: '0px 0px' }], { duration: H.flipMs, easing: H.flipEasing }, 'flip');
+      } else fresh.push({ el: el, obj: obj, x: x, y: y });
+    });
+    let dealt = 0;
+    fresh.forEach(f => {
+      if (f.obj && f.obj.isToken) {   // 切割、變色產生的牌：原地彈出
+        if (!rd) anim(f.el, [{ scale: String(H.tokenFrom), opacity: 0.3 }, { scale: '1', opacity: 1 }], { duration: H.tokenMs, easing: H.tokenEasing, fill: 'backwards' }, 'token');
+        return;
+      }
+      const delay = dealt++ * H.dealStaggerMs;
+      if (f.obj) dealing.set(f.obj, now + delay + H.dealMs);
+      if (rd) { anim(f.el, [{ opacity: 0 }, { opacity: 1 }], { duration: 160, delay: delay, fill: 'backwards' }, 'deal'); return; }
+      const dx = dc ? dc.x - f.x : 0, dy = dc ? dc.y - f.y : 0;
+      anim(f.el, [
+        { translate: dx + 'px ' + dy + 'px', rotate: H.dealTiltDeg + 'deg', scale: String(H.dealFromScale), opacity: 0, offset: 0 },
+        { translate: '0px 0px', rotate: '0deg', scale: '1', opacity: 1, offset: 1 }
+      ], { duration: H.dealMs, delay: delay, easing: H.dealEasing, fill: 'backwards' }, 'deal');
+    });
+    if (dealt) emit('draw', { tier: 'small', count: dealt });
+  }
+  function scheduleJob() {
+    const h = $('hand-area');
+    if (h) h.setAttribute('data-gf', String(++seq));   // 觸發下面那個 observer（deco 的 observer 只看 class／style，不會被這個屬性驚動）
+    else if (!jobRaf) jobRaf = requestAnimationFrame(runJob);
+  }
+
+  /* ================= 掛接遊戲全域函式 ================= */
+  function wrap(name, make) {
+    const orig = window[name];
+    if (typeof orig !== 'function' || orig.__gf) return false;
+    const w = make(orig);
+    w.__gf = true;
+    window[name] = w;
+    return true;
+  }
+
+  wrap('updateUI', orig => function gfUpdateUI() {
+    previewRestore = null;   // 預覽暫時改過預兆格的話，遊戲更新畫面就以遊戲為準，不再還原
+    const pre = safe(snapPre);
+    if (!job) job = { old: safe(captureOld, new Map()), tries: 0 };
+    const ret = orig.apply(this, arguments);
+    safe(() => { if (pre) onUpdated(pre); });
+    safe(() => { renderedHand = g.hand.slice(); scheduleJob(); });
+    return ret;
+  });
+
+  wrap('showLog', orig => function gfShowLog(msg) {
+    // 「- N」的傷害文字改由飄字表示（只在 playCard 之內才不顯示；其他情況照常，避免傷害完全看不到）
+    if (inPlayCard && typeof msg === 'string' && /^- \d+\s*$/.test(msg)) { lastLogDamage = (lastLogDamage || 0) + parseInt(msg.slice(1), 10); return undefined; }
+    return orig.apply(this, arguments);
+  });
+
+  wrap('initGame', orig => function gfInitGame() {
+    resetting = true;
+    try { return orig.apply(this, arguments); } finally {
+      resetting = false;
+      safe(() => {
+        const pl = g.player, en = g.enemy;
+        lastHp = pl ? pl.hp : null; lastPhase = en ? en.phaseIndex : null;
+      });
+    }
+  });
+
+  wrap('playCard', orig => function gfPlayCard(index) {
+    // 呼叫前記下每張手牌的位置與外觀（以牌物件為鍵）：打出的牌、提线連動自動打出的牌都要飛
+    const infos = new Map();
+    safe(() => {
+      const hs = g.hand;
+      $$('#hand-area .card').forEach((el, i) => {
+        if (!hs[i]) return;
+        const c = center(el);
+        infos.set(hs[i], { cx: c.x, cy: c.y, w: el.offsetWidth, h: el.offsetHeight, cls: el.className, text: el.textContent, fanR: el.style.getPropertyValue('--fan-r') });
+      });
+    });
+    const en0 = g.enemy || {}, e0 = { hp: en0.hp, phase: en0.phaseIndex, max: en0.maxHp };
+    const n0 = g.turnCards.length, h0 = g.hand.length;
+    lastLogDamage = null;
+    pendingOrbs.length = 0;
+    curSnap = safe(captureIntent, null);   // 呼叫原函式之前記下預兆格（擊破前的樣子）
+    inPlayCard = true;
+    let ret;
+    try { ret = orig.apply(this, arguments); } finally { inPlayCard = false; curSnap = null; }
+    safe(() => {
+      const turnCards = g.turnCards, en = g.enemy || {};
+      if (turnCards.length > n0) {
+        emit('cardPlay', { tier: 'small' });
+        let order = 0;
+        turnCards.slice(n0).forEach((c, k) => {
+          if (isNefCard(c)) return;   // 奈芙蒂插的牌：不建分身、不當成玩家出牌
+          const inf = infos.get(c);
+          if (inf) flyCard(inf, n0 + k, (order++) * C.cardPlay.flyExtraDelayMs);
+        });
+        const phaseChanged = en.phaseIndex !== e0.phase, victory = !phaseChanged && en.hp <= 0;
+        const dealtHp = phaseChanged ? e0.hp : e0.hp - en.hp;
+        if (dealtHp > 0) {
+          const text = lastLogDamage != null ? lastLogDamage : dealtHp, ratio = e0.max > 0 ? dealtHp / e0.max : 1;
+          const orbs = victory ? [previewOrb()] : pendingOrbs.splice(0);
+          if (victory) {
+            emit('victory', { tier: 'big', damage: dealtHp });
+            enemyHitFx('big', text, orbs, true);
+          } else if (phaseChanged) {
+            emit('break', { tier: 'big', damage: dealtHp, maxHp: e0.max, ratio: ratio });
+            enemyHitFx('big', text, orbs, false);
+          } else {
+            const tier = ratio >= C.enemyHit.midRatio ? 'mid' : 'small';
+            emit('enemyHit', { tier: tier, damage: dealtHp, maxHp: e0.max, ratio: ratio });
+            enemyHitFx(tier, text, orbs, false);
+          }
+        }
+      } else if (turnCards.length === n0 && g.hand.length === h0) {
+        emit('deny', { tier: 'small' });   // 不能出的牌：震動由 CSS（.shake → gf-deny）處理
+      }
+    });
+    pendingOrbs.length = 0;
+    return ret;
+  });
+
+  // 觀察者：晚於 rf-refresh-deco 建立，所以 rAF 的登記順序在它之後（同一幀裡，扇形變數先套好、我們再量測）
+  const handBox = $('hand-area');
+  if (handBox) {
+    new MutationObserver(() => { if (!jobRaf && job) jobRaf = requestAnimationFrame(runJob); })
+      .observe(handBox, { attributes: true, attributeFilter: ['data-gf'] });
+  }
+  watchOverlay();
+  root.style.setProperty('--gf-k', String(K()));
+
+  // J. 按壓事件（只記錄，不播音效）
+  const PRESS_SEL = '.card:not(.disabled), .skill-btn:not([disabled]), .btn-full, .cp-btn, .d-btn, .btn-ready, .btn-start, .sel-card';
+  document.addEventListener('pointerdown', e => {
+    const t = e.target && e.target.closest && e.target.closest(PRESS_SEL);
+    if (t) emit('press', { tier: 'small', target: String(t.className).split(' ')[0] });
+  }, { capture: true, passive: true });
+
+  /* ================= 預覽：只播畫面效果，不讀寫遊戲狀態 ================= */
+  function previewOrb() { return $$('.inline-orb').filter(o => !o.classList.contains('lost')).pop() || $$('.inline-orb').pop(); }
+  function previewBanner(kind) {
+    const ov = $('turn-overlay'), t = $('turn-overlay-text'), s = $('turn-overlay-sub'), B = C.banner;
+    const stage = $('game-stage');
+    if (!ov || !t || !s || ov.classList.contains('visible') || (stage && stage.style.pointerEvents === 'none')) return false;   // 真的回合過場進行中，不插手
+    const set = { enemy: ['#ff4d4d', 'ENEMY ATTACK!', '受到 12 点伤害'], guard: ['#4dabf7', 'ENEMY ATTACK!', '— GUARD —'], player: ['#c5a059', 'YOUR TURN', 'FORWARD!'] }[kind];
+    t.style.color = set[0]; t.innerText = set[1]; s.innerText = set[2];
+    const show = kind === 'player' ? B.playerMs : B.enemyMs, fade = kind === 'player' ? B.playerFadeMs : B.enemyFadeMs;
+    ov.classList.add('visible');
+    setTimeout(() => {
+      ov.style.animation = 'fadeOut ' + fade + 'ms ease-out forwards';
+      setTimeout(() => { ov.classList.remove('visible'); ov.style.animation = ''; }, fade);
+    }, show);
+    return true;
+  }
+  const PREVIEWS = {
+    'enemyHit.small': () => { emit('enemyHit', { tier: 'small', preview: true }); enemyHitFx('small', 1, [], false); },
+    'enemyHit.streak': () => {   // 連續命中：看飄字累加與立繪震動冷卻
+      const S = C.enemyHit.streak;
+      for (let i = 0; i < S.count; i++) setTimeout(() => { emit('enemyHit', { tier: S.tier, preview: true, streak: i + 1 }); enemyHitFx(S.tier, 1, [], false); }, i * S.intervalMs);
+    },
+    'enemyHit.mid': () => { emit('enemyHit', { tier: 'mid', preview: true }); enemyHitFx('mid', 6, [], false); },
+    'break': () => { emit('break', { tier: 'big', preview: true }); enemyHitFx('big', 3, [previewOrb()], false); safe(previewShatter); },
+    'victory': () => {
+      emit('victory', { tier: 'big', preview: true });
+      enemyHitFx('big', 3, [previewOrb()], true);
+    },
+    'playerHit.small': () => { emit('playerHit', { tier: 'small', preview: true }); playerHitFx('small', 6); },
+    'playerHit.mid': () => { emit('playerHit', { tier: 'mid', preview: true }); playerHitFx('mid', 18); },
+    'guard': () => { emit('guard', { tier: 'small', preview: true }); guardFx(); },
+    'heal': () => { emit('heal', { tier: 'small', preview: true }); healFx(20); },
+    'turnEnemy': () => previewBanner('enemy'),
+    'turnGuard': () => previewBanner('guard'),
+    'turnPlayer': () => previewBanner('player'),
+    'draw': () => {
+      const cards = $$('#hand-area .card'), dc = $('deck-count') ? center($('deck-count')) : null, H = C.hand;
+      emit('draw', { tier: 'small', count: cards.length, preview: true });
+      cards.forEach((el, i) => {
+        const c = center(el), delay = i * H.dealStaggerMs;
+        if (reduced() || !dc) { anim(el, [{ opacity: 0 }, { opacity: 1 }], { duration: 160, delay: delay, fill: 'backwards' }, 'deal'); return; }
+        anim(el, [{ translate: (dc.x - c.x) + 'px ' + (dc.y - c.y) + 'px', rotate: H.dealTiltDeg + 'deg', scale: String(H.dealFromScale), opacity: 0, offset: 0 },
+          { translate: '0px 0px', rotate: '0deg', scale: '1', opacity: 1, offset: 1 }], { duration: H.dealMs, delay: delay, easing: H.dealEasing, fill: 'backwards' }, 'deal');
+      });
+    }
+  };
+  function preview(name) {
+    const fn = PREVIEWS[name];
+    if (!fn) return false;
+    return safe(() => { const r = fn(); return r === undefined ? true : r; }, false);
+  }
+
+  window.GameFeel = { config: FEEL_CONFIG, preview: preview, emit: emit, getLog: () => log.slice(), previews: Object.keys(PREVIEWS), stats: stats, version: '1' };
 })();
 </script>
 </body>
