@@ -2134,8 +2134,13 @@ html.rf-m .gf-vignette { box-shadow: inset 0 0 220px 80px rgba(255, 30, 20, 0.7)
 /* 擊破：傷害預兆格碎裂。碎片容器放在 #game-stage 內、和預兆格同位置同大小（座標由 JS 寫 inline style），
  * 所以 html.rf-m 的手機樣式也套得上。碎片是「擊破前的預兆格」副本（id 已改成 data-gf-id；遊戲沒有以 id 為選擇器的預兆格樣式）。
  * 做法參考 D:\NewCard\exploration-prototype.html 的遇敵碎裂轉場。 */
-.gf-shatter-fx { position: absolute; z-index: 15; pointer-events: none; overflow: visible; }
-.gf-shatter-fx .gf-piece { position: absolute; pointer-events: none; }
+.gf-shatter-fx { position: absolute; z-index: 15; pointer-events: none; overflow: visible; contain: layout style; }
+.gf-shatter-fx .gf-piece { position: absolute; pointer-events: none; contain: layout style; }
+/* 切開的碎片（不含 .gf-base／.gf-fade 那兩份整格副本）再加 paint：每片的樣式、版面、繪製都和頁面其他部分隔開。
+ * 碎片盒子 = 該多邊形與預兆格的交集，副本內容本來就只畫在盒內，paint 只會多裁掉副本盒外的陰影（box-shadow 0 10px 28px，底下真正的預兆格有同一圈）。
+ * 容器不能加 paint：碎片會落出格外，容器的 paint 會把它們裁掉；容器只加 layout style。
+ * 寫在 CSS 而不是 inline style：規則固定、與碎片幾何無關，不必每片重寫；不加 will-change（碎片本來就在跑 transform 動畫，瀏覽器會自行升層）。 */
+.gf-shatter-fx .gf-piece:not(.gf-base):not(.gf-fade) { contain: layout style paint; }
 .gf-shatter-fx .gf-cracks { position: absolute; left: 0; top: 0; width: 100%; height: 100%; overflow: hidden; pointer-events: none; }
 
 /* 橫幅副標「受到 N 点伤害」不顯示（回饋層加 class）；用 display: none，文字會留在色帶正中央 */
@@ -3357,21 +3362,21 @@ html.rf-m #turn-overlay-text { font-size: 88px; padding: 24px 40px; letter-spaci
                         if (j && !j.ok) {
                             const add = fx.reverse > 0 ? REVERSE_SIN : 1;   // 审判反转的回合罪加得更多
                             fx.sin += add;
-                            say(`审判：不符合条件，罪 +${add}（${Math.min(fx.sin, SIN_MAX)}/${SIN_MAX}）`);
+                            // 罪 +N 不再提示（罪有計量條）；2026-11-11 提示精簡
                             if (fx.sin >= SIN_MAX) {
                                 fx.sin = 0;
                                 const hp0 = S.player.hp;
                                 const dmg = Math.max(0, Math.min(SIN_DAMAGE, hp0 - 1));   // 鎖血：生命不會低於 1
                                 S.player.hp = hp0 - dmg;
                                 fx.sinPending += dmg;
-                                say(dmg > 0 ? `审判：天罚！受到 ${dmg} 点罪伤（本回合可赎回），罪归零` : "审判：天罚！生命只剩 1，未扣血，罪归零");
+                                say(dmg > 0 ? "审判：天罚！本回合出伤害牌可赎回" : "审判：天罚！生命只剩 1，未扣血");
                             }
                         }
                         if (info.damage > 0 && fx.sinPending > 0 && !(fx.reverse > 0)) {   // 审判反转的回合赎罪無效
                             const heal = Math.min(SIN_REDEEM, fx.sinPending);
                             fx.sinPending -= heal;
                             S.player.hp = Math.min(S.player.maxHp, S.player.hp + heal);
-                            say(`审判：赎罪，回复 ${heal}`);
+                            // 赎罪不再提示（我方生命有綠色飄字）
                         }
                     },
                     // 回合結束：沒赎回的罪伤變成真的傷害
@@ -3850,7 +3855,6 @@ html.rf-m #turn-overlay-text { font-size: 88px; padding: 24px 40px; letter-spaci
             }
 
             if (buffs.keepHandTurns > 0) {
-                log(`Buff: 保留手牌 (${buffs.keepHandTurns})`);
                 buffs.keepHandTurns--;
             } else {
                 if (state.hand.length > 0) {
@@ -3864,7 +3868,6 @@ html.rf-m #turn-overlay-text { font-size: 88px; padding: 24px 40px; letter-spaci
             const ctx = { drawCount: 5 };
             if (buffs.extraDrawTurns > 0) {
                 ctx.drawCount += 2;
-                log(`Buff: 多抽2张 (${buffs.extraDrawTurns})`);
                 buffs.extraDrawTurns--;
             }
 
@@ -5736,19 +5739,21 @@ function freeAfterTurnStart() {
 // 每次出牌之後（updateUI 之前）：核心回傳的事件（机巧齿轮轉動、提线自動打出）用提示顯示，手牌閃一下
 const FREE_COLOR_ZH = { red: '红', blue: '蓝', green: '绿', yellow: '黄' };
 function freeAfterPlay(result) {
-    const lines = [];
+    // 一次出牌最多一行提示（2026-11-11 提示精簡）：優先順序 階段切換／奈芙蒂借用 ＞ 天罚 ＞ 血月支付 ＞ 提线自动打出 ＞ 其他（照原順序取第一個）
     const ev = (result.events || []).concat(result.auto && result.auto.events ? result.auto.events : []);
+    let borrowLine = '', judgeLine = '', bloodLine = '', autoLine = '';
     if (result.auto) {
         const c = result.auto.card;
-        lines.push(`提线：自动打出 ${FREE_COLOR_ZH[c.color]}${c.number}`);
+        autoLine = `提线：自动打出 ${FREE_COLOR_ZH[c.color]}${c.number}`;
     }
-    ev.forEach(t => lines.push(t));
-    if (result.blood) lines.unshift(`血月：支付 ${result.blood} 生命打出`);
+    if (result.blood) bloodLine = `血月：支付 ${result.blood} 生命打出`;
     // 奈芙蒂：這張牌打倒階段、換成另一位對手的領域與技能
     if (S.free && S.free.borrow && freeCtx.curKey && S.free.curKey !== freeCtx.curKey) {
         const d = S.free.def;
-        lines.unshift(`第 ${S.enemy.phaseIndex + 1} 阶段：借用 ${d.char}${d.field ? '·' + d.field.name : ''}`);
+        borrowLine = `第 ${S.enemy.phaseIndex + 1} 阶段：借用 ${d.char}${d.field ? '·' + d.field.name : ''}`;
     }
+    judgeLine = ev.find(t => t.indexOf('审判：天罚') === 0) || '';
+    const lines = [borrowLine, judgeLine, bloodLine, autoLine, ev[0] || ''].filter(Boolean).slice(0, 1);
     // 奈芙蒂插入：提示（只出現一次：核心的 g.log 暫存會被 freeToast 清掉）；小牌從她的手牌飛到出牌紀錄
     if (result.nef) {
         freeNefSay(result.nef.label);   // 提示放在她手牌的小標上（不走 #free-toast：電腦版會蓋住立繪的臉，手機版會合併成大黑框）
@@ -6449,7 +6454,7 @@ function freeBuffChips(chips) {
     // 範圍只有預兆格；沒有全畫面閃光、沒有斜邊深色底。沒有亮度閃爍。碎片是「擊破前的預兆格」的副本。
     shatter: {
       seed: 11,                                   // 固定種子亂數（seeded），每次擊破 +7，圖樣不同但可重播；不用 Math.random
-      raysMin: 7, raysMax: 9,                     // 射線數
+      raysMin: 5, raysMax: 6,                     // 射線數
       ringRadii: [0.22, 0.55],                    // 內圈、中圈半徑（乘上格子短邊）；第三圈一律往外到蓋住整格
       radialMs: 150, crossMs: 90, crossDelayMs: 70, crossDelayJitterMs: 50, crackEase: 'cubic-bezier(.2,.8,.3,1)',
       crossChanceRing2: 0.5,                      // 橫向裂痕：內圈一定有，第二圈有這個機率
@@ -6458,7 +6463,8 @@ function freeBuffChips(chips) {
       fallStartMs: 240, crackFadeMs: 140,         // 240ms 起裂痕淡出、碎片落下
       ringStaggerMs: 40, jitterMs: 45, fallMs: 420, fallEase: 'cubic-bezier(.55,0,.9,.5)',
       pushPx: 6, pushUntil: 0.12, rotDeg: 45, scaleEnd: 0.9, dropMinH: 1.5, dropMaxH: 2.5,   // 先往外推 pushPx（前 12%），再旋轉、縮、往下掉 1.5～2.5 倍格子高度
-      reducedFadeMs: 300                          // 減少動態：副本淡出 300ms，不切碎、不震動、沒有裂痕
+      reducedFadeMs: 300,                         // 減少動態：副本淡出 300ms，不切碎、不震動、沒有裂痕
+      buildChunk: 5, buildFlushMs: 120            // 碎片 DOM 分批建（每幀 buildChunk 片）；超過 buildFlushMs 還沒建完就一次建完（碎片 240ms 要開始落下）
     },
     float: { risePx: 46, ms: 700, bossYFrac: 1 / 3, spreadPx: 26, popMs: 140, popEasing: BACK },
     hpLag: { holdMs: 250, shrinkMs: 350 },
@@ -6723,8 +6729,9 @@ function freeBuffChips(chips) {
     if (!shat) return;
     const t = shat; shat = null;
     clearTimeout(t.timer);
+    if (t.raf) cancelAnimationFrame(t.raf);
     t.anims.forEach(a => { try { a.cancel(); } catch (_) { /* ignore */ } });
-    t.fx.remove();
+    if (t.fx) t.fx.remove();
   }
   // 碎片幾何（照參考的 shatterGeometry，尺寸改用預兆格）：以撞擊點為中心，射線 × 圈數切成多邊形；內圈三角形、其餘四邊形
   function shatterGeometry(hit, W, H, r) {
@@ -6743,18 +6750,36 @@ function freeBuffChips(chips) {
     }
     return { pts: pts, polys: polys, n: n, rings: 3 };
   }
-  function shatterFx(snap) {
+  /* shatterFx(snap, onEnd)：只登記，碎片 DOM 延後到 kickShatter 排的那一幀再建（buildShatter）。
+   * 原因：擊破的那一次 playCard 同步流程裡，flyCard／bossAnchor／center 會讀版面；若這時已插入二十幾份預兆格副本，
+   * 每次讀版面都要重算這些副本的樣式與版面（手機降速後是主要的卡頓來源）。延後到 rAF 之後，副本在 playCard 結束後才進 DOM。
+   * 延後只有一幀：真正的預兆格已經變成 BREAK，但 rAF 在同一幀繪製之前執行，所以畫面上不會出現「BREAK 沒有碎片蓋著」的一幀。 */
+  function shatterFx(snap, onEnd) {
     const stage = $('game-stage');
     cancelShatter();
     if (!snap || !stage) return;
-    const S = C.shatter, k = K(), W = snap.w, H = snap.h, off = reduced();
+    const mine = { fx: null, anims: [], timer: 0, raf: 0, kicked: false, snap: snap, onEnd: onEnd, seedN: shatCount++, off: reduced(), k: K() };
+    shat = mine;
+    mine.timer = setTimeout(() => { if (shat === mine) cancelShatter(); }, 2500);   // 保底：一直沒排到 rAF（分頁在背景）就放棄
+  }
+  // 排進 rAF：先 queueMicrotask 再 rAF，讓登記順序在 rf-refresh-deco 與 runJob 的 rAF 之後（它們要讀手牌位置，不能被副本拖慢）
+  function kickShatter() {
+    const m = shat;
+    if (!m || m.kicked) return;
+    m.kicked = true;
+    queueMicrotask(() => { if (shat === m) m.raf = requestAnimationFrame(() => { m.raf = 0; if (shat === m) buildShatter(m); }); });
+  }
+  function buildShatter(mine) {
+    const stage = $('game-stage'), snap = mine.snap;
+    if (!stage) { cancelShatter(); return; }
+    clearTimeout(mine.timer);
+    const S = C.shatter, k = mine.k, W = snap.w, H = snap.h, off = mine.off;
     const fx = document.createElement('div');
     fx.className = 'gf-shatter-fx';
     fx.setAttribute('aria-hidden', 'true'); fx.setAttribute('inert', '');
     fx.style.left = snap.left + 'px'; fx.style.top = snap.top + 'px'; fx.style.width = W + 'px'; fx.style.height = H + 'px';
     stage.appendChild(fx);
-    const anims = [], mine = { fx: fx, anims: anims, timer: 0 };
-    shat = mine;
+    const anims = mine.anims; mine.fx = fx;
     const A = (node, kf, opt, id) => { const a = anim(node, kf, Object.assign({ fill: 'both', easing: 'linear' }, opt), id); if (a) anims.push(a); return a; };
     // 副本放進 node：位置與大小用 inline style 蓋過 .area-right-top 的 top／right／width（含 html.rf-m 的手機樣式）
     const place = (node, left, top) => {
@@ -6770,7 +6795,7 @@ function freeBuffChips(chips) {
       fx.appendChild(whole); place(whole, 0, 0);
       A(whole, [{ opacity: 1 }, { opacity: 0 }], { duration: S.reducedFadeMs, easing: 'ease-out' }, 'shatterfade');
     } else {
-      const r = seeded(S.seed + 7 * (shatCount++)), g2 = shatterGeometry(snap.hit, W, H, r), sm = Math.min(W, H);
+      const r = seeded(S.seed + 7 * mine.seedN), g2 = shatterGeometry(snap.hit, W, H, r), sm = Math.min(W, H);
       fx.setAttribute('data-rays', g2.n); fx.setAttribute('data-rings', g2.rings);
       // 底層放一份完整副本，遮住碎片之間的細縫；碎片開始動時移除（同參考的 base）
       const base = document.createElement('div');
@@ -6778,19 +6803,6 @@ function freeBuffChips(chips) {
       base.style.cssText = 'left:0;top:0;width:100%;height:100%';
       fx.appendChild(base); place(base, 0, 0);
       A(base, [{ opacity: 1 }, { opacity: 0 }], { duration: 1, delay: S.fallStartMs }, 'shatterbase');
-      const pieces = [];
-      g2.polys.forEach(poly => {
-        const xs = poly.pts.map(q => q.x), ys = poly.pts.map(q => q.y);
-        const bx = Math.max(0, Math.floor(Math.min.apply(null, xs))), by = Math.max(0, Math.floor(Math.min.apply(null, ys)));
-        const ex = Math.min(W, Math.ceil(Math.max.apply(null, xs))), ey = Math.min(H, Math.ceil(Math.max.apply(null, ys)));
-        // 完全落在格子外的碎片也留著（看不見，但數量 = 射線 × 圈數），給它 1px 大小
-        const sh = document.createElement('div');
-        sh.className = 'gf-piece';
-        sh.style.cssText = 'left:' + bx + 'px;top:' + by + 'px;width:' + Math.max(1, ex - bx) + 'px;height:' + Math.max(1, ey - by) + 'px;clip-path:polygon(' +
-          poly.pts.map(q => (q.x - bx).toFixed(1) + 'px ' + (q.y - by).toFixed(1) + 'px').join(',') + ')';
-        fx.appendChild(sh); place(sh, -bx, -by);
-        pieces.push({ node: sh, poly: poly });
-      });
       // 裂痕：每條線畫兩次（深色粗線＋米白細線）。主裂痕從撞擊點沿射線往外並帶折角；內圈有橫向裂痕，第二圈約一半機率有
       const NS = 'http://www.w3.org/2000/svg', svg = document.createElementNS(NS, 'svg');
       svg.setAttribute('class', 'gf-cracks'); svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H); svg.setAttribute('preserveAspectRatio', 'none');
@@ -6832,22 +6844,52 @@ function freeBuffChips(chips) {
       }
       // 240ms 起裂痕淡出、碎片落下（離撞擊點越近越早掉）
       A(svg, [{ opacity: 1 }, { opacity: 0 }], { duration: S.crackFadeMs, delay: S.fallStartMs, easing: 'ease-in' }, 'crackfade');
-      pieces.forEach(pc => {
-        const q = pc.poly.pts, cx = q.reduce((a, b) => a + b.x / q.length, 0), cy = q.reduce((a, b) => a + b.y / q.length, 0);
+      // 每片的幾何與動畫參數在這裡一次算好（亂數呼叫順序不變）；碎片節點與動畫分批建（addPieces）
+      const specs = g2.polys.map(poly => {
+        const xs = poly.pts.map(q => q.x), ys = poly.pts.map(q => q.y);
+        const bx = Math.max(0, Math.floor(Math.min.apply(null, xs))), by = Math.max(0, Math.floor(Math.min.apply(null, ys)));
+        const ex = Math.min(W, Math.ceil(Math.max.apply(null, xs))), ey = Math.min(H, Math.ceil(Math.max.apply(null, ys)));
+        const q = poly.pts, cx = q.reduce((a, b) => a + b.x / q.length, 0), cy = q.reduce((a, b) => a + b.y / q.length, 0);
         const dx = cx - snap.hit.x, dy = cy - snap.hit.y, dist = Math.hypot(dx, dy), out = Math.min(1, dist / (Math.hypot(W, H) * 0.9));
-        const rot = (r() * 2 - 1) * S.rotDeg, drop = (S.dropMinH + r() * (S.dropMaxH - S.dropMinH)) * H, delay = S.fallStartMs + pc.poly.ring * S.ringStaggerMs + r() * S.jitterMs;
+        const rot = (r() * 2 - 1) * S.rotDeg, drop = (S.dropMinH + r() * (S.dropMaxH - S.dropMinH)) * H, delay = S.fallStartMs + poly.ring * S.ringStaggerMs + r() * S.jitterMs;
         const px = (dist ? dx / dist * S.pushPx : 0) * k, py = (dist ? dy / dist * S.pushPx : 0) * k;
-        A(pc.node, [
-          { translate: '0px 0px', rotate: '0deg', scale: '1', opacity: 1 },
-          { translate: px + 'px ' + py + 'px', rotate: '0deg', scale: '1', opacity: 1, offset: S.pushUntil },
-          { translate: (dx * 0.25 * out) + 'px ' + drop + 'px', rotate: rot + 'deg', scale: String(S.scaleEnd), opacity: 0 }
-        ], { duration: S.fallMs, delay: delay, easing: S.fallEase }, 'shard-fall');
+        return { poly: poly, bx: bx, by: by, w: Math.max(1, ex - bx), h: Math.max(1, ey - by), dx: dx, out: out, rot: rot, drop: drop, delay: delay, px: px, py: py };
       });
+      mine.specs = specs; mine.next = 0; mine.svg = svg; mine.t0 = performance.now(); mine.place = place; mine.A = A;
+      mine.pieceEnd = specs.reduce((m, sp) => Math.max(m, sp.delay + S.fallMs), 0);
     }
-    const end = anims.reduce((m, a) => Math.max(m, a.effect.getComputedTiming().endTime), 0);
+    const end = Math.max(anims.reduce((m, a) => Math.max(m, a.effect.getComputedTiming().endTime), 0), mine.pieceEnd || 0);
     mine.end = end;
     mine.timer = setTimeout(() => { if (shat === mine) cancelShatter(); }, end + 40);
-    return end;
+    if (mine.onEnd) mine.onEnd(end);
+    if (mine.specs) pieceStep(mine);
+  }
+  /* 碎片分批建：每幀 buildChunk 片（第一幀只有容器、整格副本、裂痕，已經蓋住真正的預兆格）。
+   * 碎片疊在整格副本上、內容相同，240ms 前看不出差別；晚建的碎片動畫用 currentTime 補回已經過的時間，所以和一次建完的時間軸一致。
+   * 超過 buildFlushMs 還沒建完（裝置太慢）就一次建完，避免整格副本在 fallStartMs 消失後出現空洞。 */
+  function pieceStep(mine) {
+    mine.raf = requestAnimationFrame(() => {
+      mine.raf = 0;
+      if (shat !== mine || !mine.fx) return;
+      const S = C.shatter, el = performance.now() - mine.t0, specs = mine.specs, fx = mine.fx;
+      const to = el >= S.buildFlushMs ? specs.length : Math.min(specs.length, mine.next + S.buildChunk);
+      for (; mine.next < to; mine.next++) {
+        const sp = specs[mine.next], q = sp.poly.pts;
+        const sh = document.createElement('div');
+        sh.className = 'gf-piece';
+        sh.style.cssText = 'left:' + sp.bx + 'px;top:' + sp.by + 'px;width:' + sp.w + 'px;height:' + sp.h + 'px;clip-path:polygon(' +
+          q.map(c => (c.x - sp.bx).toFixed(1) + 'px ' + (c.y - sp.by).toFixed(1) + 'px').join(',') + ')';   // 完全落在格子外的碎片也留著（看不見，但數量 = 射線 × 圈數），給它 1px 大小
+        fx.insertBefore(sh, mine.svg);   // 在裂痕 svg 底下
+        mine.place(sh, -sp.bx, -sp.by);
+        const a = mine.A(sh, [
+          { translate: '0px 0px', rotate: '0deg', scale: '1', opacity: 1 },
+          { translate: sp.px + 'px ' + sp.py + 'px', rotate: '0deg', scale: '1', opacity: 1, offset: S.pushUntil },
+          { translate: (sp.dx * 0.25 * sp.out) + 'px ' + sp.drop + 'px', rotate: sp.rot + 'deg', scale: String(S.scaleEnd), opacity: 0 }
+        ], { duration: S.fallMs, delay: sp.delay, easing: S.fallEase }, 'shard-fall');
+        if (a) { try { a.currentTime = el; } catch (_) { /* ignore */ } }
+      }
+      if (mine.next < specs.length) pieceStep(mine);
+    });
   }
   // 測試面板：預兆格不會真的變狀態，所以暫時讓真正的預兆格顯示 BREAK，動畫結束後還原；期間遊戲呼叫 updateUI 就以遊戲為準
   let previewRestore = null;
@@ -6858,12 +6900,16 @@ function freeBuffChips(chips) {
     const saved = { cls: box.className, lab: lab.textContent, val: val.textContent };
     box.classList.add('broken'); lab.textContent = 'BOSS STUNNED'; val.textContent = 'BREAK';
     previewRestore = saved;
-    const end = shatterFx(snap);
-    setTimeout(() => {
+    // 碎片延後一幀才建，結束時間要等建好才知道；先用保底計時器還原，建好後改成 end + 150
+    let restoreTimer = 0;
+    const restore = () => {
       if (previewRestore !== saved) return;
       previewRestore = null;
       box.className = saved.cls; lab.textContent = saved.lab; val.textContent = saved.val;
-    }, end + 150);
+    };
+    restoreTimer = setTimeout(restore, 3000);
+    shatterFx(snap, end => { clearTimeout(restoreTimer); restoreTimer = setTimeout(restore, end + 150); });
+    kickShatter();
   }
   // tier: small | mid | big。big = 擊破或勝利（orbs：這一擊變成 .lost 的寶珠）
   function enemyHitFx(tier, text, orbs, victory) {
@@ -7267,6 +7313,7 @@ function freeBuffChips(chips) {
     const ret = orig.apply(this, arguments);
     safe(() => { if (pre) onUpdated(pre); });
     safe(() => { renderedHand = g.hand.slice(); scheduleJob(); });
+    safe(kickShatter);   // scheduleJob 之後才排：確保 MutationObserver 的微任務已排入，碎片 rAF 會落在 runJob 之後
     return ret;
   });
 
