@@ -6392,10 +6392,19 @@ function freeBuffChips(chips) {
   const FEEL_CONFIG = {
     mobileScale: 1.6,
     shake: true,                 // false：關掉所有畫面／立繪震動（閃白、飄字仍在）
-    // J. 音效接口：只留接口，不建立任何 Audio 物件。要接音效就聽 window 的 'gamefeel' 事件，或用 GameFeel.getLog()。
+    // J. 音效：現在只接了 break（擊破，BREAK.mp3）；其他事件保持空字串＝不播。files 的值可以是字串或網址陣列（第一個載入失敗就改用下一個，之後都用能用的那個）。
+    //   在小遊戲 iframe 裡直接用 Audio（不經過 RPGBridge，不會打斷戰鬥音樂）；跟著小遊戲的靜音鈕（全域 isLocalMuted 為真就不播）；
+    //   回饋層初始化時就替有網址的事件建立 Audio 預載（不播放）。減少動態不影響音效。也可以另外聽 window 的 'gamefeel' 事件，或用 GameFeel.getLog()。
     sound: {
-      enabled: false,
-      files: { press: '', cardPlay: '', draw: '', deny: '', enemyHit: '', break: '', playerHit: '', guard: '', heal: '', turnEnemy: '', turnPlayer: '', victory: '' }
+      enabled: true,
+      volume: 0.8,
+      files: {
+        press: '', cardPlay: '', draw: '', deny: '', enemyHit: '', playerHit: '', guard: '', heal: '', turnEnemy: '', turnPlayer: '', victory: '',
+        break: [
+          'https://cdn.jsdelivr.net/gh/asal0120/st-rpg-chain@main/audio/BREAK.mp3',
+          'https://raw.githubusercontent.com/asal0120/st-rpg-chain/refs/heads/main/audio/BREAK.mp3'
+        ]
+      }
     },
     // B. 出牌：手牌分身飛向出牌紀錄
     cardPlay: { flyExtraDelayMs: 70, flyMs: 220, flyEasing: 'cubic-bezier(.2,.8,.2,1)', tiltDeg: 7, landFrom: 1.25, landMs: 160, landEasing: BACK },
@@ -6487,10 +6496,54 @@ function freeBuffChips(chips) {
 
   /* J. 事件紀錄與接口 */
   const log = [];
+  // 音效：每個事件名稱一個 Audio（初始化時預載建立、重複使用）。任何失敗（自動播放限制、網路錯誤）都吞掉，不產生 pageerror 或未處理的 rejection
+  const sounds = {};
+  function soundList(name) {
+    const f = C.sound && C.sound.files ? C.sound.files[name] : '';
+    return (Array.isArray(f) ? f : [f]).filter(u => typeof u === 'string' && u);
+  }
+  function soundPlay(st) {
+    try {
+      st.pending = true;
+      try { st.el.currentTime = 0; } catch (_) { /* 還沒載入時不能設定也沒關係 */ }
+      const p = st.el.play();
+      if (p && typeof p.catch === 'function') p.catch(() => { /* 自動播放限制、網路失敗：忽略 */ });
+    } catch (e) { warn(e); }
+  }
+  // 取得（必要時建立）某個事件的 Audio；沒有設網址、enabled 為假、沒有 Audio 時回傳 null。只建立與預載，不播放
+  function ensureSound(name) {
+    const cfg = C.sound;
+    if (!cfg || !cfg.enabled || typeof Audio !== 'function') return null;
+    const list = soundList(name);
+    if (!list.length) return null;
+    let st = sounds[name];
+    if (!st) {
+      st = sounds[name] = { el: new Audio(), i: 0, pending: false };
+      st.el.preload = 'auto';
+      st.el.addEventListener('playing', () => { st.pending = false; });
+      st.el.addEventListener('error', () => {   // 這個網址載入失敗：換下一個，之後都用它；這次的播放要求還在等的話就用新網址重播
+        if (st.i >= list.length - 1) { st.pending = false; return; }
+        st.i++;
+        st.el.src = list[st.i];
+        try { st.el.load(); } catch (_) { /* ignore */ }
+        if (st.pending) soundPlay(st);
+      });
+      st.el.src = list[0];
+    }
+    return st;
+  }
+  function playSound(name) {
+    if (typeof isLocalMuted !== 'undefined' && isLocalMuted) return;   // 小遊戲的靜音鈕（全域 let，不是 window 屬性）
+    const st = ensureSound(name);
+    if (!st) return;
+    st.el.volume = Math.min(1, Math.max(0, Number(C.sound.volume) || 0));
+    soundPlay(st);
+  }
   function emit(name, detail) {
     const entry = Object.assign({ name: name, t: Math.round(performance.now()) }, detail || {});
     log.push(entry);
     if (log.length > 500) log.shift();
+    safe(() => playSound(name));
     try { window.dispatchEvent(new CustomEvent('gamefeel', { detail: entry })); } catch (e) { warn(e); }
     return entry;
   }
@@ -7283,7 +7336,7 @@ function freeBuffChips(chips) {
   watchOverlay();
   root.style.setProperty('--gf-k', String(K()));
 
-  // J. 按壓事件（只記錄，不播音效）
+  // J. 按壓事件（只記錄；press 沒有設音效檔）
   const PRESS_SEL = '.card:not(.disabled), .skill-btn:not([disabled]), .btn-full, .cp-btn, .d-btn, .btn-ready, .btn-start, .sel-card';
   document.addEventListener('pointerdown', e => {
     const t = e.target && e.target.closest && e.target.closest(PRESS_SEL);
@@ -7342,7 +7395,210 @@ function freeBuffChips(chips) {
     return safe(() => { const r = fn(); return r === undefined ? true : r; }, false);
   }
 
+  // 音效預載：初始化時就替有網址的事件建立 Audio（preload = 'auto'），第一次擊破才不會等檔案；預載不播放，靜音時也不播
+  safe(() => Object.keys(C.sound.files).forEach(ensureSound));
+
   window.GameFeel = { config: FEEL_CONFIG, preview: preview, emit: emit, getLog: () => log.slice(), previews: Object.keys(PREVIEWS), stats: stats, version: '1' };
+})();
+</script>
+<script id="boss-diff">
+/* 敵人最後一階段的立繪差分（imgDiff）：進入最後一個階段（最後一條血）時，#boss-img 換成該角色的 imgDiff，
+ * 並有「預先載入」與「淡入淡出」過渡。這個檔是唯一的來源；用 tools/patches/mini_boss_diff_20261111.py 放進小遊戲檔。
+ *
+ * 載入位置：小遊戲檔 body 結尾之前、回饋層（id 為 gf-layer 的 script 區塊）之後，自成一個 id 為 boss-diff 的 script 區塊。
+ *   劇情檔（miniMVU2.html、mini261014.html）與自由戰鬥檔（Preview/free-battle/*_free.html）都一樣。
+ *   遊戲主 <script> 一個字都不改；也不碰 ENEMIES_DB、FEEL_CONFIG、回饋層、rules-core.js、free-mode.js。
+ *
+ * 讀取的全域（classic script 之間共用全域詞法環境，所以直接用名字讀；這個 IIFE 裡不可宣告同名的區域變數）：
+ *   img(…)                      遊戲的圖片網址函式；用 img("", "", "party/<id>/imgDiff.webp") 產生差分網址（第一次用到才呼叫，並登記備援網址）
+ *   currentEnemyData            目前敵人資料（.img 原圖、.phases）；新戰鬥會換成新物件
+ *   enemy／S.enemy              目前階段狀態（.phaseIndex）；自由戰鬥檔用 S.enemy，劇情檔用全域 enemy（與回饋層 g 的寫法相同）
+ *   document.documentElement.dataset.rfEnemy   目前敵人代號（enemy_1…enemy_9；奈芙蒂借用對手時仍是 enemy_8）；不在對照表（例如訓練木樁）就什麼都不做
+ *   updateUI                    被包一層：先呼叫原本的，再執行這裡的邏輯（例外一律吞掉並 console.warn，不會弄壞遊戲）
+ *
+ * 行為：
+ *   - 新戰鬥（currentEnemyData 換了）：取消進行中的過渡，預先載入差分（new Image）。
+ *   - 最後一個階段且還沒顯示差分：等「觸發後至少 380ms」（讓回饋層在舊圖上的擊破震動 320ms 先播完）且預載完成（最多等 1200ms，逾時照樣繼續），
+ *     做舊圖分身（.bd-ghost，插在 #boss-img 後面、同一個容器），換 src，再用 Web Animations 做 700ms 的 opacity 交叉淡化
+ *     （#boss-img 的 bd-in 0→1、分身的 bd-out 1→0）；只動 opacity，不動 transform／translate／scale／filter。
+ *   - 不是最後階段（重新挑戰）卻還顯示差分：取消過渡，直接設回 currentEnemyData.img。
+ *   - 新戰鬥的第一次（例如只有一個階段的對手）直接換圖，不過渡；prefers-reduced-motion: reduce 時也直接換。
+ *   - 差分圖全部載入失敗（遊戲的 error 備援都用完、src 仍是失敗的那個網址）：改回 currentEnemyData.img，這場不再換差分。
+ * 對外：window.BossDiff = { diffUrl(key), state() }（測試用；state 回傳 { key, wantDiff, shownDiff, transitioning }）。
+ * 不呼叫 Math.random（遊戲用固定種子重播）。 */
+(function () {
+  'use strict';
+  if (window.BossDiff) return;
+
+  const DIFF_ID = {
+    enemy_1: 'aina', enemy_2: 'daphne', enemy_3: 'sui', enemy_4: 'lin', enemy_5: 'freya',
+    enemy_6: 'miralune', enemy_7: 'lydia', enemy_8: 'nefti', enemy_9: 'lufa'
+  };
+  const DIFF_RE = /\/imgDiff\.webp(\?|$)/;
+  const MIN_WAIT_MS = 380;    // 回饋層擊破時在舊圖上震動 320ms，留點餘裕
+  const MAX_WAIT_MS = 1200;   // 預載最多等這麼久，逾時照樣繼續
+  const FADE_MS = 700;
+
+  const warn = e => { try { console.warn('[BossDiff]', e && e.stack || e); } catch (_) { /* 沒有 console 也不影響 */ } };
+  const bossEl = () => document.getElementById('boss-img');
+  const rootKey = () => document.documentElement.dataset.rfEnemy || '';
+  const reduced = () => { try { return !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches); } catch (_) { return false; } };
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+  // 遊戲的全域 let（不是 window 屬性）：每次都重新讀。注意：不可宣告名為 enemy、S、img、currentEnemyData 的區域變數
+  function curData() { return typeof currentEnemyData !== 'undefined' ? currentEnemyData : null; }
+  function curEnemy() {
+    if (typeof S !== 'undefined' && S && S.hand) return S.enemy;
+    return typeof enemy !== 'undefined' ? enemy : null;
+  }
+
+  const urlCache = {};
+  function diffUrl(key) {
+    const id = DIFF_ID[key];
+    if (!id) return '';
+    if (!urlCache[key]) {
+      try { urlCache[key] = img('', '', 'party/' + id + '/imgDiff.webp') || ''; } catch (e) { warn(e); urlCache[key] = ''; }
+    }
+    return urlCache[key];
+  }
+
+  let lastData = null;      // 上一次記錄的 currentEnemyData
+  let pre = null;           // 預載的 Image（保留參考，避免被回收）
+  let seenNormal = false;   // 這場戰鬥是否已看過「不需要差分」的畫面（有就代表不是新戰鬥的第一次，之後要差分才走過渡）
+  let noDiff = false;       // 這場差分載入失敗，不再換
+  let trans = null;         // 進行中的過渡 { ghost, anims }
+  let failedSrc = '';       // 最近一次 #boss-img 載入失敗的 src（window 捕獲階段記錄，早於遊戲的處理）
+
+  const isDiffSrc = el => !!el && DIFF_RE.test(el.getAttribute('src') || '');
+
+  function wantNow(data) {
+    const e = curEnemy();
+    return !!(data && e && Array.isArray(data.phases) && e.phaseIndex === data.phases.length - 1 && diffUrl(rootKey()) && !noDiff);
+  }
+
+  function cancel() {
+    const t = trans;
+    trans = null;
+    if (!t) return;
+    t.anims.forEach(a => { try { a.cancel(); } catch (_) { /* 已結束 */ } });
+    if (t.ghost && t.ghost.parentNode) t.ghost.parentNode.removeChild(t.ghost);
+  }
+
+  function setPlain(boss, data) {
+    if (data && data.img && boss.getAttribute('src') !== data.img) boss.src = data.img;
+  }
+
+  function begin(boss, url) {
+    if (trans) return;
+    const t = { ghost: null, anims: [] };
+    trans = t;
+    const p = pre;
+    const loaded = p && typeof p.decode === 'function' ? p.decode().catch(() => {}) : Promise.resolve();
+    Promise.all([sleep(MIN_WAIT_MS), Promise.race([loaded, sleep(MAX_WAIT_MS)])]).then(() => {
+      if (trans !== t) return;   // 已被取消
+      run(t, boss, url);
+    }).catch(e => { warn(e); if (trans === t) { cancel(); boss.src = url; } });
+  }
+
+  function run(t, boss, url) {
+    const box = boss.parentNode;
+    if (!boss.animate || !box || !boss.offsetWidth || !boss.offsetHeight) {   // 沒有版面（圖沒載入或隱藏）：直接換
+      trans = null;
+      boss.src = url;
+      return;
+    }
+    const ghost = boss.cloneNode(false);
+    ghost.removeAttribute('id');
+    ghost.className = 'boss-img bd-ghost';
+    ghost.style.cssText = 'display:block;position:absolute;left:' + boss.offsetLeft + 'px;top:' + boss.offsetTop + 'px;width:' + boss.offsetWidth +
+      'px;height:' + boss.offsetHeight + 'px;margin:0;max-width:none;max-height:none;pointer-events:none';
+    box.insertBefore(ghost, boss.nextSibling);
+    t.ghost = ghost;
+    // 上下浮動（CSS float 動畫）與 #boss-img 同步
+    try {
+      const find = el => el.getAnimations().find(a => a.animationName === 'float');
+      const bf = find(boss), gf = find(ghost);
+      if (bf && gf && bf.currentTime != null) gf.currentTime = bf.currentTime;
+    } catch (e) { warn(e); }
+    boss.src = url;
+    const opt = { duration: FADE_MS, easing: 'ease-in-out', fill: 'none' };
+    const a1 = boss.animate([{ opacity: 0 }, { opacity: 1 }], Object.assign({ id: 'bd-in' }, opt));
+    const a2 = ghost.animate([{ opacity: 1 }, { opacity: 0 }], Object.assign({ id: 'bd-out' }, opt));
+    t.anims.push(a1, a2);
+    const done = () => { if (trans === t) cancel(); };   // 結束：移除分身
+    Promise.all([a1.finished, a2.finished]).then(done, done);
+  }
+
+  function onUpdated() {
+    const boss = bossEl();
+    const data = curData();
+    if (!boss || !data) return;
+    if (data !== lastData) {   // 新戰鬥
+      lastData = data;
+      cancel();
+      noDiff = false;
+      seenNormal = false;
+      pre = null;
+      const u = diffUrl(rootKey());
+      if (u) { pre = new Image(); pre.src = u; }
+    }
+    const url = diffUrl(rootKey());
+    if (!url) return;   // 代號不在表裡（例如訓練木樁）：什麼都不做
+    const want = wantNow(data);
+    const shown = isDiffSrc(boss);
+    if (want && !shown) {
+      if (trans) return;
+      if (!seenNormal) {   // 新戰鬥的第一次（例如只有一個階段的對手）：遊戲設好原圖後直接換圖，不過渡；還沒設好（src 不是原圖）就等下一次
+        if (boss.getAttribute('src') === data.img) boss.src = url;
+        return;
+      }
+      if (reduced()) { cancel(); boss.src = url; return; }   // 減少動態效果：直接換圖
+      begin(boss, url);
+    } else if (!want && shown) {
+      cancel();
+      setPlain(boss, data);
+    }
+    if (!want) seenNormal = true;
+  }
+
+  const origUpdateUI = window.updateUI;
+  if (typeof origUpdateUI === 'function' && !origUpdateUI.__bd) {
+    const wrapped = function bdUpdateUI() {
+      const ret = origUpdateUI.apply(this, arguments);
+      try { onUpdated(); } catch (e) { warn(e); }
+      return ret;
+    };
+    wrapped.__bd = true;
+    window.updateUI = wrapped;
+  }
+
+  // 差分載入失敗：遊戲的 error 備援在 document 捕獲階段（先登記先執行）。window 捕獲階段比 document 早，用來記下失敗的網址；
+  // document 捕獲階段（登記在遊戲之後，所以晚於遊戲的處理）檢查：遊戲處理後 src 仍是失敗的差分網址（沒有下一個備援）→ 改回原圖
+  window.addEventListener('error', ev => {
+    const t = ev.target;
+    if (t && t.id === 'boss-img') failedSrc = t.getAttribute('src') || '';
+  }, true);
+  document.addEventListener('error', ev => {
+    try {
+      const t = ev.target;
+      if (!t || t.id !== 'boss-img') return;
+      const src = t.getAttribute('src') || '';
+      if (src && src === failedSrc && DIFF_RE.test(src)) {
+        noDiff = true;
+        cancel();
+        setPlain(t, curData());
+      }
+    } catch (e) { warn(e); }
+  }, true);
+
+  window.BossDiff = {
+    diffUrl: diffUrl,
+    state: function () {
+      const boss = bossEl();
+      const data = curData();
+      return { key: rootKey(), wantDiff: wantNow(data), shownDiff: isDiffSrc(boss), transitioning: !!trans };
+    }
+  };
 })();
 </script>
 </body>
