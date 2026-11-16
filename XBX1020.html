@@ -6597,9 +6597,12 @@ function _measureTrueHeight() {
         const tall = String(textArea.offsetHeight > 900);
         if (paperStack.dataset.paperTall !== tall) paperStack.dataset.paperTall = tall;
     }
+    // [修復 2026-11-17] offsetHeight／scrollHeight 會四捨五入；卡片高度是小數時（例 1177.34）回報 1177，iframe 會矮不到 1px。
+    // 加上無條件進位的實際高度，回報值不會小於卡片。
     const height = Math.max(
         root.scrollHeight || 0,
         root.offsetHeight || 0,
+        Math.ceil(root.getBoundingClientRect().height),
         720
     );
     root.style.overflow = prevOverflow;
@@ -6615,7 +6618,8 @@ let _lastReportedHeight = 0;
 function _doResizeReport() {
     try {
         const height = _measureTrueHeight();
-        if (Math.abs(height - _lastReportedHeight) <= 4) return; // 高度未變，跳過回報
+        // [修復 2026-11-17] 變高一律回報（原本相差 4px 內不回報，iframe 會切到卡片底部）；只有變矮 4px 以內才跳過
+        if (height <= _lastReportedHeight && _lastReportedHeight - height <= 4) return;
         _lastReportedHeight = height;
         window.parent?.postMessage({
             type: 'RPG_MVU_RESIZE',
@@ -9875,12 +9879,19 @@ if (typeof window.setLayout === 'function') {
     };
 
     // === [最終修正版] 文本格式化函數 (含圖片標記攔截) ===
+    // [修復 2026-11-17] 正文裡原有的 HTML 標籤（含屬性）與註解：上色前換成佔位，上色後換回。
+    // 上色的正則分不出對白引號與屬性引號，<div class="x"> 會被改成 <div class=<span …>"x"</span>>。
+    // 佔位不含引號與星號，所以跨標籤的對白（"<b>重要</b>的事"）仍照常上色。
+    const _TAG_SENTINEL = '__RPGTAG_';
+    const _HTML_TAG_RE = /<!--[\s\S]*?-->|<\/?[A-Za-z][\w:-]*(?:\s+[^\s"'<>\/=]+(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s"'<>`=]+))?)*\s*\/?>/g;
     const formatText = (text) => {
         if (!text) return "";
 
         // Step 0: 圖片標記攔截 — 用 sentinel 替換，保護後續 regex 不破壞 HTML 屬性
         const { text: _processed, slots: _imgSlots } = processImageMarkers(text);
         let res = _processed;
+        const _tags = [];
+        res = res.replace(_HTML_TAG_RE, (tag) => _TAG_SENTINEL + (_tags.push(tag) - 1) + '__');
 
         // =========================================================
         // 順序非常重要！請勿隨意更動（以下為原有邏輯，維持不變）
@@ -9897,6 +9908,9 @@ if (typeof window.setLayout === 'function') {
 
         // 3. 最後處理【中文引號】
         res = res.replace(/([\u300c\u201c])([\s\S]*?)([\u300d\u201d])/g, '<span class="highlight-dialogue">$1$2$3</span>');
+
+        // 還原原有的 HTML 標籤（見 _HTML_TAG_RE）
+        if (_tags.length) res = res.replace(/__RPGTAG_(\d+)__/g, (m, i) => _tags[+i]);
 
         // Step final: 還原圖片標記 sentinel → 實際 HTML
         if (_imgSlots) {

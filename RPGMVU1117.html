@@ -5967,14 +5967,15 @@ html:not(.rpg-classic) .rpg-v7-root :is(.bag-scaler, .quest-scaler) .cat-btn {
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
-  padding-block: 48px;
+  padding-block: 34px 48px;   /* 上緣 14px 移到 .text-display，給下沉首字 */
 }
 .rpg-v7-root.pg-fixed .text-display {
   flex: 1 1 auto;
   min-height: 0;
   overflow-x: hidden;
   overflow-y: auto;
-  padding-block: 0 !important;
+  /* 上緣留 14px：首字下沉（line-height .8）的字形會凸出第一行上方，正文框會捲動（overflow），沒有上邊距會被切掉。 */
+  padding-block: 14px 0 !important;
   scrollbar-gutter: stable;
   scrollbar-width: thin;
   scrollbar-color: rgba(174, 148, 98, .55) transparent;
@@ -5982,7 +5983,7 @@ html:not(.rpg-classic) .rpg-v7-root :is(.bag-scaler, .quest-scaler) .cat-btn {
 .rpg-v7-root.pg-fixed .text-display::-webkit-scrollbar { width: 6px; }
 .rpg-v7-root.pg-fixed .text-display::-webkit-scrollbar-thumb { background: rgba(174, 148, 98, .55); border-radius: 3px; }
 @container paper-area (max-width: 520px) {
-  .rpg-v7-root.pg-fixed .text-area { padding-block: 38px; }
+  .rpg-v7-root.pg-fixed .text-area { padding-block: 24px 38px; }
 }
 
 /* ── 段落跨頁 ── 一頁的最後一段不留下邊距；接到下一頁的後半段不縮排；留在前一頁的最後一行左右撐滿。 */
@@ -5999,19 +6000,50 @@ html:not(.rpg-classic) .rpg-v7-root :is(.bag-scaler, .quest-scaler) .cat-btn {
    切換鈕用原版的「切换全文模式」按鈕，文字縮成四字，寬 136×44（原版手機的大小，比寬版的 156 稍窄）。 */
 .rpg-v7-root.pg-trial .control-panel { display: none !important; }
 .rpg-v7-root.pg-fixed .mvu-paper-space { padding-bottom: 6px !important; }
+/* 固定一列、不換行（換行會增高）。放不下時只縮切換鈕（最少用）；上页／下页不縮。 */
 .rpg-v7-root.pg-trial .pg-foot {
-  display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px;
+  display: flex; flex-wrap: nowrap; align-items: center; gap: 8px;
   height: 44px; margin-top: 6px;
+  container: pg-foot / inline-size;
 }
-.rpg-v7-root.mvu-paper.stock-study.pg-trial .pg-foot .mode-switch { justify-self: start; width: 136px; padding: 9px 16px; touch-action: manipulation; }
+.rpg-v7-root.pg-trial .pg-foot > * { flex: none; }
+.rpg-v7-root.mvu-paper.stock-study.pg-trial .pg-foot .mode-switch {
+  flex: 0 1 136px; width: auto; min-width: 64px; padding: 9px 4px; touch-action: manipulation;
+}
 .rpg-v7-root.mvu-paper.stock-study.pg-trial .pg-foot .mode-switch::before { -webkit-mask-size: 136px 34.83px; mask-size: 136px 34.83px; }
 .rpg-v7-root.mvu-paper.stock-study.pg-trial .pg-foot .mode-switch::after { inset: 10px 11px; }
-.rpg-v7-root.pg-trial .pg-foot .nav-group { justify-self: end; margin-left: 0; }
+.rpg-v7-root.pg-trial .pg-foot .nav-group { margin-left: auto; }
+/* 頁碼固定最小寬度：位數變了，上页的位置不跟著變。 */
+.rpg-v7-root.pg-trial .pg-foot .page-num { min-width: 52px; text-align: center; white-space: nowrap; }
+/* 1：上页／下页的花框由左右端與中段三片圖拼成，端片寬 30.735px（小數）；按鈕落在小數像素時接縫會露出裂縫。中段兩邊各多蓋 1px。 */
+.rpg-v7-root.mvu-paper.stock-study.pg-trial .pg-foot .nav-btn::before {
+  -webkit-mask-size: 30.735294px 38px, 30.735294px 38px, calc(100% - 59.470588px) 8.941176px, calc(100% - 59.470588px) 8.941176px;
+  mask-size: 30.735294px 38px, 30.735294px 38px, calc(100% - 59.470588px) 8.941176px, calc(100% - 59.470588px) 8.941176px;
+}
 .rpg-v7-root.pg-trial .pg-foot .nav-btn { touch-action: manipulation; }
 @container paper-area (max-width: 520px) {
-  .rpg-v7-root.pg-trial .pg-foot { gap: 6px; }
+  .rpg-v7-root.pg-trial .pg-foot { gap: 4px; }
   .rpg-v7-root.pg-trial .pg-foot .nav-btn { width: 64px !important; padding: 9px 10px !important; }
-  .rpg-v7-root.pg-trial .pg-foot .nav-group { gap: 4px; }
+  .rpg-v7-root.pg-trial .pg-foot .nav-group { gap: 4px !important; }   /* 原版手機（.mobile-layout）設 8px，優先權較高 */
+  .rpg-v7-root.pg-trial .pg-foot .page-num { min-width: 40px; }
+}
+/* 切換鈕縮小時（窄版需要 136＋4＋箭頭 32＋4＋上页 64＋4＋頁碼 40＋4＋下页 64 = 352）：
+   原本的花框是固定 136px 寬的一張圖，縮小會被切掉，改用上页／下页那套可伸縮的三片花框。 */
+@container pg-foot (max-width: 351.98px) {
+  .rpg-v7-root.mvu-paper.stock-study.pg-trial .pg-foot .mode-switch::before {
+    inset: auto 0; top: 50%; height: 38px; transform: translateY(-50%);
+    -webkit-mask: none; mask: none;
+    -webkit-mask-image: var(--stock-page-left), var(--stock-page-right), var(--stock-page-top), var(--stock-page-bottom);
+    mask-image: var(--stock-page-left), var(--stock-page-right), var(--stock-page-top), var(--stock-page-bottom);
+    -webkit-mask-position: left top, right top, center top, center bottom;
+    mask-position: left top, right top, center top, center bottom;
+    -webkit-mask-size: 30.735294px 38px, 30.735294px 38px, calc(100% - 59.470588px) 8.941176px, calc(100% - 59.470588px) 8.941176px;
+    mask-size: 30.735294px 38px, 30.735294px 38px, calc(100% - 59.470588px) 8.941176px, calc(100% - 59.470588px) 8.941176px;
+    -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+  }
+  .rpg-v7-root.mvu-paper.stock-study.pg-trial .pg-foot .mode-switch::after {
+    inset: 8px 10px; clip-path: polygon(9% 0, 91% 0, 100% 25%, 100% 75%, 91% 100%, 9% 100%, 0 75%, 0 25%);
+  }
 }
 
 /* ── 這一頁還能往下捲：正文底部淡出＋向下箭頭（按鈕列中央）── */
@@ -6020,13 +6052,17 @@ html:not(.rpg-classic) .rpg-v7-root :is(.bag-scaler, .quest-scaler) .cat-btn {
   mask-image: linear-gradient(to bottom, #000 calc(100% - 56px), rgba(0, 0, 0, .15));
 }
 .rpg-v7-root.pg-trial .pg-more-hint {
-  justify-self: center; visibility: hidden; display: grid; place-items: center;
+  margin-inline: auto; visibility: hidden; display: grid; place-items: center;
   width: 32px; height: 32px; padding: 0; border: 1px solid var(--study-line, rgba(138, 115, 75, .45)); border-radius: 50%;
   background: transparent; color: var(--study-accent, #d4af37); cursor: pointer;
   animation: pgMoreBob 1.8s ease-in-out infinite;
 }
 .rpg-v7-root.pg-trial.paged-mode.pg-more .pg-more-hint { visibility: visible; }
 .rpg-v7-root.pg-trial .pg-more-hint svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+/* 極窄（切換鈕已縮到 64 仍放不下：64＋4＋32＋4＋176 = 280）：不顯示向下箭頭，正文底部的淡出仍表示下面還有。 */
+@container pg-foot (max-width: 279.98px) {
+  .rpg-v7-root.pg-trial .pg-more-hint { display: none; }
+}
 @keyframes pgMoreBob { 50% { transform: translateY(2px); } }
 @media (prefers-reduced-motion: reduce) { .rpg-v7-root.pg-trial .pg-more-hint { animation: none; } }
 </style>
@@ -6789,9 +6825,12 @@ function _measureTrueHeight() {
 
     // 使用 root 自身的尺寸（而非 body/html 的 scrollHeight）
     // 這樣當面板收起時，高度能正確縮小
+    // [修復 2026-11-17] offsetHeight／scrollHeight 會四捨五入；卡片高度是小數時（例 1177.34）回報 1177，iframe 會矮不到 1px。
+    // 加上無條件進位的實際高度，回報值不會小於卡片。
     const height = Math.max(
         root.scrollHeight || 0,
         root.offsetHeight || 0,
+        Math.ceil(root.getBoundingClientRect().height),
         720
     );
 
@@ -6811,7 +6850,8 @@ function _doResizeReport() {
         const root = document.querySelector('.rpg-v7-root');
         if (root && root.offsetHeight === 0) return;
         const height = _measureTrueHeight();
-        if (Math.abs(height - window.innerHeight) <= 4) return; // 和目前的 iframe 高度相同，跳過回報
+        // [修復 2026-11-17] 變高一律回報（原本相差 4px 內不回報，iframe 會切到卡片底部）；只有變矮 4px 以內才跳過
+        if (height <= window.innerHeight && window.innerHeight - height <= 4) return;
         window.parent?.postMessage({
             type: 'RPG_MVU_RESIZE',
             height,
@@ -9830,12 +9870,19 @@ if (typeof window.setLayout === 'function') {
         return { text: result, slots: slots.length > 0 ? slots : null };
     };
     // === [最終修正版] 文本格式化函數 ===
+    // [修復 2026-11-17] 正文裡原有的 HTML 標籤（含屬性）與註解：上色前換成佔位，上色後換回。
+    // 上色的正則分不出對白引號與屬性引號，<div class="x"> 會被改成 <div class=<span …>"x"</span>>。
+    // 佔位不含引號與星號，所以跨標籤的對白（"<b>重要</b>的事"）仍照常上色。
+    const _TAG_SENTINEL = '__RPGTAG_';
+    const _HTML_TAG_RE = /<!--[\s\S]*?-->|<\/?[A-Za-z][\w:-]*(?:\s+[^\s"'<>\/=]+(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s"'<>`=]+))?)*\s*\/?>/g;
     const formatText = (text) => {
         if (!text) return "";
 
         // Step 0: 圖片標記攔截 — 用 sentinel 替換，保護 HTML 不被後續 regex 破壞
         const { text: _processed, slots: _imgSlots } = processImageMarkers(text);
         let res = _processed;
+        const _tags = [];
+        res = res.replace(_HTML_TAG_RE, (tag) => _TAG_SENTINEL + (_tags.push(tag) - 1) + '__');
 
         // =========================================================
         // 順序非常重要！請勿隨意更動
@@ -9863,6 +9910,9 @@ if (typeof window.setLayout === 'function') {
         // 這些符號不會跟 HTML 屬性衝突，放最後很安全
         res = res.replace(/([「“])([\s\S]*?)([」”])/g, '<span class="highlight-dialogue">$1$2$3</span>');
         
+        // 還原原有的 HTML 標籤（見 _HTML_TAG_RE）
+        if (_tags.length) res = res.replace(/__RPGTAG_(\d+)__/g, (m, i) => _tags[+i]);
+
         // Step final: 還原圖片標記 sentinel → 實際 HTML
         if (_imgSlots) {
             for (let i = 0; i < _imgSlots.length; i++) {
