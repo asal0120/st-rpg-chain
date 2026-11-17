@@ -11154,6 +11154,41 @@ if (typeof window.setLayout === 'function') {
         if (!state.isPaged) requestParentResize();
     }
 
+    // ── [圖片插件適配 1117] 閱讀模式：沒有偏好時寬螢幕分頁、窄版全文；玩家切換後存在聊天變數「阅读模式」──
+    const READ_MODE_VAR_KEY = '阅读模式';   // 值：分页／全文；沒有或其他值＝照螢幕寬度決定
+    function pgChatId() {
+        try { return String(topWindow.SillyTavern?.getContext?.()?.getCurrentChatId?.() ?? ''); } catch (e) { return ''; }
+    }
+    function pgSetPaged(paged, rerender) {
+        if (state.isPaged === paged) return;
+        state.isPaged = paged;
+        PG.root.classList.toggle('paged-mode', paged);
+        if (PG.modeBtn) PG.modeBtn.textContent = paged ? '切换全文' : '切换分页';
+        state.currPage = 0;
+        if (rerender) { try { refreshUI(); requestParentResize(); } catch (e) { /* 還沒初始化完：之後的渲染會照 state.isPaged */ } }
+    }
+    function pgReadModeInit() {
+        const chat = pgChatId();
+        let known = null;
+        try { const c = topWindow.__RPG_READ_MODE; if (c && c.chat === chat) known = c.mode; } catch (e) { /* 拿不到宿主 */ }
+        const width = PG.root.clientWidth || document.documentElement.clientWidth || window.innerWidth || 0;
+        pgSetPaged(known === '分页' ? true : known === '全文' ? false : !(width && width < PG.NARROW), false);
+        (async () => {
+            let raw;
+            try { raw = String(await triggerSlash('/getvar key=' + READ_MODE_VAR_KEY) ?? '').trim(); } catch (e) { return; }
+            if (_rpgLifetime.signal.aborted || PG.readModeTouched) return;   // 讀回來之前玩家已經切換：以玩家為準
+            const mode = raw === '分页' || raw === '全文' ? raw : '';
+            try { topWindow.__RPG_READ_MODE = { chat, mode }; } catch (e) { /* 拿不到宿主 */ }
+            if (mode) pgSetPaged(mode === '分页', true);
+        })();
+    }
+    function pgSaveReadMode() {
+        const mode = state.isPaged ? '分页' : '全文';
+        PG.readModeTouched = true;
+        try { topWindow.__RPG_READ_MODE = { chat: pgChatId(), mode }; } catch (e) { /* 拿不到宿主 */ }
+        try { triggerSlash('/setvar key=' + READ_MODE_VAR_KEY + ' ' + mode).catch(() => {}); } catch (e) { /* 酒館 API 不可用：只在這次有效 */ }
+    }
+
     // ── 按鈕列、監聽 ──
     function pgInit() {
         const root = document.querySelector('.rpg-v7-root');
@@ -11162,6 +11197,7 @@ if (typeof window.setLayout === 'function') {
         const paper = root.querySelector('.mvu-paper-space');
         if (!area || !display || !paper) return;
         Object.assign(PG, { root, area, display, paper, map: root.querySelector('.map-area') });
+        pgReadModeInit();   // [圖片插件適配 1117] 寬螢幕分頁、窄版全文；有偏好時照偏好
 
         // 按鈕列在紙張外：紙張下緣與變量列之間（.mvu-paper-space 裡、疊紙裝飾後面，所以全文模式的高度計算自動算進去）。
         // 左：原本的切換鈕（整個搬過來，點擊處理不變，文字縮成四字）；右：原本的上页／頁碼／下页（大小與樣式照原版）。
@@ -11218,7 +11254,8 @@ if (typeof window.setLayout === 'function') {
         window.__PG_TRIAL = {
             info: () => Object.assign({}, PG.info, {
                 areaH: PG.areaH, pages: (state.pages || []).length, page: state.currPage, paged: state.isPaged,
-                mapPeek: PG.MAP_PEEK, imgH: PG.imgH   // [圖片插件適配 1117] 給驗收腳本讀
+                mapPeek: PG.MAP_PEEK, imgH: PG.imgH,   // [圖片插件適配 1117] 給驗收腳本讀
+                readMode: true
             })
         };
     }
@@ -11236,17 +11273,27 @@ if (typeof window.setLayout === 'function') {
     }
 
     // 翻頁後的捲動（scrollToTextArea 一開始呼叫）。回傳 true 表示已處理，不再送 RPG_MVU_SCROLL_TO_TEXT。
-    // 翻到最後一頁（分頁模式、兩頁以上）：捲到地圖區域的中線（中線貼齊聊天區可見範圍的上緣）。
-    // 其他頁照 1020 捲回正文頂端（回傳 false）。拿不到宿主（不同來源）時也回傳 false，照原本的做法。
+    // 翻到最後一頁（分頁模式、兩頁以上）：捲到地圖下方 MAP_PEEK（1/3）的對齊線（貼齊聊天區可見範圍的上緣）。
+    // 其他頁捲回正文頂端。[圖片插件適配 1117] 只往上捲：翻頁前畫面已經比目標高就不動；一般頁也由主檔自己捲。
+    // 拿不到宿主的聊天區（不同來源）時回傳 false，照原本的做法送 RPG_MVU_SCROLL_TO_TEXT 給宿主。
     function pgPageTurnScroll() {
         pgSyncFrameHeight();
-        if (!state.isPaged || !state.pages || state.pages.length < 2 || state.currPage !== state.pages.length - 1) return false;
         const frame = pgFrame(), sc = pgScroller();
-        if (!frame || !sc || !PG.map || PG.map.offsetParent === null || !PG.map.offsetHeight) return false;
-        const mapBox = PG.map.getBoundingClientRect();
-        // [圖片插件適配 1117] 對齊線：地圖下方 MAP_PEEK（1/3）留在畫面上（原本是中線）
-        const middle = frame.getBoundingClientRect().top + mapBox.top + mapBox.height * (1 - PG.MAP_PEEK);   // 宿主座標
-        sc.scrollTop += middle - sc.getBoundingClientRect().top;
+        if (!frame || !sc) return false;
+        const lastPage = state.isPaged && state.pages && state.pages.length >= 2 && state.currPage === state.pages.length - 1;
+        let line;   // 要對齊聊天區上緣的位置（宿主座標）
+        if (lastPage && PG.map && PG.map.offsetParent !== null && PG.map.offsetHeight) {
+            // [圖片插件適配 1117] 對齊線：地圖下方 MAP_PEEK（1/3）留在畫面上（原本是中線）
+            const mapBox = PG.map.getBoundingClientRect();
+            line = frame.getBoundingClientRect().top + mapBox.top + mapBox.height * (1 - PG.MAP_PEEK);
+        } else {
+            const textArea = document.querySelector('.text-area');
+            if (!textArea) return false;
+            line = frame.getBoundingClientRect().top + textArea.getBoundingClientRect().top;
+        }
+        // [圖片插件適配 1117] 只往上捲：畫面已經比目標高（對齊線在聊天區上緣之下）就不動
+        const delta = line - sc.getBoundingClientRect().top;
+        if (delta < 0) sc.scrollTop += delta;
         return true;
     }
 
@@ -15529,6 +15576,7 @@ await syncGameState();
     e.preventDefault();
 
     state.isPaged = !state.isPaged;
+    if (typeof pgSaveReadMode === 'function') pgSaveReadMode();   // [圖片插件適配 1117] 記住玩家的選擇（聊天變數「阅读模式」）
     root.classList.toggle('paged-mode', state.isPaged);
     els.modeBtn.innerText = state.isPaged ? '切换全文' : '切换分页';   // [分頁改版 1117] 按鈕縮成四字
     state.currPage = 0;
