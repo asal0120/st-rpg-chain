@@ -5902,7 +5902,134 @@ html:not(.rpg-classic) .rpg-v7-root :is(.bag-scaler, .quest-scaler) .cat-btn {
 }
 </style>
 
-<div class="rpg-v7-root paged-mode mvu-paper interface-harmony-study stock-study" data-paper-width="fluid" data-ui-release="2026-09-16-stock-bbi-v2" data-stock-button="on" data-stock-panel="on" data-stock-divider="on" data-stock-paging="on" data-stock-menu-trigger="on" data-stock-menu-list="on" data-stock-hud-arrow="4" data-stock-topbar-arrow="4">
+<style id="pg-trial-css">
+/* ==== [分頁改版 1117] 分頁／全文改版（Preview/paging，2026-11-17 第二版）====
+   由 build.py 插在根節點前面。只作用在 .pg-trial / .pg-fixed（分頁改版的根節點才有）。
+   分頁模式的正文照 1020；只有全文模式（:not(.paged-mode)）固定高度、在正文框內捲動。按鈕列兩種模式都用。 */
+
+/* ── 全文模式：正文框固定高度（--pg-area-h 由 pgApplyArea 算出），在 .text-display 內捲動 ──
+   上下留白移到外框：捲動時文字停在紙框與角飾裡面，不會蓋過去。左右留白仍在 .text-display。 */
+.rpg-v7-root.pg-fixed:not(.paged-mode) .text-area {
+  height: var(--pg-area-h, 480px) !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  overflow: hidden !important;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  padding-block: 34px 48px;   /* 上緣 14px 移到 .text-display，給下沉首字 */
+}
+.rpg-v7-root.pg-fixed:not(.paged-mode) .text-display {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  /* 上緣留 14px：首字下沉（line-height .8）的字形會凸出第一行上方，正文框會捲動（overflow），沒有上邊距會被切掉。 */
+  padding-block: 14px 0 !important;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(174, 148, 98, .55) transparent;
+}
+.rpg-v7-root.pg-fixed:not(.paged-mode) .text-display::-webkit-scrollbar { width: 6px; }
+.rpg-v7-root.pg-fixed:not(.paged-mode) .text-display::-webkit-scrollbar-thumb { background: rgba(174, 148, 98, .55); border-radius: 3px; }
+@container paper-area (max-width: 520px) {
+  .rpg-v7-root.pg-fixed:not(.paged-mode) .text-area { padding-block: 24px 38px; }
+}
+
+/* ── 按鈕列：紙張外，紙張下緣與變量列之間（兩種模式都用）──
+   原本的翻頁列（75px）不再顯示；紙張與變量列維持原樣。紙張到變量列的空隙（原本 24／27px）改放按鈕列。
+   按鈕照原版的樣式與大小：上页／下页寬版 76×44、窄版 64×44（同原版手機）；
+   切換鈕用原版的「切换全文模式」按鈕，文字縮成四字，寬 136×44（原版手機的大小，比寬版的 156 稍窄）。 */
+.rpg-v7-root.pg-trial .control-panel { display: none !important; }
+.rpg-v7-root.pg-trial .mvu-paper-space { padding-bottom: 6px !important; }
+/* 固定一列、不換行（換行會增高）。放不下時只縮切換鈕（最少用）；上页／下页不縮。 */
+.rpg-v7-root.pg-trial .pg-foot {
+  display: flex; flex-wrap: nowrap; align-items: center; gap: 8px;
+  height: 44px; margin-top: 6px;
+  container: pg-foot / inline-size;
+}
+.rpg-v7-root.pg-trial .pg-foot > * { flex: none; }
+.rpg-v7-root.mvu-paper.stock-study.pg-trial .pg-foot .mode-switch {
+  flex: 0 1 136px; width: auto; min-width: 64px; padding: 9px 4px; touch-action: manipulation;
+}
+.rpg-v7-root.mvu-paper.stock-study.pg-trial .pg-foot .mode-switch::before { -webkit-mask-size: 136px 34.83px; mask-size: 136px 34.83px; }
+.rpg-v7-root.mvu-paper.stock-study.pg-trial .pg-foot .mode-switch::after { inset: 10px 11px; }
+.rpg-v7-root.pg-trial .pg-foot .nav-group { margin-left: auto; }
+/* 頁碼固定最小寬度：位數變了，上页的位置不跟著變。 */
+.rpg-v7-root.pg-trial .pg-foot .page-num { min-width: 52px; text-align: center; white-space: nowrap; }
+/* 上页／下页的花框由左右端與中段三片圖拼成，端片寬 30.735px（小數）；按鈕落在小數像素時接縫會露出裂縫。中段兩邊各多蓋 1px。 */
+.rpg-v7-root.mvu-paper.stock-study.pg-trial .pg-foot .nav-btn::before {
+  -webkit-mask-size: 30.735294px 38px, 30.735294px 38px, calc(100% - 59.470588px) 8.941176px, calc(100% - 59.470588px) 8.941176px;
+  mask-size: 30.735294px 38px, 30.735294px 38px, calc(100% - 59.470588px) 8.941176px, calc(100% - 59.470588px) 8.941176px;
+}
+.rpg-v7-root.pg-trial .pg-foot .nav-btn { touch-action: manipulation; }
+@container paper-area (max-width: 520px) {
+  .rpg-v7-root.pg-trial .pg-foot { gap: 4px; }
+  .rpg-v7-root.pg-trial .pg-foot .nav-btn { width: 64px !important; padding: 9px 10px !important; }
+  .rpg-v7-root.pg-trial .pg-foot .nav-group { gap: 4px !important; }   /* 原版手機（.mobile-layout）設 8px，優先權較高 */
+  .rpg-v7-root.pg-trial .pg-foot .page-num { min-width: 44px; }
+}
+/* 切換鈕縮小時（窄版需要 136＋4＋上页 64＋4＋頁碼 44＋4＋下页 64 = 320）：
+   原本的花框是固定 136px 寬的一張圖，縮小會被切掉，改用上页／下页那套可伸縮的三片花框。 */
+@container pg-foot (max-width: 319.98px) {
+  .rpg-v7-root.mvu-paper.stock-study.pg-trial .pg-foot .mode-switch::before {
+    inset: auto 0; top: 50%; height: 38px; transform: translateY(-50%);
+    -webkit-mask: none; mask: none;
+    -webkit-mask-image: var(--stock-page-left), var(--stock-page-right), var(--stock-page-top), var(--stock-page-bottom);
+    mask-image: var(--stock-page-left), var(--stock-page-right), var(--stock-page-top), var(--stock-page-bottom);
+    -webkit-mask-position: left top, right top, center top, center bottom;
+    mask-position: left top, right top, center top, center bottom;
+    -webkit-mask-size: 30.735294px 38px, 30.735294px 38px, calc(100% - 59.470588px) 8.941176px, calc(100% - 59.470588px) 8.941176px;
+    mask-size: 30.735294px 38px, 30.735294px 38px, calc(100% - 59.470588px) 8.941176px, calc(100% - 59.470588px) 8.941176px;
+    -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+  }
+  .rpg-v7-root.mvu-paper.stock-study.pg-trial .pg-foot .mode-switch::after {
+    inset: 8px 10px; clip-path: polygon(9% 0, 91% 0, 100% 25%, 100% 75%, 91% 100%, 9% 100%, 0 75%, 0 25%);
+  }
+}
+
+/* ── 全文模式「下面還有」提示（不遮文字）──
+   向下箭頭：正文框下緣的留白裡（.text-area 的下內距 48px／窄版 38px），置中、輕微上下浮動；點了往下捲。捲到底就隱藏。
+   百分比：按鈕列右側（分頁模式頁碼的位置；全文模式上页／下页本來就隱藏），樣式同頁碼。 */
+.rpg-v7-root.pg-trial .pg-more-btn {
+  position: absolute; left: 50%; bottom: 5px; z-index: 2;   /* 寬版：下內距 48px，箭頭佔 36px，上方離正文 7px */
+  width: 56px; height: 36px; margin-left: -28px; padding: 0;
+  display: none; place-items: center;
+  border: 0; background: transparent; color: var(--border-main, #d4af37); cursor: pointer;
+  touch-action: manipulation;
+  animation: pgMoreBob 1.6s ease-in-out infinite;
+}
+.rpg-v7-root.pg-trial.pg-more:not(.paged-mode) .pg-more-btn { display: grid; }
+.rpg-v7-root.pg-trial .pg-more-btn svg {
+  width: 32px; height: 19px; fill: none; stroke: currentColor; stroke-width: 2.2;
+  stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 0 3px rgba(0, 0, 0, .35));
+}
+.rpg-v7-root.pg-trial.light-mode .pg-more-btn svg { filter: none; }
+@container paper-area (max-width: 520px) {
+  /* 窄版：下內距 38px，箭頭佔 30px，上方離正文 5px */
+  .rpg-v7-root.pg-trial .pg-more-btn { bottom: 3px; width: 50px; height: 30px; margin-left: -25px; }
+  .rpg-v7-root.pg-trial .pg-more-btn svg { width: 28px; height: 16px; }
+}
+@keyframes pgMoreBob { 50% { transform: translateY(2px); } }
+@media (prefers-reduced-motion: reduce) { .rpg-v7-root.pg-trial .pg-more-btn { animation: none; } }
+.rpg-v7-root.pg-trial .pg-foot .pg-progress {
+  display: none; margin-left: auto; min-width: 52px; text-align: center; white-space: nowrap;
+  color: var(--border-main); font-family: "Cinzel", "Georgia", serif; font-style: italic; font-weight: bold; letter-spacing: 1px;
+}
+.rpg-v7-root.pg-trial.pg-scrollable:not(.paged-mode) .pg-foot .pg-progress { display: block; }
+
+/* 頁碼、百分比、向下箭頭：夜間模式原色（#8a734b 暗金）在深色底上偏暗。
+   色相不變，只提高亮度（brightness），再加柔和的金色光暈。日間模式（淺色底）不改。 */
+.rpg-v7-root.pg-trial:not(.light-mode) .pg-foot .page-num,
+.rpg-v7-root.pg-trial:not(.light-mode) .pg-foot .pg-progress {
+  filter: brightness(1.45);
+  text-shadow: 0 0 6px rgba(212, 175, 55, .45), 0 0 1px rgba(212, 175, 55, .6);
+}
+.rpg-v7-root.pg-trial:not(.light-mode) .pg-more-btn svg {
+  filter: brightness(1.45) drop-shadow(0 0 4px rgba(212, 175, 55, .55));
+}
+</style>
+<div class="rpg-v7-root paged-mode mvu-paper interface-harmony-study stock-study pg-trial pg-fixed" data-paper-width="fluid" data-ui-release="2026-09-16-stock-bbi-v2" data-stock-button="on" data-stock-panel="on" data-stock-divider="on" data-stock-paging="on" data-stock-menu-trigger="on" data-stock-menu-list="on" data-stock-hud-arrow="4" data-stock-topbar-arrow="4">
 <div class="map-topbar" id="map-topbar">
     <div class="hud-toggle-btn" id="hud-toggle">◀</div>
     <!-- [新增] 窄屏專用：日期條（點擊展開/收合面板） -->
@@ -6664,9 +6791,11 @@ function scrollToTextArea() {
     try {
         const height = _measureTrueHeight();
         _lastReportedHeight = height; // 和 _doResizeReport 一致，避免之後重複回報相同高度
+        // [分頁改版 1117] 翻到最後一頁時改捲到地圖區域的中線（pgLastPageOffset）；其他頁照原本捲到正文頂端。
+        const lastPageOffset = typeof pgLastPageOffset === 'function' ? pgLastPageOffset() : null;
         window.parent?.postMessage({
             type: 'RPG_MVU_SCROLL_TO_TEXT',
-            offsetTop: Math.max(0, textArea.getBoundingClientRect().top + window.scrollY),
+            offsetTop: lastPageOffset ?? Math.max(0, textArea.getBoundingClientRect().top + window.scrollY),
             height,
             force: true,
         }, '*');
@@ -9436,7 +9565,8 @@ function extractStateContent(rawString) {
     let cleaned = rawString
         .replace(/<thinking>[\s\S]*?<\/thinking>/gi, '')
         .replace(/<think>[\s\S]*?<\/think>/gi, '')
-        .replace(/\[metacognition\][\s\S]*?\[\/metacognition\]/gi, '');
+        .replace(/\[metacognition\][\s\S]*?\[\/metacognition\]/gi, '')
+        .replace(/<check>[\s\S]*?<\/check>/gi, '');   // [分頁改版 1117] 也清除 <check></check>
     // 2. 移除 [自动化变量] 整個區塊（不含裡面的 <state>）
     cleaned = cleaned.replace(/\[自动化变量\][\s\S]*?\[\/自动化变量\]/gi, '');
     // 3. 提取剩下的第一個 <state>...</state>
@@ -10823,6 +10953,209 @@ if (typeof window.setLayout === 'function') {
         return true;
     }
 
+    // ==== [分頁改版 1117] 分頁／全文改版（Preview/paging，2026-11-17 第二版）===========
+    // 由 Preview/paging/build.py 插入主檔 refreshUI 的前面，與 state、els、refreshUI、isGenerating 同一個作用域。
+    //   1. 分頁模式照 1020：依字數／段落數分頁、正文框高度不固定、翻頁後捲回正文頂端。
+    //      例外：翻到最後一頁時，捲到地圖區域的中線（地圖下半部＋正文都在畫面上，提醒回到地圖操作）。
+    //   2. 全文模式：正文框固定高度（一半地圖＋紙張＋按鈕列＋變量列＝一個聊天區畫面），在正文框內捲動；
+    //      生成中原本在底部就跟著往下，否則維持位置。
+    //   3. 原本的翻頁列（75px）拿掉：切換鈕（文字四字）與上页／頁碼／下页放在紙張下緣與變量列之間的按鈕列，固定一列。
+    const PG = {
+        root: null, area: null, display: null, paper: null, foot: null, map: null, modeBtn: null, stateRow: 33,
+        progress: null, moreFrame: 0,
+        PLACEHOLDER: "<p class='placeholder-text'>谱写崭新篇章...</p>",   // 同分頁模式（sliceToPages）的佔位文字
+        areaFrame: 0, areaH: 0, narrowWidth: 0, info: null,
+        MIN_AREA: 300,      // 全文模式的正文框（含上下留白）至少這麼高；畫面太矮時優先保住正文，地圖露出少於一半
+        NARROW: 600         // 卡片寬度小於這個值算窄版（手機）
+    };
+
+    // ── 宿主（酒館）：卡片所在的 iframe 與聊天區 ──
+    function pgFrame() {
+        try { return window.frameElement || null; } catch (e) { return null; }
+    }
+    // 酒館的聊天區 #chat；找不到時往外找第一個可上下捲動的區域。
+    function pgScroller() {
+        const frame = pgFrame();
+        if (!frame) return null;
+        const chat = frame.parentElement && frame.parentElement.closest ? frame.parentElement.closest('#chat') : null;
+        if (chat && chat.clientHeight > 0) return chat;
+        for (let el = frame.parentElement; el && el.nodeType === 1; el = el.parentElement) {
+            const style = el.ownerDocument.defaultView.getComputedStyle(el);
+            if (/(auto|scroll)/.test(style.overflowY) && el.clientHeight > 0) return el;
+        }
+        return null;
+    }
+    // 聊天區的可見範圍（宿主座標）；找不到聊天區時用整個視窗。
+    function pgVisible() {
+        const sc = pgScroller();
+        if (sc) { const box = sc.getBoundingClientRect(); return { top: box.top, h: sc.clientHeight }; }
+        const frame = pgFrame();
+        const win = frame ? frame.ownerDocument.defaultView : window;
+        return { top: 0, h: win.innerHeight };
+    }
+
+    // ── 全文模式的正文框高度 ──
+    // 一個畫面＝地圖下半部＋紙張上緣留白＋正文框＋紙張下緣留白＋按鈕列＋變量列（收起時的高度）。
+    // 變量列在生成結束後才出現，所以不論有沒有顯示都先留它的高度，結束時正文框不必變。
+    function pgStateRowHeight() {
+        const toggle = document.querySelector('#state-viewer-panel .state-viewer-toggle');
+        const h = toggle ? toggle.offsetHeight : 0;
+        if (h > 0) PG.stateRow = h + 1;   // ＋上框線
+        return PG.stateRow;
+    }
+    // 寬版（卡片寬 600 以上）跟著聊天區高度變；窄版只在載入與寬度改變（旋轉）時決定，網址列伸縮不改。
+    function pgScheduleArea() {
+        if (PG.areaFrame) return;
+        PG.areaFrame = requestAnimationFrame(() => { PG.areaFrame = 0; pgApplyArea(); });
+    }
+    function pgApplyArea() {
+        const root = PG.root;
+        if (!root || !root.offsetHeight || !PG.foot) return;   // iframe 隱藏時量不到
+        const width = root.clientWidth, narrow = width < PG.NARROW;
+        if (narrow && PG.narrowWidth === width && PG.areaH) return;
+        const vis = pgVisible();
+        if (!(vis.h > 0)) return;
+        const areaBox = PG.area.getBoundingClientRect(), paperBox = PG.paper.getBoundingClientRect();
+        const above = areaBox.top - paperBox.top;                              // 紙張區上緣 → 正文框
+        const below = (paperBox.bottom - areaBox.bottom) + pgStateRowHeight(); // 正文框 → 變量列下緣（含按鈕列）
+        const mapH = PG.map && PG.map.offsetParent !== null ? PG.map.offsetHeight : 0;
+        const fit = vis.h - 10 - above - below;     // 只放紙張、按鈕列與變量列時，正文框最多多高
+        let h = fit - Math.ceil(mapH / 2);          // 再留一半地圖
+        if (h < PG.MIN_AREA) h = Math.min(PG.MIN_AREA, fit);
+        h = Math.max(160, Math.round(h));
+        PG.narrowWidth = narrow ? width : 0;
+        PG.info = {
+            visible: Math.round(vis.h), narrow, map: mapH, area: h,
+            mapShown: Math.max(0, Math.min(mapH, Math.round(fit - h)))
+        };
+        if (Math.abs(PG.areaH - h) < 2) return;
+        PG.areaH = h;
+        root.style.setProperty('--pg-area-h', h + 'px');
+        if (!state.isPaged) requestParentResize();
+    }
+
+    // ── 按鈕列、監聽 ──
+    function pgInit() {
+        const root = document.querySelector('.rpg-v7-root');
+        if (!root || PG.root) return;
+        const area = root.querySelector('.text-area'), display = root.querySelector('.text-display');
+        const paper = root.querySelector('.mvu-paper-space');
+        if (!area || !display || !paper) return;
+        Object.assign(PG, { root, area, display, paper, map: root.querySelector('.map-area') });
+
+        // 按鈕列在紙張外：紙張下緣與變量列之間（.mvu-paper-space 裡、疊紙裝飾後面，所以全文模式的高度計算自動算進去）。
+        // 左：原本的切換鈕（整個搬過來，點擊處理不變，文字縮成四字）；右：原本的上页／頁碼／下页（大小與樣式照原版）。
+        const foot = document.createElement('div');
+        foot.className = 'pg-foot';
+        PG.modeBtn = root.querySelector('.control-panel .mode-switch');   // els 此時還沒填好，直接找
+        if (PG.modeBtn) {
+            PG.modeBtn.textContent = state.isPaged ? '切换全文' : '切换分页';
+            foot.appendChild(PG.modeBtn);
+        }
+        const nav = root.querySelector('.control-panel .nav-group');
+        if (nav) foot.appendChild(nav);
+        (area.closest('.mvu-paper-stack') || area).after(foot);   // 疊紙裝飾的外面
+        PG.foot = foot;
+
+        // 全文模式的正文框高度：卡片寬度、地圖高度、聊天區高度改變時重算。
+        new ResizeObserver(pgScheduleArea).observe(root);
+        if (PG.map) new ResizeObserver(pgScheduleArea).observe(PG.map);
+        const frame = pgFrame();
+        if (frame) {
+            try {
+                const hostWin = frame.ownerDocument.defaultView;
+                hostWin.addEventListener('resize', pgScheduleArea, { signal: _rpgLifetime.signal });
+                const sc = pgScroller();
+                if (sc && hostWin.ResizeObserver) {
+                    const observer = new hostWin.ResizeObserver(pgScheduleArea);
+                    observer.observe(sc);
+                    _rpgLifetime.signal.addEventListener('abort', () => observer.disconnect(), { once: true });
+                }
+            } catch (e) { /* 宿主不同來源時只用卡片自己的大小 */ }
+        }
+        pgScheduleArea();
+
+        // 全文模式的「下面還有」提示：正文框下緣留白裡的向下箭頭（點了往下捲），按鈕列右側的閱讀百分比。
+        // 都放在正文以外的地方，不遮文字。
+        const more = document.createElement('button');
+        more.type = 'button'; more.className = 'pg-more-btn'; more.setAttribute('aria-label', '往下捲');
+        more.innerHTML = '<svg viewBox="0 0 24 14" aria-hidden="true"><path d="M2 2 12 12 22 2"/></svg>';
+        more.addEventListener('click', () => {
+            const d = PG.display;
+            d.scrollBy({ top: Math.round(d.clientHeight * 0.8), behavior: 'smooth' });
+        });
+        area.appendChild(more);
+        const progress = document.createElement('span');
+        progress.className = 'pg-progress';
+        foot.appendChild(progress);
+        PG.progress = progress;
+        display.addEventListener('scroll', pgScheduleMore, { passive: true });
+        display.addEventListener('load', pgScheduleMore, true);   // 插圖載入後內容變高
+        new ResizeObserver(pgScheduleMore).observe(display);
+        pgScheduleMore();
+
+        // 給預覽頁與驗收腳本讀的狀態（只讀）。
+        window.__PG_TRIAL = {
+            info: () => Object.assign({}, PG.info, {
+                areaH: PG.areaH, pages: (state.pages || []).length, page: state.currPage, paged: state.isPaged
+            })
+        };
+    }
+
+    // 翻頁後的捲動（scrollToTextArea 用）：翻到最後一頁（分頁模式、兩頁以上）時，回傳地圖區域中線在卡片內的位置，
+    // 小白X 的分頁上拉任務把這個位置捲到聊天區可見範圍的上緣。其他頁回傳 null，照原本捲到正文頂端。
+    // 新高度在同一則訊息送出（XBX 原本的做法），小白X 先套用高度再捲，捲動不會被舊高度擋住。
+    function pgLastPageOffset() {
+        if (!state.isPaged || !state.pages || state.pages.length < 2 || state.currPage !== state.pages.length - 1) return null;
+        if (!PG.map || PG.map.offsetParent === null || !PG.map.offsetHeight) return null;
+        const mapBox = PG.map.getBoundingClientRect();
+        return Math.max(0, mapBox.top + mapBox.height / 2 + window.scrollY);
+    }
+
+    // ── 全文模式的「下面還有」提示 ──
+    function pgScheduleMore() {
+        if (PG.moreFrame) return;
+        PG.moreFrame = requestAnimationFrame(() => { PG.moreFrame = 0; pgUpdateMore(); });
+    }
+    function pgUpdateMore() {
+        const root = PG.root, d = PG.display;
+        if (!root || !d) return;
+        const total = d.scrollHeight, view = d.clientHeight;
+        const scrollable = !state.isPaged && view > 0 && total - view > 2;
+        root.classList.toggle('pg-scrollable', scrollable);
+        root.classList.toggle('pg-more', scrollable && total - view - d.scrollTop > 2);
+        // 百分比＝已經看到的部分（畫面下緣在全文的位置）；捲到底是 100%。
+        if (PG.progress) PG.progress.textContent = scrollable ? Math.min(100, Math.round((d.scrollTop + view) / total * 100)) + '%' : '';
+    }
+
+    // refreshUI 的全文分支：沿用原本只重畫尾端的做法。
+    // 捲動：生成中原本在底部就跟著往下；生成結束那一次（以及之後的重畫）若原本就在全文模式的底部，也跟著往下
+    // （MVU 在畫最後一段前就先結束「生成中」，原本最後一段會留在畫面下方）。剛從分頁切過來、不在生成中時維持在頂端。
+    // 還沒有正文時（正文標籤出現前）顯示和分頁模式相同的佔位文字，不留空白的正文框。
+    function pgRenderFull() {
+        const d = PG.display || els.display;
+        const atBottom = d.scrollHeight - d.clientHeight - d.scrollTop < 40, previousTop = d.scrollTop;
+        const wasFull = _textRenderCache.element === d && _textRenderCache.mode === 'full';
+        let changed;
+        if (!state.rawText || !state.rawText.trim()) {
+            changed = _textRenderCache.element !== d || _textRenderCache.mode !== 'full-empty';
+            if (changed) {
+                d.innerHTML = PG.PLACEHOLDER;
+                _textRenderCache.element = d;
+                _textRenderCache.mode = 'full-empty';   // 下一次有正文時整個重畫（佔位文字會被清掉）
+                _textRenderCache.html = null;
+                _textRenderCache.paragraphs = [];
+            }
+        } else {
+            changed = renderFullTextParagraphs();
+        }
+        if (changed) d.scrollTop = atBottom && (isGenerating || wasFull) ? d.scrollHeight : previousTop;
+        pgScheduleMore();
+        return changed;
+    }
+
+    pgInit();
+    // ==== [分頁改版 1117] 結束 ====================================================
     const refreshUI = () => {
         if (_rpgLifetime.signal.aborted) return;
         if (!els.display || !els.display.isConnected) {
@@ -10873,7 +11206,8 @@ if (typeof window.setLayout === 'function') {
             if (els.pageNum.textContent !== pageLabel) els.pageNum.textContent = pageLabel;
             updateButtons();
         } else {
-            contentChanged = renderFullTextParagraphs();
+            // [分頁改版 1117] 全文模式在固定高度的正文框內捲動；生成中原本在底部就跟著往下（pgRenderFull）。
+            contentChanged = pgRenderFull();
         }
         els.display.classList.toggle('show-drop-cap',
             !state.isPaged || (state.currPage === 0 && !!state.rawText.trim()));
@@ -14242,7 +14576,7 @@ function sendMsgViaDOM(message) {
             e.preventDefault();
             state.isPaged = !state.isPaged;
             root.classList.toggle('paged-mode', state.isPaged);
-            els.modeBtn.innerText = state.isPaged ? "切换全文模式" : "切换分页模式";
+            els.modeBtn.innerText = state.isPaged ? '切换全文' : '切换分页';   // [分頁改版 1117] 按鈕縮成四字
             state.currPage = 0;
             refreshUI();
         };
