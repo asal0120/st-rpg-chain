@@ -6853,8 +6853,8 @@ document.addEventListener('mvu-stock-assets-change', requestParentResize, { sign
 // [修正] 立即發送，並在同一則訊息附上新高度與 force:true：小白X 會在下一個 rAF 套用高度（不節流），
 // 分頁上拉任務在更後面的 rAF 才計算捲動位置，所以不用再等 500ms。
 // 舊版分頁上拉任務（不使用 rAF）仍可能在套用高度前計算，行為等於沒有延遲的舊版；請同時更新任務。
-// [圖片插件適配 1117] 只往上捲：翻頁前畫面已經比目標高（pgPageTurnTarget().scroll 為 false）就不送捲動訊息，
-// 新高度改走一般的高度回報（_doResizeReport）；目標線在聊天區上緣之上才送訊息。
+// [圖片插件適配 1117] 只往上捲：翻頁前畫面已經比目標高（pgPageTurnTarget().scroll 為 false）時，捲動位置是翻頁前的畫面上緣（停在原處）。
+// 仍然送訊息：只送高度的話，iframe 變高時瀏覽器的捲動錨定可能把畫面往下移（用戶實測 2026-11-18），任務的捲動會把它移回來。
 function scrollToTextArea() {
     if (_rpgLifetime.signal.aborted) return;
     const textArea = document.querySelector('.text-area');
@@ -6862,12 +6862,6 @@ function scrollToTextArea() {
     try {
         // [圖片插件適配 1117] 目標線：最後一頁是地圖下方 MAP_PEEK（1/3）的對齊線，其他頁是 .text-area 頂端（見 pgPageTurnTarget）
         const target = typeof pgPageTurnTarget === 'function' ? pgPageTurnTarget() : null;
-        if (target && !target.scroll) {
-            // 畫面已經比目標高：不送捲動訊息；新高度照一般的回報（立刻量一次，再排一次延後的回報）
-            _doResizeReport();
-            requestParentResize();
-            return;
-        }
         const height = _measureTrueHeight();
         _lastReportedHeight = height; // 和 _doResizeReport 一致，避免之後重複回報相同高度
         window.parent?.postMessage({
@@ -6876,6 +6870,8 @@ function scrollToTextArea() {
             height,
             force: true,
         }, '*');
+        // 新高度套用後再對一次對齊線（分頁上拉任務捲完通常已經對齊；宿主移動畫面時移回來）
+        if (target && target.sc && typeof pgHoldLine === 'function') pgHoldLine(target.sc, target.frame, target.local, target.hold);
     } catch (e) {
         console.warn('[RPG] 翻頁捲動訊息送出失敗:', e);
     }
@@ -12541,11 +12537,39 @@ if (typeof window.setLayout === 'function') {
         };
     }
 
+    // [圖片插件適配 1117] 翻頁後保住對齊線的位置（用戶實測 2026-11-18）：翻頁前的判斷是用舊高度做的；iframe 變高後，
+    // 宿主可能讓聊天區維持在底部（或聊天區從底部排起），正文頂端被推出畫面。新高度套用後約 0.4 秒內，
+    // 把對齊線放回 offset（距聊天區可見上緣的距離；0＝貼齊上緣）。玩家自己捲動、觸控、按鍵時立刻停止。回傳 fix，可以先立刻呼叫一次。
+    function pgHoldLine(sc, frame, local, offset) {
+        const doc = sc.ownerDocument;
+        const viewTop = () => (sc === doc.scrollingElement || sc === doc.documentElement) ? 0 : sc.getBoundingClientRect().top;
+        const wins = [window];
+        try { const hw = doc.defaultView; if (hw && hw !== window) wins.push(hw); } catch (e) { /* 只看卡片自己的事件 */ }
+        const names = ['wheel', 'touchstart', 'keydown', 'mousedown'], opts = { passive: true, capture: true };
+        let stopped = false;
+        const stop = () => { stopped = true; };
+        wins.forEach(w => names.forEach(n => w.addEventListener(n, stop, opts)));
+        const fix = () => {
+            if (stopped || _rpgLifetime.signal.aborted) return;
+            try {
+                const d = frame.getBoundingClientRect().top + local() - viewTop() - offset;
+                if (Math.abs(d) > 2) sc.scrollTop += d;
+            } catch (e) { /* iframe 已移除 */ }
+        };
+        let n = 0;
+        const tick = () => { fix(); if (++n < 4) requestAnimationFrame(tick); };
+        requestAnimationFrame(tick);
+        setTimeout(fix, 150);
+        setTimeout(() => { fix(); wins.forEach(w => names.forEach(n => w.removeEventListener(n, stop, opts))); }, 400);
+        return fix;
+    }
+
     // 翻頁後的捲動目標（scrollToTextArea 用）。[圖片插件適配 1117]
     // 目標線：最後一頁（分頁模式、兩頁以上、地圖可見）時是地圖下方 MAP_PEEK（1/3）的對齊線（原本是中線），其他頁是 .text-area 頂端。
-    // 回傳 { offsetTop, scroll }：offsetTop＝目標線在卡片內的位置，小白X 的分頁上拉任務把它捲到聊天區可見範圍的上緣；
-    //   scroll＝false：畫面已經比目標高（目標線已在聊天區可見上緣或以下），只往上、不往下，scrollToTextArea 不送捲動訊息、只套用新高度。
-    // 拿不到宿主（不同來源）時 scroll 一律為 true，照原本的做法送出。新高度在同一則訊息送出（XBX 原本的做法），小白X 先套用高度再捲。
+    // 回傳 { offsetTop, scroll }：offsetTop 是要捲到聊天區可見上緣的位置（卡片內座標），小白X 的分頁上拉任務在套用新高度後捲過去。
+    //   畫面已經比目標高（目標線在聊天區可見上緣或以下）：只往上、不往下，offsetTop 改成翻頁前畫面上緣在卡片內的位置（scroll＝false），
+    //   任務照樣捲，結果是停在原處；iframe 頂端在畫面外時，瀏覽器的捲動錨定會在 iframe 變高時把畫面往下移，這樣也會被移回來。
+    // 拿不到宿主（不同來源）時照原本的做法（目標線）。新高度在同一則訊息送出（XBX 原本的做法），小白X 先套用高度再捲。
     function pgPageTurnTarget() {
         const textArea = document.querySelector('.text-area');
         if (!textArea) return null;
@@ -12561,8 +12585,16 @@ if (typeof window.setLayout === 'function') {
         const frame = pgFrame(), sc = pgScroller();
         if (frame && sc) {
             try {
-                const delta = frame.getBoundingClientRect().top + top - sc.getBoundingClientRect().top;   // 宿主座標：目標線 − 聊天區上緣
-                if (delta >= 0) target.scroll = false;
+                const docScroll = sc === sc.ownerDocument.scrollingElement || sc === sc.ownerDocument.documentElement;
+                const viewTop = docScroll ? 0 : sc.getBoundingClientRect().top;   // 聊天區可見上緣（宿主座標；整頁捲動時是 0，同分頁上拉任務）
+                const frameTop = frame.getBoundingClientRect().top;
+                const delta = frameTop + top - viewTop;
+                if (delta >= 0) { target.scroll = false; target.offsetTop = viewTop - frameTop; }
+                // pgHoldLine 用：新高度套用後，對齊線應該距聊天區上緣 hold（翻頁前在畫面內→原位置；在上方→0）
+                const lastLine = lastPage && PG.map && PG.map.offsetParent !== null && PG.map.offsetHeight;
+                Object.assign(target, { sc, frame, hold: Math.max(0, delta),
+                    local: lastLine ? () => { const m = PG.map.getBoundingClientRect(); return m.top + m.height * (1 - PG.MAP_PEEK); }
+                                    : () => textArea.getBoundingClientRect().top });
             } catch (e) { /* 宿主不同來源：照原本的做法送出 */ }
         }
         return target;

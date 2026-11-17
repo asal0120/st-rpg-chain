@@ -11272,28 +11272,57 @@ if (typeof window.setLayout === 'function') {
         } catch (e) { /* 宿主不同來源時照原本等高度回報 */ }
     }
 
+    // [圖片插件適配 1117] 翻頁後保住對齊線的位置（用戶實測 2026-11-18）：翻頁前的判斷是用舊高度做的；iframe 變高後，
+    // 宿主可能讓聊天區維持在底部（或聊天區從底部排起），正文頂端被推出畫面。新高度套用後約 0.4 秒內，
+    // 把對齊線放回 offset（距聊天區可見上緣的距離；0＝貼齊上緣）。玩家自己捲動、觸控、按鍵時立刻停止。回傳 fix，可以先立刻呼叫一次。
+    function pgHoldLine(sc, frame, local, offset) {
+        const doc = sc.ownerDocument;
+        const viewTop = () => (sc === doc.scrollingElement || sc === doc.documentElement) ? 0 : sc.getBoundingClientRect().top;
+        const wins = [window];
+        try { const hw = doc.defaultView; if (hw && hw !== window) wins.push(hw); } catch (e) { /* 只看卡片自己的事件 */ }
+        const names = ['wheel', 'touchstart', 'keydown', 'mousedown'], opts = { passive: true, capture: true };
+        let stopped = false;
+        const stop = () => { stopped = true; };
+        wins.forEach(w => names.forEach(n => w.addEventListener(n, stop, opts)));
+        const fix = () => {
+            if (stopped || _rpgLifetime.signal.aborted) return;
+            try {
+                const d = frame.getBoundingClientRect().top + local() - viewTop() - offset;
+                if (Math.abs(d) > 2) sc.scrollTop += d;
+            } catch (e) { /* iframe 已移除 */ }
+        };
+        let n = 0;
+        const tick = () => { fix(); if (++n < 4) requestAnimationFrame(tick); };
+        requestAnimationFrame(tick);
+        setTimeout(fix, 150);
+        setTimeout(() => { fix(); wins.forEach(w => names.forEach(n => w.removeEventListener(n, stop, opts))); }, 400);
+        return fix;
+    }
+
     // 翻頁後的捲動（scrollToTextArea 一開始呼叫）。回傳 true 表示已處理，不再送 RPG_MVU_SCROLL_TO_TEXT。
     // 翻到最後一頁（分頁模式、兩頁以上）：捲到地圖下方 MAP_PEEK（1/3）的對齊線（貼齊聊天區可見範圍的上緣）。
     // 其他頁捲回正文頂端。[圖片插件適配 1117] 只往上捲：翻頁前畫面已經比目標高就不動；一般頁也由主檔自己捲。
     // 拿不到宿主的聊天區（不同來源）時回傳 false，照原本的做法送 RPG_MVU_SCROLL_TO_TEXT 給宿主。
     function pgPageTurnScroll() {
-        pgSyncFrameHeight();
         const frame = pgFrame(), sc = pgScroller();
-        if (!frame || !sc) return false;
+        if (!frame || !sc) { pgSyncFrameHeight(); return false; }
         const lastPage = state.isPaged && state.pages && state.pages.length >= 2 && state.currPage === state.pages.length - 1;
-        let line;   // 要對齊聊天區上緣的位置（宿主座標）
+        let local;   // 對齊線在卡片視窗內的位置
         if (lastPage && PG.map && PG.map.offsetParent !== null && PG.map.offsetHeight) {
             // [圖片插件適配 1117] 對齊線：地圖下方 MAP_PEEK（1/3）留在畫面上（原本是中線）
-            const mapBox = PG.map.getBoundingClientRect();
-            line = frame.getBoundingClientRect().top + mapBox.top + mapBox.height * (1 - PG.MAP_PEEK);
+            local = () => { const m = PG.map.getBoundingClientRect(); return m.top + m.height * (1 - PG.MAP_PEEK); };
         } else {
             const textArea = document.querySelector('.text-area');
-            if (!textArea) return false;
-            line = frame.getBoundingClientRect().top + textArea.getBoundingClientRect().top;
+            if (!textArea) { pgSyncFrameHeight(); return false; }
+            local = () => textArea.getBoundingClientRect().top;
         }
-        // [圖片插件適配 1117] 只往上捲：畫面已經比目標高（對齊線在聊天區上緣之下）就不動
-        const delta = line - sc.getBoundingClientRect().top;
-        if (delta < 0) sc.scrollTop += delta;
+        const doc = sc.ownerDocument;
+        const viewTop = (sc === doc.scrollingElement || sc === doc.documentElement) ? 0 : sc.getBoundingClientRect().top;
+        // [圖片插件適配 1117] 只往上捲：翻頁前對齊線已在畫面內（畫面比目標高）→ 留在翻頁前的位置；在畫面上方 → 貼齊聊天區上緣。
+        // 用翻頁前的位置當目標，新高度套用後再對一次（pgHoldLine）：iframe 變高時宿主可能移動畫面。
+        const offset = Math.max(0, frame.getBoundingClientRect().top + local() - viewTop);
+        pgSyncFrameHeight();
+        pgHoldLine(sc, frame, local, offset)();
         return true;
     }
 
