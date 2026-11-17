@@ -6038,6 +6038,47 @@ html:not(.rpg-classic) .rpg-v7-root :is(.bag-scaler, .quest-scaler) .cat-btn {
     inset: 8px 10px; clip-path: polygon(9% 0, 91% 0, 100% 25%, 100% 75%, 91% 100%, 9% 100%, 0 75%, 0 25%);
   }
 }
+
+/* ── 全文模式「下面還有」提示（不遮文字）──
+   向下箭頭：正文框下緣的留白裡（.text-area 的下內距 48px／窄版 38px），置中、輕微上下浮動；點了往下捲。捲到底就隱藏。
+   百分比：按鈕列右側（分頁模式頁碼的位置；全文模式上页／下页本來就隱藏），樣式同頁碼。 */
+.rpg-v7-root.pg-trial .pg-more-btn {
+  position: absolute; left: 50%; bottom: 5px; z-index: 2;   /* 寬版：下內距 48px，箭頭佔 36px，上方離正文 7px */
+  width: 56px; height: 36px; margin-left: -28px; padding: 0;
+  display: none; place-items: center;
+  border: 0; background: transparent; color: var(--border-main, #d4af37); cursor: pointer;
+  touch-action: manipulation;
+  animation: pgMoreBob 1.6s ease-in-out infinite;
+}
+.rpg-v7-root.pg-trial.pg-more:not(.paged-mode) .pg-more-btn { display: grid; }
+.rpg-v7-root.pg-trial .pg-more-btn svg {
+  width: 32px; height: 19px; fill: none; stroke: currentColor; stroke-width: 2.2;
+  stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 0 3px rgba(0, 0, 0, .35));
+}
+.rpg-v7-root.pg-trial.light-mode .pg-more-btn svg { filter: none; }
+@container paper-area (max-width: 520px) {
+  /* 窄版：下內距 38px，箭頭佔 30px，上方離正文 5px */
+  .rpg-v7-root.pg-trial .pg-more-btn { bottom: 3px; width: 50px; height: 30px; margin-left: -25px; }
+  .rpg-v7-root.pg-trial .pg-more-btn svg { width: 28px; height: 16px; }
+}
+@keyframes pgMoreBob { 50% { transform: translateY(2px); } }
+@media (prefers-reduced-motion: reduce) { .rpg-v7-root.pg-trial .pg-more-btn { animation: none; } }
+.rpg-v7-root.pg-trial .pg-foot .pg-progress {
+  display: none; margin-left: auto; min-width: 52px; text-align: center; white-space: nowrap;
+  color: var(--border-main); font-family: "Cinzel", "Georgia", serif; font-style: italic; font-weight: bold; letter-spacing: 1px;
+}
+.rpg-v7-root.pg-trial.pg-scrollable:not(.paged-mode) .pg-foot .pg-progress { display: block; }
+
+/* 頁碼、百分比、向下箭頭：夜間模式原色（#8a734b 暗金）在深色底上偏暗。
+   色相不變，只提高亮度（brightness），再加柔和的金色光暈。日間模式（淺色底）不改。 */
+.rpg-v7-root.pg-trial:not(.light-mode) .pg-foot .page-num,
+.rpg-v7-root.pg-trial:not(.light-mode) .pg-foot .pg-progress {
+  filter: brightness(1.45);
+  text-shadow: 0 0 6px rgba(212, 175, 55, .45), 0 0 1px rgba(212, 175, 55, .6);
+}
+.rpg-v7-root.pg-trial:not(.light-mode) .pg-more-btn svg {
+  filter: brightness(1.45) drop-shadow(0 0 4px rgba(212, 175, 55, .55));
+}
 </style>
 <div class="rpg-v7-root paged-mode mvu-paper interface-harmony-study stock-study pg-trial pg-fixed" data-paper-width="fluid" data-ui-release="2026-09-16-stock-bbi-v2" data-stock-button="on" data-stock-panel="on" data-stock-divider="on" data-stock-paging="on" data-stock-menu-trigger="on" data-stock-menu-list="on" data-stock-hud-arrow="4" data-stock-topbar-arrow="4">
 <div class="map-topbar" id="map-topbar">
@@ -10474,6 +10515,7 @@ if (typeof window.setLayout === 'function') {
     //   3. 原本的翻頁列（75px）拿掉：切換鈕（文字四字）與上页／頁碼／下页放在紙張下緣與變量列之間的按鈕列，固定一列。
     const PG = {
         root: null, area: null, display: null, paper: null, foot: null, map: null, modeBtn: null, stateRow: 33,
+        progress: null, moreFrame: 0,
         areaFrame: 0, areaH: 0, narrowWidth: 0, info: null,
         MIN_AREA: 300,      // 全文模式的正文框（含上下留白）至少這麼高；畫面太矮時優先保住正文，地圖露出少於一半
         NARROW: 600         // 卡片寬度小於這個值算窄版（手機）
@@ -10585,6 +10627,25 @@ if (typeof window.setLayout === 'function') {
         }
         pgScheduleArea();
 
+        // 全文模式的「下面還有」提示：正文框下緣留白裡的向下箭頭（點了往下捲），按鈕列右側的閱讀百分比。
+        // 都放在正文以外的地方，不遮文字。
+        const more = document.createElement('button');
+        more.type = 'button'; more.className = 'pg-more-btn'; more.setAttribute('aria-label', '往下捲');
+        more.innerHTML = '<svg viewBox="0 0 24 14" aria-hidden="true"><path d="M2 2 12 12 22 2"/></svg>';
+        more.addEventListener('click', () => {
+            const d = PG.display;
+            d.scrollBy({ top: Math.round(d.clientHeight * 0.8), behavior: 'smooth' });
+        });
+        area.appendChild(more);
+        const progress = document.createElement('span');
+        progress.className = 'pg-progress';
+        foot.appendChild(progress);
+        PG.progress = progress;
+        display.addEventListener('scroll', pgScheduleMore, { passive: true });
+        display.addEventListener('load', pgScheduleMore, true);   // 插圖載入後內容變高
+        new ResizeObserver(pgScheduleMore).observe(display);
+        pgScheduleMore();
+
         // 給預覽頁與驗收腳本讀的狀態（只讀）。
         window.__PG_TRIAL = {
             info: () => Object.assign({}, PG.info, {
@@ -10619,12 +10680,29 @@ if (typeof window.setLayout === 'function') {
         return true;
     }
 
+    // ── 全文模式的「下面還有」提示 ──
+    function pgScheduleMore() {
+        if (PG.moreFrame) return;
+        PG.moreFrame = requestAnimationFrame(() => { PG.moreFrame = 0; pgUpdateMore(); });
+    }
+    function pgUpdateMore() {
+        const root = PG.root, d = PG.display;
+        if (!root || !d) return;
+        const total = d.scrollHeight, view = d.clientHeight;
+        const scrollable = !state.isPaged && view > 0 && total - view > 2;
+        root.classList.toggle('pg-scrollable', scrollable);
+        root.classList.toggle('pg-more', scrollable && total - view - d.scrollTop > 2);
+        // 百分比＝已經看到的部分（畫面下緣在全文的位置）；捲到底是 100%。
+        if (PG.progress) PG.progress.textContent = scrollable ? Math.min(100, Math.round((d.scrollTop + view) / total * 100)) + '%' : '';
+    }
+
     // refreshUI 的全文分支：沿用原本只重畫尾端的做法；生成中原本在底部就跟著往下，否則維持位置。
     function pgRenderFull() {
         const d = PG.display || els.display;
         const atBottom = d.scrollHeight - d.clientHeight - d.scrollTop < 40, previousTop = d.scrollTop;
         const changed = renderFullTextParagraphs();
         if (changed) d.scrollTop = isGenerating && atBottom ? d.scrollHeight : previousTop;
+        pgScheduleMore();
         return changed;
     }
 
