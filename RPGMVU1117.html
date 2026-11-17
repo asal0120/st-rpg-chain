@@ -5954,12 +5954,13 @@ html:not(.rpg-classic) .rpg-v7-root :is(.bag-scaler, .quest-scaler) .cat-btn {
 </style>
 
 <style id="pg-trial-css">
-/* ==== [分頁改版 1117] 分頁／全文改版（Preview/paging，2026-11-16）====
-   由 build.py 插在根節點前面。只作用在 .pg-trial / .pg-fixed（分頁改版的根節點才有）。 */
+/* ==== [分頁改版 1117] 分頁／全文改版（Preview/paging，2026-11-17 第二版）====
+   由 build.py 插在根節點前面。只作用在 .pg-trial / .pg-fixed（分頁改版的根節點才有）。
+   分頁模式的正文照 1020；只有全文模式（:not(.paged-mode)）固定高度、在正文框內捲動。按鈕列兩種模式都用。 */
 
-/* ── 正文框固定高度（--pg-area-h 由 pgApplyArea 算出），兩種模式都在 .text-display 內捲動 ──
+/* ── 全文模式：正文框固定高度（--pg-area-h 由 pgApplyArea 算出），在 .text-display 內捲動 ──
    上下留白移到外框：捲動時文字停在紙框與角飾裡面，不會蓋過去。左右留白仍在 .text-display。 */
-.rpg-v7-root.pg-fixed .text-area {
+.rpg-v7-root.pg-fixed:not(.paged-mode) .text-area {
   height: var(--pg-area-h, 480px) !important;
   min-height: 0 !important;
   max-height: none !important;
@@ -5969,7 +5970,7 @@ html:not(.rpg-classic) .rpg-v7-root :is(.bag-scaler, .quest-scaler) .cat-btn {
   box-sizing: border-box;
   padding-block: 34px 48px;   /* 上緣 14px 移到 .text-display，給下沉首字 */
 }
-.rpg-v7-root.pg-fixed .text-display {
+.rpg-v7-root.pg-fixed:not(.paged-mode) .text-display {
   flex: 1 1 auto;
   min-height: 0;
   overflow-x: hidden;
@@ -5980,26 +5981,18 @@ html:not(.rpg-classic) .rpg-v7-root :is(.bag-scaler, .quest-scaler) .cat-btn {
   scrollbar-width: thin;
   scrollbar-color: rgba(174, 148, 98, .55) transparent;
 }
-.rpg-v7-root.pg-fixed .text-display::-webkit-scrollbar { width: 6px; }
-.rpg-v7-root.pg-fixed .text-display::-webkit-scrollbar-thumb { background: rgba(174, 148, 98, .55); border-radius: 3px; }
+.rpg-v7-root.pg-fixed:not(.paged-mode) .text-display::-webkit-scrollbar { width: 6px; }
+.rpg-v7-root.pg-fixed:not(.paged-mode) .text-display::-webkit-scrollbar-thumb { background: rgba(174, 148, 98, .55); border-radius: 3px; }
 @container paper-area (max-width: 520px) {
-  .rpg-v7-root.pg-fixed .text-area { padding-block: 24px 38px; }
+  .rpg-v7-root.pg-fixed:not(.paged-mode) .text-area { padding-block: 24px 38px; }
 }
 
-/* ── 段落跨頁 ── 一頁的最後一段不留下邊距；接到下一頁的後半段不縮排；留在前一頁的最後一行左右撐滿。 */
-.rpg-v7-root.pg-fixed .text-display p:last-child { margin-bottom: 0; }
-.rpg-v7-root.pg-fixed .text-display p.rpg-split-tail { text-indent: 0; }
-.rpg-v7-root.pg-fixed .text-display p.rpg-split-justify { text-align-last: justify; }
-.rpg-v7-root.pg-fixed .text-display .rpg-split-end { display: block; text-indent: 0; text-align-last: justify; }
-
-
-
-/* ── 按鈕列：紙張外，紙張下緣與變量列之間 ──
+/* ── 按鈕列：紙張外，紙張下緣與變量列之間（兩種模式都用）──
    原本的翻頁列（75px）不再顯示；紙張與變量列維持原樣。紙張到變量列的空隙（原本 24／27px）改放按鈕列。
    按鈕照原版的樣式與大小：上页／下页寬版 76×44、窄版 64×44（同原版手機）；
    切換鈕用原版的「切换全文模式」按鈕，文字縮成四字，寬 136×44（原版手機的大小，比寬版的 156 稍窄）。 */
 .rpg-v7-root.pg-trial .control-panel { display: none !important; }
-.rpg-v7-root.pg-fixed .mvu-paper-space { padding-bottom: 6px !important; }
+.rpg-v7-root.pg-trial .mvu-paper-space { padding-bottom: 6px !important; }
 /* 固定一列、不換行（換行會增高）。放不下時只縮切換鈕（最少用）；上页／下页不縮。 */
 .rpg-v7-root.pg-trial .pg-foot {
   display: flex; flex-wrap: nowrap; align-items: center; gap: 8px;
@@ -6015,7 +6008,7 @@ html:not(.rpg-classic) .rpg-v7-root :is(.bag-scaler, .quest-scaler) .cat-btn {
 .rpg-v7-root.pg-trial .pg-foot .nav-group { margin-left: auto; }
 /* 頁碼固定最小寬度：位數變了，上页的位置不跟著變。 */
 .rpg-v7-root.pg-trial .pg-foot .page-num { min-width: 52px; text-align: center; white-space: nowrap; }
-/* 1：上页／下页的花框由左右端與中段三片圖拼成，端片寬 30.735px（小數）；按鈕落在小數像素時接縫會露出裂縫。中段兩邊各多蓋 1px。 */
+/* 上页／下页的花框由左右端與中段三片圖拼成，端片寬 30.735px（小數）；按鈕落在小數像素時接縫會露出裂縫。中段兩邊各多蓋 1px。 */
 .rpg-v7-root.mvu-paper.stock-study.pg-trial .pg-foot .nav-btn::before {
   -webkit-mask-size: 30.735294px 38px, 30.735294px 38px, calc(100% - 59.470588px) 8.941176px, calc(100% - 59.470588px) 8.941176px;
   mask-size: 30.735294px 38px, 30.735294px 38px, calc(100% - 59.470588px) 8.941176px, calc(100% - 59.470588px) 8.941176px;
@@ -6025,11 +6018,11 @@ html:not(.rpg-classic) .rpg-v7-root :is(.bag-scaler, .quest-scaler) .cat-btn {
   .rpg-v7-root.pg-trial .pg-foot { gap: 4px; }
   .rpg-v7-root.pg-trial .pg-foot .nav-btn { width: 64px !important; padding: 9px 10px !important; }
   .rpg-v7-root.pg-trial .pg-foot .nav-group { gap: 4px !important; }   /* 原版手機（.mobile-layout）設 8px，優先權較高 */
-  .rpg-v7-root.pg-trial .pg-foot .page-num { min-width: 40px; }
+  .rpg-v7-root.pg-trial .pg-foot .page-num { min-width: 44px; }
 }
-/* 切換鈕縮小時（窄版需要 136＋4＋箭頭 32＋4＋上页 64＋4＋頁碼 40＋4＋下页 64 = 352）：
+/* 切換鈕縮小時（窄版需要 136＋4＋上页 64＋4＋頁碼 44＋4＋下页 64 = 320）：
    原本的花框是固定 136px 寬的一張圖，縮小會被切掉，改用上页／下页那套可伸縮的三片花框。 */
-@container pg-foot (max-width: 351.98px) {
+@container pg-foot (max-width: 319.98px) {
   .rpg-v7-root.mvu-paper.stock-study.pg-trial .pg-foot .mode-switch::before {
     inset: auto 0; top: 50%; height: 38px; transform: translateY(-50%);
     -webkit-mask: none; mask: none;
@@ -6045,26 +6038,6 @@ html:not(.rpg-classic) .rpg-v7-root :is(.bag-scaler, .quest-scaler) .cat-btn {
     inset: 8px 10px; clip-path: polygon(9% 0, 91% 0, 100% 25%, 100% 75%, 91% 100%, 9% 100%, 0 75%, 0 25%);
   }
 }
-
-/* ── 這一頁還能往下捲：正文底部淡出＋向下箭頭（按鈕列中央）── */
-.rpg-v7-root.pg-fixed.paged-mode.pg-more .text-display {
-  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 56px), rgba(0, 0, 0, .15));
-  mask-image: linear-gradient(to bottom, #000 calc(100% - 56px), rgba(0, 0, 0, .15));
-}
-.rpg-v7-root.pg-trial .pg-more-hint {
-  margin-inline: auto; visibility: hidden; display: grid; place-items: center;
-  width: 32px; height: 32px; padding: 0; border: 1px solid var(--study-line, rgba(138, 115, 75, .45)); border-radius: 50%;
-  background: transparent; color: var(--study-accent, #d4af37); cursor: pointer;
-  animation: pgMoreBob 1.8s ease-in-out infinite;
-}
-.rpg-v7-root.pg-trial.paged-mode.pg-more .pg-more-hint { visibility: visible; }
-.rpg-v7-root.pg-trial .pg-more-hint svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-/* 極窄（切換鈕已縮到 64 仍放不下：64＋4＋32＋4＋176 = 280）：不顯示向下箭頭，正文底部的淡出仍表示下面還有。 */
-@container pg-foot (max-width: 279.98px) {
-  .rpg-v7-root.pg-trial .pg-more-hint { display: none; }
-}
-@keyframes pgMoreBob { 50% { transform: translateY(2px); } }
-@media (prefers-reduced-motion: reduce) { .rpg-v7-root.pg-trial .pg-more-hint { animation: none; } }
 </style>
 <div class="rpg-v7-root paged-mode mvu-paper interface-harmony-study stock-study pg-trial pg-fixed" data-paper-width="fluid" data-ui-release="2026-09-16-stock-bbi-v2" data-stock-button="on" data-stock-panel="on" data-stock-divider="on" data-stock-paging="on" data-stock-menu-trigger="on" data-stock-menu-list="on" data-stock-hud-arrow="4" data-stock-topbar-arrow="4">
 <div class="map-topbar" id="map-topbar">
@@ -6892,8 +6865,8 @@ document.addEventListener('mvu-stock-assets-change', requestParentResize, { sign
 
 // [新增] 翻頁後通知父層捲動到 .text-area 頂端（解決手機端翻頁後停留在底部的問題）
 function scrollToTextArea() {
-    // [分頁改版 1117] 紙張與閱讀列都看得到就不捲；看不到時捲到「上方露出一半地圖」的位置。
-    if (typeof pgScrollToView === 'function' && pgScrollToView()) return;
+    // [分頁改版 1117] 先把 iframe 設成新高度再捲（捲動不再被舊高度擋住）；翻到最後一頁時改捲到地圖區域的中線（pgPageTurnScroll）。
+    if (typeof pgPageTurnScroll === 'function' && pgPageTurnScroll()) return;
     const textArea = document.querySelector('.text-area');
     if (!textArea) return;
     window.parent?.postMessage({
@@ -10492,22 +10465,17 @@ if (typeof window.setLayout === 'function') {
         return true;
     }
 
-    // ==== [分頁改版 1117] 分頁／全文改版（Preview/paging，2026-11-16）====================
+    // ==== [分頁改版 1117] 分頁／全文改版（Preview/paging，2026-11-17 第二版）===========
     // 由 Preview/paging/build.py 插入主檔 refreshUI 的前面，與 state、els、refreshUI、isGenerating 同一個作用域。
-    // 照新作（D:\NewCard 正文前端）的做法：
-    //   1. 正文框固定高度：「一半地圖＋正文紙張＋閱讀列」剛好一個聊天區畫面；全文模式也在正文框內捲動。
-    //   2. 依實際排版量頁：一頁剛好填滿正文框；一般段落在行尾切開，接到下一頁。插圖自己一頁。
-    //   3. 生成中只重量最後幾頁；生成結束、改大小、切換模式後，停在讀者所在的段落。
-    //   4. 放不下的頁（很長又不能切的區塊）在頁內捲動，底部淡出＋向下箭頭。
-    //   5. 翻頁列（75px）拿掉：閱讀方式與翻頁改放在紙張下緣與變量列之間的按鈕列。紙張與變量列維持原樣。
-    // 不改：預設模式（分頁）、頁碼（1/2）、翻頁方式（上页／下页按鈕，大小與樣式照原版）。
+    //   1. 分頁模式照 1020：依字數／段落數分頁、正文框高度不固定、翻頁後捲回正文頂端。
+    //      例外：翻到最後一頁時，捲到地圖區域的中線（地圖下半部＋正文都在畫面上，提醒回到地圖操作）。
+    //   2. 全文模式：正文框固定高度（一半地圖＋紙張＋按鈕列＋變量列＝一個聊天區畫面），在正文框內捲動；
+    //      生成中原本在底部就跟著往下，否則維持位置。
+    //   3. 原本的翻頁列（75px）拿掉：切換鈕（文字四字）與上页／頁碼／下页放在紙張下緣與變量列之間的按鈕列，固定一列。
     const PG = {
-        root: null, area: null, display: null, paper: null, foot: null, map: null, stateRow: 33,
-        paras: [], pageParas: null, pages: [''], starts: [0], offsets: [0],
-        key: null, layoutKey: '', dirty: false, pins: null, streamPaging: false,
-        shownIndex: -1, shownStart: '', repagTimer: null, areaFrame: 0,
-        areaH: 0, narrowWidth: 0, info: null,
-        MIN_AREA: 300,      // 正文框（含上下留白）至少這麼高；畫面太矮時優先保住正文，地圖露出少於一半
+        root: null, area: null, display: null, paper: null, foot: null, map: null, modeBtn: null, stateRow: 33,
+        areaFrame: 0, areaH: 0, narrowWidth: 0, info: null,
+        MIN_AREA: 300,      // 全文模式的正文框（含上下留白）至少這麼高；畫面太矮時優先保住正文，地圖露出少於一半
         NARROW: 600         // 卡片寬度小於這個值算窄版（手機）
     };
 
@@ -10536,8 +10504,8 @@ if (typeof window.setLayout === 'function') {
         return { top: 0, h: win.innerHeight };
     }
 
-    // ── 正文框高度 ──
-    // 一個畫面＝地圖下半部＋紙張上緣留白＋正文框（含頁腳）＋紙張下緣留白＋變量列（收起時的高度）。
+    // ── 全文模式的正文框高度 ──
+    // 一個畫面＝地圖下半部＋紙張上緣留白＋正文框＋紙張下緣留白＋按鈕列＋變量列（收起時的高度）。
     // 變量列在生成結束後才出現，所以不論有沒有顯示都先留它的高度，結束時正文框不必變。
     function pgStateRowHeight() {
         const toggle = document.querySelector('#state-viewer-panel .state-viewer-toggle');
@@ -10545,7 +10513,7 @@ if (typeof window.setLayout === 'function') {
         if (h > 0) PG.stateRow = h + 1;   // ＋上框線
         return PG.stateRow;
     }
-    // 寬版（卡片寬 600 以上）跟著聊天區高度變；窄版只在載入與寬度改變（旋轉）時決定，網址列伸縮不重新分頁。
+    // 寬版（卡片寬 600 以上）跟著聊天區高度變；窄版只在載入與寬度改變（旋轉）時決定，網址列伸縮不改。
     function pgScheduleArea() {
         if (PG.areaFrame) return;
         PG.areaFrame = requestAnimationFrame(() => { PG.areaFrame = 0; pgApplyArea(); });
@@ -10559,9 +10527,9 @@ if (typeof window.setLayout === 'function') {
         if (!(vis.h > 0)) return;
         const areaBox = PG.area.getBoundingClientRect(), paperBox = PG.paper.getBoundingClientRect();
         const above = areaBox.top - paperBox.top;                              // 紙張區上緣 → 正文框
-        const below = (paperBox.bottom - areaBox.bottom) + pgStateRowHeight(); // 正文框 → 變量列下緣
+        const below = (paperBox.bottom - areaBox.bottom) + pgStateRowHeight(); // 正文框 → 變量列下緣（含按鈕列）
         const mapH = PG.map && PG.map.offsetParent !== null ? PG.map.offsetHeight : 0;
-        const fit = vis.h - 10 - above - below;     // 只放紙張與閱讀列時，正文框最多多高
+        const fit = vis.h - 10 - above - below;     // 只放紙張、按鈕列與變量列時，正文框最多多高
         let h = fit - Math.ceil(mapH / 2);          // 再留一半地圖
         if (h < PG.MIN_AREA) h = Math.min(PG.MIN_AREA, fit);
         h = Math.max(160, Math.round(h));
@@ -10573,10 +10541,10 @@ if (typeof window.setLayout === 'function') {
         if (Math.abs(PG.areaH - h) < 2) return;
         PG.areaH = h;
         root.style.setProperty('--pg-area-h', h + 'px');
-        requestParentResize();
+        if (!state.isPaged) requestParentResize();
     }
 
-    // ── 閱讀列、提示箭頭、監聽 ──
+    // ── 按鈕列、監聽 ──
     function pgInit() {
         const root = document.querySelector('.rpg-v7-root');
         if (!root || PG.root) return;
@@ -10585,55 +10553,21 @@ if (typeof window.setLayout === 'function') {
         if (!area || !display || !paper) return;
         Object.assign(PG, { root, area, display, paper, map: root.querySelector('.map-area') });
 
-        // 按鈕列在紙張外：紙張下緣與變量列之間（.mvu-paper-space 裡、正文框後面，所以高度計算自動算進去）。
-        // 左：閱讀方式（原本的切換鈕）；中：這一頁還能往下捲時的向下箭頭；右：原本的上页／頁碼／下页（大小與樣式照原版）。
+        // 按鈕列在紙張外：紙張下緣與變量列之間（.mvu-paper-space 裡、疊紙裝飾後面，所以全文模式的高度計算自動算進去）。
+        // 左：原本的切換鈕（整個搬過來，點擊處理不變，文字縮成四字）；右：原本的上页／頁碼／下页（大小與樣式照原版）。
         const foot = document.createElement('div');
         foot.className = 'pg-foot';
-        // 閱讀方式：原本的「切换全文模式」按鈕整個搬過來（點擊處理不變），文字縮成四字。
         PG.modeBtn = root.querySelector('.control-panel .mode-switch');   // els 此時還沒填好，直接找
-        if (PG.modeBtn) foot.appendChild(PG.modeBtn);
-        const hint = document.createElement('button');
-        hint.type = 'button';
-        hint.className = 'pg-more-hint';
-        hint.tabIndex = -1;
-        hint.setAttribute('aria-label', '往下卷动');
-        hint.innerHTML = '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 6l4 4 4-4"/></svg>';
-        foot.appendChild(hint);
+        if (PG.modeBtn) {
+            PG.modeBtn.textContent = state.isPaged ? '切换全文' : '切换分页';
+            foot.appendChild(PG.modeBtn);
+        }
         const nav = root.querySelector('.control-panel .nav-group');
         if (nav) foot.appendChild(nav);
         (area.closest('.mvu-paper-stack') || area).after(foot);   // 疊紙裝飾的外面
         PG.foot = foot;
-        pgSyncModeButtons();
-        hint.addEventListener('click', () => {
-            display.scrollBy({ top: Math.max(80, Math.round(display.clientHeight * 0.8)), behavior: 'smooth' });
-        });
-        display.addEventListener('scroll', pgSyncMore, { passive: true });
 
-        // 生成開始／結束：所有路徑都會同時改根節點的 generating class。
-        let wasGenerating = root.classList.contains('generating');
-        if (wasGenerating) PG.pins = {};
-        new MutationObserver(() => {
-            const generating = root.classList.contains('generating');
-            if (generating === wasGenerating) return;
-            wasGenerating = generating;
-            PG.streamPaging = false;
-            if (generating) { PG.pins = {}; return; }
-            // 結束：清掉生成中固定的頁，照一般規則完整分頁一次（停在讀者所在的段落）。
-            PG.pins = null;
-            pgRepaginateSoon(0);
-        }).observe(root, { attributes: true, attributeFilter: ['class'] });
-
-        // 正文框大小改變（高度重算、寬度、旋轉）或字體下載完 → 重新分頁。
-        let lastSize = '';
-        new ResizeObserver(() => {
-            const size = display.clientWidth + 'x' + display.clientHeight;
-            if (size === lastSize) return;
-            lastSize = size;
-            pgRepaginateSoon(180);
-        }).observe(display);
-        if (document.fonts) document.fonts.addEventListener('loadingdone', () => pgRepaginateSoon(180));
-
-        // 正文框高度：卡片寬度、地圖高度、聊天區高度改變時重算。
+        // 全文模式的正文框高度：卡片寬度、地圖高度、聊天區高度改變時重算。
         new ResizeObserver(pgScheduleArea).observe(root);
         if (PG.map) new ResizeObserver(pgScheduleArea).observe(PG.map);
         const frame = pgFrame();
@@ -10654,371 +10588,35 @@ if (typeof window.setLayout === 'function') {
         // 給預覽頁與驗收腳本讀的狀態（只讀）。
         window.__PG_TRIAL = {
             info: () => Object.assign({}, PG.info, {
-                areaH: PG.areaH, pages: PG.pages.length, page: state.currPage, paged: state.isPaged,
-                starts: PG.starts.slice(), offsets: PG.offsets.slice(), pins: PG.pins ? Object.assign({}, PG.pins) : null
-            }),
-            pageTexts: () => PG.pages.map(pgTextOf),
-            fullText: () => PG.paras.map(pgTextOf).join('')
+                areaH: PG.areaH, pages: (state.pages || []).length, page: state.currPage, paged: state.isPaged
+            })
         };
     }
 
-    function pgSyncModeButtons() {
-        // 和原版一樣寫「按下去會切到哪個模式」，只是縮成四字。
-        if (PG.modeBtn) PG.modeBtn.textContent = state.isPaged ? '切换全文' : '切换分页';
-    }
-
-    // 全文→分頁：回到上次分頁時讀者所在的段落（內容沒換時）；分頁→全文：回到頂端（生成中維持位置）。
-    function pgSetReadingMode(paged) {
-        if (state.isPaged === paged) { pgSyncModeButtons(); return; }
-        clearTimeout(PG.repagTimer);
-        state.isPaged = paged;
-        PG.root.classList.toggle('paged-mode', paged);
-        pgSyncModeButtons();
-        if (paged) PG.dirty = true;
-        refreshUI();
-        if (!paged && !isGenerating) PG.display.scrollTop = 0;
-        pgSyncMore();
-        requestParentResize();
-    }
-
-    function pgRepaginateSoon(delay) {
-        clearTimeout(PG.repagTimer);
-        PG.repagTimer = setTimeout(() => {
-            PG.repagTimer = null;
-            if (!state.isPaged || _rpgLifetime.signal.aborted) return;
-            PG.dirty = true;
-            refreshUI();
-        }, delay);
-    }
-
-    // 這一頁還沒捲到底：根節點加 pg-more（底部淡出＋向下箭頭）。
-    function pgSyncMore() {
-        const d = PG.display;
-        if (!d || !PG.root) return;
-        const more = state.isPaged && d.scrollHeight - d.clientHeight - d.scrollTop > 4;
-        PG.root.classList.toggle('pg-more', more);
-    }
-
-    // 翻頁後的捲動（取代原本「正文頂端貼齊聊天區頂端」）：紙張與變量列都看得到就不捲；
-    // 看不到時捲到設計的位置——變量列下緣貼齊畫面下緣（上方露出一半地圖），放不下時正文框上緣貼齊畫面上緣。
-    function pgScrollToView() {
-        const frame = pgFrame(), sc = pgScroller();
-        if (!frame || !sc || !PG.foot) return false;
-        const offset = frame.getBoundingClientRect().top;
-        const areaTop = offset + PG.area.getBoundingClientRect().top;
-        const barBottom = offset + PG.paper.getBoundingClientRect().bottom + PG.stateRow;
-        const visTop = sc.getBoundingClientRect().top, visBottom = visTop + sc.clientHeight;
-        if (areaTop >= visTop - 1 && barBottom <= visBottom + 1) return true;
-        let delta = barBottom - (visBottom - 5);
-        if (areaTop - delta < visTop) delta = areaTop - visTop;
-        sc.scrollTop += delta;
-        return true;
-    }
-
-    // ── 段落 ──
-    function pgCaptureParas() {
-        const list = state.rawText.split(/\n+/).filter(p => p.trim());
-        PG.paras = list.map((p, i) => '<p>' + getFormattedParagraph(p, !isGenerating || i < list.length - 1) + '</p>');
-        if (!PG.paras.length) PG.paras = ["<p class='placeholder-text'>谱写崭新篇章...</p>"];
-    }
-    function pgIsIllustration(html) { return html.indexOf('rpg-img-placeholder') >= 0; }
-    // 只有一般段落（<p> 裡只有行內標籤）可以切開；酒館正則產生的其他 HTML 整塊處理。
-    const PG_SPLIT_TAGS = /^(?:p|span|br|em|strong|b|i|u|s|small|mark)$/;
-    function pgIsSplittable(html) {
-        if (html.slice(0, 3) !== '<p>' || pgIsIllustration(html)) return false;
-        const tag = /<\/?([a-zA-Z][\w-]*)/g;
-        let match;
-        while ((match = tag.exec(html))) if (!PG_SPLIT_TAGS.test(match[1].toLowerCase())) return false;
-        return true;
-    }
-    function pgTextOf(html) {
-        const holder = document.createElement('div');
-        holder.innerHTML = html;
-        return holder.textContent;
-    }
-
-    // ── 段落跨頁（移植自新作 skeleton-IFRAME-POC.html）──
-    // 段內每個字（代理對算一個字）的文字節點與位置；offset 是整段文字中的位置（UTF-16）。
-    function pgTextPoints(element) {
-        const points = [], walker = document.createTreeWalker(element, 4);
-        let node, total = 0;
-        while ((node = walker.nextNode())) {
-            const value = node.data;
-            for (let k = 0; k < value.length; k++) {
-                const code = value.charCodeAt(k);
-                const size = code >= 0xD800 && code <= 0xDBFF && k + 1 < value.length ? 2 : 1;
-                points.push({ node, at: k, size, offset: total + k });
-                k += size - 1;
-            }
-            total += value.length;
-        }
-        return points;
-    }
-    function pgLocateText(element, offset) {
-        const walker = document.createTreeWalker(element, 4);
-        let node, total = 0, last = null;
-        while ((node = walker.nextNode())) {
-            if (offset <= total + node.data.length) return { node, at: offset - total };
-            total += node.data.length;
-            last = node;
-        }
-        return last ? { node: last, at: last.data.length } : { node: element, at: element.childNodes.length };
-    }
-    function pgCharRect(range, point) {
-        range.setStart(point.node, point.at);
-        range.setEnd(point.node, point.at + point.size);
-        const rects = range.getClientRects();
-        return rects.length ? rects[rects.length - 1] : null;
-    }
-    // 這一段最後一行第一個字的位置；只有一行時回傳 -1。
-    function pgLastLineStart(element) {
-        const points = pgTextPoints(element), range = document.createRange();
-        let top = null;
-        for (let t = points.length - 1; t >= 0; t--) {
-            const rect = pgCharRect(range, points[t]);
-            if (!rect) continue;
-            if (top === null) top = rect.top;
-            else if (rect.top < top - 2) return points[t + 1].offset;
-        }
-        return -1;
-    }
-    // measure 的最後一段裡，最後一個完整放得下的行在哪裡結束：回傳下一行第一個字的位置；一行都放不下時回傳 -1。
-    function pgFindLineCut(measure, element, available) {
-        const style = getComputedStyle(measure);
-        const limit = measure.getBoundingClientRect().top + measure.clientTop + available - (parseFloat(style.paddingBottom) || 0) + 0.5;
-        const lineHeight = parseFloat(getComputedStyle(element).lineHeight);
-        const points = pgTextPoints(element), range = document.createRange();
-        const bottom = (index) => {
-            for (let t = index; t >= 0 && t > index - 16; t--) {
-                const rect = pgCharRect(range, points[t]);
-                if (rect) return (rect.top + rect.bottom) / 2 + (lineHeight > 0 ? lineHeight : rect.height) / 2;
-            }
-            return -Infinity;
-        };
-        let lo = -1, hi = points.length - 1;
-        while (lo < hi) {
-            const mid = (lo + hi + 1) >> 1;
-            if (bottom(mid) <= limit) lo = mid; else hi = mid - 1;
-        }
-        if (lo < 0) return -1;
-        if (lo >= points.length - 1) return pgLastLineStart(element);
-        return points[lo + 1].offset;
-    }
-    function pgTrimEdgeBreak(element, atStart) {
-        const walker = document.createTreeWalker(element, 5);
-        let node, found = null;
-        while ((node = walker.nextNode())) {
-            if (node.nodeType === 3 ? !node.data.trim() : node.nodeName !== 'BR') continue;
-            found = node;
-            if (atStart) break;
-        }
-        if (!found || found.nodeName !== 'BR') return false;
-        found.remove();
-        return true;
-    }
-    // 正文左右對齊；留在前一頁的最後一行要撐滿。段內有換行時，只撐最後一個換行之後的部分。
-    function pgJustifyLastLine(head) {
-        const breaks = head.querySelectorAll('br'), last = breaks[breaks.length - 1];
-        if (!last) { head.classList.add('rpg-split-justify'); return; }
-        const range = document.createRange();
-        range.setStartAfter(last);
-        range.setEnd(head, head.childNodes.length);
-        const end = document.createElement('span');
-        end.className = 'rpg-split-end';
-        end.append(range.extractContents());
-        last.remove();
-        head.append(end);
-    }
-    function pgSplitParagraph(element, cut) {
-        const at = pgLocateText(element, cut), range = document.createRange();
-        range.selectNodeContents(element);
-        range.setEnd(at.node, at.at);
-        const head = element.cloneNode(false);
-        head.append(range.cloneContents());
-        range.selectNodeContents(element);
-        range.setStart(at.node, at.at);
-        const tail = element.cloneNode(false);
-        tail.append(range.cloneContents());
-        const hardBreak = pgTrimEdgeBreak(tail, true);
-        pgTrimEdgeBreak(head, false);
-        head.classList.add('rpg-split-head');
-        tail.classList.add('rpg-split-tail');
-        if (!hardBreak) pgJustifyLastLine(head);
-        return { head, tail };
-    }
-    function pgTailOf(html, offset) {
-        const holder = document.createElement('div');
-        holder.innerHTML = html;
-        const element = holder.firstElementChild;
-        return element && offset > 0 ? pgSplitParagraph(element, offset).tail.outerHTML : html;
-    }
-    function pgFitLines(measure, available) {
-        const source = measure.lastElementChild;
-        let cut = pgFindLineCut(measure, source, available);
-        for (let tries = 0; cut > 0 && tries < 4; tries++) {
-            const parts = pgSplitParagraph(source, cut);
-            measure.replaceChild(parts.head, measure.lastElementChild);
-            if (measure.scrollHeight <= available) return { head: parts.head.outerHTML, tail: parts.tail.outerHTML, at: cut };
-            cut = pgLastLineStart(parts.head);
-        }
-        return null;
-    }
-
-    // 從第 from 頁開始重新量頁，之前的頁保留（生成中只重量最後幾頁）。只算頁，不畫畫面。
-    function pgMeasure(from) {
-        from = Math.max(0, Math.min(from, PG.pages.length - 1, PG.starts.length - 1));
-        const start = from > 0 ? PG.starts[from] : 0, startOffset = from > 0 ? (PG.offsets[from] || 0) : 0;
-        const display = PG.display;
-        const available = display.clientHeight > 0 ? display.clientHeight : 400;
-        const measure = document.createElement('div');
-        measure.className = display.className + ' rpg-page-measure';
-        measure.setAttribute('aria-hidden', 'true');
-        measure.style.cssText = 'position:absolute;visibility:hidden;pointer-events:none;left:-10000px;top:0;height:auto;min-height:0;overflow:visible;flex:none;';
-        measure.style.width = display.clientWidth + 'px';
-        // 放在正文旁邊（紙張容器內），容器查詢（窄紙張的留白）才會套用；放在 .text-display 後面，querySelector 仍找到正文。
-        display.after(measure);
-        const next = from > 0 ? PG.pages.slice(0, from) : [], starts = from > 0 ? PG.starts.slice(0, from) : [];
-        const offsets = from > 0 ? PG.offsets.slice(0, from) : [];
-        const pins = PG.pins;
-        let buffer = [], bufferStart = start, bufferOffset = startOffset;
-        const flush = () => { next.push(buffer.join('')); starts.push(bufferStart); offsets.push(bufferOffset); buffer = []; };
-        const fits = () => {
-            measure.classList.toggle('show-drop-cap', next.length === 0);
-            measure.innerHTML = buffer.join('');
-            return measure.scrollHeight <= available;
-        };
+    // 翻頁後捲動之前：先把 iframe 設成新的高度（同 RPG_MVU_RESIZE 的算法）。
+    // 原本高度回報要等兩個畫格，捲動訊息卻立刻送出：卡片是最後一則訊息、下一頁比較高時，捲動會被舊高度的上限擋住，
+    // 正文頂端停在畫面上緣下方（1020 就有；最後一頁改捲到地圖中線後，從最後一頁按上页時更明顯）。
+    function pgSyncFrameHeight() {
+        const frame = pgFrame();
+        if (!frame) return;
         try {
-            for (let i = start; i < PG.paras.length; i++) {
-                let paragraph = PG.paras[i];
-                // 插圖自己一頁（圖片高度要等外掛補上才知道）。
-                if (pgIsIllustration(paragraph)) {
-                    if (buffer.length) flush();
-                    next.push(paragraph); starts.push(i); offsets.push(0);
-                    continue;
-                }
-                const splittable = pgIsSplittable(paragraph);
-                let offset = i === start && splittable ? startOffset : 0;
-                if (offset > 0) paragraph = pgTailOf(paragraph, offset);
-                // 生成中已經放在某一頁的整塊區塊：前面的頁變短時仍從那一頁開始；變長放不下時留在原頁，這一頁暫時在頁內捲動。
-                const pin = !splittable && pins ? pins[i] : undefined;
-                if (pin !== undefined && buffer.length && next.length < pin) flush();
-                for (;;) {
-                    if (!buffer.length) { bufferStart = i; bufferOffset = offset; }
-                    buffer.push(paragraph);
-                    if (fits()) break;
-                    if (splittable) {
-                        const cut = pgFitLines(measure, available);
-                        if (cut) {
-                            buffer[buffer.length - 1] = cut.head;
-                            flush();
-                            paragraph = cut.tail;
-                            offset += cut.at;
-                            continue;
-                        }
-                    } else if (pin === next.length) break;
-                    if (buffer.length > 1) { buffer.pop(); flush(); continue; }
-                    break;   // 單獨一段仍放不下：這一頁在頁內往下捲。
-                }
-                if (!splittable && pins && pins[i] === undefined) pins[i] = next.length;
-            }
-            if (buffer.length) flush();
-        } finally { measure.remove(); }
-        PG.pages = next.length ? next : [''];
-        PG.starts = next.length ? starts : [0];
-        PG.offsets = next.length ? offsets : [0];
-        PG.pageParas = PG.paras;
+            const h = Math.max(720, Math.ceil(_measureTrueHeight()));
+            if (h > frame.offsetHeight || frame.offsetHeight - h > 4) frame.style.height = h + 'px';
+        } catch (e) { /* 宿主不同來源時照原本等高度回報 */ }
     }
 
-    // 讀者目前所在頁的起點（第幾段、段內第幾個字）。起點之前的內容都沒變就沿用；否則回到開頭。
-    function pgReadingAnchor() {
-        const page = state.currPage;
-        const anchor = PG.starts[page] || 0, offset = PG.offsets[page] || 0;
-        if (PG.pageParas === PG.paras) return { para: anchor, offset };
-        if (!PG.pageParas) return { para: 0, offset: 0 };
-        const limit = Math.min(anchor, PG.paras.length);
-        for (let i = 0; i < limit; i++) if (PG.pageParas[i] !== PG.paras[i]) return { para: 0, offset: 0 };
-        if (limit < anchor || !offset) return { para: limit, offset: 0 };
-        const same = PG.pageParas[anchor] === PG.paras[anchor] ||
-            pgTextOf(PG.pageParas[anchor]).slice(0, offset) === pgTextOf(PG.paras[anchor]).slice(0, offset);
-        return { para: anchor, offset: same ? offset : 0 };
-    }
-    function pgPageOf(anchor) {
-        for (let k = PG.starts.length - 1; k > 0; k--) {
-            if (PG.starts[k] < anchor.para || (PG.starts[k] === anchor.para && (PG.offsets[k] || 0) <= anchor.offset)) return k;
-        }
-        return 0;
-    }
-
-    function pgPaginate() {
-        const anchor = pgReadingAnchor();
-        // 生成中整份重新分頁（換高度、寬度、字體）：記住的頁碼屬於舊版面，清掉後在新版面重記。
-        if (isGenerating) PG.pins = {};
-        pgMeasure(0);
-        state.currPage = pgPageOf(anchor);
-        if (isGenerating) PG.streamPaging = true;
-    }
-
-    // 生成中：前面寫完的頁不會再變，只重量最後幾頁；頁碼停在讀者所在的頁。
-    function pgStreamPaginate() {
-        // 檢查最後兩張已完成的頁：比這一頁用到的原始段落（含跨到下一頁的那一段）有沒有變。
-        let from = Math.max(0, PG.pages.length - 3);
-        while (from < PG.pages.length - 1 && PG.pageParas) {
-            const last = PG.offsets[from + 1] ? PG.starts[from + 1] : PG.starts[from + 1] - 1;
-            if (last >= PG.paras.length) break;
-            let i = PG.starts[from];
-            for (; i <= last && PG.pageParas[i] === PG.paras[i]; i++);
-            if (i <= last) break;
-            from++;
-        }
-        pgMeasure(from);
-        state.currPage = Math.min(state.currPage, PG.pages.length - 1);
-    }
-
-    // refreshUI 的分頁分支（取代原本的 sliceToPages）。回傳畫面是否換了內容。
-    function pgRenderPaged() {
-        const display = PG.display;
-        if (!display || !display.clientHeight) { PG.layoutKey = ''; return false; }   // 看不到時不分頁，大小恢復後再分
-        const layoutKey = display.clientWidth + 'x' + display.clientHeight;
-        if (PG.key !== state.rawText) {
-            PG.key = state.rawText;
-            pgCaptureParas();
-            if (isGenerating && PG.streamPaging && layoutKey === PG.layoutKey && !PG.dirty) pgStreamPaginate();
-            else pgPaginate();
-            PG.layoutKey = layoutKey;
-            PG.dirty = false;
-        } else if (PG.dirty || layoutKey !== PG.layoutKey) {
-            pgPaginate();
-            PG.layoutKey = layoutKey;
-            PG.dirty = false;
-        }
-        state.pages = PG.pages;
-        state.currPage = Math.max(0, Math.min(state.currPage, PG.pages.length - 1));
-        const html = PG.pages[state.currPage];
-        const startKey = PG.starts[state.currPage] + ':' + PG.offsets[state.currPage];
-        let changed = false;
-        if (_textRenderCache.element !== display || _textRenderCache.mode !== 'paged' || _textRenderCache.html !== html) {
-            // 同一頁（同一個起點）長出新文字或重排：維持捲動位置，生成中原本在底部就跟著往下；換頁從頂端開始。
-            const samePage = _textRenderCache.mode === 'paged' && PG.shownIndex === state.currPage && PG.shownStart === startKey;
-            const atBottom = display.scrollHeight - display.clientHeight - display.scrollTop < 40;
-            const previousTop = display.scrollTop;
-            display.innerHTML = html;
-            _textRenderCache.element = display;
-            _textRenderCache.mode = 'paged';
-            _textRenderCache.html = html;
-            _textRenderCache.paragraphs = [];
-            display.scrollTop = samePage ? (isGenerating && atBottom ? display.scrollHeight : previousTop) : 0;
-            changed = true;
-        }
-        PG.shownIndex = state.currPage;
-        PG.shownStart = startKey;
-        const pageLabel = (state.currPage + 1) + '/' + PG.pages.length;
-        if (els.pageNum && els.pageNum.textContent !== pageLabel) els.pageNum.textContent = pageLabel;
-        updateButtons();
-        // 首字放大只在第 1 頁（refreshUI 之後也會設同樣的值）；先設好再判斷這一頁放不放得下。
-        display.classList.toggle('show-drop-cap', state.currPage === 0 && !!state.rawText.trim());
-        pgSyncMore();
-        requestAnimationFrame(pgSyncMore);   // 外掛補圖等稍後的變化
-        return changed;
+    // 翻頁後的捲動（scrollToTextArea 一開始呼叫）。回傳 true 表示已處理，不再送 RPG_MVU_SCROLL_TO_TEXT。
+    // 翻到最後一頁（分頁模式、兩頁以上）：捲到地圖區域的中線（中線貼齊聊天區可見範圍的上緣）。
+    // 其他頁照 1020 捲回正文頂端（回傳 false）。拿不到宿主（不同來源）時也回傳 false，照原本的做法。
+    function pgPageTurnScroll() {
+        pgSyncFrameHeight();
+        if (!state.isPaged || !state.pages || state.pages.length < 2 || state.currPage !== state.pages.length - 1) return false;
+        const frame = pgFrame(), sc = pgScroller();
+        if (!frame || !sc || !PG.map || PG.map.offsetParent === null || !PG.map.offsetHeight) return false;
+        const mapBox = PG.map.getBoundingClientRect();
+        const middle = frame.getBoundingClientRect().top + mapBox.top + mapBox.height / 2;   // 宿主座標
+        sc.scrollTop += middle - sc.getBoundingClientRect().top;
+        return true;
     }
 
     // refreshUI 的全文分支：沿用原本只重畫尾端的做法；生成中原本在底部就跟著往下，否則維持位置。
@@ -11027,14 +10625,11 @@ if (typeof window.setLayout === 'function') {
         const atBottom = d.scrollHeight - d.clientHeight - d.scrollTop < 40, previousTop = d.scrollTop;
         const changed = renderFullTextParagraphs();
         if (changed) d.scrollTop = isGenerating && atBottom ? d.scrollHeight : previousTop;
-        PG.shownIndex = -1;
-        pgSyncMore();
         return changed;
     }
 
     pgInit();
     // ==== [分頁改版 1117] 結束 ====================================================
-
     const refreshUI = () => {
         if (_rpgLifetime.signal.aborted) return;
         if (!els.display) {
@@ -11065,10 +10660,30 @@ if (typeof window.setLayout === 'function') {
         }
 
         let contentChanged = false;
-        // [分頁改版 1117] 依實際高度分頁（pgRenderPaged）；全文沿用尾端重畫並跟隨底部（pgRenderFull）。
         if (state.isPaged) {
-            contentChanged = pgRenderPaged();
+            if (_pagesCacheKey !== state.rawText) {
+                state.pages = sliceToPages(state.rawText);
+                _pagesCacheKey = state.rawText;
+            }
+            if (state.currPage >= Math.max(1, state.pages.length)) {
+                state.currPage = Math.max(0, state.pages.length - 1);
+            }
+
+            const pageHTML = state.pages[state.currPage];
+            if (_textRenderCache.element !== els.display || _textRenderCache.mode !== 'paged' ||
+                _textRenderCache.html !== pageHTML) {
+                els.display.innerHTML = pageHTML;
+                _textRenderCache.element = els.display;
+                _textRenderCache.mode = 'paged';
+                _textRenderCache.html = pageHTML;
+                _textRenderCache.paragraphs = [];
+                contentChanged = true;
+            }
+            const pageLabel = (state.currPage + 1) + '/' + state.pages.length;
+            if (els.pageNum.textContent !== pageLabel) els.pageNum.textContent = pageLabel;
+            updateButtons();
         } else {
+            // [分頁改版 1117] 全文模式在固定高度的正文框內捲動；生成中原本在底部就跟著往下（pgRenderFull）。
             contentChanged = pgRenderFull();
         }
         els.display.classList.toggle('show-drop-cap',
@@ -14419,8 +14034,14 @@ await syncGameState();
         // UI 相關
         els.modeBtn.onclick = (e) => {
     e.preventDefault();
-    // [分頁改版 1117] 切換時停在讀者所在的段落（見 pgSetReadingMode）；原本一律回到第 1 頁。
-    pgSetReadingMode(!state.isPaged);
+
+    state.isPaged = !state.isPaged;
+    root.classList.toggle('paged-mode', state.isPaged);
+    els.modeBtn.innerText = state.isPaged ? '切换全文' : '切换分页';   // [分頁改版 1117] 按鈕縮成四字
+    state.currPage = 0;
+
+    refreshUI();
+    requestParentResize();
 };
         els.prevBtn.onclick = () => {
     if (state.isPaged && state.currPage > 0) {
