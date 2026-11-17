@@ -9464,7 +9464,8 @@ function extractStateContent(rawString) {
     let cleaned = rawString
         .replace(/<thinking>[\s\S]*?<\/thinking>/gi, '')
         .replace(/<think>[\s\S]*?<\/think>/gi, '')
-        .replace(/\[metacognition\][\s\S]*?\[\/metacognition\]/gi, '');
+        .replace(/\[metacognition\][\s\S]*?\[\/metacognition\]/gi, '')
+        .replace(/<check>[\s\S]*?<\/check>/gi, '');   // [分頁改版 1117] 也清除 <check></check>
     // 2. 提取標籤
     const match = cleaned.match(/<JSONPatch>([\s\S]*?)<\/JSONPatch>/i);
     return match ? match[1].trim() : null;
@@ -10516,6 +10517,7 @@ if (typeof window.setLayout === 'function') {
     const PG = {
         root: null, area: null, display: null, paper: null, foot: null, map: null, modeBtn: null, stateRow: 33,
         progress: null, moreFrame: 0,
+        PLACEHOLDER: "<p class='placeholder-text'>谱写崭新篇章...</p>",   // 同分頁模式（sliceToPages）的佔位文字
         areaFrame: 0, areaH: 0, narrowWidth: 0, info: null,
         MIN_AREA: 300,      // 全文模式的正文框（含上下留白）至少這麼高；畫面太矮時優先保住正文，地圖露出少於一半
         NARROW: 600         // 卡片寬度小於這個值算窄版（手機）
@@ -10696,12 +10698,28 @@ if (typeof window.setLayout === 'function') {
         if (PG.progress) PG.progress.textContent = scrollable ? Math.min(100, Math.round((d.scrollTop + view) / total * 100)) + '%' : '';
     }
 
-    // refreshUI 的全文分支：沿用原本只重畫尾端的做法；生成中原本在底部就跟著往下，否則維持位置。
+    // refreshUI 的全文分支：沿用原本只重畫尾端的做法。
+    // 捲動：生成中原本在底部就跟著往下；生成結束那一次（以及之後的重畫）若原本就在全文模式的底部，也跟著往下
+    // （MVU 在畫最後一段前就先結束「生成中」，原本最後一段會留在畫面下方）。剛從分頁切過來、不在生成中時維持在頂端。
+    // 還沒有正文時（正文標籤出現前）顯示和分頁模式相同的佔位文字，不留空白的正文框。
     function pgRenderFull() {
         const d = PG.display || els.display;
         const atBottom = d.scrollHeight - d.clientHeight - d.scrollTop < 40, previousTop = d.scrollTop;
-        const changed = renderFullTextParagraphs();
-        if (changed) d.scrollTop = isGenerating && atBottom ? d.scrollHeight : previousTop;
+        const wasFull = _textRenderCache.element === d && _textRenderCache.mode === 'full';
+        let changed;
+        if (!state.rawText || !state.rawText.trim()) {
+            changed = _textRenderCache.element !== d || _textRenderCache.mode !== 'full-empty';
+            if (changed) {
+                d.innerHTML = PG.PLACEHOLDER;
+                _textRenderCache.element = d;
+                _textRenderCache.mode = 'full-empty';   // 下一次有正文時整個重畫（佔位文字會被清掉）
+                _textRenderCache.html = null;
+                _textRenderCache.paragraphs = [];
+            }
+        } else {
+            changed = renderFullTextParagraphs();
+        }
+        if (changed) d.scrollTop = atBottom && (isGenerating || wasFull) ? d.scrollHeight : previousTop;
         pgScheduleMore();
         return changed;
     }
