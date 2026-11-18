@@ -1297,6 +1297,9 @@ html:not(.rpg-classic) .rpg-v7-root :is(.bag-scaler, .quest-scaler) .cat-btn {
         line-height: 1.9;
         letter-spacing: 0.03em;
         text-shadow: 0 1px 1px rgba(0,0,0,0.1); /* 輕微陰影增加可讀性 */
+        /* [標點壓縮 1118] 不壓縮相鄰的全形標點：壓縮跨不過對白的 span，一行剛好靠壓縮才放得下時，
+           Chrome 會把整句對白推到下一行、上一行被左右對齊拉開。 */
+        text-spacing-trim: space-all;
     }
     .rpg-v7-root .text-display p { 
         text-indent: 2em;
