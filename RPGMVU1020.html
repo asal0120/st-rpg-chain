@@ -1155,83 +1155,127 @@ html:not(.rpg-classic) .rpg-v7-root :is(.bag-scaler, .quest-scaler) .cat-btn {
         font-style: italic;
         padding: 6px 0;
     }
-    /* === [柏寶繪適配] 圖片懸浮操作按鈕 === */
-    .rpg-bbi-wrap {
-        position: relative;
-        display: inline-block;
-        width: 100%;
+    /* === [柏寶繪 1117] 圖卡：沒有外框，圖片照原比例填滿寬度（高度不超過一頁）；顏色沿用正文配色（--study-*，沒有時用 --text-color 等） ===
+       --bbi-ratio（寬÷高）在圖片載入後由程式設定；沒有圖時照提示詞的直式／橫式預留位置，出圖時版面不跳動。
+       操作收進圖片右上角的「⋯」：觸控點開，滑鼠移過去就出現。生成中是蓋在圖上的遮罩；錯誤與警告疊在圖片底部。 */
+    .rpg-v7-root .rpg-img-placeholder[data-img-type="bbi"] { margin: 0; min-height: 0; }
+    .rpg-v7-root .rpg-bbi-anchor {
+        --bbi-ink: var(--study-ink, var(--text-color, #d0c8b6));
+        --bbi-dim: var(--study-muted, var(--text-color, #aaa08e));
+        --bbi-accent: var(--study-accent, var(--p-gold, #c5a059));
+        --bbi-line: var(--study-line, var(--menu-border, #8a734b));
+        --bbi-panel: var(--study-panel, var(--menu-bg, #191c22));
+        --bbi-soft: var(--study-selected, rgba(138, 115, 75, 0.16));
+        --bbi-h: max(120px, calc(var(--pg-area-h, 480px) - 60px));
+        display: block; margin: 0; padding: 0; color: var(--bbi-ink); font-size: 13px; line-height: 1.6;
+        text-indent: 0; letter-spacing: normal; text-align: center;
     }
-    .rpg-bbi-actions {
-        position: relative;
-        display: flex;
-        justify-content: flex-end;
-        flex-wrap: wrap;
-        gap: 6px;
-        margin: 6px 0;
-        opacity: 1;
-        transition: opacity 0.25s ease;
-        z-index: 10;
+    .rpg-v7-root.paged-mode .rpg-bbi-anchor { --bbi-h: max(120px, calc(var(--pg-img-h, var(--pg-area-h, 480px)) - 60px)); }
+    .rpg-v7-root .rpg-bbi-anchor [hidden] { display: none !important; }
+    .rpg-v7-root .rpg-bbi-body { display: block; }
+    .rpg-v7-root .rpg-bbi-stage {
+        --bbi-ratio: 0.6667; position: relative; display: block; margin: 0 auto; border-radius: 8px; overflow: hidden;
+        width: min(100%, max(140px, calc(var(--bbi-h) * var(--bbi-ratio))));
     }
-    .rpg-bbi-wrap:hover .rpg-bbi-actions,
-    .rpg-bbi-wrap:focus-within .rpg-bbi-actions {
-        opacity: 1;
+    .rpg-v7-root .rpg-bbi-stage[data-size="landscape"] { --bbi-ratio: 1.5; }
+    .rpg-v7-root .rpg-bbi-stage[data-placeholder="1"] { aspect-ratio: var(--bbi-ratio); background: var(--bbi-soft); }
+    .rpg-v7-root .rpg-bbi-picture { display: block; }
+    .rpg-v7-root .text-display p.rpg-img-para .rpg-bbi-picture img {
+        display: block; width: 100%; height: auto; max-width: none; max-height: none; object-fit: fill;
+        margin: 0; border-radius: 0; box-shadow: none; opacity: 1; cursor: zoom-in;
     }
-    .rpg-bbi-btn {
-        background: var(--menu-bg, rgba(0,0,0,0.55));
-        border: 1px solid var(--menu-border, rgba(255,255,255,0.15));
-        color: var(--menu-text, rgba(255,255,255,0.85));
-        border-radius: 6px;
-        padding: 4px 8px;
-        min-height: 32px;
-        font-size: 0.75em;
-        cursor: pointer;
-        backdrop-filter: blur(4px);
-        transition: background 0.2s, color 0.2s;
-        white-space: nowrap;
+    .rpg-v7-root .rpg-bbi-pending, .rpg-v7-root .rpg-bbi-busy {
+        position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 16px;
     }
-    .rpg-bbi-btn:hover {
-        background: var(--menu-hover-bg, rgba(255,255,255,0.2));
-        color: var(--menu-text, #fff); border-color: var(--menu-hover-text, #fff);
+    .rpg-v7-root .rpg-bbi-busy {
+        background: color-mix(in srgb, var(--bbi-panel) 62%, transparent); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
     }
-    .rpg-bbi-btn:disabled { opacity: 0.5; cursor: default; }
-    .rpg-bbi-btn:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
-    .rpg-bbi-btn[hidden], .rpg-bbi-status[hidden] { display: none; }
-    .rpg-bbi-status, .rpg-bbi-empty-text {
-        display: block;
-        color: var(--text-color, #d0c8b6);
-        font-size: 0.78em;
-        line-height: 1.5;
-        padding: 6px 0;
-        overflow-wrap: anywhere;
+    .rpg-v7-root .rpg-bbi-hint, .rpg-v7-root .rpg-bbi-busy-text { max-width: 24em; color: var(--bbi-dim); font-size: 12px; overflow-wrap: anywhere; }
+    .rpg-v7-root .rpg-bbi-spin {
+        width: 22px; height: 22px; border: 2px solid var(--bbi-line); border-top-color: var(--bbi-accent); border-radius: 50%;
+        animation: rpg-bbi-spin 0.8s linear infinite;
     }
-    @media (pointer: coarse) { .rpg-bbi-btn { min-height: 40px; padding: 6px 10px; } }
-    .rpg-bbi-prompt-panel {
-        position: relative;
-        background: rgba(0,0,0,0.75);
-        color: rgba(255,255,255,0.9);
-        font-size: 0.72em;
-        line-height: 1.5;
-        padding: 8px 10px;
-        border-radius: 0 0 8px 8px;
-        backdrop-filter: blur(6px);
-        max-height: 240px;
-        overflow-y: auto;
-        word-break: break-all;
-        z-index: 10;
+    @keyframes rpg-bbi-spin { to { transform: rotate(360deg); } }
+    .rpg-v7-root .rpg-bbi-anchor button { font: inherit; cursor: pointer; touch-action: manipulation; }
+    .rpg-v7-root .rpg-bbi-anchor button:focus-visible { outline: 2px solid var(--bbi-accent); outline-offset: 2px; }
+    .rpg-v7-root .rpg-bbi-anchor button:disabled { opacity: 0.45; cursor: default; }
+    .rpg-v7-root .rpg-bbi-pill {
+        min-height: 34px; padding: 0 18px; border: 1px solid var(--bbi-accent); border-radius: 999px;
+        background: var(--bbi-accent); color: var(--bbi-panel); font-size: 13px;
     }
-    .rpg-bbi-prompt-panel button {
-        background: rgba(255,255,255,0.15);
-        border: none;
-        color: rgba(255,255,255,0.8);
-        border-radius: 4px;
-        padding: 2px 8px;
-        font-size: 0.9em;
-        cursor: pointer;
-        margin-top: 4px;
+    .rpg-v7-root .rpg-bbi-ghost {
+        min-height: 28px; padding: 0 14px; border: 1px solid var(--bbi-line); border-radius: 999px;
+        background: var(--bbi-panel); color: var(--bbi-ink); font-size: 12px;
     }
-    .rpg-bbi-prompt-panel button:hover {
-        background: rgba(255,255,255,0.3);
+    .rpg-v7-root .rpg-bbi-ghost:hover:not(:disabled) { border-color: var(--bbi-accent); color: var(--bbi-accent); }
+    .rpg-v7-root .rpg-bbi-tools {
+        position: absolute; top: 8px; right: 8px; z-index: 3; display: flex; flex-direction: row-reverse; align-items: flex-start; gap: 6px; max-width: calc(100% - 16px);
     }
+    .rpg-v7-root .rpg-bbi-menu { display: none; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
+    .rpg-v7-root .rpg-bbi-tools[data-open="1"] .rpg-bbi-menu { display: flex; }
+    /* 滑鼠移上去自動展開：只限主要輸入是滑鼠的裝置。S Pen 手機等會回報 hover: hover，但主要輸入是手指（pointer: coarse），
+       點過「⋯」後的懸停與焦點會讓選單收不起來，所以不用 :focus-within，鍵盤操作改看 :focus-visible。
+       data-open="0"：使用者點「⋯」收起，懸停或焦點都不再展開，直到滑鼠離開。 */
+    @media (hover: hover) and (pointer: fine) { .rpg-v7-root .rpg-bbi-tools:hover .rpg-bbi-menu { display: flex; } }
+    .rpg-v7-root .rpg-bbi-tools:has(:focus-visible) .rpg-bbi-menu { display: flex; }
+    .rpg-v7-root .rpg-bbi-tools[data-open="0"] .rpg-bbi-menu { display: none; }
+    /* 壓在圖上的圓鈕用半透明黑底，任何圖、任何主題都看得清楚。 */
+    .rpg-v7-root .rpg-bbi-fab {
+        display: inline-flex; flex: none; align-items: center; justify-content: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 50%;
+        background: rgba(0, 0, 0, 0.55); color: rgba(255, 255, 255, 0.92); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+    }
+    .rpg-v7-root .rpg-bbi-fab:hover:not(:disabled) { background: rgba(0, 0, 0, 0.72); color: #fff; }
+    .rpg-v7-root .rpg-bbi-fab[aria-pressed="true"] { background: var(--bbi-accent); color: var(--bbi-panel); }
+    .rpg-v7-root .rpg-bbi-fab.rpg-bbi-danger:hover:not(:disabled) { background: #b4513e; color: #fff; }
+    .rpg-v7-root .rpg-bbi-fab svg { width: 16px; height: 16px; }
+    .rpg-v7-root .rpg-bbi-more { opacity: 0.7; }
+    .rpg-v7-root .rpg-bbi-stage:hover .rpg-bbi-more, .rpg-v7-root .rpg-bbi-tools[data-open="1"] .rpg-bbi-more,
+    .rpg-v7-root .rpg-bbi-tools:has(:focus-visible) .rpg-bbi-more { opacity: 1; }
+    /* 錯誤與警告疊在圖片底部，不另佔一行；不接收點擊，也不蓋到右上角的「⋯」。 */
+    .rpg-v7-root .rpg-bbi-status {
+        position: absolute; left: 8px; right: 8px; bottom: 8px; z-index: 2; max-height: calc(100% - 56px); overflow: hidden; pointer-events: none;
+        display: block; padding: 4px 10px; border-radius: 6px; background: rgba(0, 0, 0, 0.62); color: rgba(255, 255, 255, 0.92);
+        font-size: 12px; line-height: 1.5; overflow-wrap: anywhere;
+    }
+    .rpg-v7-root .rpg-bbi-prompt { position: relative; display: block; margin-top: 6px; padding: 9px 64px 9px 10px; border-radius: 6px; background: var(--bbi-soft); text-align: left; }
+    .rpg-v7-root .rpg-bbi-prompt-text { display: block; max-height: 220px; overflow-y: auto; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 12px; user-select: text; }
+    .rpg-v7-root .rpg-bbi-prompt .rpg-bbi-ghost { position: absolute; top: 6px; right: 6px; }
+    /* 只剩舊提示詞的圖：左上角標籤。 */
+    .rpg-v7-root .rpg-bbi-badge {
+        position: absolute; top: 8px; left: 8px; z-index: 2; padding: 2px 9px; border-radius: 999px;
+        background: rgba(180, 120, 40, 0.88); color: #fff; font-size: 11px; line-height: 1.6; pointer-events: none;
+    }
+    /* 同一位置有多張圖：右下角翻頁。 */
+    .rpg-v7-root .rpg-bbi-pager {
+        position: absolute; right: 8px; bottom: 8px; z-index: 3; display: inline-flex; align-items: center; gap: 2px; padding: 2px; border-radius: 999px;
+        background: rgba(0, 0, 0, 0.55); color: rgba(255, 255, 255, 0.92); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+    }
+    .rpg-v7-root .rpg-bbi-page { display: inline-flex; flex: none; align-items: center; justify-content: center; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: inherit; }
+    .rpg-v7-root .rpg-bbi-page svg { width: 14px; height: 14px; }
+    .rpg-v7-root .rpg-bbi-page:hover:not(:disabled) { background: rgba(255, 255, 255, 0.16); }
+    .rpg-v7-root .rpg-bbi-count { min-width: 3em; font-size: 12px; font-variant-numeric: tabular-nums; }
+    .rpg-v7-root .rpg-bbi-pager:not([hidden]) ~ .rpg-bbi-status { right: 112px; }
+    /* 收合後的細條：點一下展開。 */
+    .rpg-v7-root .rpg-bbi-bar {
+        display: flex; align-items: center; gap: 8px; width: 100%; min-height: 36px; padding: 0 12px; border: 1px dashed var(--bbi-line); border-radius: 8px;
+        background: var(--bbi-soft); color: var(--bbi-dim); font-size: 12px; text-align: left;
+    }
+    .rpg-v7-root .rpg-bbi-bar:hover { border-color: var(--bbi-accent); color: var(--bbi-ink); }
+    .rpg-v7-root .rpg-bbi-bar svg { flex: none; width: 16px; height: 16px; }
+    .rpg-v7-root .rpg-bbi-bar-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .rpg-v7-root .rpg-bbi-bar-text[data-error="1"] { color: #c0634f; }
+    .rpg-v7-root .rpg-bbi-bar-count { flex: none; }
+    /* 觸控裝置：每個按鈕的可點範圍至少 40px */
+    @media (pointer: coarse) {
+        .rpg-v7-root .rpg-bbi-fab { width: 40px; height: 40px; }
+        /* 選單每排最多 3 顆（3 × 40px ＋ 2 × 6px）：連同「⋯」排成上 4 下 3，不會剩一顆單獨一排。 */
+        .rpg-v7-root .rpg-bbi-menu { max-width: 132px; }
+        .rpg-v7-root .rpg-bbi-page { width: 40px; height: 40px; }
+        .rpg-v7-root .rpg-bbi-pager:not([hidden]) ~ .rpg-bbi-status { right: 140px; }
+        .rpg-v7-root .rpg-bbi-bar { min-height: 44px; }
+        .rpg-v7-root .rpg-bbi-pill, .rpg-v7-root .rpg-bbi-ghost { min-height: 40px; }
+    }
+    @media (prefers-reduced-motion: reduce) { .rpg-v7-root .rpg-bbi-spin { animation: none; } }
 
     .highlight-dialogue {
         color: var(--color-dialogue);
@@ -1265,6 +1309,30 @@ html:not(.rpg-classic) .rpg-v7-root :is(.bag-scaler, .quest-scaler) .cat-btn {
         text-align: center;
     }
     
+    /* === [圖片插件適配 1117] 插圖段落：單獨一頁；高度不超過正文框（--pg-area-h，沒有時 480px）減上下留白；不裁切 === */
+    .rpg-v7-root .text-display p.rpg-img-para { text-indent: 0; text-align: center; margin: 0 0 0.6em 0; }
+    .rpg-v7-root .text-display.show-drop-cap p.rpg-img-para:first-child::first-letter {
+        font-size: inherit; float: none; line-height: inherit; margin-right: 0; color: inherit; font-family: inherit; font-weight: inherit;
+    }
+    .rpg-v7-root .text-display p.rpg-img-para img, .rpg-v7-root .text-display p.rpg-img-para video {
+        max-width: 100%; max-height: max(120px, calc(var(--pg-area-h, 480px) - 60px)); width: auto; height: auto; object-fit: contain;
+    }
+    /* 分頁模式的圖片頁：上限改用 --pg-img-h（紙張、按鈕列、變量列剛好放滿聊天區時的正文框高度，不保留地圖），只影響圖片頁 */
+    .rpg-v7-root.paged-mode .text-display p.rpg-img-para img, .rpg-v7-root.paged-mode .text-display p.rpg-img-para video {
+        max-height: max(120px, calc(var(--pg-img-h, var(--pg-area-h, 480px)) - 60px));
+    }
+    .rpg-xb-anchor, .rpg-chatu8-anchor, .rpg-ld-anchor, .rpg-plug-fb {
+        display: block; text-align: center; text-indent: 0; letter-spacing: normal; overflow-wrap: anywhere;
+        color: var(--text-color, #d0c8b6); font-size: 12px; line-height: 1.6;
+    }
+    .rpg-xb-anchor, .rpg-chatu8-anchor, .rpg-ld-pending, .rpg-ld-missing { opacity: 0.55; }
+    .rpg-xb-anchor:has(.xb-nd-img), .rpg-chatu8-anchor:has(img, video, button) { opacity: 1; }
+    .rpg-xb-anchor .xb-nd-img { margin: 0 auto; }
+    .rpg-ld-anchor img {
+        display: block; margin: 0 auto; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        cursor: pointer; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; touch-action: manipulation;
+    }
+    .rpg-plug-fb img { display: block; margin: 0 auto; border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.4); }
     /* 首字下沉 */
     .rpg-v7-root .text-display.show-drop-cap p:first-child::first-letter {
         font-size: 2.4em;
@@ -9819,6 +9887,520 @@ if (typeof window.setLayout === 'function') {
     return '';
 };
 
+    // === [圖片插件適配 1117] ====================================================
+    // 小白X（xiaobaixDraw）、chatu8、LocalDream 的插圖，以及柏寶繪的佔位（柏寶繪的邏輯不動，只照同樣的排版）：
+    //   - 每個圖片標記拆成單獨一段、單獨一頁（分頁時不以字數計算）；
+    //   - 小白X、chatu8 把「標記原文」放進錨點，由插件自己換成圖卡（小白X：mountMessageImages；chatu8：自己掃描 iframe）；
+    //   - LocalDream 直接讀同源 IndexedDB「LocalDream_DB」的圖（只讀、不建立圖庫）；
+    //   - 串流中只做輕量工作，插件相關的處理等生成結束後才做（plugAfterRender）。
+    const _PLUG = {
+        dirty: false, inView: false, io: null, listening: false, idleTimer: 0, lateTimer: 0, lateTries: 0,
+        xbMount: null, xbMountAt: 0, ldDb: null, ldUrls: new Map()
+    };
+    const _PLUG_XB_RE = /\[image\s*:\s*([a-z0-9_-]+)\]|\[(?:img|图片)\s*:\s*[^\]\r\n]+\]/gi;
+    const _PLUG_LD_IMG_RE = /<img\b[^>]*\bdata-ld-hash\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)[^>]*>/gi;
+    const _PLUG_LATE_RE = /\[(?:image|img|图片)\s*:/i;
+    const plugAborted = () => _rpgLifetime.signal.aborted;
+    const plugEsc = (v) => String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    const plugQuote = (v) => String(v).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const plugIsImagePara = (p) => /^<rpg-(?:img-mark|bbi-image)\s/.test(p);
+    const plugGenerating = () => isGenerating || _stGenActive;
+
+    function plugCtx() {
+        try { return topWindow.SillyTavern?.getContext?.() || null; } catch (e) { return null; }
+    }
+    // 小白X 3.2.6 起提供 mountMessageImages；getStatus().ready 為 true 才算可用。
+    function plugXbDraw() {
+        try {
+            const draw = topWindow.xiaobaixDraw;
+            return typeof draw?.mountMessageImages === 'function' && draw.getStatus?.().ready === true ? draw : null;
+        } catch (e) { return null; }
+    }
+    // chatu8：沒安裝＝沒有設定物件；scriptEnabled 為 false／'false' 視為停用；標記預設 image###／###。
+    function plugChatu() {
+        const settings = plugCtx()?.extensionSettings?.['st-chatu8'];
+        if (!settings || typeof settings !== 'object') return { installed: false, enabled: false, start: '', end: '' };
+        const off = settings.scriptEnabled === false || settings.scriptEnabled === 'false';
+        const start = typeof settings.startTag === 'string' && settings.startTag ? settings.startTag : 'image###';
+        const end = typeof settings.endTag === 'string' && settings.endTag ? settings.endTag : '###';
+        return { installed: true, enabled: !off, start, end };
+    }
+
+    // 正文 → 段落陣列。圖片標記先換成單獨一行的 <rpg-img-mark>（柏寶繪的 <rpg-bbi-image> 也獨立成行），所以多行標記不會被拆開。
+    // 開關／插件狀態在這裡決定；標記的 HTML 在 processImageMarkers 產生。
+    function plugParagraphs(text) {
+        let s = String(text || '');
+        const mk = (kind, value) => '\n<rpg-img-mark data-k="' + kind + '" data-v="' + encodeURIComponent(value) + '"></rpg-img-mark>\n';
+        const chatu = plugChatu();
+        if (chatu.installed && s.includes(chatu.start)) {
+            // chatu8 開啟「插入原文」時寫進正文的是 <image>標記</image>（chatu8 自己組的，小寫）：外框一起拿掉。
+            // 不拿掉的話，瀏覽器會把 <image> 當成沒有網址的 <img>，圖片頁前後多出空白段落。自訂標記本身是 <image> 時不處理。
+            if (chatu.start !== '<image>' && s.includes('<image>')) {
+                s = s.replace(new RegExp('<image>\\s*(' + plugQuote(chatu.start) + '[\\s\\S]*?' + plugQuote(chatu.end) + ')\\s*</image>', 'g'), '$1');
+            }
+            const rx = new RegExp(plugQuote(chatu.start) + '[\\s\\S]*?' + plugQuote(chatu.end), 'g');
+            s = s.replace(rx, (full) => chatu.enabled ? mk('ct', full) : '\n');
+        }
+        if (!chatu.enabled && /<image>/i.test(s)) s = s.replace(/<image>[\s\S]*?<\/image>/gi, '\n');
+        if (s.includes('data-ld-hash')) {
+            s = s.replace(_PLUG_LD_IMG_RE, (tag) => {
+                const m = /\bdata-ld-hash\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/i.exec(tag);
+                const hash = m ? (m[1] ?? m[2] ?? m[3] ?? '') : '';
+                return /^[a-z0-9_-]{1,64}$/i.test(hash) ? mk('ld', hash) : '\n';
+            });
+        }
+        if (/<local_img>/i.test(s)) {
+            s = s.replace(/<local_img>([\s\S]*?)(?:<\/local_img>|$)/gi, (full, inner) => mk('ldp', inner.trim()));
+        }
+        if (s.includes('[')) {
+            const xbReady = !!plugXbDraw();
+            s = s.replace(_PLUG_XB_RE, (full, id) => id ? mk(xbReady ? 'xb' : 'xbf', full) : (xbReady ? mk('xb', full) : full));
+        }
+        if (s.includes('<rpg-bbi-image ')) s = s.replace(/<rpg-bbi-image [^>]*><\/rpg-bbi-image>/g, '\n$&\n');
+        return s.split(/\n+/).filter(p => p.trim());
+    }
+
+    // <rpg-img-mark> → 錨點 HTML（processImageMarkers 呼叫）。
+    function plugSlotHtml(kind, v) {
+        const e = plugEsc(v);
+        switch (kind) {
+            case 'xb': {
+                const m = /^\[image\s*:\s*([a-z0-9_-]+)\]$/i.exec(v);
+                return '<span class="rpg-xb-anchor" data-rpg-xb-slot="' + plugEsc(m ? m[1] : '') + '">' + e + '</span>';
+            }
+            case 'xbf': {
+                const m = /^\[image\s*:\s*([a-z0-9_-]+)\]$/i.exec(v);
+                return '<span class="rpg-plug-fb" data-rpg-fb="' + plugEsc(m ? m[1] : '') + '"><span class="rpg-img-loading">\u{1F5BC}\uFE0F</span></span>';
+            }
+            case 'ct': return '<span class="rpg-chatu8-anchor">' + e + '</span>';
+            case 'ld': return '<span class="rpg-ld-anchor" data-rpg-ld="' + e + '"></span>';
+            case 'ldp': return '<span class="rpg-ld-anchor rpg-ld-pending" data-rpg-ld="">' + e + '</span>';
+        }
+        return '';
+    }
+
+    // ── 閱讀位置：原文改變後重新分頁，讀者目前頁之前的文字沒變 → 停在同一段文字（或同一張圖）所在的頁 ──
+    let _pgParas = null, _pgFirst = null;   // 最近一次分頁的段落與每頁第一段的序號（sliceToPages 寫入）
+    const plugSqueeze = (t) => String(t).replace(/\s+/g, '');
+    function plugLayoutSnapshot() {
+        return _pgParas ? { paras: _pgParas, first: _pgFirst, page: state.currPage } : null;
+    }
+    // 回傳新分頁裡應該停的頁碼；文字有任何不同或找不到時回傳 -1（呼叫端維持原本的行為：保留頁碼並限制範圍）。
+    function plugAnchorPage(prev, paras, first) {
+        if (!prev.first.length || !first.length) return -1;
+        const page = Math.min(Math.max(prev.page, 0), prev.first.length - 1);
+        const a = prev.first[page];
+        const onImage = plugIsImagePara(prev.paras[a]);
+        let before = '', skip = 0;          // 目前頁之前的文字；skip＝緊接在最後一段文字後面、目前頁之前的圖片張數
+        for (let i = 0; i < a; i++) {
+            if (plugIsImagePara(prev.paras[i])) skip++;
+            else { before += plugSqueeze(prev.paras[i]); skip = 0; }
+        }
+        let seen = '', at = -1;
+        for (let j = 0; j <= paras.length; j++) {
+            if (seen === before) { at = j; break; }
+            if (j === paras.length) break;
+            if (plugIsImagePara(paras[j])) continue;
+            seen += plugSqueeze(paras[j]);
+            if (seen.length > before.length || !before.startsWith(seen)) return -1;
+        }
+        if (at < 0) return -1;
+        let target = -1;
+        if (onImage) {
+            target = at + skip;
+            for (let k = at; k <= target; k++) if (k >= paras.length || !plugIsImagePara(paras[k])) return -1;
+        } else {
+            for (let k = at; k < paras.length; k++) if (!plugIsImagePara(paras[k])) { target = k; break; }
+            if (target < 0) return -1;
+        }
+        for (let p = first.length - 1; p >= 0; p--) if (first[p] <= target) return p;
+        return -1;
+    }
+    function plugKeepReadingPosition(prev) {
+        if (!prev || !_pgParas) return;
+        const page = plugAnchorPage(prev, _pgParas, _pgFirst);
+        if (page >= 0) state.currPage = page;
+    }
+
+    // ── 重畫之後的插件處理 ──
+    // 串流中不做（只排一個稍後的檢查）；生成結束後的第一次呼叫才掛載、掃描、讀圖。
+    function plugAfterRender(changed) {
+        if (plugAborted() || !els.display) return;
+        if (changed) _PLUG.dirty = true;
+        if (plugGenerating()) {
+            clearTimeout(_PLUG.idleTimer);
+            _PLUG.idleTimer = setTimeout(() => plugAfterRender(false), 1200);
+            return;
+        }
+        plugRun();
+    }
+    function plugRun() {
+        const dirty = _PLUG.dirty;
+        _PLUG.dirty = false;
+        if (dirty) _PLUG.lateTries = 0;
+        plugInstall();
+        plugSweepLd();
+        if (dirty && plugChatu().enabled) {
+            // chatu8 在處理過的元素記下 data-chatu8-processed，之後只補圖不再找新標記；正文重畫後清掉，讓它重新找。
+            document.querySelectorAll('[data-chatu8-processed]').forEach((el) => {
+                delete el.dataset.chatu8Processed;
+                delete el.dataset.chatu8ContentLength;
+            });
+            plugNudgeChatu();
+        }
+        plugSyncXb(dirty);
+        plugSyncLd();
+        plugSyncFallback();
+        plugArmLate();
+        bbiNotify();   // 生成結束後柏寶繪圖卡重新整理（串流中只顯示、不能操作）
+    }
+    // chatu8 只在 iframe 內容變動時重新掃描，不看捲動。iframe 捲進畫面時若還有沒換成按鈕的標記，
+    // 加入再移除一個空文字節點，讓它掃描這一次。
+    function plugNudgeChatu() {
+        if (!_PLUG.inView || !document.body) return;
+        if (!els.display.querySelector('.rpg-chatu8-anchor:not(:has(.st-chatu8-image-button, .image-tag-button))')) return;
+        const node = document.createTextNode('');
+        document.body.append(node);
+        node.remove();
+    }
+    function plugInstall() {
+        const display = els.display;
+        if (_PLUG.listening || !display) return;
+        _PLUG.listening = true;
+        const signal = _rpgLifetime.signal;
+        display.addEventListener('click', plugOnDblClick, { signal });
+        display.addEventListener('contextmenu', (ev) => {
+            if (ev.target?.closest?.('.rpg-ld-anchor img')) ev.preventDefault();
+        }, { signal });
+        if (typeof IntersectionObserver === 'function') {
+            _PLUG.io = new IntersectionObserver((entries) => {
+                const was = _PLUG.inView;
+                _PLUG.inView = !!entries[entries.length - 1]?.isIntersecting;
+                if (_PLUG.inView && !was && !plugGenerating() && plugChatu().enabled) plugNudgeChatu();
+            }, { threshold: 0 });
+            _PLUG.io.observe(display);
+        }
+        signal.addEventListener('abort', () => {
+            clearTimeout(_PLUG.idleTimer);
+            clearTimeout(_PLUG.lateTimer);
+            _PLUG.io?.disconnect();
+            plugReleaseXb();
+            for (const info of _PLUG.ldUrls.values()) if (info.owned) { try { URL.revokeObjectURL(info.url); } catch (e) {} }
+            _PLUG.ldUrls.clear();
+            try { _PLUG.ldDb?.then((db) => db?.close()); } catch (e) {}
+            _PLUG.ldDb = null;
+        }, { once: true });
+    }
+    // 整頁重畫（小白X 晚載入時）；閱讀位置由 plugKeepReadingPosition 保留。
+    function plugForceRedraw() {
+        _pagesCacheKey = null;
+        _textRenderCache.element = null;
+        _textRenderCache.mode = null;
+        _textRenderCache.html = null;
+        _textRenderCache.paragraphs = [];
+        refreshUI();
+    }
+
+    // ── 小白X ──
+    function plugReleaseXb() {
+        const mount = _PLUG.xbMount;
+        _PLUG.xbMount = null;
+        try { mount?.destroy?.(); } catch (e) { console.warn('[RPG] 小白X圖卡釋放失敗', e); }
+    }
+    function plugSyncXb(dirty) {
+        const anchors = els.display.querySelectorAll('.rpg-xb-anchor');
+        if (!anchors.length) { if (_PLUG.xbMount) plugReleaseXb(); return; }
+        const draw = plugXbDraw();
+        if (!draw) return;   // 小白X 還沒載入：plugArmLate 等它
+        const waiting = els.display.querySelector('.rpg-xb-anchor:not(:has(.xb-nd-img))');
+        if (!dirty && (!waiting || Date.now() - _PLUG.xbMountAt < 1500)) return;
+        const id = Number(window.RPG_MESSAGE_ID);
+        if (window.RPG_MESSAGE_ID === null || window.RPG_MESSAGE_ID === undefined || !Number.isFinite(id)) return;
+        plugReleaseXb();
+        try {
+            _PLUG.xbMount = draw.mountMessageImages({ element: els.display, messageId: id });
+            _PLUG.xbMountAt = Date.now();
+            Promise.resolve(_PLUG.xbMount?.refresh?.()).catch((e) => console.warn('[RPG] 小白X圖卡更新失敗', e));
+        } catch (e) {
+            _PLUG.xbMount = null;
+            console.warn('[RPG] 小白X圖卡掛載失敗', e);
+        }
+    }
+    // 小白X 比主檔晚載入：文字裡有它的標記又還沒就緒時，每秒看一次，就緒後整頁重畫（改成錨點並掛載）。
+    function plugArmLate() {
+        clearTimeout(_PLUG.lateTimer);
+        if (plugXbDraw() || !_PLUG_LATE_RE.test(state.rawText || '') || _PLUG.lateTries >= 120) return;
+        _PLUG.lateTimer = setTimeout(() => {
+            _PLUG.lateTries++;
+            if (plugAborted()) return;
+            if (plugXbDraw() && !plugGenerating()) plugForceRedraw();
+            else plugArmLate();
+        }, 1000);
+    }
+
+    // 小白X 不可用時的後備（搬自宿主 MVU渲染用1.txt 的 lwbIndexedDBLookup／lwbPreviewUrl，改用 iframe 自己的 indexedDB）。
+    // 只讀資料庫，不建立（onupgradeneeded 一律 abort）。
+    function plugLwbPreviewUrl(preview) {
+        if (!preview || preview.status === 'failed') return null;
+        const savedUrl = String(preview.savedUrl || '').trim();
+        if (savedUrl) return savedUrl;
+        const raw = String(preview.base64 || '').trim();
+        if (!raw) return null;
+        return /^data:[^;]+;base64,/i.test(raw) ? raw : 'data:image/png;base64,' + raw;
+    }
+    function plugLwbLookup(slotId, signal) {
+        return new Promise((resolve) => {
+            let db = null, tx = null, finished = false, timeout = null;
+            const finish = (value) => {
+                if (finished) return;
+                finished = true;
+                clearTimeout(timeout);
+                signal?.removeEventListener('abort', cancel);
+                if (value === null) { try { tx?.abort(); } catch (e) {} }
+                try { db?.close(); } catch (e) {}
+                resolve(value);
+            };
+            const cancel = () => finish(null);
+            if (!slotId || signal?.aborted) { cancel(); return; }
+            signal?.addEventListener('abort', cancel, { once: true });
+            timeout = setTimeout(cancel, 15000);
+            try {
+                const request = window.indexedDB.open('xb_novel_draw_previews');
+                request.onerror = request.onblocked = cancel;
+                request.onupgradeneeded = () => {
+                    try { request.transaction.abort(); } catch (e) {}
+                    cancel();
+                };
+                request.onsuccess = () => {
+                    db = request.result;
+                    if (finished) { db.close(); return; }
+                    db.onversionchange = cancel;
+                    db.onclose = cancel;
+                    try {
+                        if (!db.objectStoreNames.contains('previews')) { cancel(); return; }
+                        const stores = ['previews'];
+                        const hasSelections = db.objectStoreNames.contains('selections');
+                        if (hasSelections) stores.push('selections');
+                        tx = db.transaction(stores, 'readonly');
+                        tx.onerror = tx.onabort = cancel;
+                        const store = tx.objectStore('previews');
+                        let records = [], selectedImgId = null;
+                        tx.oncomplete = () => {
+                            if (finished) return;
+                            records.sort((a, b) => (Number(b.timestamp) || 0) - (Number(a.timestamp) || 0));
+                            const selected = records.find((record) => record.imgId === selectedImgId);
+                            const preview = selected || records.find((record) => plugLwbPreviewUrl(record));
+                            finish(plugLwbPreviewUrl(preview));
+                        };
+                        if (hasSelections) {
+                            const selection = tx.objectStore('selections').get(slotId);
+                            selection.onsuccess = () => { selectedImgId = selection.result?.selectedImgId || null; };
+                            selection.onerror = cancel;
+                        }
+                        if (store.indexNames.contains('slotId')) {
+                            const query = store.index('slotId').getAll(slotId);
+                            query.onerror = cancel;
+                            query.onsuccess = () => {
+                                if (finished) return;
+                                if (query.result?.length) records = query.result;
+                                else {
+                                    const legacy = store.get(slotId);
+                                    legacy.onerror = cancel;
+                                    legacy.onsuccess = () => {
+                                        const record = legacy.result;
+                                        if (record && (record.slotId === slotId || record.imgId === slotId)) records = [record];
+                                    };
+                                }
+                            };
+                        } else {
+                            const cursorRequest = store.openCursor();
+                            cursorRequest.onerror = cancel;
+                            cursorRequest.onsuccess = () => {
+                                if (finished) return;
+                                const cursor = cursorRequest.result;
+                                if (!cursor) return;
+                                const record = cursor.value;
+                                if (record && (record.slotId === slotId || record.imgId === slotId)) records.push(record);
+                                cursor.continue();
+                            };
+                        }
+                    } catch (e) { cancel(); }
+                };
+            } catch (e) { cancel(); }
+        });
+    }
+    async function plugXbFallbackUrl(slotId) {
+        if (!slotId) return null;
+        try {
+            const esc = (topWindow.CSS || CSS).escape(String(slotId));
+            const doc = topWindow.document;
+            const widget = doc.querySelector('.xb-nd-img[data-slot-id="' + esc + '"]') || doc.querySelector('.xb-nd-img[data-img-id="' + esc + '"]');
+            if (widget) {
+                if (widget.dataset.state === 'failed') return null;
+                const img = widget.querySelector('img');
+                if (img?.getAttribute('src')?.trim() && img.src && !img.src.endsWith('/')) return img.src;
+            }
+        } catch (e) {}
+        return await plugLwbLookup(String(slotId), _rpgLifetime.signal);
+    }
+    function plugSyncFallback() {
+        els.display.querySelectorAll('.rpg-plug-fb:not(.rpg-plug-fb-busy):not(.rpg-plug-fb-done)').forEach((node) => {
+            node.classList.add('rpg-plug-fb-busy');
+            plugResolveFallback(node, 0);
+        });
+    }
+    async function plugResolveFallback(node, attempt) {
+        let url = null;
+        try { url = await plugXbFallbackUrl(node.dataset.rpgFb); } catch (e) {}
+        if (plugAborted() || !node.isConnected) return;
+        if (url) {
+            const img = document.createElement('img');
+            img.className = 'rpg-inline-image rpg-img-visible';
+            img.alt = node.dataset.rpgFb || '';
+            img.onload = () => { if (!plugAborted()) requestParentResize(); };
+            img.src = url;
+            node.replaceChildren(img);
+            node.classList.remove('rpg-plug-fb-busy');
+            node.classList.add('rpg-plug-fb-done');
+            return;
+        }
+        const delays = [500, 1500, 3000, 6000];
+        if (attempt < delays.length) {
+            setTimeout(() => {
+                if (plugAborted() || !node.isConnected) return;
+                plugResolveFallback(node, attempt + 1);
+            }, delays[attempt]);
+            return;
+        }
+        const failed = document.createElement('span');
+        failed.className = 'rpg-img-failed';
+        failed.textContent = '\uD83D\uDDBC\uFE0F ' + (node.dataset.rpgFb || '');
+        node.replaceChildren(failed);
+        node.classList.remove('rpg-plug-fb-busy');
+        node.classList.add('rpg-plug-fb-done');
+    }
+
+    // ── LocalDream ──
+    // 圖庫：IndexedDB「LocalDream_DB」的 images（keyPath hash，值有 .blob）。只讀；資料庫不存在時 onupgradeneeded 直接 abort，不會建立。
+    function plugLdDatabase() {
+        if (_PLUG.ldDb) return _PLUG.ldDb;
+        _PLUG.ldDb = new Promise((resolve) => {
+            let request;
+            try { request = window.indexedDB.open('LocalDream_DB'); } catch (e) { resolve(null); return; }
+            request.onupgradeneeded = () => { try { request.transaction.abort(); } catch (e) {} };
+            request.onerror = () => resolve(null);
+            request.onblocked = () => resolve(null);
+            request.onsuccess = () => {
+                const db = request.result;
+                db.onversionchange = () => { db.close(); _PLUG.ldDb = null; };
+                if (!db.objectStoreNames.contains('images')) { db.close(); resolve(null); return; }
+                resolve(db);
+            };
+        }).then((db) => { if (!db) _PLUG.ldDb = null; return db; });
+        return _PLUG.ldDb;
+    }
+    // 回傳 Blob；圖庫沒有這張圖 → null；讀不到資料庫 → undefined。
+    async function plugLdImage(hash) {
+        const db = await plugLdDatabase();
+        if (!db) return undefined;
+        return new Promise((resolve) => {
+            try {
+                const request = db.transaction('images', 'readonly').objectStore('images').get(hash);
+                request.onsuccess = () => {
+                    const blob = request.result?.blob;
+                    resolve(blob && typeof blob.size === 'number' && typeof blob.type === 'string' ? blob : null);
+                };
+                request.onerror = () => resolve(undefined);
+            } catch (e) { resolve(undefined); }
+        });
+    }
+    // 父頁面原訊息裡的 LocalDream 圖（display:none；LocalDream 補圖後 src 是 blob:）。
+    function plugLdParentImages(hash) {
+        try {
+            const id = Number(window.RPG_MESSAGE_ID);
+            if (window.RPG_MESSAGE_ID === null || window.RPG_MESSAGE_ID === undefined || !Number.isFinite(id)) return [];
+            const mes = topWindow.document.querySelector('.mes[mesid="' + id + '"]');
+            if (!mes) return [];
+            return Array.from(mes.querySelectorAll('img[data-ld-hash]')).filter((img) => img.getAttribute('data-ld-hash') === hash);
+        } catch (e) { return []; }
+    }
+    async function plugLdSource(hash) {
+        const blob = await plugLdImage(hash);
+        if (blob) return { url: URL.createObjectURL(blob), owned: true };
+        if (blob === undefined) {
+            const img = plugLdParentImages(hash).find((el) => /^blob:/i.test(el.src));
+            if (img) return { url: img.src, owned: false };
+        }
+        return null;
+    }
+    function plugSyncLd() {
+        els.display.querySelectorAll('.rpg-ld-anchor:not(.rpg-ld-pending):not(.rpg-ld-missing):not(.rpg-ld-busy)').forEach((node) => {
+            const hash = node.dataset.rpgLd || '';
+            if (!hash || node.querySelector('img')) return;
+            node.classList.add('rpg-ld-busy');
+            plugLdSource(hash).then((source) => {
+                node.classList.remove('rpg-ld-busy');
+                if (plugAborted() || !node.isConnected || node.querySelector('img')) {
+                    if (source?.owned) URL.revokeObjectURL(source.url);
+                    return;
+                }
+                if (!source) {
+                    node.classList.add('rpg-ld-missing');
+                    node.textContent = 'LocalDream 圖庫裡已沒有這張圖';
+                    requestParentResize();
+                    return;
+                }
+                const img = document.createElement('img');
+                img.alt = '';
+                img.draggable = false;
+                img.onload = () => { if (!plugAborted()) requestParentResize(); };
+                img.src = source.url;
+                _PLUG.ldUrls.set(img, source);
+                node.append(img);
+            }).catch((e) => {
+                node.classList.remove('rpg-ld-busy');
+                console.warn('[RPG] LocalDream 圖片讀取失敗', e);
+            });
+        });
+    }
+    // 圖片已經不在畫面上（重畫、翻頁）→ 收回 blob URL。
+    function plugSweepLd() {
+        for (const [img, info] of _PLUG.ldUrls) {
+            if (img.isConnected) continue;
+            if (info.owned) { try { URL.revokeObjectURL(info.url); } catch (e) {} }
+            _PLUG.ldUrls.delete(img);
+        }
+    }
+    // 點主檔裡的圖：LocalDream 在酒館 body 偵測「同一個 IMG 400ms 內點兩次」開操作面板。
+    // 每點一次就對父頁面原訊息裡同 hash 的圖（同一個元素）送一次 click，雙擊由 LocalDream 自己判斷
+    // （手機上雙擊不一定觸發 dblclick，所以不用 dblclick）。
+    function plugOnDblClick(ev) {
+        const img = ev.target?.closest?.('.rpg-ld-anchor img');
+        if (!img) return;
+        const hash = img.closest('.rpg-ld-anchor')?.dataset.rpgLd || '';
+        const target = hash ? plugLdParentImages(hash)[0] : null;
+        if (!target) return;
+        const view = target.ownerDocument.defaultView;
+        target.dispatchEvent(new view.MouseEvent('click', { bubbles: true, cancelable: true, view }));
+        ev.preventDefault();
+    }
+
+    // ── 事後改寫原文（MESSAGE_UPDATED／MESSAGE_EDITED）：外掛（LocalDream、小白X、柏寶繪…）改了這一樓的 chat[id].mes ──
+    // 宿主只在 MESSAGE_EDITED 時才重送原文；這裡自己更新正文。走 updateTemplateVariables(mes, {rerender:true})：
+    // 不寫變量、不進入「生成中」。宿主之後再送同樣的原文時，正文沒變就不會重畫。
+    function plugOnMessageRewritten(messageId) {
+        if (plugAborted()) return;
+        const mine = window.RPG_MESSAGE_ID;
+        if (mine === null || mine === undefined || mine === '' || Number(messageId) !== Number(mine)) return;
+        bbiPrune();   // 標籤已經改了的位置，進行中的柏寶繪生成取消
+        if (plugGenerating()) return;
+        let mes = '';
+        try { mes = plugCtx()?.chat?.[Number(messageId)]?.mes; } catch (e) { return; }
+        if (typeof mes !== 'string' || !mes || mes === state.rawMessage) return;
+        if (typeof window.updateTemplateVariables === 'function') window.updateTemplateVariables(mes, { rerender: true });
+    }
+    // === [圖片插件適配 1117] 結束 ================================================
+
     // === [新增] 圖片標記攔截 — sentinel 方式保護 HTML 不被高亮 regex 破壞 ===
     const _IMG_SENTINEL = '__RPGIMG_';
 
@@ -9827,44 +10409,13 @@ if (typeof window.setLayout === 'function') {
         const slots = [];
         let result = text;
 
-        // 1. LittleWhiteBox [image:slotId]
-        if (result.includes('[image:')) {
-            result = result.replace(/\[image:([^\]]+)\]/g, (match, slotId) => {
+        // 1–3. [圖片插件適配 1117] 小白X／chatu8／LocalDream 的標記（plugParagraphs 已換成單獨一行的 <rpg-img-mark>）
+        if (result.includes('<rpg-img-mark ')) {
+            result = result.replace(/<rpg-img-mark data-k="([a-z]+)" data-v="([^"]*)"><\/rpg-img-mark>/g, (match, kind, enc) => {
+                let value = '';
+                try { value = decodeURIComponent(enc); } catch (e) { return ''; }
                 const idx = slots.length;
-                const eid = String(slotId).replace(/&/g, '&amp;').replace(/"/g, '&quot;');
-                slots.push(
-                    '<span class="rpg-img-placeholder" data-img-type="lwb" data-img-id="' + eid + '">' +
-                    '<span class="rpg-img-loading">\u{1F5BC}\uFE0F</span></span>'
-                );
-                return _IMG_SENTINEL + idx + '__';
-            });
-        }
-
-        // 2. LocalDream <img data-ld-hash="..." data-ld-prompt="..." .../>
-        if (result.includes('data-ld-hash')) {
-            result = result.replace(
-                /<img\s[^>]*?data-ld-hash="([^"]*)"[^>]*?data-ld-prompt="([^"]*)"[^>]*?\/?>/gi,
-                (match, hash, prompt) => {
-                    const idx = slots.length;
-                    slots.push(
-                        '<span class="rpg-img-placeholder" data-img-type="ld" data-img-id="' + hash +
-                        '" data-img-prompt="' + prompt + '">' +
-                        '<span class="rpg-img-loading">\u{1F5BC}\uFE0F</span></span>'
-                    );
-                    return _IMG_SENTINEL + idx + '__';
-                }
-            );
-        }
-
-        // 3. st-chatu8 <image>prompt</image>
-        if (/<image>/i.test(result)) {
-            result = result.replace(/<image>([\s\S]*?)<\/image>/gi, (match, p) => {
-                const idx = slots.length;
-                const encoded = encodeURIComponent(p.trim());
-                slots.push(
-                    '<span class="rpg-img-placeholder" data-img-type="chatu8" data-img-prompt="' + encoded + '">' +
-                    '<span class="rpg-img-loading">\u{1F5BC}\uFE0F</span></span>'
-                );
+                slots.push(plugSlotHtml(kind, value));
                 return _IMG_SENTINEL + idx + '__';
             });
         }
@@ -9931,7 +10482,7 @@ if (typeof window.setLayout === 'function') {
         // Step final: 還原圖片標記 sentinel → 實際 HTML
         if (_imgSlots) {
             for (let i = 0; i < _imgSlots.length; i++) {
-                res = res.replace(_IMG_SENTINEL + i + '__', _imgSlots[i]);
+                res = res.replace(_IMG_SENTINEL + i + '__', () => _imgSlots[i]);
             }
         }
 
@@ -9961,8 +10512,9 @@ if (typeof window.setLayout === 'function') {
 
     // === [修改] 分頁切割函數 (導入記憶化快取) ===
     const sliceToPages = (text) => {
-        const paragraphs = text.split(/\n+/).filter(p => p.trim());
+        const paragraphs = plugParagraphs(text);   // [圖片插件適配 1117] 圖片標記獨立成段
         const pages = [];
+        const pageFirst = [];   // 每頁第一個段落的序號（保留閱讀位置用）
         let currentPageHTML = "";
         let currentPageLength = 0;
         let paragraphsInPage = 0;
@@ -9971,6 +10523,16 @@ if (typeof window.setLayout === 'function') {
         
         paragraphs.forEach((p, index) => {
             const pLen = p.length;
+            // [圖片插件適配 1117] 圖片段落單獨一頁，不以字數計算
+            if (plugIsImagePara(p)) {
+                if (currentPageHTML !== "") pages.push(currentPageHTML);
+                currentPageHTML = "";
+                currentPageLength = 0;
+                paragraphsInPage = 0;
+                pageFirst.push(index);
+                pages.push('<p class="rpg-img-para">' + getFormattedParagraph(p, !isGenerating || index < paragraphs.length - 1) + '</p>');
+                return;
+            }
             // 判斷是否換頁
             if ((currentPageLength + pLen > MAX_CHARS_PER_PAGE || paragraphsInPage >= MAX_PARAS_PER_PAGE) && currentPageHTML !== "") {
                 pages.push(currentPageHTML);
@@ -9984,10 +10546,13 @@ if (typeof window.setLayout === 'function') {
 
             currentPageHTML += `<p>${styledText}</p>`;
             currentPageLength += pLen;
+            if (paragraphsInPage === 0) pageFirst.push(index);
             paragraphsInPage++;
         });
 
         if (currentPageHTML) pages.push(currentPageHTML);
+        _pgParas = paragraphs;
+        _pgFirst = pageFirst;
         return pages.length > 0 ? pages : ["<p class='placeholder-text'>谱写崭新篇章...</p>"];
     };
 
@@ -10471,7 +11036,7 @@ if (typeof window.setLayout === 'function') {
     const _textRenderCache = { element: null, mode: null, html: null, paragraphs: [] };
 
     function renderFullTextParagraphs() {
-        const paragraphs = state.rawText.split(/\n+/).filter(p => p.trim());
+        const paragraphs = plugParagraphs(state.rawText);   // [圖片插件適配 1117]
         const sameDisplay = _textRenderCache.element === els.display && _textRenderCache.mode === 'full';
         const previous = sameDisplay ? _textRenderCache.paragraphs : [];
         let unchanged = 0;
@@ -10486,7 +11051,8 @@ if (typeof window.setLayout === 'function') {
         const next = previous.slice(0, unchanged);
         const template = document.createElement('template');
         for (let i = unchanged; i < paragraphs.length; i++) {
-            template.innerHTML = '<p>' + getFormattedParagraph(paragraphs[i], !isGenerating || i < paragraphs.length - 1) + '</p>';
+            template.innerHTML = '<p' + (plugIsImagePara(paragraphs[i]) ? ' class="rpg-img-para"' : '') + '>' +
+                getFormattedParagraph(paragraphs[i], !isGenerating || i < paragraphs.length - 1) + '</p>';
             fragment.appendChild(template.content);
             // 邊界不影響排版，也能保留插件在段落內插入或替換的圖片節點。
             const end = document.createComment('rpg-paragraph');
@@ -10519,7 +11085,9 @@ if (typeof window.setLayout === 'function') {
         progress: null, moreFrame: 0,
         PLACEHOLDER: "<p class='placeholder-text'>谱写崭新篇章...</p>",   // 同分頁模式（sliceToPages）的佔位文字
         areaFrame: 0, areaH: 0, narrowWidth: 0, info: null,
-        MIN_AREA: 300,      // 全文模式的正文框（含上下留白）至少這麼高；畫面太矮時優先保住正文，地圖露出少於一半
+        MIN_AREA: 300,      // 全文模式的正文框（含上下留白）至少這麼高；畫面太矮時優先保住正文，地圖露出少於 MAP_PEEK
+        MAP_PEEK: 1 / 3,    // [圖片插件適配 1117] 地圖露出的比例（原本 1/2）：全文模式的正文框高度、分頁模式最後一頁的捲動都用它
+        imgH: 0,            // [圖片插件適配 1117] 圖片頁的正文框高度上限（--pg-img-h）
         NARROW: 600         // 卡片寬度小於這個值算窄版（手機）
     };
 
@@ -10574,7 +11142,10 @@ if (typeof window.setLayout === 'function') {
         const below = (paperBox.bottom - areaBox.bottom) + pgStateRowHeight(); // 正文框 → 變量列下緣（含按鈕列）
         const mapH = PG.map && PG.map.offsetParent !== null ? PG.map.offsetHeight : 0;
         const fit = vis.h - 10 - above - below;     // 只放紙張、按鈕列與變量列時，正文框最多多高
-        let h = fit - Math.ceil(mapH / 2);          // 再留一半地圖
+        // [圖片插件適配 1117] 分頁模式的圖片頁不保留地圖：紙張、按鈕列、變量列剛好放滿聊天區（只影響圖片頁，見 --pg-img-h 的樣式）
+        const imgH = Math.max(160, Math.round(fit));
+        if (Math.abs(PG.imgH - imgH) >= 2) { PG.imgH = imgH; root.style.setProperty('--pg-img-h', imgH + 'px'); }
+        let h = fit - Math.ceil(mapH * PG.MAP_PEEK);   // 再留地圖下方 MAP_PEEK（1/3）
         if (h < PG.MIN_AREA) h = Math.min(PG.MIN_AREA, fit);
         h = Math.max(160, Math.round(h));
         PG.narrowWidth = narrow ? width : 0;
@@ -10588,6 +11159,41 @@ if (typeof window.setLayout === 'function') {
         if (!state.isPaged) requestParentResize();
     }
 
+    // ── [圖片插件適配 1117] 閱讀模式：沒有偏好時寬螢幕分頁、窄版全文；玩家切換後存在聊天變數「阅读模式」──
+    const READ_MODE_VAR_KEY = '阅读模式';   // 值：分页／全文；沒有或其他值＝照螢幕寬度決定
+    function pgChatId() {
+        try { return String(topWindow.SillyTavern?.getContext?.()?.getCurrentChatId?.() ?? ''); } catch (e) { return ''; }
+    }
+    function pgSetPaged(paged, rerender) {
+        if (state.isPaged === paged) return;
+        state.isPaged = paged;
+        PG.root.classList.toggle('paged-mode', paged);
+        if (PG.modeBtn) PG.modeBtn.textContent = paged ? '切换全文' : '切换分页';
+        state.currPage = 0;
+        if (rerender) { try { refreshUI(); requestParentResize(); } catch (e) { /* 還沒初始化完：之後的渲染會照 state.isPaged */ } }
+    }
+    function pgReadModeInit() {
+        const chat = pgChatId();
+        let known = null;
+        try { const c = topWindow.__RPG_READ_MODE; if (c && c.chat === chat) known = c.mode; } catch (e) { /* 拿不到宿主 */ }
+        const width = PG.root.clientWidth || document.documentElement.clientWidth || window.innerWidth || 0;
+        pgSetPaged(known === '分页' ? true : known === '全文' ? false : !(width && width < PG.NARROW), false);
+        (async () => {
+            let raw;
+            try { raw = String(await triggerSlash('/getvar key=' + READ_MODE_VAR_KEY) ?? '').trim(); } catch (e) { return; }
+            if (_rpgLifetime.signal.aborted || PG.readModeTouched) return;   // 讀回來之前玩家已經切換：以玩家為準
+            const mode = raw === '分页' || raw === '全文' ? raw : '';
+            try { topWindow.__RPG_READ_MODE = { chat, mode }; } catch (e) { /* 拿不到宿主 */ }
+            if (mode) pgSetPaged(mode === '分页', true);
+        })();
+    }
+    function pgSaveReadMode() {
+        const mode = state.isPaged ? '分页' : '全文';
+        PG.readModeTouched = true;
+        try { topWindow.__RPG_READ_MODE = { chat: pgChatId(), mode }; } catch (e) { /* 拿不到宿主 */ }
+        try { triggerSlash('/setvar key=' + READ_MODE_VAR_KEY + ' ' + mode).catch(() => {}); } catch (e) { /* 酒館 API 不可用：只在這次有效 */ }
+    }
+
     // ── 按鈕列、監聽 ──
     function pgInit() {
         const root = document.querySelector('.rpg-v7-root');
@@ -10596,6 +11202,7 @@ if (typeof window.setLayout === 'function') {
         const paper = root.querySelector('.mvu-paper-space');
         if (!area || !display || !paper) return;
         Object.assign(PG, { root, area, display, paper, map: root.querySelector('.map-area') });
+        pgReadModeInit();   // [圖片插件適配 1117] 寬螢幕分頁、窄版全文；有偏好時照偏好
 
         // 按鈕列在紙張外：紙張下緣與變量列之間（.mvu-paper-space 裡、疊紙裝飾後面，所以全文模式的高度計算自動算進去）。
         // 左：原本的切換鈕（整個搬過來，點擊處理不變，文字縮成四字）；右：原本的上页／頁碼／下页（大小與樣式照原版）。
@@ -10651,7 +11258,9 @@ if (typeof window.setLayout === 'function') {
         // 給預覽頁與驗收腳本讀的狀態（只讀）。
         window.__PG_TRIAL = {
             info: () => Object.assign({}, PG.info, {
-                areaH: PG.areaH, pages: (state.pages || []).length, page: state.currPage, paged: state.isPaged
+                areaH: PG.areaH, pages: (state.pages || []).length, page: state.currPage, paged: state.isPaged,
+                mapPeek: PG.MAP_PEEK, imgH: PG.imgH,   // [圖片插件適配 1117] 給驗收腳本讀
+                readMode: true
             })
         };
     }
@@ -10668,17 +11277,57 @@ if (typeof window.setLayout === 'function') {
         } catch (e) { /* 宿主不同來源時照原本等高度回報 */ }
     }
 
+    // [圖片插件適配 1117] 翻頁後保住對齊線的位置（用戶實測 2026-11-18）：翻頁前的判斷是用舊高度做的；iframe 變高後，
+    // 宿主可能讓聊天區維持在底部（或聊天區從底部排起），正文頂端被推出畫面。新高度套用後約 0.4 秒內，
+    // 把對齊線放回 offset（距聊天區可見上緣的距離；0＝貼齊上緣）。玩家自己捲動、觸控、按鍵時立刻停止。回傳 fix，可以先立刻呼叫一次。
+    function pgHoldLine(sc, frame, local, offset) {
+        const doc = sc.ownerDocument;
+        const viewTop = () => (sc === doc.scrollingElement || sc === doc.documentElement) ? 0 : sc.getBoundingClientRect().top;
+        const wins = [window];
+        try { const hw = doc.defaultView; if (hw && hw !== window) wins.push(hw); } catch (e) { /* 只看卡片自己的事件 */ }
+        const names = ['wheel', 'touchstart', 'keydown', 'mousedown'], opts = { passive: true, capture: true };
+        let stopped = false;
+        const stop = () => { stopped = true; };
+        wins.forEach(w => names.forEach(n => w.addEventListener(n, stop, opts)));
+        const fix = () => {
+            if (stopped || _rpgLifetime.signal.aborted) return;
+            try {
+                const d = frame.getBoundingClientRect().top + local() - viewTop() - offset;
+                if (Math.abs(d) > 2) sc.scrollTop += d;
+            } catch (e) { /* iframe 已移除 */ }
+        };
+        let n = 0;
+        const tick = () => { fix(); if (++n < 4) requestAnimationFrame(tick); };
+        requestAnimationFrame(tick);
+        setTimeout(fix, 150);
+        setTimeout(() => { fix(); wins.forEach(w => names.forEach(n => w.removeEventListener(n, stop, opts))); }, 400);
+        return fix;
+    }
+
     // 翻頁後的捲動（scrollToTextArea 一開始呼叫）。回傳 true 表示已處理，不再送 RPG_MVU_SCROLL_TO_TEXT。
-    // 翻到最後一頁（分頁模式、兩頁以上）：捲到地圖區域的中線（中線貼齊聊天區可見範圍的上緣）。
-    // 其他頁照 1020 捲回正文頂端（回傳 false）。拿不到宿主（不同來源）時也回傳 false，照原本的做法。
+    // 翻到最後一頁（分頁模式、兩頁以上）：捲到地圖下方 MAP_PEEK（1/3）的對齊線（貼齊聊天區可見範圍的上緣）。
+    // 其他頁捲回正文頂端。[圖片插件適配 1117] 只往上捲：翻頁前畫面已經比目標高就不動；一般頁也由主檔自己捲。
+    // 拿不到宿主的聊天區（不同來源）時回傳 false，照原本的做法送 RPG_MVU_SCROLL_TO_TEXT 給宿主。
     function pgPageTurnScroll() {
-        pgSyncFrameHeight();
-        if (!state.isPaged || !state.pages || state.pages.length < 2 || state.currPage !== state.pages.length - 1) return false;
         const frame = pgFrame(), sc = pgScroller();
-        if (!frame || !sc || !PG.map || PG.map.offsetParent === null || !PG.map.offsetHeight) return false;
-        const mapBox = PG.map.getBoundingClientRect();
-        const middle = frame.getBoundingClientRect().top + mapBox.top + mapBox.height / 2;   // 宿主座標
-        sc.scrollTop += middle - sc.getBoundingClientRect().top;
+        if (!frame || !sc) { pgSyncFrameHeight(); return false; }
+        const lastPage = state.isPaged && state.pages && state.pages.length >= 2 && state.currPage === state.pages.length - 1;
+        let local;   // 對齊線在卡片視窗內的位置
+        if (lastPage && PG.map && PG.map.offsetParent !== null && PG.map.offsetHeight) {
+            // [圖片插件適配 1117] 對齊線：地圖下方 MAP_PEEK（1/3）留在畫面上（原本是中線）
+            local = () => { const m = PG.map.getBoundingClientRect(); return m.top + m.height * (1 - PG.MAP_PEEK); };
+        } else {
+            const textArea = document.querySelector('.text-area');
+            if (!textArea) { pgSyncFrameHeight(); return false; }
+            local = () => textArea.getBoundingClientRect().top;
+        }
+        const doc = sc.ownerDocument;
+        const viewTop = (sc === doc.scrollingElement || sc === doc.documentElement) ? 0 : sc.getBoundingClientRect().top;
+        // [圖片插件適配 1117] 只往上捲：翻頁前對齊線已在畫面內（畫面比目標高）→ 留在翻頁前的位置；在畫面上方 → 貼齊聊天區上緣。
+        // 用翻頁前的位置當目標，新高度套用後再對一次（pgHoldLine）：iframe 變高時宿主可能移動畫面。
+        const offset = Math.max(0, frame.getBoundingClientRect().top + local() - viewTop);
+        pgSyncFrameHeight();
+        pgHoldLine(sc, frame, local, offset)();
         return true;
     }
 
@@ -10758,8 +11407,10 @@ if (typeof window.setLayout === 'function') {
         let contentChanged = false;
         if (state.isPaged) {
             if (_pagesCacheKey !== state.rawText) {
+                const _prevLayout = plugLayoutSnapshot();   // [圖片插件適配 1117] 原文改變：保留閱讀位置
                 state.pages = sliceToPages(state.rawText);
                 _pagesCacheKey = state.rawText;
+                plugKeepReadingPosition(_prevLayout);
             }
             if (state.currPage >= Math.max(1, state.pages.length)) {
                 state.currPage = Math.max(0, state.pages.length - 1);
@@ -10789,6 +11440,7 @@ if (typeof window.setLayout === 'function') {
             hydrateInlineImages();
             installExternalPluginResizeObserver();
         }
+        plugAfterRender(contentChanged);   // [圖片插件適配 1117] 小白X／chatu8／LocalDream（串流中只排程）
     };
 
     // === [新增] 監視外部插件（chatu8/LWB）動態填充內容後的尺寸變化 ===
@@ -10861,170 +11513,997 @@ if (typeof window.setLayout === 'function') {
         document.querySelectorAll(_PLUGIN_WATCH_SELECTOR).forEach(_watchPluginElement);
     }
 
-    // 柏寶繪操作由 Vue 的樓層橋接處理；DOM 與進度只屬於目前 iframe。
-    const _bbiCards = new WeakMap();
-    function bbiProgressText(progress) {
-        switch (progress?.phase) {
-            case 'queued': return '等待生成…';
-            case 'generating': return '正在生成…';
-            case 'queued-remote': return '伺服器排隊中' + (Number.isFinite(progress.ahead) ? '，前方 ' + progress.ahead + ' 張' : '') + '…';
-            case 'retrying': return '限流後重試中' + (progress.attempt ? '（' + progress.attempt + '/' + progress.max + '）' : '') + '…';
-            case 'saving': return '正在保存圖片…';
-            default: return '正在生成…';
+    // === [柏寶繪 1117] ============================================================
+    // 柏寶繪（BBI）圖卡改成主檔自己做，不再使用宿主注入的 window.RPG_BBI（做法同新作）。
+    // 資料：與柏寶繪原生圖卡共用 message.extra.bbiImage = {[swipe]: {[promptHash(標籤原文)]: 紀錄[]}}，
+    //   每筆 {generationId, path, prompt, seed, status, createdAt, slotSeq}。舊的 extra.rpgBbiImages（version 1，每個位置一張）只讀不寫，能顯示、能刪除。
+    // 生成只走公開 API STBaiBaiImage（apiVersion 1）。寫入前核對目標仍是同一個聊天、同一則訊息物件、同一個 swipe、同一個標籤原文與前綴；保存失敗就撤回本次寫入。
+    // 宿主在原訊息裡的柏寶繪原生錨點與展開鈕（.rpg-bbi-toggle）維持原樣；window.rpgRefreshBbi 仍在，被呼叫時重新整理這裡的圖卡。
+    const _BBI_NATIVE = 'bbiImage', _BBI_LEGACY = 'rpgBbiImages';
+    const _BBI = {
+        jobs: new Map(), temporary: new WeakMap(), missing: new Set(), notices: new Map(), ui: new Map(),
+        saveTail: null, notifyTimer: 0, sequence: 0, installed: false, screen: null,
+        observer: null, watched: null, localCollapsed: new Map()
+    };
+    const _bbiCards = new WeakMap();    // 佔位元素 → 圖卡
+    const _bbiAnchors = new WeakMap();  // 圖卡節點 → 圖卡
+    const bbiError = (code, message) => Object.assign(new Error(message), { code });
+    const bbiAlive = () => !_rpgLifetime.signal.aborted;
+    const bbiLine = (text) => String(text || '').trim().replace(/[\r\n]+/g, ' ');
+    const bbiTagsOf = (text) => Array.from(String(text || '').matchAll(/<bbi_image>[\s\S]+?<\/bbi_image>/gi));
+    const bbiNormalizePath = (path) => { try { return decodeURI(String(path || '')); } catch (e) { return String(path || ''); } };
+    // 寫進酒館聊天紀錄的資料用酒館視窗自己的物件（iframe 離開後也不會留下別的 realm 的物件）。
+    const bbiToTop = (value) => { try { return topWindow.JSON.parse(JSON.stringify(value)); } catch (e) { return value; } };
+    function bbiApi() {
+        try {
+            const api = topWindow.STBaiBaiImage;
+            return api?.apiVersion === 1 && api.capabilities?.generate === true &&
+                typeof api.generate === 'function' && typeof api.getBackendStatus === 'function' ? api : null;
+        } catch (e) { return null; }
+    }
+    // 與柏寶繪 promptHash 相同（cyrb53，14 位十六進位）：紀錄依標籤原文分組。
+    function bbiPromptHash(text) {
+        let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
+        for (let i = 0; i < text.length; i++) {
+            const ch = text.charCodeAt(i);
+            h1 = Math.imul(h1 ^ ch, 2654435761); h2 = Math.imul(h2 ^ ch, 1597334677);
+        }
+        h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+        h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+        return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(16).padStart(14, '0');
+    }
+    const bbiGenerationId = () => 'g' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+
+    // 解析標籤：<type>comic</type>（漫畫）、<layout> 不混進提示詞；漫畫不能在這裡生成或改提示詞。
+    function bbiParse(raw) {
+        const inner = String(raw).replace(/^<bbi_image[^>]*>/i, '').replace(/<\/bbi_image>$/i, '');
+        const field = (name) => bbiLine(inner.match(new RegExp('<' + name + '>([\\s\\S]*?)</' + name + '>', 'i'))?.[1] || '');
+        const comic = field('type').toLowerCase() === 'comic';
+        let characters = [];
+        try {
+            const value = JSON.parse(inner.match(/<characters>([\s\S]*?)<\/characters>/i)?.[1] || '[]');
+            if (Array.isArray(value)) characters = value.slice(0, 32).flatMap((item) => {
+                if (!item || typeof item !== 'object' || Array.isArray(item)) return [];
+                const name = bbiLine(typeof item.name === 'string' ? item.name : '');
+                const tag = bbiLine(typeof item.tag === 'string' ? item.tag : '');
+                const nl = bbiLine(typeof item.nl === 'string' ? item.nl : '');
+                return name && tag ? [{ name, tag, nl }] : [];
+            });
+        } catch (e) {}
+        const rest = inner.replace(/<(type|layout|nl|negative|characters|size)>[\s\S]*?<\/\1>/gi, '');
+        const explicit = Array.from(rest.matchAll(/<tag>([\s\S]*?)<\/tag>/gi), (m) => bbiLine(m[1])).filter(Boolean);
+        const bare = bbiLine(rest.replace(/<tag>[\s\S]*?<\/tag>/gi, ''));
+        const size = field('size').toLowerCase();
+        const ratio = size.match(/(\d+(?:\.\d+)?)\s*[:：×xX*]\s*(\d+(?:\.\d+)?)/);
+        const landscape = ratio && Number(ratio[2]) > 0 ? Number(ratio[1]) > Number(ratio[2]) :
+            /^(l|h|w)$/.test(size) || ['landscape', 'horizontal', 'widescreen', 'wide', '横', '宽屏'].some((word) => size.includes(word));
+        return { prompt: comic ? '' : [bare, ...explicit].filter(Boolean).join(', '), nl: comic ? '' : field('nl'),
+            negative: comic ? '' : field('negative'), characters: comic ? [] : characters,
+            size: landscape ? 'landscape' : 'portrait', kind: comic ? 'comic' : 'illustration', save: true };
+    }
+    // 與柏寶繪 serializeImageTag 逐字相同：tag 為裸文字，nl／negative／characters 空就不寫，size 一定寫。
+    function bbiSerialize(content) {
+        return '<bbi_image>' + content.prompt + (content.nl ? '<nl>' + content.nl + '</nl>' : '') +
+            (content.negative ? '<negative>' + content.negative + '</negative>' : '') +
+            (content.characters.length ? '<characters>' + JSON.stringify(content.characters) + '</characters>' : '') +
+            '<size>' + content.size + '</size></bbi_image>';
+    }
+    function bbiPromptText(request) {
+        return [request.prompt, request.nl,
+            ...request.characters.map((c) => ['角色: ' + c.name, c.tag, c.nl].filter(Boolean).join('\n')),
+            request.negative ? 'Negative: ' + request.negative : ''].filter(Boolean).join('\n\n');
+    }
+
+    // ── 目標（一個圖片位置）：從目前聊天紀錄的第 seq 個標籤算出；expectedRaw 不同代表畫面上的標籤已過期 ──
+    function bbiTargetAt(seq, expectedRaw) {
+        try {
+            const context = plugCtx();
+            const rawId = window.RPG_MESSAGE_ID;
+            if (!context || rawId === null || rawId === undefined || rawId === '' || !Number.isFinite(Number(rawId))) return null;
+            const id = Number(rawId), message = context.chat?.[id];
+            if (!message) return null;
+            const source = String(message.mes || ''), tag = bbiTagsOf(source)[seq];
+            if (!tag || (expectedRaw !== undefined && tag[0] !== expectedRaw)) return null;
+            const swipe = Number.isInteger(message.swipe_id) ? message.swipe_id : 0;
+            const chatId = context.getCurrentChatId?.() ?? null;
+            return { chat: context.chat, chatId, message, id, swipe, seq, raw: tag[0], hash: bbiPromptHash(tag[0]),
+                prefix: source.slice(0, tag.index), key: swipe + ':' + seq, slotKey: chatId + '|' + id + '|' + swipe + '|' + seq };
+        } catch (e) { return null; }
+    }
+    function bbiTargetOf(ph) {
+        const seq = /^\d+$/.test(ph.dataset.imgId || '') ? Number(ph.dataset.imgId) : -1;
+        let raw = '';
+        try { raw = decodeURIComponent(ph.dataset.imgPrompt || ''); } catch (e) {}
+        return seq >= 0 && raw ? bbiTargetAt(seq, raw) : null;
+    }
+    // 寫入前核對：同一個聊天、同一則訊息物件、同一個 swipe、同一個標籤原文與前綴。
+    function bbiTargetCurrent(target) {
+        if (!bbiAlive()) return false;
+        try {
+            const context = plugCtx();
+            if (!context || Number(window.RPG_MESSAGE_ID) !== target.id) return false;
+            if (context.chat !== target.chat || context.chat[target.id] !== target.message ||
+                (context.getCurrentChatId?.() ?? null) !== target.chatId ||
+                (Number.isInteger(target.message.swipe_id) ? target.message.swipe_id : 0) !== target.swipe) return false;
+            const source = String(target.message.mes || ''), tag = bbiTagsOf(source)[target.seq];
+            return tag?.[0] === target.raw && source.slice(0, tag.index) === target.prefix;
+        } catch (e) { return false; }
+    }
+    function bbiRequireTarget(target) {
+        if (!bbiTargetCurrent(target)) throw bbiError('stale_target', '圖片所在的訊息已變更，請重新載入該樓層。');
+        return target;
+    }
+
+    // ── 紀錄 ──
+    const bbiSeqOf = (entry) => entry?.slotSeq ?? 0;
+    const bbiUsable = (entry) => entry && entry.status === 'ready' && typeof entry.path === 'string' && entry.path && !_BBI.missing.has(bbiNormalizePath(entry.path));
+    function bbiBucket(message, swipe) {
+        const store = message?.extra?.[_BBI_NATIVE];
+        const bucket = store && typeof store === 'object' ? store[String(swipe)] : null;
+        return bucket && typeof bucket === 'object' ? bucket : null;
+    }
+    // 這個提示詞、這個位置的全部圖（時間由舊到新）：原生紀錄＋舊版 rpgBbiImages＋這次執行中未存檔的圖。
+    function bbiHistory(target) {
+        const items = [];
+        const list = bbiBucket(target.message, target.swipe)?.[target.hash];
+        if (Array.isArray(list)) for (const entry of list) {
+            if (bbiUsable(entry) && bbiSeqOf(entry) === target.seq) {
+                items.push({ id: 'n:' + entry.generationId, url: entry.path, createdAt: Number(entry.createdAt) || 0,
+                    seed: entry.seed ?? null, generationId: entry.generationId, source: 'native' });
+            }
+        }
+        const legacy = target.message.extra?.[_BBI_LEGACY];
+        const saved = legacy?.version === 1 ? legacy.swipes?.[target.swipe]?.[target.seq] : null;
+        if (saved?.raw === target.raw && bbiUsable({ status: 'ready', path: saved.path })) {
+            items.push({ id: 'l:' + target.seq, url: saved.path, createdAt: Number(saved.createdAt) || 0, seed: saved.seed ?? null, source: 'legacy' });
+        }
+        for (const entry of _BBI.temporary.get(target.message)?.get(target.key) || []) {
+            if (entry.raw === target.raw) items.push({ id: entry.id, url: entry.url, createdAt: entry.createdAt, seed: entry.seed ?? null,
+                source: 'temporary', warning: entry.warning });
+        }
+        return items.sort((a, b) => a.createdAt - b.createdAt);
+    }
+    // 沒有這個提示詞的圖時：同一位置其他（舊）提示詞最新的一張，顯示並標示「舊提示詞」。
+    function bbiStale(target) {
+        const bucket = bbiBucket(target.message, target.swipe);
+        let latest = null;
+        for (const [hash, list] of Object.entries(bucket || {})) {
+            if (hash === target.hash || !Array.isArray(list)) continue;
+            for (let i = list.length - 1; i >= 0; i--) {
+                const entry = list[i];
+                if (!bbiUsable(entry) || bbiSeqOf(entry) !== target.seq) continue;
+                if (!latest || (Number(entry.createdAt) || 0) > (Number(latest.createdAt) || 0)) latest = entry;
+                break;
+            }
+        }
+        return latest ? { id: 'n:' + latest.generationId, url: latest.path, createdAt: Number(latest.createdAt) || 0,
+            seed: latest.seed ?? null, generationId: latest.generationId, source: 'native' } : null;
+    }
+    // 宿主在原訊息裡的柏寶繪原生圖卡正在生成時，讀它根元素的 data-phase（錨點數量和標籤數量一致才對得上位置）。
+    function bbiNativeSlots(id) {
+        try {
+            const mes = topWindow.document.querySelector('.mes[mesid="' + Number(id) + '"]');
+            return mes ? Array.from(mes.querySelectorAll('[data-bbi-slot],bbi_image')) : [];
+        } catch (e) { return []; }
+    }
+    function bbiNativePhase(target) {
+        try {
+            const slots = bbiNativeSlots(target.id);
+            if (!slots.length || slots.length !== bbiTagsOf(target.message.mes).length) return '';
+            const phase = slots[target.seq]?.shadowRoot?.querySelector('.bbi-figure')?.getAttribute('data-phase') || '';
+            return phase === 'queued' || phase === 'generating' ? phase : '';
+        } catch (e) { return ''; }
+    }
+    function bbiWatchNative() {
+        try {
+            const roots = bbiNativeSlots(window.RPG_MESSAGE_ID).map((slot) => slot.shadowRoot).filter(Boolean);
+            if (_BBI.watched && _BBI.watched.length === roots.length && _BBI.watched.every((root, i) => root === roots[i])) return;
+            _BBI.observer?.disconnect();
+            _BBI.watched = roots;
+            if (!roots.length || typeof topWindow.MutationObserver !== 'function') { _BBI.observer = null; return; }
+            _BBI.observer = new topWindow.MutationObserver(() => bbiNotify());
+            for (const root of roots) _BBI.observer.observe(root, { subtree: true, childList: true, attributes: true, attributeFilter: ['data-phase'] });
+        } catch (e) {}
+    }
+    function bbiState(target) {
+        const api = bbiApi(), request = bbiParse(target.raw);
+        let backend = null;
+        try { backend = api?.getBackendStatus(); }
+        catch (e) { backend = { configured: false, reason: '目前無法讀取柏寶繪設定，請稍後重試。' }; }
+        const job = _BBI.jobs.get(target.slotKey), native = bbiNativePhase(target);
+        const reason = plugGenerating() ? '訊息還在生成中，完成後才能生成圖片。' : !api ? '此柏寶繪版本尚未提供生成接口。' :
+            !backend?.configured ? backend?.reason || '請先設定柏寶繪的出圖後端。' :
+            request.kind === 'comic' ? '漫畫分鏡請用柏寶繪原生圖卡生成。' : !request.prompt ? '這張圖片缺少正向提示詞。' : '';
+        const history = bbiHistory(target), last = history[history.length - 1], notice = _BBI.notices.get(target.slotKey);
+        const character = String(target.message?.name || plugCtx()?.name2 || '');
+        return { available: !!api, canGenerate: !reason && !native, reason, promptText: bbiPromptText(request), size: request.size, character,
+            content: { prompt: request.prompt, nl: request.nl, negative: request.negative, size: request.size,
+                characters: request.characters.length, kind: request.kind },
+            editable: request.kind !== 'comic', history, stale: history.length ? null : bbiStale(target),
+            collapsed: bbiCollapsedMap().get(target.slotKey) === true, nativeBusy: native,
+            busy: !!job, canCancel: !!job && !job.committing, progress: job?.progress || null,
+            warning: last?.warning || (notice && notice.id === last?.id ? notice.text : '') };
+    }
+    // 收合狀態存在酒館視窗：重新載入 iframe 仍收合，重新整理網頁恢復展開。
+    function bbiCollapsedMap() {
+        try {
+            if (!(topWindow.__RPG_BBI_COLLAPSED__ instanceof topWindow.Map)) topWindow.__RPG_BBI_COLLAPSED__ = new topWindow.Map();
+            return topWindow.__RPG_BBI_COLLAPSED__;
+        } catch (e) { return _BBI.localCollapsed; }
+    }
+    function bbiUi(target) {
+        let ui = _BBI.ui.get(target.slotKey);
+        if (!ui) { ui = { index: 0, length: -1, error: '', image: null, url: '', ratio: 0 }; _BBI.ui.set(target.slotKey, ui); }
+        return ui;
+    }
+
+    // ── 通知與重畫 ──
+    function bbiNotify() {
+        if (!bbiAlive() || _BBI.notifyTimer) return;
+        _BBI.notifyTimer = setTimeout(() => { _BBI.notifyTimer = 0; bbiRefreshAll(); }, 16);
+    }
+    function bbiRefreshAll() {
+        if (!bbiAlive()) return;
+        const list = document.querySelectorAll('.rpg-img-placeholder[data-img-type="bbi"]');
+        if (!list.length) return;
+        list.forEach(bbiRefreshPlaceholder);
+        bbiWatchNative();
+    }
+    function bbiPrune() {
+        for (const job of _BBI.jobs.values()) if (!bbiTargetCurrent(job.target)) job.controller.abort();
+    }
+
+    // ── 寫入：所有寫入排成一列，一次一個存檔 ──
+    function bbiWaitFor(work, signal) {
+        return new Promise((resolve, reject) => {
+            const stop = () => reject(bbiError('aborted', '已取消生成。'));
+            signal.addEventListener('abort', stop, { once: true });
+            if (signal.aborted) stop();
+            Promise.resolve(work).then(resolve, reject).finally(() => signal.removeEventListener('abort', stop));
+        });
+    }
+    function bbiQueue(work, isCurrent) {
+        const run = (_BBI.saveTail || Promise.resolve()).then(() => {
+            if (isCurrent && !isCurrent()) throw bbiError('stale_target', '圖片所在的訊息已變更，未保存。');
+            return work();
+        });
+        const tail = run.catch(() => {}).finally(() => { if (_BBI.saveTail === tail) _BBI.saveTail = null; });
+        _BBI.saveTail = tail;
+        return run;
+    }
+    // 讀、建新物件、指派同步做完再存檔（柏寶繪靠物件參照判斷同時寫入）；存檔失敗就換回原物件。
+    async function bbiWriteNative(target, mutate) {
+        if (!bbiTargetCurrent(target)) throw bbiError('stale_target', '訊息已變更，未更新圖片。');
+        const context = plugCtx();
+        if (typeof context?.saveChat !== 'function') throw bbiError('save_failed', '目前無法保存聊天紀錄。');
+        const message = target.message;
+        message.extra ||= {};
+        const previous = message.extra[_BBI_NATIVE];
+        const store = previous && typeof previous === 'object' ? previous : {};
+        const changed = mutate(store);
+        if (changed === store) return false;
+        const next = bbiToTop(changed);
+        message.extra[_BBI_NATIVE] = next;
+        try { await context.saveChat(); }
+        catch (cause) {
+            if (message.extra[_BBI_NATIVE] === next) {
+                if (previous === undefined) delete message.extra[_BBI_NATIVE]; else message.extra[_BBI_NATIVE] = previous;
+            }
+            throw cause;
+        }
+        return true;
+    }
+    async function bbiWriteLegacy(target, entry) {
+        if (!bbiTargetCurrent(target)) throw bbiError('stale_target', '訊息已變更，未更新圖片。');
+        const context = plugCtx();
+        if (typeof context?.saveChat !== 'function') throw bbiError('save_failed', '目前無法保存聊天紀錄。');
+        const previous = target.message.extra?.[_BBI_LEGACY];
+        if (previous && previous.version !== 1) throw bbiError('save_failed', '圖片紀錄版本不相容。');
+        const bucket = { ...previous?.swipes?.[target.swipe] };
+        if (entry) bucket[target.seq] = entry; else delete bucket[target.seq];
+        const next = bbiToTop({ version: 1, swipes: { ...previous?.swipes, [target.swipe]: bucket } });
+        target.message.extra ||= {};
+        target.message.extra[_BBI_LEGACY] = next;
+        try { await context.saveChat(); }
+        catch (cause) {
+            if (target.message.extra[_BBI_LEGACY] === next) {
+                if (previous === undefined) delete target.message.extra[_BBI_LEGACY]; else target.message.extra[_BBI_LEGACY] = previous;
+            }
+            throw cause;
         }
     }
-    function renderBbiCard(ph, next) {
-        if (!ph.isConnected || _rpgLifetime.signal.aborted) return;
-        let card = _bbiCards.get(ph);
-        if (!card) {
-            const wrap = document.createElement('div');
-            wrap.className = 'rpg-bbi-wrap';
-            const picture = document.createElement('div');
-            const empty = document.createElement('span');
-            empty.className = 'rpg-bbi-empty-text';
-            empty.textContent = '圖片尚未生成。';
-            picture.appendChild(empty);
-            const actions = document.createElement('div');
-            actions.className = 'rpg-bbi-actions';
-            const status = document.createElement('span');
-            status.className = 'rpg-bbi-status';
-            status.setAttribute('role', 'status');
-            status.setAttribute('aria-live', 'polite');
-            const button = (label, name) => {
-                const node = document.createElement('button');
-                node.type = 'button'; node.className = 'rpg-bbi-btn rpg-bbi-' + name;
-                node.textContent = label; actions.appendChild(node); return node;
-            };
-            card = { wrap, picture, empty, actions, status, image: null, url: '', requestedUrl: '', pendingImage: null,
-                error: '', imageError: '', restoring: false, state: next, panel: null,
-                download: button('⬇ 下載', 'download'), prompt: button('📋 提示詞', 'prompt'),
-                generate: button('生成圖片', 'generate'), cancel: button('取消', 'cancel'),
-                restore: button('使用原生圖', 'restore') };
-            _bbiCards.set(ph, card);
-            wrap.append(picture, actions, status);
-            ph.replaceChildren(wrap);
-            const args = () => [ph.dataset.imgId || '', ph.dataset.imgPrompt || ''];
-            card.download.onclick = event => {
-                event.stopPropagation();
-                if (!card.url) return;
-                const a = document.createElement('a');
-                a.href = card.url;
-                const mime = card.url.match(/^data:image\/([\w+-]+)[;,]/i)?.[1];
-                const extension = mime === 'jpeg' ? 'jpg' : mime === 'svg+xml' ? 'svg' : mime || 'png';
-                a.download = /^(data|blob):/i.test(card.url) ? 'bbi-image.' + extension : card.url.split('/').pop().split('?')[0] || 'bbi-image.png';
-                a.rel = 'noopener'; document.body.appendChild(a); a.click(); a.remove();
-            };
-            card.prompt.onclick = event => {
-                event.stopPropagation();
-                if (card.panel) { card.panel.remove(); card.panel = null; }
-                else {
-                    const panel = document.createElement('div');
-                    panel.className = 'rpg-bbi-prompt-panel';
-                    const pre = document.createElement('pre');
-                    pre.style.cssText = 'margin:0;white-space:pre-wrap;font-family:inherit';
-                    pre.textContent = card.state.promptText;
-                    const copy = document.createElement('button');
-                    copy.type = 'button'; copy.textContent = '複製';
-                    copy.onclick = async ev => {
-                        ev.stopPropagation();
-                        try {
-                            await navigator.clipboard.writeText(card.state.promptText);
-                            copy.textContent = '✓ 已複製';
-                        } catch { copy.textContent = '請選取上方文字複製'; }
-                    };
-                    panel.append(pre, copy); wrap.appendChild(panel); card.panel = panel;
+    function bbiGenerate(target) {
+        bbiRequireTarget(target);
+        const existing = _BBI.jobs.get(target.slotKey);
+        if (existing) return existing.promise;
+        const api = bbiApi(), state = bbiState(target), request = bbiParse(target.raw);
+        if (!api) throw bbiError('unavailable', state.reason);
+        if (!state.canGenerate) throw bbiError('not_configured', state.reason || '柏寶繪正在生成這張圖。');
+        request.character = String(target.message?.name || plugCtx()?.name2 || '未命名角色');
+        const controller = new topWindow.AbortController();
+        const job = { target, controller, progress: { phase: 'queued' }, committing: false, promise: null };
+        const isCurrent = () => !controller.signal.aborted && bbiTargetCurrent(target);
+        _BBI.jobs.set(target.slotKey, job);
+        job.promise = Promise.resolve().then(async () => {
+            if (!isCurrent()) throw bbiError('aborted', '已取消生成。');
+            const result = await bbiWaitFor(api.generate(request, {
+                signal: controller.signal,
+                onProgress(progress) {
+                    if (!isCurrent()) { controller.abort(); return; }
+                    job.progress = { phase: progress?.phase, ahead: progress?.ahead, attempt: progress?.attempt, max: progress?.max };
+                    bbiNotify();
                 }
-                card.prompt.setAttribute('aria-expanded', String(!!card.panel));
-                requestParentResize();
+            }), controller.signal);
+            if (!isCurrent()) throw bbiError('stale_target', '訊息已變更，未更新圖片。');
+            const path = typeof result?.path === 'string' && /^\/?user\/(images|files)\//.test(result.path) ? result.path : null;
+            if (!path && !/^data:image\//i.test(result?.dataUrl || '')) throw bbiError('backend_error', '柏寶繪未回傳可用圖片。');
+            const notice = result.charactersApplied === false && request.characters.length ? '此後端未套用多角色提示。' : '';
+            const createdAt = Date.now(), seed = Number.isFinite(result.seed) ? result.seed : null;
+            const keepTemporary = (warning) => {
+                let cache = _BBI.temporary.get(target.message);
+                if (!cache) { cache = new Map(); _BBI.temporary.set(target.message, cache); }
+                const list = cache.get(target.key) || [];
+                const id = 't:' + (++_BBI.sequence);
+                list.push({ id, raw: target.raw, url: path || result.dataUrl, createdAt, seed, warning });
+                cache.set(target.key, list);
+                if (notice) _BBI.notices.set(target.slotKey, { id, text: notice });
             };
-            card.prompt.setAttribute('aria-expanded', 'false');
-            card.generate.onclick = async event => {
-                event.stopPropagation();
-                card.error = '';
+            if (!path) keepTemporary('圖片未存入圖庫，請先下載；重新整理後這張圖會消失。');
+            else {
+                const entry = { generationId: bbiGenerationId(), path, prompt: target.raw, seed, status: 'ready', createdAt, slotSeq: target.seq };
                 try {
-                    const work = window.RPG_BBI.generate(...args());
-                    refreshBbiPlaceholder(ph);
-                    await work;
-                } catch (error) {
-                    card.error = error?.code === 'aborted' ? '已取消生成。' : error?.message || '生成失敗，請稍後重試。';
-                } finally { refreshBbiPlaceholder(ph); }
-            };
-            card.cancel.onclick = event => {
-                event.stopPropagation();
-                try { window.RPG_BBI.cancel(...args()); }
-                catch (error) { card.error = error.message; refreshBbiPlaceholder(ph); }
-            };
-            card.restore.onclick = async event => {
-                event.stopPropagation();
-                card.error = ''; card.restoring = true;
-                refreshBbiPlaceholder(ph);
-                try { await window.RPG_BBI.restore(...args()); }
-                catch (error) { card.error = error?.message || '無法保存圖片選擇。'; }
-                finally { card.restoring = false; refreshBbiPlaceholder(ph); }
-            };
-        }
-        card.state = next;
-        const url = next.url || '';
-        if (url !== card.requestedUrl) {
-            card.requestedUrl = url;
-            card.imageError = '';
-            if (card.pendingImage) {
-                card.pendingImage.onload = card.pendingImage.onerror = null;
-                card.pendingImage.removeAttribute('src');
-                card.pendingImage = null;
+                    await bbiQueue(() => {
+                        job.committing = true; job.progress = { phase: 'saving' }; bbiNotify();
+                        const swipe = String(target.swipe);
+                        return bbiWriteNative(target, (store) => ({ ...store, [swipe]: { ...store[swipe],
+                            [target.hash]: [...(Array.isArray(store[swipe]?.[target.hash]) ? store[swipe][target.hash] : []), entry] } }));
+                    }, isCurrent);
+                    if (notice) _BBI.notices.set(target.slotKey, { id: 'n:' + entry.generationId, text: notice });
+                } catch (cause) {
+                    if (!isCurrent()) throw cause;
+                    keepTemporary('圖片已存入圖庫，但樓層紀錄保存失敗；重新整理後可能看不到這張圖。');
+                }
             }
-            if (!url) {
-                card.image = null; card.url = ''; card.picture.replaceChildren(card.empty);
-            } else {
-                const img = document.createElement('img');
-                img.className = 'rpg-inline-image';
-                img.alt = next.promptText || '柏寶繪圖片';
-                card.pendingImage = img;
-                img.onload = () => {
-                    if (!ph.isConnected || _rpgLifetime.signal.aborted || card.pendingImage !== img) return;
-                    card.pendingImage = null; card.image = img; card.url = url;
-                    img.classList.add('rpg-img-visible');
-                    card.picture.replaceChildren(img);
-                    renderBbiCard(ph, card.state);
-                    requestParentResize();
-                };
-                img.onerror = () => {
-                    if (!ph.isConnected || _rpgLifetime.signal.aborted || card.pendingImage !== img) return;
-                    card.pendingImage = null;
-                    card.imageError = '圖片載入失敗，請重新載入該樓層或使用原生圖。';
-                    renderBbiCard(ph, card.state);
-                    requestParentResize();
-                };
-                img.src = url;
-            }
-        }
-        card.download.hidden = !card.url;
-        card.generate.hidden = !next.available;
-        card.generate.textContent = next.url ? '重新生成' : '生成圖片';
-        card.generate.disabled = !next.canGenerate || next.busy || card.restoring;
-        card.generate.title = next.reason || '';
-        card.cancel.hidden = !next.busy;
-        card.cancel.disabled = next.canCancel === false;
-        card.restore.hidden = !next.hasOverride || !next.nativeUrl;
-        card.restore.disabled = next.busy || card.restoring;
-        card.status.textContent = card.restoring ? '正在切回原生圖…' : next.busy ? bbiProgressText(next.progress)
-            : card.error || card.imageError || next.warning || (next.available && !next.canGenerate ? next.reason : '');
-        card.status.hidden = !card.status.textContent;
-        card.wrap.setAttribute('aria-busy', String(!!next.busy || card.restoring));
-        ph.classList.add('rpg-img-loaded');
+            if (!isCurrent()) throw bbiError('stale_target', '訊息已變更，未更新圖片。');
+            return bbiState(target);
+        }).finally(() => {
+            if (_BBI.jobs.get(target.slotKey) === job) _BBI.jobs.delete(target.slotKey);
+            bbiNotify();
+        });
+        bbiNotify();
+        return job.promise;
     }
-    function refreshBbiPlaceholder(ph) {
-        if (!ph.isConnected || _rpgLifetime.signal.aborted || typeof window.RPG_BBI?.getState !== 'function') return false;
-        try { renderBbiCard(ph, window.RPG_BBI.getState(ph.dataset.imgId || '', ph.dataset.imgPrompt || '')); }
-        catch (error) {
-            renderBbiCard(ph, { available: false, canGenerate: false, url: null, promptText: '', warning: error.message });
+    async function bbiPostJson(endpoint, body) {
+        const headers = plugCtx()?.getRequestHeaders?.();
+        if (!headers) return false;
+        const response = await topWindow.fetch(endpoint, { method: 'POST', headers, body: JSON.stringify(body) });
+        return response.ok;
+    }
+    // 刪檔照柏寶繪：只刪 /user/images/ 底下的圖，連同 /user/files/ 的同名 .json 側寫；失敗只記錄。
+    async function bbiDeleteFiles(path) {
+        const target = bbiNormalizePath(path);
+        if (!/^\/?user\/images\//.test(target)) return;
+        try { await bbiPostJson('/api/images/delete', { path: target }); }
+        catch (cause) { console.warn('[RPG] 刪除圖片檔案失敗（留在圖庫）', cause); }
+        const file = target.split('/').pop() || '';
+        if (!/^bbi_[a-zA-Z0-9_]+-[a-zA-Z0-9]+\.[a-z0-9]+$/i.test(file)) return;
+        try { await bbiPostJson('/api/files/delete', { path: '/user/files/' + file.replace(/\.[^./]*$/, '') + '.json' }); }
+        catch (cause) { console.warn('[RPG] 刪除側寫檔失敗', cause); }
+    }
+    async function bbiRemove(target, id) {
+        bbiRequireTarget(target);
+        if (_BBI.jobs.has(target.slotKey)) throw bbiError('busy', '請先取消或等待生成完成。');
+        const state = bbiState(target);
+        const item = state.history.find((entry) => entry.id === id) || (state.stale?.id === id ? state.stale : null);
+        if (!item) throw bbiError('stale_target', '這張圖已不在紀錄中。');
+        if (item.source === 'temporary') {
+            const cache = _BBI.temporary.get(target.message), list = cache?.get(target.key) || [];
+            cache?.set(target.key, list.filter((entry) => entry.id !== id));
+            await bbiDeleteFiles(item.url);
+        } else if (item.source === 'legacy') {
+            await bbiQueue(() => bbiWriteLegacy(target, null), () => bbiTargetCurrent(target));
+            await bbiDeleteFiles(item.url);
+        } else {
+            let removedPath = '';
+            await bbiQueue(() => bbiWriteNative(target, (store) => {
+                const swipe = String(target.swipe), bucket = store[swipe];
+                for (const [hash, list] of Object.entries(bucket || {})) {
+                    if (!Array.isArray(list)) continue;
+                    const index = list.findIndex((entry) => entry?.generationId === item.generationId && bbiSeqOf(entry) === target.seq);
+                    if (index < 0) continue;
+                    removedPath = list[index].path;
+                    const rest = list.filter((_, i) => i !== index), nextBucket = { ...bucket };
+                    if (rest.length) nextBucket[hash] = rest; else delete nextBucket[hash];
+                    return { ...store, [swipe]: nextBucket };
+                }
+                return store;
+            }), () => bbiTargetCurrent(target));
+            if (removedPath) await bbiDeleteFiles(removedPath);
+        }
+        bbiNotify();
+        return bbiState(target);
+    }
+    // 改提示詞＝改寫正文裡的第 seq 個標籤（同柏寶繪 serializeImageTag）。換了標籤原文，原本的圖自動變成「舊提示詞」。
+    // 內容沒改就不存。存檔後送出 MESSAGE_EDITED／MESSAGE_UPDATED（主檔的 plugOnMessageRewritten 會重畫正文）。
+    async function bbiEditPrompt(target, input, regenerate) {
+        bbiRequireTarget(target);
+        if (_BBI.jobs.has(target.slotKey)) throw bbiError('busy', '請先取消或等待生成完成。');
+        const before = bbiParse(target.raw);
+        if (before.kind === 'comic') throw bbiError('unsupported', '漫畫分鏡請用柏寶繪原生圖卡編輯。');
+        const next = { prompt: bbiLine(input?.prompt), nl: bbiLine(input?.nl), negative: bbiLine(input?.negative),
+            size: input?.size === 'landscape' ? 'landscape' : 'portrait', characters: before.characters };
+        if (!next.prompt) throw bbiError('invalid', '正向提示詞不可空白。');
+        if (/<\/?(?:bbi_image|tag|nl|negative|characters|size|type|layout)\b/i.test(next.prompt + next.nl + next.negative)) {
+            throw bbiError('invalid', '提示詞裡不能有 <bbi_image>、<nl> 這類標籤。');
+        }
+        const changed = ['prompt', 'nl', 'negative', 'size'].some((key) => next[key] !== before[key]);
+        let newRaw = target.raw;
+        if (changed) {
+            await bbiQueue(async () => {
+                if (!bbiTargetCurrent(target)) throw bbiError('stale_target', '訊息已變更，提示詞未保存。');
+                const context = plugCtx(), message = target.message;
+                if (typeof context?.saveChat !== 'function') throw bbiError('save_failed', '目前無法保存聊天紀錄。');
+                const text = String(message.mes || ''), tag = bbiTagsOf(text)[target.seq];
+                if (tag?.[0] !== target.raw) throw bbiError('stale_target', '正文裡的這個標籤已被改動，請重新開啟。');
+                newRaw = bbiSerialize(next);
+                const nextText = text.slice(0, tag.index) + newRaw + text.slice(tag.index + tag[0].length);
+                const swipe = message.swipe_id ?? 0, hasSwipe = Array.isArray(message.swipes) && swipe >= 0 && swipe < message.swipes.length;
+                const previousSwipe = hasSwipe ? message.swipes[swipe] : undefined;
+                message.mes = nextText;
+                if (hasSwipe) message.swipes[swipe] = nextText;
+                try { await context.saveChat(); }
+                catch (cause) { message.mes = text; if (hasSwipe) message.swipes[swipe] = previousSwipe; throw cause; }
+                const types = context.eventTypes || context.event_types || {};
+                const emit = (name) => name && context.eventSource?.emit?.(name, target.id);
+                try { await emit(types.MESSAGE_EDITED); } catch (cause) { console.warn('[RPG] MESSAGE_EDITED 送出失敗', cause); }
+                try { if (typeof context.updateMessageBlock === 'function') await context.updateMessageBlock(target.id, message); }
+                catch (cause) { console.warn('[RPG] 樓層重繪失敗', cause); }
+                try { await emit(types.MESSAGE_UPDATED); } catch (cause) { console.warn('[RPG] MESSAGE_UPDATED 送出失敗', cause); }
+            });
+        }
+        if (!regenerate) return { changed };
+        // 換了標籤後立刻重新對位，用新的標籤生成。
+        const fresh = bbiTargetAt(target.seq, newRaw);
+        if (!fresh) throw bbiError('stale_target', '找不到新的圖片位置，請重新載入該樓層。');
+        return { changed, target: fresh, work: bbiGenerate(fresh) };
+    }
+    // 圖片載入失敗：先確認檔案真的不存在（404）才從清單拿掉，網路斷線不算。
+    async function bbiReportMissing(url) {
+        const path = bbiNormalizePath(url);
+        if (!path || /^data:/i.test(path) || _BBI.missing.has(path)) return;
+        try {
+            const response = await topWindow.fetch(path, { method: 'HEAD', cache: 'no-store' });
+            if (response.status !== 404) return;
+        } catch (e) { return; }
+        if (!bbiAlive()) return;
+        _BBI.missing.add(path);
+        bbiNotify();
+    }
+
+    // ── 圖卡畫面 ──
+    function bbiProgressText(progress) {
+        if (!progress) return '正在生成…';
+        if (progress.phase === 'queued') return '等待生成…';
+        if (progress.phase === 'queued-remote') return '伺服器排隊中' + (Number.isFinite(progress.ahead) ? '，前方 ' + progress.ahead + ' 張' : '') + '…';
+        if (progress.phase === 'retrying') return '限流後重試中' + (progress.attempt ? '（' + progress.attempt + '/' + progress.max + '）' : '') + '…';
+        if (progress.phase === 'saving') return '正在保存圖片…';
+        return '正在生成…';
+    }
+    const BBI_ICONS = {
+        more: '<circle cx="5" cy="12" r="1.7" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.7" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.7" fill="currentColor" stroke="none"/>',
+        redraw: '<path d="M20 12a8 8 0 1 1-2.6-5.9"/><path d="M20 4v5h-5"/>',
+        download: '<path d="M12 4v11"/><path d="M7 10l5 5 5-5"/><path d="M5 20h14"/>',
+        prompt: '<path d="M5 6h14"/><path d="M5 11h14"/><path d="M5 16h9"/>',
+        edit: '<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13 7l4 4"/>',
+        trash: '<path d="M4 7h16"/><path d="M9 7V4h6v3"/><path d="M6 7l1 13h10l1-13"/>',
+        up: '<path d="M6 15l6-6 6 6"/>', down: '<path d="M6 9l6 6 6-6"/>',
+        prev: '<path d="M16 5L7 12l9 7z" fill="currentColor"/>', next: '<path d="M8 5l9 7-9 7z" fill="currentColor"/>',
+        image: '<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M21 16l-5-5-8 8"/>'
+    };
+    function bbiIcon(name) {
+        return '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + BBI_ICONS[name] + '</svg>';
+    }
+    function bbiButton(action, label, className, icon) {
+        const button = document.createElement('button');
+        button.type = 'button'; button.className = className; button.dataset.bbiAction = action; button.title = label;
+        if (icon) { button.setAttribute('aria-label', label); button.innerHTML = bbiIcon(icon); }
+        return button;
+    }
+    function bbiReleaseImage(image) {
+        if (!image) return;
+        image.onload = image.onerror = null;
+        image.removeAttribute('src');
+    }
+    function bbiMakeCard(ph) {
+        const el = (tag, cls) => { const node = document.createElement(tag); if (cls) node.className = cls; return node; };
+        const node = el('span', 'rpg-bbi-anchor');
+        node.setAttribute('role', 'group'); node.setAttribute('aria-label', '柏寶繪圖片');
+        // 收合時整張圖換成一條細條，點一下展開。
+        const bar = bbiButton('expand', '展開圖片', 'rpg-bbi-bar');
+        const barText = el('span', 'rpg-bbi-bar-text'), barCount = el('span', 'rpg-bbi-bar-count');
+        bar.innerHTML = bbiIcon('image');
+        bar.append(barText, barCount);
+        bar.insertAdjacentHTML('beforeend', bbiIcon('down'));
+        bar.hidden = true;
+        const body = el('span', 'rpg-bbi-body');
+        // 舞台：圖片、沒有圖時的生成入口、生成中遮罩、右上角「⋯」、翻頁器都疊在這裡。
+        const stage = el('span', 'rpg-bbi-stage');
+        stage.dataset.placeholder = '1';
+        const picture = el('span', 'rpg-bbi-picture');
+        const waiting = el('span', 'rpg-bbi-pending'), hint = el('span', 'rpg-bbi-hint');
+        const start = bbiButton('generate', '生成圖片', 'rpg-bbi-pill');
+        start.textContent = '生成圖片';
+        waiting.append(hint, start);
+        const busy = el('span', 'rpg-bbi-busy');
+        busy.hidden = true;
+        const busyText = el('span', 'rpg-bbi-busy-text');
+        busyText.setAttribute('role', 'status'); busyText.setAttribute('aria-live', 'polite');
+        const cancel = bbiButton('cancel', '取消生成', 'rpg-bbi-ghost');
+        cancel.textContent = '取消';
+        busy.append(el('span', 'rpg-bbi-spin'), busyText, cancel);
+        const badge = el('span', 'rpg-bbi-badge');
+        badge.textContent = '舊提示詞'; badge.hidden = true;
+        const tools = el('span', 'rpg-bbi-tools');
+        const more = bbiButton('menu', '更多操作', 'rpg-bbi-fab rpg-bbi-more', 'more');
+        more.setAttribute('aria-expanded', 'false');
+        const menu = el('span', 'rpg-bbi-menu');
+        tools.append(more, menu);
+        const pager = el('span', 'rpg-bbi-pager');
+        pager.hidden = true;
+        const prev = bbiButton('prev', '上一張', 'rpg-bbi-page', 'prev');
+        const count = el('span', 'rpg-bbi-count');
+        const next = bbiButton('next', '下一張', 'rpg-bbi-page', 'next');
+        pager.append(prev, count, next);
+        const status = el('span', 'rpg-bbi-status');
+        status.setAttribute('role', 'status'); status.setAttribute('aria-live', 'polite');
+        stage.append(picture, waiting, busy, badge, tools, pager, status);
+        const panel = el('span', 'rpg-bbi-prompt');
+        panel.hidden = true;
+        const prompt = el('span', 'rpg-bbi-prompt-text');
+        const copy = bbiButton('copy', '複製提示詞', 'rpg-bbi-ghost');
+        copy.textContent = '複製';
+        panel.append(prompt, copy);
+        body.append(stage, panel);
+        const card = { ph, node, bar, barText, barCount, body, stage, picture, waiting, hint, start, busy, busyText, badge,
+            tools, more, pager, prev, count, next, status, panel, prompt, copy, buttons: { cancel }, state: {}, target: null,
+            ui: { index: 0, length: -1, error: '', image: null, url: '', ratio: 0 }, imageError: '',
+            requestedUrl: '', url: '', image: null, pending: null, item: null, layout: '' };
+        [['collapse', '收合圖片', 'up'], ['generate', '重新生成', 'redraw'], ['download', '下載這張圖', 'download'],
+            ['remove', '刪除這張圖', 'trash'], ['edit', '修改提示詞', 'edit'], ['prompt', '查看提示詞', 'prompt']].forEach((entry) => {
+            const button = bbiButton(entry[0], entry[1], 'rpg-bbi-fab', entry[2]);
+            menu.append(button); card.buttons[entry[0]] = button;
+        });
+        card.buttons.remove.classList.add('rpg-bbi-danger');
+        card.buttons.prompt.setAttribute('aria-pressed', 'false');
+        node.append(bar, body);
+        ph.replaceChildren(node);
+        _bbiCards.set(ph, card);
+        _bbiAnchors.set(node, card);
+        bbiInstall();
+        return card;
+    }
+    const bbiShown = (card) => card.item && card.url && card.item.url === card.url ? card.item : null;
+    const bbiAbsolute = (url) => { try { return new URL(url, topWindow.location.href).href; } catch (e) { return String(url); } };
+    function bbiCloseMenu(card) {
+        card.tools.dataset.open = '';
+        card.more.setAttribute('aria-expanded', 'false');
+    }
+    function bbiPaint(card, st) {
+        if (!bbiAlive()) return;
+        const ui = card.ui;
+        card.state = st;
+        const history = Array.isArray(st.history) ? st.history : [];
+        // 新圖存好（或刪掉一張）時跳到最新的一張。
+        if (history.length !== ui.length) { ui.length = history.length; ui.index = Math.max(0, history.length - 1); }
+        ui.index = Math.min(ui.index, Math.max(0, history.length - 1));
+        const stale = !history.length && st.stale ? st.stale : null;
+        card.item = history[ui.index] || stale;
+        const address = card.item?.url || '';
+        if (ui.ratio) card.stage.style.setProperty('--bbi-ratio', String(ui.ratio));
+        if (address !== card.requestedUrl) {
+            card.requestedUrl = address; card.imageError = '';
+            bbiReleaseImage(card.pending); card.pending = null;
+            if (!address) {
+                if (card.image && card.image !== ui.image) bbiReleaseImage(card.image);
+                card.image = null; card.url = '';
+                card.picture.replaceChildren();
+                card.stage.style.removeProperty('--bbi-ratio');
+            } else if (ui.image && ui.url === address && ui.image.complete && ui.image.naturalWidth > 0) {
+                // 同一張圖重畫（翻頁、串流）：沿用已載入的圖，不閃。
+                card.image = ui.image; card.url = address;
+                card.picture.replaceChildren(ui.image);
+            } else {
+                const image = document.createElement('img');
+                image.className = 'rpg-bbi-image';
+                image.alt = st.promptText || '柏寶繪圖片';
+                image.dataset.bbiAction = 'zoom';
+                card.pending = image;
+                image.onload = () => {
+                    if (!bbiAlive() || card.pending !== image) return;
+                    card.pending = null;
+                    if (card.image && card.image !== image && card.image !== ui.image) bbiReleaseImage(card.image);
+                    card.image = image; card.url = address;
+                    ui.image = image; ui.url = address;
+                    if (image.naturalWidth > 0 && image.naturalHeight > 0) {
+                        ui.ratio = image.naturalWidth / image.naturalHeight;
+                        card.stage.style.setProperty('--bbi-ratio', String(ui.ratio));
+                    }
+                    card.picture.replaceChildren(image);
+                    bbiPaint(card, card.state);
+                    requestParentResize();
+                };
+                image.onerror = () => {
+                    if (!bbiAlive() || card.pending !== image) return;
+                    card.pending = null;
+                    card.imageError = '圖片載入失敗，請重新生成。';
+                    bbiReportMissing(address);
+                    bbiPaint(card, card.state);
+                };
+                image.src = bbiAbsolute(address);
+            }
+        }
+        const shown = !!card.image, working = !!st.busy || !!st.nativeBusy, folded = !!st.collapsed;
+        card.bar.hidden = !folded; card.body.hidden = folded;
+        card.barText.textContent = working ? (st.busy ? bbiProgressText(st.progress) : '柏寶繪正在生成…') :
+            ui.error || (history.length ? '圖片已收合' : stale ? '圖片已收合（舊提示詞）' : '圖片尚未生成');
+        card.barText.dataset.error = ui.error && !working ? '1' : '';
+        card.barCount.textContent = history.length > 1 ? history.length + ' 張' : '';
+        card.stage.dataset.placeholder = shown ? '' : '1';
+        card.stage.dataset.size = st.size === 'landscape' ? 'landscape' : 'portrait';
+        // 沒有圖：舞台中央是生成入口；不能生成時寫出原因。
+        card.waiting.hidden = shown || working || !!card.item;
+        card.start.hidden = !st.available;
+        card.start.disabled = !st.canGenerate || working;
+        card.hint.textContent = st.canGenerate || st.nativeBusy ? '' : st.reason || '';
+        card.hint.hidden = !card.hint.textContent;
+        // 生成中：遮罩蓋住舞台（舊圖留在底下）。柏寶繪原生圖卡在生成時只顯示狀態，不能從這裡取消。
+        card.busy.hidden = !working;
+        card.busyText.textContent = st.busy ? bbiProgressText(st.progress) : '柏寶繪正在生成…';
+        card.buttons.cancel.hidden = !st.busy;
+        card.buttons.cancel.disabled = st.canCancel === false;
+        card.tools.hidden = working;
+        if (working) bbiCloseMenu(card);
+        card.badge.hidden = !stale || working;
+        card.pager.hidden = history.length < 2 || working;
+        card.count.textContent = (ui.index + 1) + '/' + history.length;
+        card.prev.disabled = ui.index <= 0;
+        card.next.disabled = ui.index >= history.length - 1;
+        card.buttons.generate.hidden = !st.available || !card.item;
+        card.buttons.generate.disabled = !st.canGenerate || working;
+        card.buttons.generate.title = st.canGenerate ? '重新生成' : st.reason || '重新生成';
+        card.buttons.download.hidden = !card.url;
+        // 只能刪畫面上正在顯示的那張（新圖還在載入或載入失敗時先不給刪）。
+        card.buttons.remove.hidden = !bbiShown(card);
+        card.buttons.edit.hidden = !st.editable;
+        card.buttons.prompt.hidden = !st.promptText;
+        card.prompt.textContent = st.promptText || '';
+        // 狀態條只放錯誤與警告，平時隱藏；生成中由遮罩顯示進度。
+        card.status.textContent = ui.error || card.imageError || st.warning ||
+            (stale ? '提示詞已修改，這張是舊提示詞的圖；按「重新生成」用新提示詞出圖。' : '');
+        card.status.hidden = !card.status.textContent || working;
+        card.node.setAttribute('aria-busy', String(!!st.busy));
+        card.ph.classList.add('rpg-img-loaded');
+        const layout = [folded, shown, working, card.panel.hidden, st.size].join('|');
+        if (layout !== card.layout) { card.layout = layout; requestParentResize(); }
+    }
+    function bbiRefreshPlaceholder(ph) {
+        if (!ph.isConnected || !bbiAlive()) return false;
+        const card = _bbiCards.get(ph) || bbiMakeCard(ph);
+        const target = bbiTargetOf(ph);
+        card.target = target;
+        if (target) {
+            card.ui = bbiUi(target);
+            bbiPaint(card, bbiState(target));
+        } else {
+            // 位置無法確認（訊息換了、標籤改了、串流中還沒寫進聊天紀錄）：不動已顯示的圖，只停用操作。
+            let raw = '';
+            try { raw = decodeURIComponent(ph.dataset.imgPrompt || ''); } catch (e) {}
+            const request = bbiParse(raw);
+            bbiPaint(card, { available: false, canGenerate: false, reason: '圖片所在的訊息已變更，請重新載入該樓層。', promptText: bbiPromptText(request),
+                size: request.size, character: '', content: {}, editable: false, history: [], stale: null, collapsed: false, nativeBusy: '',
+                busy: false, canCancel: false, progress: null, warning: '' });
         }
         return true;
     }
     window.rpgRefreshBbi = function() {
-        if (_rpgLifetime.signal.aborted) return;
-        document.querySelectorAll('.rpg-img-placeholder[data-img-type="bbi"]').forEach(refreshBbiPlaceholder);
+        if (!bbiAlive()) return;
+        bbiRefreshAll();
     };
+
+    // ── 點擊：圖卡裡的按鈕（事件代理，只裝一次） ──
+    function bbiCloseMenus(except) {
+        document.querySelectorAll('.rpg-bbi-tools[data-open="1"]').forEach((tools) => {
+            const card = _bbiAnchors.get(tools.closest('.rpg-bbi-anchor'));
+            if (card && card !== except) bbiCloseMenu(card);
+        });
+    }
+    function bbiInstall() {
+        if (_BBI.installed || !els.display) return;
+        _BBI.installed = true;
+        els.display.addEventListener('click', bbiOnClick, { signal: _rpgLifetime.signal });
+        // 點「⋯」收起後（data-open="0"），滑鼠離開那一組按鈕才恢復「移上去展開」。
+        els.display.addEventListener('mouseout', (event) => {
+            const tools = event.target?.closest?.('.rpg-bbi-tools[data-open="0"]');
+            if (tools && !tools.contains(event.relatedTarget)) tools.dataset.open = '';
+        }, { signal: _rpgLifetime.signal });
+    }
+    async function bbiOnClick(event) {
+        const button = event.target?.closest?.('[data-bbi-action]');
+        const node = button?.closest('.rpg-bbi-anchor');
+        const card = node ? _bbiAnchors.get(node) : null;
+        bbiCloseMenus(card || null);
+        if (!card || button.disabled) return;
+        event.stopPropagation();
+        const action = button.dataset.bbiAction;
+        const target = card.target, ui = card.ui;
+        if (action === 'menu') {
+            const open = card.tools.dataset.open !== '1';
+            card.tools.dataset.open = open ? '1' : '0';
+            button.setAttribute('aria-expanded', String(open));
+            return;
+        }
+        bbiCloseMenu(card);
+        if (action === 'prompt') {
+            card.panel.hidden = !card.panel.hidden;
+            button.setAttribute('aria-pressed', String(!card.panel.hidden));
+            bbiPaint(card, card.state);
+            requestParentResize();
+            return;
+        }
+        if (action === 'copy') {
+            try { await (topWindow.navigator.clipboard || navigator.clipboard).writeText(card.state.promptText || ''); button.textContent = '已複製'; }
+            catch (e) { button.textContent = '請選取文字複製'; }
+            return;
+        }
+        if (action === 'download') { bbiDownload(card.url, bbiShown(card), card.state.character); return; }
+        if (action === 'zoom') { bbiOpenLightbox(card); return; }
+        if (action === 'remove') { if (bbiShown(card) && target) bbiConfirmRemove(card, bbiShown(card)); return; }
+        if (action === 'edit') { if (target) bbiOpenEditor(card); return; }
+        if (action === 'prev' || action === 'next') {
+            ui.index += action === 'prev' ? -1 : 1;
+            bbiPaint(card, card.state);
+            return;
+        }
+        if (action === 'collapse' || action === 'expand') {
+            if (!target) return;
+            const folding = action === 'collapse';
+            bbiCollapsedMap().set(target.slotKey, folding);
+            bbiRefreshPlaceholder(card.ph);
+            requestAnimationFrame(() => {
+                if (!bbiAlive()) return;
+                try { (folding ? card.bar : card.more).focus({ preventScroll: true }); } catch (e) {}
+                requestParentResize();
+            });
+            return;
+        }
+        if (!target) return;
+        ui.error = '';
+        try {
+            if (action === 'cancel') {
+                const job = _BBI.jobs.get(target.slotKey);
+                if (job && !job.committing) job.controller.abort();
+            }
+            if (action === 'generate') {
+                const work = bbiGenerate(target);
+                bbiRefreshAll();
+                await work;
+            }
+        } catch (error) {
+            if (bbiAlive()) ui.error = error?.code === 'aborted' ? '已取消生成。' : error?.message || '操作失敗，請稍後重試。';
+        } finally {
+            if (bbiAlive()) bbiRefreshAll();
+        }
+    }
+
+    // ── 下載（在酒館主視窗的 document 建 <a download>；iframe 沒有 allow-downloads）──
+    function bbiDownload(url, item, character) {
+        if (!url) return;
+        const doc = topWindow.document;
+        const link = doc.createElement('a');
+        link.href = bbiAbsolute(url);
+        const mime = String(url).match(/^data:image\/([\w+-]+)[;,]/i)?.[1];
+        const extension = mime === 'jpeg' ? 'jpg' : mime === 'svg+xml' ? 'svg' : mime || String(url).match(/\.([a-zA-Z0-9]+)(?:[?#]|$)/)?.[1] || 'png';
+        // 檔名同柏寶繪：bbi_角色名_生成編號。
+        const id = item?.generationId || item?.id?.replace(/^\w:/, '') || Date.now().toString(36);
+        const name = String(character || '').replace(/[\\/:*?"<>|\s]+/g, '_').slice(0, 40);
+        link.download = 'bbi_' + (name ? name + '_' : '') + id + '.' + extension;
+        link.rel = 'noopener';
+        doc.body.append(link); link.click(); link.remove();
+    }
+
+    // ── 全螢幕畫面（放大檢視、改提示詞、刪除確認）：開在酒館主視窗，不受 iframe 高度限制；Esc 或點空白處關閉 ──
+    const BBI_SCREEN_CSS = [
+        '*{box-sizing:border-box}',
+        '.scr{position:fixed;inset:0;display:flex;flex-direction:column;background:rgba(8,10,14,.92);color:var(--ink);font:14px/1.6 var(--font);}',
+        'button{font:inherit;cursor:pointer;touch-action:manipulation}',
+        'button:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}',
+        '.btn{min-height:40px;padding:0 16px;border:1px solid var(--line);border-radius:999px;background:var(--paper);color:var(--ink)}',
+        '.btn:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}.btn:disabled{opacity:.45;cursor:default}',
+        '.btn.main{border-color:var(--accent);background:var(--accent);color:var(--paper)}.btn.danger{border-color:#c0634f;background:#c0634f;color:#fff}',
+        '.lb-top{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:8px;padding:max(10px,env(safe-area-inset-top)) 12px 10px}',
+        '.lb-stage{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:0 12px 12px}',
+        '.lb-stage img{display:block;max-width:100%;max-height:100%;object-fit:contain;border-radius:4px;touch-action:auto}',
+        '.lb-prompt{flex:none;max-height:40%;overflow:auto;margin:0 12px max(12px,env(safe-area-inset-bottom));padding:10px 12px;border-radius:6px;background:rgba(255,255,255,.06);white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;user-select:text}',
+        '.sheet{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:16px}',
+        '.panel{width:min(560px,100%);max-height:100%;overflow:auto;padding:18px;border:1px solid var(--line);border-radius:10px;background:var(--paper)}',
+        '.panel h2{margin:0 0 12px;font-size:17px;font-weight:600;line-height:1.5;color:var(--ink)}.panel p{margin:0 0 12px;color:var(--dim)}',
+        '.panel label{display:block;margin:0 0 10px;font-size:12px;color:var(--dim)}',
+        '.panel textarea,.panel select{display:block;width:100%;margin-top:4px;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:rgba(0,0,0,.25);color:var(--ink);font:13px/1.6 ui-monospace,Consolas,monospace;resize:vertical}',
+        '.panel select{font-family:inherit}.panel .err{color:#e7a08f}.row{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px;margin-top:14px}'
+    ].join('');
+    function bbiCloseScreen() {
+        _BBI.screen?.close();
+    }
+    function bbiOpenScreen(label, build) {
+        bbiCloseScreen();
+        const doc = topWindow.document;
+        if (!doc?.body || !bbiAlive()) return null;
+        const cs = getComputedStyle(document.querySelector('.rpg-v7-root') || document.documentElement);
+        const pick = (name, fallback) => cs.getPropertyValue(name).trim() || fallback;
+        const host = doc.createElement('div');
+        host.setAttribute('data-rpg-bbi-screen', '');
+        host.style.cssText = 'position:fixed;inset:0;z-index:2147483000;--paper:' + pick('--study-panel', '#191c22') + ';--ink:' + pick('--study-ink', '#ded5c2') +
+            ';--dim:' + pick('--study-muted', '#aaa08e') + ';--accent:' + pick('--study-accent', '#c7ae7b') + ';--line:' + pick('--study-line', 'rgba(174,148,98,.43)') +
+            ';--font:' + (cs.fontFamily || 'serif');
+        const shadow = host.attachShadow({ mode: 'open' });
+        const style = doc.createElement('style');
+        style.textContent = BBI_SCREEN_CSS;
+        const frame = doc.createElement('div');
+        frame.className = 'scr';
+        frame.setAttribute('role', 'dialog'); frame.setAttribute('aria-modal', 'true'); frame.setAttribute('aria-label', label);
+        shadow.append(style, frame);
+        const opener = document.activeElement;
+        const onKey = (event) => {
+            if (event.key !== 'Escape') return;
+            event.preventDefault(); event.stopPropagation();
+            screen.close();
+        };
+        const screen = {
+            host, closed: false,
+            close() {
+                if (screen.closed) return;
+                screen.closed = true;
+                if (_BBI.screen === screen) _BBI.screen = null;
+                doc.removeEventListener('keydown', onKey, true);
+                document.removeEventListener('keydown', onKey, true);
+                host.remove();
+                try { opener?.focus?.({ preventScroll: true }); } catch (e) {}
+            }
+        };
+        _BBI.screen = screen;
+        doc.addEventListener('keydown', onKey, true);
+        document.addEventListener('keydown', onKey, true);
+        doc.body.append(host);
+        build(doc, frame, screen.close);
+        return screen;
+    }
+    function bbiOpenLightbox(card) {
+        if (!card.url) return;
+        const item = bbiShown(card), url = bbiAbsolute(card.url), state = card.state, target = card.target, address = card.url;
+        bbiOpenScreen('柏寶繪圖片', (doc, frame, close) => {
+            const top = doc.createElement('div'); top.className = 'lb-top';
+            const stage = doc.createElement('div'); stage.className = 'lb-stage';
+            const img = doc.createElement('img'); img.src = url; img.alt = state.promptText || '柏寶繪圖片';
+            const text = doc.createElement('div'); text.className = 'lb-prompt'; text.hidden = true;
+            text.textContent = state.promptText || '';
+            const action = (label, fn, cls) => {
+                const button = doc.createElement('button');
+                button.type = 'button'; button.className = 'btn' + (cls ? ' ' + cls : '');
+                button.textContent = label; button.addEventListener('click', fn); top.append(button);
+                return button;
+            };
+            if (state.promptText) action('提示詞', () => { text.hidden = !text.hidden; });
+            action('下載', () => bbiDownload(address, item, state.character));
+            if (item && target) action('刪除', () => { close(); bbiConfirmRemove(card, item); });
+            const closeButton = action('關閉', close, 'main');
+            // 點圖片以外的地方關閉；圖片本身不攔截觸控，手機可長按存圖。
+            stage.addEventListener('click', (event) => { if (event.target === stage) close(); });
+            stage.append(img);
+            frame.append(top, stage, text);
+            closeButton.focus();
+        });
+    }
+    function bbiConfirmRemove(card, item) {
+        const target = card.target;
+        if (!target) return;
+        bbiOpenScreen('刪除圖片', (doc, frame, close) => {
+            const sheet = doc.createElement('div'); sheet.className = 'sheet';
+            sheet.innerHTML = '<div class="panel" role="alertdialog" aria-labelledby="t"><h2 id="t">刪除這張圖？</h2>' +
+                '<p>會從這則訊息的圖片紀錄移除，圖庫裡的檔案也一併刪除，無法復原。</p><p class="err" hidden></p>' +
+                '<div class="row"><button type="button" class="btn" data-k="no">取消</button><button type="button" class="btn danger" data-k="yes">刪除</button></div></div>';
+            const err = sheet.querySelector('.err'), no = sheet.querySelector('[data-k="no"]'), yes = sheet.querySelector('[data-k="yes"]');
+            sheet.addEventListener('click', (event) => { if (event.target === sheet) close(); });
+            no.addEventListener('click', close);
+            yes.addEventListener('click', async () => {
+                yes.disabled = true;
+                try { await bbiRemove(target, item.id); close(); }
+                catch (error) { err.hidden = false; err.textContent = error?.message || '刪除失敗，請稍後重試。'; yes.disabled = false; }
+                finally { bbiNotify(); }
+            });
+            frame.append(sheet);
+            no.focus();
+        });
+    }
+    function bbiOpenEditor(card) {
+        const target = card.target, content = card.state.content || {};
+        if (!target) return;
+        bbiOpenScreen('修改提示詞', (doc, frame, close) => {
+            const sheet = doc.createElement('div'); sheet.className = 'sheet';
+            sheet.innerHTML = '<form class="panel" aria-labelledby="t"><h2 id="t">修改提示詞</h2>' +
+                '<label>正向提示詞（tag）<textarea name="prompt" rows="4"></textarea></label>' +
+                '<label>自然語言描述（nl，可空）<textarea name="nl" rows="3"></textarea></label>' +
+                '<label>負面提示詞（negative，可空）<textarea name="negative" rows="2"></textarea></label>' +
+                '<label>畫幅<select name="size"><option value="portrait">直式</option><option value="landscape">橫式</option></select></label>' +
+                (content.characters ? '<p>這張圖另有 ' + content.characters + ' 位角色的提示，保留不變。</p>' : '') +
+                '<p>存檔後正文裡的標籤會一起改寫；原本的圖會標示為「舊提示詞」。</p><p class="err" hidden></p>' +
+                '<div class="row"><button type="button" class="btn" data-k="no">取消</button><button type="button" class="btn" data-k="save">存檔</button>' +
+                '<button type="button" class="btn main" data-k="regen">存檔並重新生成</button></div></form>';
+            const form = sheet.querySelector('form'), err = sheet.querySelector('.err');
+            form.elements.prompt.value = content.prompt || ''; form.elements.nl.value = content.nl || '';
+            form.elements.negative.value = content.negative || '';
+            form.elements.size.value = content.size === 'landscape' ? 'landscape' : 'portrait';
+            const regen = sheet.querySelector('[data-k="regen"]');
+            regen.disabled = !card.state.available;
+            form.addEventListener('submit', (event) => event.preventDefault());
+            sheet.querySelector('[data-k="no"]').addEventListener('click', close);
+            const submit = async (regenerate) => {
+                const buttons = form.querySelectorAll('button');
+                buttons.forEach((button) => { button.disabled = true; });
+                try {
+                    const result = await bbiEditPrompt(target, { prompt: form.elements.prompt.value, nl: form.elements.nl.value,
+                        negative: form.elements.negative.value, size: form.elements.size.value }, regenerate);
+                    close();
+                    // 改完標籤後是新的標籤，生成失敗的訊息記在這個位置上。
+                    if (result?.work) result.work.catch((error) => {
+                        if (!bbiAlive()) return;
+                        bbiUi(result.target).error = error?.code === 'aborted' ? '已取消生成。' : error?.message || '生成失敗，請稍後重試。';
+                        bbiNotify();
+                    });
+                    bbiNotify();
+                } catch (error) {
+                    err.hidden = false; err.textContent = error?.message || '存檔失敗，請稍後重試。';
+                    buttons.forEach((button) => { button.disabled = false; });
+                    regen.disabled = !card.state.available;
+                }
+            };
+            sheet.querySelector('[data-k="save"]').addEventListener('click', () => submit(false));
+            regen.addEventListener('click', () => submit(true));
+            frame.append(sheet);
+            form.elements.prompt.focus();
+        });
+    }
+
+    // ── 事件與離開 ──
+    // 原生圖卡（宿主在原訊息裡）開始／結束生成、存了新圖：主檔圖卡跟著更新。
+    (function bbiInstallEvents() {
+        const changed = () => { bbiPrune(); bbiNotify(); };
+        const names = ['st-baibai-image:ready', 'st-baibai-image:changed'];
+        try { for (const name of names) topWindow.addEventListener(name, changed); } catch (e) { return; }
+        // 訊息生成結束：圖卡從「串流中」恢復可操作（稍等一下，讓生成狀態先更新）。
+        const context = plugCtx(), es = context?.eventSource, et = context?.eventTypes || context?.event_types;
+        const endNames = es && typeof es.on === 'function' && et ? Array.from(new Set([et.GENERATION_ENDED, et.GENERATION_STOPPED].filter(Boolean))) : [];
+        let endTimer = 0;
+        const onEnd = () => { clearTimeout(endTimer); endTimer = setTimeout(bbiNotify, 400); };
+        for (const name of endNames) es.on(name, onEnd);
+        _rpgLifetime.signal.addEventListener('abort', () => {
+            clearTimeout(endTimer);
+            try { for (const name of names) topWindow.removeEventListener(name, changed); } catch (e) {}
+            for (const name of endNames) { try { (es.removeListener || es.off)?.call(es, name, onEnd); } catch (e) {} }
+        }, { once: true });
+    })();
+    function bbiDispose() {
+        clearTimeout(_BBI.notifyTimer);
+        _BBI.notifyTimer = 0;
+        for (const job of _BBI.jobs.values()) job.controller.abort();
+        _BBI.jobs.clear();
+        try { _BBI.observer?.disconnect(); } catch (e) {}
+        _BBI.observer = null; _BBI.watched = null;
+        bbiCloseScreen();
+        for (const ui of _BBI.ui.values()) { bbiReleaseImage(ui.image); ui.image = null; }
+        _BBI.ui.clear();
+    }
+    _rpgLifetime.signal.addEventListener('abort', bbiDispose, { once: true });
+    // === [柏寶繪 1117] 結束 =======================================================
 
     // === [新增] 圖片標記 hydration — 異步填充圖片 URL（含延遲重試）===
     let _imgRetryTimer = null;
@@ -11047,7 +12526,7 @@ if (typeof window.setLayout === 'function') {
             const prompt = ph.dataset.imgPrompt || '';
 
             try {
-                if (type === 'bbi' && refreshBbiPlaceholder(ph)) continue;
+                if (type === 'bbi') { bbiRefreshPlaceholder(ph); continue; }   // [柏寶繪 1117] 主檔自己的圖卡
                 let url = null;
                 if (typeof window.resolveImageUrl === 'function') {
                     url = await window.resolveImageUrl(type, id, prompt);
@@ -11055,11 +12534,6 @@ if (typeof window.setLayout === 'function') {
                 if (_rpgLifetime.signal.aborted) return;
                 if (!ph.isConnected) continue;
                 if (url) {
-                    if (type === 'bbi') {
-                        renderBbiCard(ph, { available: false, canGenerate: false, url,
-                            promptText: prompt ? decodeURIComponent(prompt) : '' });
-                        continue;
-                    }
                     const img = document.createElement('img');
                     img.className = 'rpg-inline-image';
                     img.alt = prompt ? decodeURIComponent(prompt) : 'Generated Image';
@@ -11118,7 +12592,11 @@ if (typeof window.setLayout === 'function') {
     }
 
     // 公開既有回補函式，供 Vue 圖片橋接通知；沿用並行防重與生命週期保護。
-    window.rpgHydrate = hydrateInlineImages;
+    // [圖片插件適配 1117] 宿主呼叫時先觸發主檔自己的補圖（小白X／chatu8／LocalDream），再做原本的 hydrate（柏寶繪）。
+    window.rpgHydrate = function(retryCount) {
+        try { plugAfterRender(false); } catch (e) { console.warn('[RPG] 圖片插件補圖失敗', e); }
+        return hydrateInlineImages(retryCount);
+    };
 
     const updateButtons = () => {
         if (!els.prevBtn || !els.nextBtn) return;
@@ -14132,6 +15610,7 @@ await syncGameState();
     e.preventDefault();
 
     state.isPaged = !state.isPaged;
+    if (typeof pgSaveReadMode === 'function') pgSaveReadMode();   // [圖片插件適配 1117] 記住玩家的選擇（聊天變數「阅读模式」）
     root.classList.toggle('paged-mode', state.isPaged);
     els.modeBtn.innerText = state.isPaged ? '切换全文' : '切换分页';   // [分頁改版 1117] 按鈕縮成四字
     state.currPage = 0;
@@ -14737,6 +16216,24 @@ function _stGenEnd() {
     if (_stopButtonVisible()) _stGenStart();
 })();
 
+// [圖片插件適配 1117] 外掛事後改寫這一樓的原文（MESSAGE_UPDATED／MESSAGE_EDITED）：自己更新正文，見 plugOnMessageRewritten。
+(function _initMessageRewriteEvents() {
+    let ctx = null;
+    try { ctx = topWindow.SillyTavern?.getContext?.() || null; } catch (e) {}
+    const es = ctx?.eventSource;
+    const et = ctx?.eventTypes || ctx?.event_types;
+    if (!es || typeof es.on !== 'function' || !et) return;
+    const names = Array.from(new Set([et.MESSAGE_UPDATED, et.MESSAGE_EDITED].filter(Boolean)));
+    if (!names.length) return;
+    const handler = (messageId) => plugOnMessageRewritten(messageId);
+    for (const name of names) es.on(name, handler);
+    _rpgLifetime.signal.addEventListener('abort', () => {
+        for (const name of names) {
+            try { (es.removeListener || es.off)?.call(es, name, handler); } catch (e) {}
+        }
+    }, { once: true });
+})();
+
 	// === 全角色選擇器邏輯 ===
     
     window.openCharSelector = function() {
@@ -14847,7 +16344,6 @@ function _stGenEnd() {
     };
 	
     _rpgLifetime.signal.addEventListener('abort', () => {
-        window.RPG_BBI?.dispose?.();
         window.__rpgDisplayObserver?.disconnect();
         _pluginMutObs?.disconnect();
         _pluginResizeObserver?.disconnect();
