@@ -1171,6 +1171,27 @@ html:not(.rpg-classic) .rpg-v7-root :is(.bag-scaler, .quest-scaler) .cat-btn {
         cursor: pointer; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; touch-action: manipulation;
     }
     .rpg-plug-fb img { display: block; margin: 0 auto; border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.4); }
+    /* === [段落分隔線 1118] 單獨一行的「－－」「---」：細線往兩端淡出，中間菱形＋兩個小圓點；顏色跟首字下沉 === */
+    .rpg-v7-root .text-display p.rpg-scene-break {
+        --sb-gap: 17px;
+        position: relative; width: min(280px, 64%); height: 1em; margin: 0 auto 1.2em; padding: 0;
+        text-indent: 0; color: var(--drop-cap-color, #d4af37); opacity: .72; pointer-events: none;
+        background: linear-gradient(to right, transparent, currentColor calc(50% - var(--sb-gap)),
+            transparent calc(50% - var(--sb-gap)), transparent calc(50% + var(--sb-gap)),
+            currentColor calc(50% + var(--sb-gap)), transparent) center / 100% 1px no-repeat;
+    }
+    .rpg-v7-root.light-mode .text-display p.rpg-scene-break { opacity: .6; }
+    .rpg-v7-root .text-display p.rpg-scene-break::before,
+    .rpg-v7-root .text-display p.rpg-scene-break::after { content: ""; position: absolute; left: 50%; top: 50%; }
+    .rpg-v7-root .text-display p.rpg-scene-break::before {
+        width: 6px; height: 6px; background: currentColor; transform: translate(-50%, -50%) rotate(45deg);
+    }
+    .rpg-v7-root .text-display p.rpg-scene-break::after {
+        width: 24px; height: 3px; transform: translate(-50%, -50%);
+        background: radial-gradient(circle, currentColor 1.1px, transparent 1.6px) left center / 3px 3px no-repeat,
+            radial-gradient(circle, currentColor 1.1px, transparent 1.6px) right center / 3px 3px no-repeat;
+    }
+
     /* 首字下沉 */
     .rpg-v7-root .text-display.show-drop-cap p:first-child::first-letter {
         font-size: 2.4em;
@@ -3625,6 +3646,11 @@ html:not(.rpg-classic) .rpg-v7-root :is(.bag-scaler, .quest-scaler) .cat-btn {
     color: #ffcc66;
 }
 .display-opt-btn:hover { border-color: #8a734b; color: #d0c0a0; }
+/* [主題圖示 1118] 主題按鈕的月亮／太陽：線條圖示，跟文字同色（不用 emoji，各裝置外觀一致） */
+.display-opt-btn .theme-ico {
+    width: 15px; height: 15px; margin-right: 6px; vertical-align: -3px;
+    fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
+}
 
 /* === [紙張質感] 濃度滑桿 === */
 .display-slider-row {
@@ -6162,8 +6188,8 @@ html:not(.rpg-classic) .rpg-v7-root :is(.bag-scaler, .quest-scaler) .cat-btn {
             <!-- 界面主題 -->
             <div class="display-section-label">界面主题</div>
             <div class="display-btn-group">
-                <div class="display-opt-btn active" id="theme-dark-btn" onclick="setTheme('dark')">🌑 深色</div>
-                <div class="display-opt-btn" id="theme-light-btn" onclick="setTheme('light')">☀️ 浅色</div>
+                <div class="display-opt-btn active" id="theme-dark-btn" onclick="setTheme('dark')"><svg class="theme-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 13.5A8.5 8.5 0 1 1 10.5 3.5a7 7 0 0 0 10 10z"/></svg>深色</div>
+                <div class="display-opt-btn" id="theme-light-btn" onclick="setTheme('light')"><svg class="theme-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg>浅色</div>
             </div>
 
             <!-- 界面布局 -->
@@ -10032,6 +10058,10 @@ if (typeof window.setLayout === 'function') {
     const plugEsc = (v) => String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     const plugQuote = (v) => String(v).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const plugIsImagePara = (p) => /^<rpg-(?:img-mark|bbi-image)\s/.test(p);
+    // [段落分隔線 1118] 分隔線段落的記號（plugParagraphs 產生）與畫出來的 HTML。
+    const PLUG_BREAK = '<rpg-scene-break>';
+    const PLUG_BREAK_HTML = '<p class="rpg-scene-break" role="separator"></p>';
+    const PLUG_BREAK_LINE = /^(?:－{2,}|-{3,})$/;
     const plugGenerating = () => isGenerating || _stGenActive;
 
     function plugCtx() {
@@ -10085,7 +10115,19 @@ if (typeof window.setLayout === 'function') {
             s = s.replace(_PLUG_XB_RE, (full, id) => id ? mk(xbReady ? 'xb' : 'xbf', full) : (xbReady ? mk('xb', full) : full));
         }
         if (s.includes('<rpg-bbi-image ')) s = s.replace(/<rpg-bbi-image [^>]*><\/rpg-bbi-image>/g, '\n$&\n');
-        return s.split(/\n+/).filter(p => p.trim());
+        // [段落分隔線 1118] 單獨一行的「－－」「---」→ 分隔線（句中的破折號不算）。開頭、結尾與連續的分隔線不畫。
+        const out = [];
+        for (const p of s.split(/\n+/)) {
+            const t = p.trim();
+            if (!t) continue;
+            if (PLUG_BREAK_LINE.test(t)) {
+                if (out.length && out[out.length - 1] !== PLUG_BREAK) out.push(PLUG_BREAK);
+                continue;
+            }
+            out.push(p);
+        }
+        if (out[out.length - 1] === PLUG_BREAK) out.pop();
+        return out;
     }
 
     // <rpg-img-mark> → 錨點 HTML（processImageMarkers 呼叫）。
@@ -10643,6 +10685,11 @@ if (typeof window.setLayout === 'function') {
         const MAX_PARAS_PER_PAGE = 4;
         
         paragraphs.forEach((p, index) => {
+            // [段落分隔線 1118] 不算字數與段落數、不觸發換頁：放在目前那一頁的最後。緊接在圖片頁後面（還沒有文字頁）時不畫。
+            if (p === PLUG_BREAK) {
+                if (currentPageHTML !== "") currentPageHTML += PLUG_BREAK_HTML;
+                return;
+            }
             const pLen = p.length;
             // [圖片插件適配 1117] 圖片段落單獨一頁，不以字數計算
             if (plugIsImagePara(p)) {
@@ -12328,7 +12375,8 @@ if (typeof window.setLayout === 'function') {
         const next = previous.slice(0, unchanged);
         const template = document.createElement('template');
         for (let i = unchanged; i < paragraphs.length; i++) {
-            template.innerHTML = '<p' + (plugIsImagePara(paragraphs[i]) ? ' class="rpg-img-para"' : '') + '>' +
+            template.innerHTML = paragraphs[i] === PLUG_BREAK ? PLUG_BREAK_HTML :   // [段落分隔線 1118]
+                '<p' + (plugIsImagePara(paragraphs[i]) ? ' class="rpg-img-para"' : '') + '>' +
                 getFormattedParagraph(paragraphs[i], !isGenerating || i < paragraphs.length - 1) + '</p>';
             fragment.appendChild(template.content);
             // 邊界不影響排版，也能保留插件在段落內插入或替換的圖片節點。
