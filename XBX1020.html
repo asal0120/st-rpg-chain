@@ -2127,8 +2127,11 @@ html:not(.rpg-classic) .rpg-v7-root :is(.bag-scaler, .quest-scaler) .cat-btn {
     .status-scaler .cg-card.locked { cursor: not-allowed; border-color: #333; }
     .status-scaler .cg-card.locked img { display: none; }
     .status-scaler .cg-card.locked::after {
-        content: '🔒'; position: absolute; top: 50%; left: 50%;
-        transform: translate(-50%, -50%); font-size: 24px; color: #555;
+        /* [UI圖示 1120] 鎖頭改用 mask（偽元素放不了 inline SVG） */
+        content: ''; position: absolute; top: 50%; left: 50%; width: 32px; height: 32px;
+        transform: translate(-50%, -50%); background: #6a6358;
+        -webkit-mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2024%2024'%20fill%3D'none'%20stroke%3D'black'%20stroke-width%3D'2'%20stroke-linecap%3D'round'%20stroke-linejoin%3D'round'%3E%3Crect%20x%3D'5'%20y%3D'10.5'%20width%3D'14'%20height%3D'10'%20rx%3D'1.6'%2F%3E%3Cpath%20d%3D'M8.2%2010.5V7.6a3.8%203.8%200%200%201%207.6%200v2.9'%2F%3E%3Cpath%20fill%3D'black'%20stroke%3D'none'%20d%3D'M12%2013.2L13.5%2015.2L12%2017.2L10.5%2015.2Z'%2F%3E%3C%2Fsvg%3E") center / contain no-repeat;
+        mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2024%2024'%20fill%3D'none'%20stroke%3D'black'%20stroke-width%3D'2'%20stroke-linecap%3D'round'%20stroke-linejoin%3D'round'%3E%3Crect%20x%3D'5'%20y%3D'10.5'%20width%3D'14'%20height%3D'10'%20rx%3D'1.6'%2F%3E%3Cpath%20d%3D'M8.2%2010.5V7.6a3.8%203.8%200%200%201%207.6%200v2.9'%2F%3E%3Cpath%20fill%3D'black'%20stroke%3D'none'%20d%3D'M12%2013.2L13.5%2015.2L12%2017.2L10.5%2015.2Z'%2F%3E%3C%2Fsvg%3E") center / contain no-repeat;
     }
 
 /* === CG 大圖預覽：覆蓋整個 RPG 容器，不再限制於 Status / map-area === */
@@ -5981,6 +5984,32 @@ html:not(.rpg-classic) .rpg-v7-root :is(.bag-scaler, .quest-scaler) .cat-btn {
     padding-right: 60px;
 }
 
+/* [UI圖示 1120] inline SVG 圖示（取代 ✖ ✕ ❮ ❯ ◀ ▶ ⚏ 🗺 ⚙ 🔄 📓 ⚠️）：跟按鈕文字同色、跟字級縮放。
+   .f＝實心的部分；.heavy＝較粗的線；.inline＝放在文字前面 */
+.rpg-ico { width: 1em; height: 1em; display: block; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.rpg-ico .f { fill: currentColor; stroke: none; }
+.rpg-ico.heavy { stroke-width: 3; }
+.rpg-ico.inline { display: inline-block; vertical-align: -0.14em; margin-right: .3em; }
+/* 各按鈕的圖示大小（相對按鈕字級） */
+:is(.close-btn, .modal-close, .quest-delete-btn, .item-delete-btn) .rpg-ico { width: .95em; height: .95em; }
+.wm-close-btn .rpg-ico { width: 1em; height: 1em; }
+.interface-nav-btn .rpg-ico { width: .9em; height: .9em; }
+.modal-nav .rpg-ico { width: .8em; height: .8em; filter: drop-shadow(0 0 5px #000); }
+.hud-toggle-btn .rpg-ico { width: 1.25em; height: 1.25em; }
+.status-grid-btn .rpg-ico { width: 1em; height: 1em; }
+/* 位置修正：字元的行框比 SVG 高、字形不在行框正中，改成 SVG 後圖示會偏上或偏左右；用 margin 讓圖示的可見中心對回原字元的位置（不改按鈕本身的位置和大小） */
+.close-btn .rpg-ico { margin-top: .35em; }
+.mini-modal-scaler .close-btn .rpg-ico { margin-top: .17em; }   /* 圓鈕用 flex 置中，只差字形的基線偏移 */
+.quest-delete-btn .rpg-ico { margin-top: .33em; }
+.interface-nav-btn .rpg-ico { margin-top: .38em; }
+.interface-nav-btn.prev .rpg-ico { margin-left: -.16em; }
+.interface-nav-btn.next .rpg-ico { margin-left: -.19em; }
+/* 原本 hover 用 text-shadow 發光的按鈕：圖示改用 drop-shadow 發光 */
+:is(.quest-scaler .close-btn, .bag-scaler .close-btn, .status-scaler .close-btn, .mini-modal-scaler .close-btn, .interface-nav-btn, .quest-scaler .quest-delete-btn, .bag-scaler .item-delete-btn):hover .rpg-ico {
+    filter: drop-shadow(0 0 4px currentColor);
+}
+html:not(.rpg-classic) .rpg-v7-root .bag-scaler .item-delete-btn:hover .rpg-ico { filter: none; }   /* 該版面的 hover 本來就沒有發光 */
+
 /* --- 任務空白頁：插圖＋分隔紋 --- */
 .rpg-v7-root .quest-scaler .empty-state {
     font-style: normal;
@@ -6129,7 +6158,7 @@ html:not(.rpg-classic) .rpg-v7-root :is(.bag-scaler, .quest-scaler) .cat-btn {
 </style>
 <div class="rpg-v7-root paged-mode mvu-paper interface-harmony-study stock-study pg-trial pg-fixed" data-paper-width="fluid" data-ui-release="2026-09-16-stock-bbi-v2" data-stock-button="on" data-stock-panel="on" data-stock-divider="on" data-stock-paging="on" data-stock-menu-trigger="on" data-stock-menu-list="on" data-stock-hud-arrow="4" data-stock-topbar-arrow="4">
 <div class="map-topbar" id="map-topbar">
-    <div class="hud-toggle-btn" id="hud-toggle">◀</div>
+    <div class="hud-toggle-btn" id="hud-toggle"><svg class="rpg-ico" viewBox="0 0 24 24" aria-hidden="true"><path class="f" d="M3.5 12L20 3L15.5 12L20 21Z"/></svg></div>
     <!-- [新增] 窄屏專用：日期條（點擊展開/收合面板） -->
     <div class="topbar-date-strip" id="topbar-date-strip">
         <span class="tds-chev">▼</span>
@@ -6183,8 +6212,8 @@ html:not(.rpg-classic) .rpg-v7-root :is(.bag-scaler, .quest-scaler) .cat-btn {
 <div class="display-layer-wrapper" id="display-layer">
     <div class="display-modal" id="display-modal">
         <div class="wm-header">
-            <span class="wm-title">⚙ 显示设定</span>
-            <button class="wm-close-btn" id="display-close-btn">✕</button>
+            <span class="wm-title"><svg class="rpg-ico inline" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.34 10.05L21.86 10.31L21.86 13.69L19.34 13.95L18.57 15.81L20.17 17.77L17.77 20.17L15.81 18.57L13.95 19.34L13.69 21.86L10.31 21.86L10.05 19.34L8.19 18.57L6.23 20.17L3.83 17.77L5.43 15.81L4.66 13.95L2.14 13.69L2.14 10.31L4.66 10.05L5.43 8.19L3.83 6.23L6.23 3.83L8.19 5.43L10.05 4.66L10.31 2.14L13.69 2.14L13.95 4.66L15.81 5.43L17.77 3.83L20.17 6.23L18.57 8.19Z"/><circle cx="12" cy="12" r="3.2"/></svg>显示设定</span>
+            <button class="wm-close-btn" id="display-close-btn"><svg class="rpg-ico" viewBox="0 0 24 24" aria-hidden="true"><path class="f" d="M2.69 4.31L10.52 13.48L19.69 21.31L21.31 19.69L13.48 10.52L4.31 2.69Z M19.69 2.69L10.52 10.52L2.69 19.69L4.31 21.31L13.48 13.48L21.31 4.31Z"/></svg></button>
         </div>
         <div class="display-modal-body">
 
@@ -6310,7 +6339,7 @@ html:not(.rpg-classic) .rpg-v7-root :is(.bag-scaler, .quest-scaler) .cat-btn {
 					读取 SillyTavern 中启用的正则脚本，勾选后应用于前端正文
 				</div>
 				<div class="st-regex-list" id="st-regex-list"></div>
-				<button class="st-regex-refresh-btn" id="st-regex-refresh-btn">🔄 刷新列表</button>
+				<button class="st-regex-refresh-btn" id="st-regex-refresh-btn"><svg class="rpg-ico inline" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 0 0-14.3-4.9"/><path d="M5 3.6v3.9h3.9"/><path d="M4 12a8 8 0 0 0 14.3 4.9"/><path d="M19 20.4v-3.9h-3.9"/></svg>刷新列表</button>
 			</div>
 
         </div>
@@ -6323,8 +6352,8 @@ html:not(.rpg-classic) .rpg-v7-root :is(.bag-scaler, .quest-scaler) .cat-btn {
         <div class="worldmap-layer-wrapper" id="worldmap-layer">
             <div class="worldmap-scaler" id="worldmap-scaler">
                 <div class="wm-header">
-                    <span class="wm-title">🗺 世界地图</span>
-                    <button class="wm-close-btn" id="worldmap-close-btn">✕</button>
+                    <span class="wm-title"><svg class="rpg-ico inline" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6.5L9 4L15 6.5L21 4V17.5L15 20L9 17.5L3 20Z"/><path d="M9 4V17.5M15 6.5V20"/></svg>世界地图</span>
+                    <button class="wm-close-btn" id="worldmap-close-btn"><svg class="rpg-ico" viewBox="0 0 24 24" aria-hidden="true"><path class="f" d="M2.69 4.31L10.52 13.48L19.69 21.31L21.31 19.69L13.48 10.52L4.31 2.69Z M19.69 2.69L10.52 10.52L2.69 19.69L4.31 21.31L13.48 13.48L21.31 4.31Z"/></svg></button>
                 </div>
 				<div class="wm-tab-bar" id="wm-tab-bar"></div>
                 <div class="wm-body">
@@ -6371,9 +6400,9 @@ html:not(.rpg-classic) .rpg-v7-root :is(.bag-scaler, .quest-scaler) .cat-btn {
                     </div>
                 </div>
 
-                <div class="close-btn" id="quest-close-btn">✖</div>
-				<div class="interface-nav-btn prev" onclick="event.stopPropagation(); switchInterface('bag')">❮</div>
-    			<div class="interface-nav-btn next" onclick="event.stopPropagation(); switchInterface('status')">❯</div>
+                <div class="close-btn" id="quest-close-btn"><svg class="rpg-ico" viewBox="0 0 24 24" aria-hidden="true"><path class="f" d="M2.69 4.31L10.52 13.48L19.69 21.31L21.31 19.69L13.48 10.52L4.31 2.69Z M19.69 2.69L10.52 10.52L2.69 19.69L4.31 21.31L13.48 13.48L21.31 4.31Z"/></svg></div>
+				<div class="interface-nav-btn prev" onclick="event.stopPropagation(); switchInterface('bag')"><svg class="rpg-ico heavy" viewBox="0 0 24 24" aria-hidden="true"><path d="M15.5 3.5L7 12L15.5 20.5"/></svg></div>
+    			<div class="interface-nav-btn next" onclick="event.stopPropagation(); switchInterface('status')"><svg class="rpg-ico heavy" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 3.5L17 12L8.5 20.5"/></svg></div>
             </div>
 		</div>
 		<div class="bag-layer-wrapper" id="bag-layer">
@@ -6401,9 +6430,9 @@ html:not(.rpg-classic) .rpg-v7-root :is(.bag-scaler, .quest-scaler) .cat-btn {
                     </div>
                 </div>
 
-                <div class="close-btn" id="bag-close-btn">✖</div>
-				<div class="interface-nav-btn prev" onclick="event.stopPropagation(); switchInterface('status')">❮</div>
-    			<div class="interface-nav-btn next" onclick="event.stopPropagation(); switchInterface('quest')">❯</div>
+                <div class="close-btn" id="bag-close-btn"><svg class="rpg-ico" viewBox="0 0 24 24" aria-hidden="true"><path class="f" d="M2.69 4.31L10.52 13.48L19.69 21.31L21.31 19.69L13.48 10.52L4.31 2.69Z M19.69 2.69L10.52 10.52L2.69 19.69L4.31 21.31L13.48 13.48L21.31 4.31Z"/></svg></div>
+				<div class="interface-nav-btn prev" onclick="event.stopPropagation(); switchInterface('status')"><svg class="rpg-ico heavy" viewBox="0 0 24 24" aria-hidden="true"><path d="M15.5 3.5L7 12L15.5 20.5"/></svg></div>
+    			<div class="interface-nav-btn next" onclick="event.stopPropagation(); switchInterface('quest')"><svg class="rpg-ico heavy" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 3.5L17 12L8.5 20.5"/></svg></div>
             </div>
 			
         </div>
@@ -6514,22 +6543,22 @@ html:not(.rpg-classic) .rpg-v7-root :is(.bag-scaler, .quest-scaler) .cat-btn {
                     <div id="cg-modal" class="cg-modal">
                         <div class="cg-modal-content">
                             <img src="" id="cg-display" class="cg-modal-img">
-                            <button class="modal-nav prev" onclick="changeCG(-1)">❮</button>
-                            <button class="modal-nav next" onclick="changeCG(1)">❯</button>
-                            <button class="modal-close" onclick="closeCG()">✖</button>
+                            <button class="modal-nav prev" onclick="changeCG(-1)"><svg class="rpg-ico heavy" viewBox="0 0 24 24" aria-hidden="true"><path d="M15.5 3.5L7 12L15.5 20.5"/></svg></button>
+                            <button class="modal-nav next" onclick="changeCG(1)"><svg class="rpg-ico heavy" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 3.5L17 12L8.5 20.5"/></svg></button>
+                            <button class="modal-close" onclick="closeCG()"><svg class="rpg-ico" viewBox="0 0 24 24" aria-hidden="true"><path class="f" d="M2.69 4.31L10.52 13.48L19.69 21.31L21.31 19.69L13.48 10.52L4.31 2.69Z M19.69 2.69L10.52 10.52L2.69 19.69L4.31 21.31L13.48 13.48L21.31 4.31Z"/></svg></button>
                         </div>
                     </div>
-					<div class="status-grid-btn" onclick="openCharSelector()" title="所有角色">⚏</div>
+					<div class="status-grid-btn" onclick="openCharSelector()" title="所有角色"><svg class="rpg-ico" viewBox="0 0 24 24" aria-hidden="true"><path class="f" d="M12 3.2L15.3 6.5L12 9.8L8.7 6.5Z M6.5 8.7L9.8 12L6.5 15.3L3.2 12Z M17.5 8.7L20.8 12L17.5 15.3L14.2 12Z M12 14.2L15.3 17.5L12 20.8L8.7 17.5Z"/></svg></div>
                     <div class="party-strip-container">
                         <div class="strip-bg"></div>
                         <button class="nav-arrow" id="btn-left"><svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg></button>
                         <div class="faces-window"><div class="faces-track" id="faces-track"></div></div>
                         <button class="nav-arrow" id="btn-right"><svg viewBox="0 0 24 24"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg></button>
                     </div>
-                    <div class="close-btn" id="status-close-btn">✖</div>
+                    <div class="close-btn" id="status-close-btn"><svg class="rpg-ico" viewBox="0 0 24 24" aria-hidden="true"><path class="f" d="M2.69 4.31L10.52 13.48L19.69 21.31L21.31 19.69L13.48 10.52L4.31 2.69Z M19.69 2.69L10.52 10.52L2.69 19.69L4.31 21.31L13.48 13.48L21.31 4.31Z"/></svg></div>
                 </div>
-				<div class="interface-nav-btn prev" onclick="event.stopPropagation(); switchInterface('quest')">❮</div>
-    			<div class="interface-nav-btn next" onclick="event.stopPropagation(); switchInterface('bag')">❯</div>
+				<div class="interface-nav-btn prev" onclick="event.stopPropagation(); switchInterface('quest')"><svg class="rpg-ico heavy" viewBox="0 0 24 24" aria-hidden="true"><path d="M15.5 3.5L7 12L15.5 20.5"/></svg></div>
+    			<div class="interface-nav-btn next" onclick="event.stopPropagation(); switchInterface('bag')"><svg class="rpg-ico heavy" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 3.5L17 12L8.5 20.5"/></svg></div>
             </div>
         </div>
     
@@ -6553,7 +6582,7 @@ html:not(.rpg-classic) .rpg-v7-root :is(.bag-scaler, .quest-scaler) .cat-btn {
                         </g>
                     </svg>
 
-                    <div class="close-btn" onclick="closeMiniModal()">✖</div>
+                    <div class="close-btn" onclick="closeMiniModal()"><svg class="rpg-ico" viewBox="0 0 24 24" aria-hidden="true"><path class="f" d="M2.69 4.31L10.52 13.48L19.69 21.31L21.31 19.69L13.48 10.52L4.31 2.69Z M19.69 2.69L10.52 10.52L2.69 19.69L4.31 21.31L13.48 13.48L21.31 4.31Z"/></svg></div>
                 </div>
             </div>
         </div>
@@ -6567,7 +6596,7 @@ html:not(.rpg-classic) .rpg-v7-root :is(.bag-scaler, .quest-scaler) .cat-btn {
             <div class="char-selector-title">角色一览</div>
             <div class="char-grid" id="char-grid-content">
                 </div>
-            <div class="close-btn" onclick="closeCharSelector()">✖</div>
+            <div class="close-btn" onclick="closeCharSelector()"><svg class="rpg-ico" viewBox="0 0 24 24" aria-hidden="true"><path class="f" d="M2.69 4.31L10.52 13.48L19.69 21.31L21.31 19.69L13.48 10.52L4.31 2.69Z M19.69 2.69L10.52 10.52L2.69 19.69L4.31 21.31L13.48 13.48L21.31 4.31Z"/></svg></div>
         </div>
     </div>
     </div>
@@ -6589,7 +6618,7 @@ html:not(.rpg-classic) .rpg-v7-root :is(.bag-scaler, .quest-scaler) .cat-btn {
 <!-- [新增] State 查看面板 -->
 <div id="state-viewer-panel" class="state-viewer-panel" style="display:none">
     <div class="state-viewer-toggle" onclick="toggleStateViewer()">
-        <span class="state-viewer-label">📓 变量更新状态</span>
+        <span class="state-viewer-label"><svg class="rpg-ico inline" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="1.6"/><path d="M8.6 3V21"/><path d="M11.6 8.5h4.4M11.6 12h4.4M11.6 15.5h2.8"/></svg>变量更新状态</span>
         <span id="state-viewer-arrow" class="state-viewer-arrow">▼</span>
     </div>
     <pre id="state-viewer-body" class="state-viewer-body"></pre>
@@ -6608,6 +6637,14 @@ html:not(.rpg-classic) .rpg-v7-root :is(.bag-scaler, .quest-scaler) .cat-btn {
 <script>
 // [移植優化] 同一份生命週期供原文入口與主 IIFE 共用。
 const _rpgLifetime = new AbortController();
+// [UI圖示 1120] JS 產生的按鈕用的 inline SVG（HTML 內的圖示直接寫在標記裡）
+const RPG_ICO_PATHS = {
+    closeB: '<path class="f" d="M2.69 4.31L10.52 13.48L19.69 21.31L21.31 19.69L13.48 10.52L4.31 2.69Z M19.69 2.69L10.52 10.52L2.69 19.69L4.31 21.31L13.48 13.48L21.31 4.31Z"/>',
+    hudBL: '<path class="f" d="M3.5 12L20 3L15.5 12L20 21Z"/>',
+    hudBR: '<path class="f" d="M20.5 12L4 3L8.5 12L4 21Z"/>',
+    warn: '<path d="M12 3.6L21.4 19.8H2.6Z"/><path d="M12 9.6v4.8"/><path d="M12 17.1v.1"/>'
+};
+const rpgIco = (k, cls = '') => '<svg class="rpg-ico' + (cls ? ' ' + cls : '') + '" viewBox="0 0 24 24" aria-hidden="true">' + RPG_ICO_PATHS[k] + '</svg>';
 window.addEventListener('pagehide', (event) => {
     if (!event.persisted) _rpgLifetime.abort();
 });
@@ -9076,9 +9113,9 @@ function ensureCGModalOnRoot() {
         modal.innerHTML = `
             <div class="cg-modal-content" onclick="event.stopPropagation()">
                 <img src="" id="cg-display" class="cg-modal-img">
-                <button class="modal-nav prev" onclick="changeCG(-1)">❮</button>
-                <button class="modal-nav next" onclick="changeCG(1)">❯</button>
-                <button class="modal-close" onclick="closeCG()">✖</button>
+                <button class="modal-nav prev" onclick="changeCG(-1)"><svg class="rpg-ico heavy" viewBox="0 0 24 24" aria-hidden="true"><path d="M15.5 3.5L7 12L15.5 20.5"/></svg></button>
+                <button class="modal-nav next" onclick="changeCG(1)"><svg class="rpg-ico heavy" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 3.5L17 12L8.5 20.5"/></svg></button>
+                <button class="modal-close" onclick="closeCG()"><svg class="rpg-ico" viewBox="0 0 24 24" aria-hidden="true"><path class="f" d="M2.69 4.31L10.52 13.48L19.69 21.31L21.31 19.69L13.48 10.52L4.31 2.69Z M19.69 2.69L10.52 10.52L2.69 19.69L4.31 21.31L13.48 13.48L21.31 4.31Z"/></svg></button>
             </div>
         `;
         root.appendChild(modal);
@@ -9530,7 +9567,7 @@ window.closeCG = function() {
                         ${currentFilter === '已失败' ? '<span>✖</span>' : ''}
                     </div>
                     ${isDeletable ? 
-                        `<div class="quest-delete-btn" title="删除任务" onclick="deleteQuest('${qName.replace(/'/g, "\\'")}', '${currentCategory}', '${currentFilter}')">✖</div>` : ''}
+                        `<div class="quest-delete-btn" title="删除任务" onclick="deleteQuest('${qName.replace(/'/g, "\\'")}', '${currentCategory}', '${currentFilter}')">${rpgIco('closeB')}</div>` : ''}
                     <div class="q-desc">${qDesc}</div>
             `;
             
@@ -9813,7 +9850,7 @@ window.toggleStateViewer = function() {
 
             // === [修改] 加入刪除按鈕 ===
             card.innerHTML = `
-                <div class="item-delete-btn" title="丢弃物品" onclick="deleteItem('${item.rawName.replace(/'/g, "\\'")}', '${currentBagCategory}')">✖</div>
+                <div class="item-delete-btn" title="丢弃物品" onclick="deleteItem('${item.rawName.replace(/'/g, "\\'")}', '${currentBagCategory}')">${rpgIco('closeB')}</div>
                 <div class="item-name">${item.name}</div>
                 <div class="item-desc">${item.desc}</div>
             `;
@@ -15628,10 +15665,10 @@ async function openMinigame(url, opts) {
     fallbackBtn.style.display = 'none'; // 預設隱藏
 
     if (isFree) {   // 自由戰鬥：只能關閉，不沿用劇情戰鬥的「直接完成攻略」（會寫變量）
-        fallbackBtn.innerHTML = '⚠️ 小游戏未成功显示？点此关闭';
+        fallbackBtn.innerHTML = rpgIco('warn', 'inline') + '小游戏未成功显示？点此关闭';
         fallbackBtn.onclick = () => window.RPGBridge.closeGame();
     } else if (fallbackTarget && fallbackTarget !== '非攻略中' && fallbackTarget !== '0') {
-        fallbackBtn.innerHTML = `⚠️ 游戏无法载入？<br><strong>点此直接完成攻略：${fallbackTarget}</strong>`;
+        fallbackBtn.innerHTML = rpgIco('warn', 'inline') + `游戏无法载入？<br><strong>点此直接完成攻略：${fallbackTarget}</strong>`;
         fallbackBtn.onclick = () => _triggerVictoryFallback(fallbackTarget);
     }
 
@@ -16177,9 +16214,9 @@ function sendMsgViaDOM(message) {
                 els.hudWrap.classList.toggle('minimized');
 
                 if (els.hudWrap.classList.contains('minimized')) {
-                    els.hudToggle.innerText = '▶';
+                    els.hudToggle.innerHTML = rpgIco('hudBR');
                 } else {
-                    els.hudToggle.innerText = '◀';
+                    els.hudToggle.innerHTML = rpgIco('hudBL');
                 }
             };
         }
