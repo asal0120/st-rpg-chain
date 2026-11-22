@@ -2178,6 +2178,7 @@ html:not(.rpg-classic) .rpg-v7-root :is(.bag-scaler, .quest-scaler) .cat-btn {
 }
 
 .rpg-v7-root .modal-nav {
+    padding: 0; /* [iOS符號內距 1122] iOS 的 button 預設左右內距約 1em，會撐寬固定寬度的按鈕、符號偏右 */
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
@@ -2866,6 +2867,7 @@ html:not(.rpg-classic) .rpg-v7-root :is(.bag-scaler, .quest-scaler) .cat-btn {
     letter-spacing: 0.08em;
 }
 .wm-close-btn {
+    padding: 0; /* [iOS符號內距 1122] iOS 的 button 預設左右內距約 1em，會撐寬固定寬度的按鈕、符號偏右 */
     background: none;
     border: 1px solid #5c4e36;
     color: #b0a080;
@@ -3816,6 +3818,7 @@ html:not(.rpg-classic) .rpg-v7-root :is(.bag-scaler, .quest-scaler) .cat-btn {
 .filter-rule-input::placeholder { color: #3a3020; }
 
 .filter-rule-delete {
+    padding: 0; /* [iOS符號內距 1122] iOS 的 button 預設左右內距約 1em，會撐寬固定寬度的按鈕、符號偏右 */
     flex-shrink: 0;
     width: 24px;
     height: 24px;
@@ -4763,6 +4766,9 @@ html:not(.rpg-classic) .rpg-v7-root :is(.bag-scaler, .quest-scaler) .cat-btn {
     max-height: calc(100vh - 32px);
 }
 .rpg-v7-root .modal-close {
+    padding: 0; /* [iOS符號內距 1122] iOS 的 button 預設左右內距約 1em，會撐寬固定寬度的按鈕、符號偏右 */
+    /* [iOS符號內距 1122] 內容是 display:block 的 SVG，沒有內距後會靠左；改用 flex 置中（原本靠內距＋auto 寬度才大致置中） */
+    display: flex; align-items: center; justify-content: center;
     position: fixed;
     top: 8px;
     right: 8px;
@@ -7365,7 +7371,7 @@ document.getElementById('anchor-save-btn')?.addEventListener('click', async func
     function setCollapsed(c) {
         panel.classList.toggle('is-collapsed', c);
         toggle.classList.toggle('is-collapsed', c);
-        if (mark) mark.textContent = c ? '▶' : '▼';
+        if (mark) mark.textContent = c ? '▶︎' : '▼';
     }
     toggle.addEventListener('click', function(e) {
         e.stopPropagation();
@@ -7538,7 +7544,7 @@ document.getElementById('filter-save-btn')?.addEventListener('click', async func
     function setFilterCollapsed(collapsed) {
         panel.classList.toggle('is-collapsed', collapsed);
         toggle.classList.toggle('is-collapsed', collapsed);
-        if (mark) mark.textContent = collapsed ? '▶' : '▼';
+        if (mark) mark.textContent = collapsed ? '▶︎' : '▼';
     }
 
     toggle.addEventListener('click', function(e) {
@@ -7633,7 +7639,7 @@ function renderSTRegexPanel() {
     function setCollapsed(c) {
         panel.classList.toggle('is-collapsed', c);
         toggle.classList.toggle('is-collapsed', c);
-        if (mark) mark.textContent = c ? '▶' : '▼';
+        if (mark) mark.textContent = c ? '▶︎' : '▼';
     }
     toggle.addEventListener('click', function(e) {
         e.stopPropagation();
@@ -9563,8 +9569,8 @@ window.closeCG = function() {
                 <div class="quest-inner">
                     <div class="q-title">
                         ${qName}
-                        ${currentFilter === '已完成' ? '<span>✔</span>' : ''}
-                        ${currentFilter === '已失败' ? '<span>✖</span>' : ''}
+                        ${currentFilter === '已完成' ? '<span>✔︎</span>' : ''}
+                        ${currentFilter === '已失败' ? '<span>✖︎</span>' : ''}
                     </div>
                     ${isDeletable ? 
                         `<div class="quest-delete-btn" title="删除任务" onclick="deleteQuest('${qName.replace(/'/g, "\\'")}', '${currentCategory}', '${currentFilter}')">${rpgIco('closeB')}</div>` : ''}
@@ -10793,6 +10799,31 @@ if (typeof window.setLayout === 'function') {
         "提费尔山脉": "https://files.catbox.moe/ppso5k.ogg"
     };
     const nsfwBgm = "https://files.catbox.moe/70hquc.ogg";
+
+    // [iOS音樂 1122] iOS 17 的 canPlayType('audio/ogg; codecs="vorbis"') 回空字串，不能播 Ogg。
+    // 20 首背景音樂（2026-11-22）另轉成 AAC 160k 48kHz 的 .m4a 上傳到 catbox；鍵是 ogg 檔名、值是 m4a 檔名（網址同為 files.catbox.moe）。
+    // 只在「送出播放」時由 bgmPlayableUrl 轉換，狀態欄位仍存 ogg 網址。
+    const BGM_M4A = {
+        // 地圖音樂與 NSFW 音樂
+        mfcikt: 'znzl5g', t4jtxq: 'baht5w', '1epyob': 'q9t4i0', '53igy4': 'o2cuvz', dqmptj: '1xuteo',
+        '5oklvh': 'b5jmnp', et5hti: '3ginai', '81sb0h': 'ohtdz6', jdomdd: 've8p2a', ppso5k: 'es7v6f', '70hquc': 'geji91',
+        // 小遊戲與自由戰鬥的敵人音樂
+        vlllik: 'i15qy9', ep9wz3: '8h3hdj', '6dk58a': 'pe6yz8', r2nk9x: 'povk6m', ho39fr: 'fpyt30',
+        '025ta8': 'qr0fwk', p6396r: 'xxmriv', yi2xi9: '5rionu', ypyat2: '1wf0x5'
+    };
+    let _bgmOggOk = null;   // 瀏覽器能不能播 Ogg Vorbis（只算一次）
+    function bgmPlayableUrl(url) {
+        try {
+            if (typeof url !== 'string') return url;
+            const m = /^https:\/\/files\.catbox\.moe\/([A-Za-z0-9]+)\.ogg$/.exec(url);
+            if (!m || !Object.prototype.hasOwnProperty.call(BGM_M4A, m[1])) return url;
+            if (_bgmOggOk === null) {
+                try { _bgmOggOk = document.createElement('audio').canPlayType('audio/ogg; codecs="vorbis"') !== ''; }
+                catch (e) { _bgmOggOk = true; }
+            }
+            return _bgmOggOk ? url : 'https://files.catbox.moe/' + BGM_M4A[m[1]] + '.m4a';
+        } catch (e) { return url; }
+    }
 
     const heroineList = ["爱娜", "琳", "米拉露恩", "黛芬妮", "芙蕾嘉", "穗", "莉迪娅", "璐法", "奈芙蒂"];
 
@@ -14063,9 +14094,9 @@ panelParent.appendChild(mobilePanel);
 
         if (!adj) return;
 
-        const arrows = { up: '▲', down: '▼', left: '◀', right: '▶', 'up-right': '▲', 'down-right': '▼' };
+        const arrows = { up: '▲', down: '▼', left: '◀︎', right: '▶︎', 'up-right': '▲', 'down-right': '▼' };
         for (const [dir, target] of Object.entries(adj)) {
-            const icon = arrows[dir] || '▶';
+            const icon = arrows[dir] || '▶︎';
             const arrow = document.createElement('div');
             arrow.className = 'home-nav-arrow arrow-' + dir;
 
@@ -15117,7 +15148,7 @@ heroineList.forEach((id, i) => {
                             // 子地點有值：只要文字不同就更新（修正：原本的 !querySelector 在子地點變更時不刷新）
                             const existingSubLoc = titleEl.querySelector('.sub-loc');
                             if (!existingSubLoc || existingSubLoc.textContent !== subLocation) {
-                                titleEl.innerHTML = `${dot.dataset.name}<span class="sub-arrow"> ▶ </span><span class="sub-loc">${subLocation}</span>`;
+                                titleEl.innerHTML = `${dot.dataset.name}<span class="sub-arrow"> ▶︎ </span><span class="sub-loc">${subLocation}</span>`;
                             }
                         } else if (titleEl) {
                             // 子地點清空：確保清除殘留的子地點箭頭
@@ -15187,7 +15218,7 @@ if (JSON.stringify(sortedIdsForKey) !== JSON.stringify(state.lastPartyIds)) {
 
             if (targetMusicUrl && targetMusicUrl !== state.currentMusicUrl) {
                 console.log("[RPG] 切换音樂至: ", targetMusicUrl);
-                await STscript(`/xbaudio "${targetMusicUrl}"`);
+                await STscript(`/xbaudio "${bgmPlayableUrl(targetMusicUrl)}"`); // [iOS音樂 1122]
                 state.currentMusicUrl = targetMusicUrl;
             }
 
@@ -15399,6 +15430,15 @@ window.updateTemplateVariables = function(data, options) {
     // =========================================
 // === RPG Bridge: 主程式與小遊戲的橋樑 ===
 // =========================================
+// [iOS音樂 1122] 小遊戲用 RPGBridge.execute('/xbaudio "<ogg 網址>"') 播音樂：只改 /xbaudio 開頭的指令
+function _bgmFixCommand(command) {
+    try {
+        if (typeof command === 'string' && /^\s*\/xbaudio\b/.test(command)) {
+            return command.replace(/https:\/\/files\.catbox\.moe\/[A-Za-z0-9]+\.ogg/g, u => bgmPlayableUrl(u));
+        }
+    } catch (e) { /* 失敗就原樣送出 */ }
+    return command;
+}
 window.RPGBridge = {
     // 1. 讀取變量
     getVar: async function(varName) {
@@ -15409,6 +15449,7 @@ window.RPGBridge = {
     // 2. 寫入/執行指令
     execute: async function(command) {
         if (typeof STscript !== 'function') return;
+        command = _bgmFixCommand(command); // [iOS音樂 1122]
         return await STscript(command);
     },
 
